@@ -3,6 +3,8 @@
 #
 # Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 #
+import sys
+print(sys.version)
 import numpy as np
 from scipy.special import sph_harm
 import matplotlib.pyplot as plt
@@ -15,32 +17,6 @@ class angbas():
     def __init__(self):
         pass
     
-    def plot_bas(self):
-        """plot the angular basis"""
-        phi = np.linspace(0, np.pi, 100)
-        theta = np.linspace(0, 2*np.pi, 100)
-        phi, theta = np.meshgrid(phi, theta)
-
-        # The Cartesian coordinates of the unit sphere
-        x = np.sin(phi) * np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(phi)
-
-        m, l = 2, 3
-
-        # Calculate the spherical harmonic Y(l,m) and normalize to [0,1]
-        fcolors = sph_harm(m, l, theta, phi).real
-        fmax, fmin = fcolors.max(), fcolors.min()
-        fcolors = (fcolors - fmin)/(fmax - fmin)
-
-        # Set the aspect ratio to 1 so our sphere looks spherical
-        fig = plt.figure(figsize=plt.figaspect(1.))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot_surface(x, y, z,  rstride=1, cstride=1, facecolors=cm.seismic(fcolors))
-        # Turn off the axis planes
-        ax.set_axis_off()
-        plt.show()
-
     def orth_test(self):
         """test orthogonality relations for the basis set"""
 
@@ -56,10 +32,10 @@ class angbas():
         phi=np.arctan(y/x)
         return r,theta,phi
 
-    def spharm(l,m,phi,theta):
-        return scipy.special.sph_harm(m, l, phi, theta)
+    def spharm(self,l,m,theta,phi):
+        return sph_harm(m, l, phi, theta)
 
-    def spharm_rot(l,m,phi,theta,alpha,beta,zgamma):
+    def spharm_rot(self,l,m,phi,theta,alpha,beta,zgamma):
         #return rotated spherical harmonic in active transformation from MF to LAB frame. 
         Yrot=0.0
         #print("value of the wigner D matrix: ", Rotation.D(l, m, 0 , alpha, beta ,zgamma).doit().evalf())
@@ -69,7 +45,7 @@ class angbas():
             Yrot+=complex(Rotation.D(l, m, mu , alpha, beta, zgamma).doit().evalf())*spharm(l, mu, phi, theta)
         return Yrot
 
-    def solidharm(l,m,r,theta,phi):
+    def solidharm(self,l,m,r,theta,phi):
     
         if m==0:
             SH=np.sqrt(4.0*np.pi/(2.0*float(l)+1))*(r**l)*np.real(scipy.special.sph_harm(0, l, phi, theta))
@@ -79,7 +55,7 @@ class angbas():
             SH=((-1.0)**m)*np.sqrt(8.0*np.pi/(2.0*float(l)+1))*(r**l)*np.imag(scipy.special.sph_harm(-m, l, phi, theta))
         return SH
 
-    def solidharm_vec(l,m,r,theta,phi):
+    def solidharm_vec(self,l,m,r,theta,phi):
         #print(theta.size)
         SH=np.array([0.0]*theta.size)
         if m==0:
@@ -94,7 +70,42 @@ class angbas():
         return SH
 
 
+    def show_Y_lm(self,l, m):
+        """plot the angular basis"""
+        theta_1d = np.linspace(0,   np.pi,  91) # 2 GRAD Schritte
+        phi_1d   = np.linspace(0, 2*np.pi, 181) # 2 GRAD Schritte
 
-#Ylm = angbas()
-#plot_bas(Ylm)
-print("hello")
+        theta_2d, phi_2d = np.meshgrid(theta_1d, phi_1d)
+        xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d),
+                        np.sin(theta_2d) * np.cos(phi_2d),
+                        np.cos(theta_2d)]) 
+
+        colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool"))
+        colormap.set_clim(-.45, .45)
+        limit = .5
+
+        print("Y_%i_%i" % (l,m)) # zeigen, dass was passiert
+        plt.figure()
+        ax = plt.gca(projection = "3d")
+        
+        plt.title("$Y^{%i}_{%i}$" % (m,l))
+        Y_lm = sph_harm(m,l, phi_2d, theta_2d)
+        r = np.abs(Y_lm.real)*xyz_2d
+        ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
+        ax.set_xlim(-limit,limit)
+        ax.set_ylim(-limit,limit)
+        ax.set_zlim(-limit,limit)
+        #ax.set_aspect("equal")
+        #ax.set_axis_off()
+        
+                
+        plt.show()
+
+
+if __name__ == "__main__":      
+    print("hello")
+
+    Ylm = angbas()
+    #Ylm.show_Y_lm(l=5,m=0)
+    #Ylm.show_Y_lm(l=5,m=4)        
+    Ylm.show_Y_lm(l=2,m=2)
