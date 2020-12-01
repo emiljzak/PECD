@@ -1,31 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; fill-column: 120 -*-
 #
-# Copyright (C) 2020 Jochen Küpper <jochen.kuepper@cfel.de>
+# Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 
 from setuptools import setup
 
-copyright = 'Copyright (C) 2020 Jochen Küpper <jochen.kuepper@cfel.de>'
-name = "CMI Python-project template"
-version = "0.2.dev0"
+copyright = 'Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>'
+name = "PECD"
+version = "0.1.dev0"
 release = version
-long_description = """CMI Python template
-
-This is the installation and general build file of the CMI Python project template.
-
-Original author:    Jochen Küpper <jochen.kuepper@cfel.de>
-Current maintainer: Jochen Küpper <jochen.kuepper@cfel.de>
+long_description = """
+Original author:    Emil Zak <emil.zak@cfel.de>
+Current maintainer: Emil Zak <emil.zak@cfel.de>
 """
 
 
 setup(name=name,
       python_requires     = '>=3.6',
-      author              = "Jochen Küpper and the CFEL-CMI group",
-      author_email        = "jochen.kuepper@cfel.de",
-      maintainer          = "Jochen Küpper and the CFEL-CMI group",
-      maintainer_email    = "jochen.kuepper@cfel.de",
-      url                 = "https://github.com/CFEL-CMI/CMI-Python-project-template",
-      description         = "CMI Python-software template",
+      author              = "Emil Zak",
+      author_email        = "emil.zak@cfel.de",
+      maintainer          = "Emil Zak",
+      maintainer_email    = "emil.zak@cfel.de",
+      url                 = "https://github.com/CFEL-CMI/PECD",
+      description         = "High-accuracy calculations of photo-electron circular dichroism",
       version             = version,
       long_description    = long_description,
       license             = "GPL",
