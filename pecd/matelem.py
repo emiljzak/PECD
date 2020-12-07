@@ -3,40 +3,11 @@
 #
 # Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 #
-#import sys
-#print(sys.version)#
 import numpy as np
 from basis import angbas
 import quadpy
 from scipy.special import sph_harm
-print(quadpy.__version__)
-
-
-class integration():
-    """Class containing all integration methods"""
-
-    def __init__(self):
-        pass
-
-    def test_angular_int(self,lmin,lmax,hdeg):
-        """ test the accuracy of angular integration (lebedev quadrature) over the spherical harmonics basis"""
-        anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])
-
-        scheme = quadpy.u3.get_good_scheme(hdeg)
-        #print(scheme.points, scheme.weights, scheme.degree, scheme.source, scheme.test_tolerance)
-        print(" %4s %4s %4s %4s"%("l1","m1","l2","m2") + " %15s"%"val")
-
-        #print(np.shape(scheme.points))
-        #print(scheme.points[1]*180.0/np.pi)
-        for l1,m1 in anglist:
-            for l2,m2 in anglist:
-                val = scheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1,l1,theta_phi[1],theta_phi[0])) * sph_harm(m2,l2,theta_phi[1],theta_phi[0]))
-                print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val)
-            
-
+#print(quadpy.__version__)
 
 
 class potential():
@@ -90,15 +61,22 @@ class potential():
         """plot the potential"""
 
 
-class potmat(potential,integration):
+class potmat(potential):
     """Class containing methods for the calculation of the potential matrix elements"""
 
-    def __init__(self,Hang):
-        self.Hang  = Hang #degree H of angular (ang) quadrature (Lebedev)
+    def __init__(self,scheme):
+        self.scheme  =  scheme #name of the quadrature scheme used (Lebedev)
     
-    def generate(self):
+    def calc_mat(self,lmin,lmax,rin):
         """calculate full potential matrix"""
         print("hello")
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+        #calc_potmatelem(self,l1,m1,l2,m2,rin,scheme)
 
 
     def spharmcart(self,l,m,x):
@@ -115,24 +93,65 @@ class potmat(potential,integration):
         #print(theta,phi)
         return sph_harm(m, l, phi, theta)
 
-
-    def jacobian(self,x):
-        theta=np.arctan(np.sqrt(x[0]**2+x[1]**2)/x[2])
-        return np.sin(theta) 
-
-
-    def pot_integrand(self,theta_phi):
-        theta, phi = theta_phi
-        return np.conjugate(sph_harm(m1,l1,phi,theta)) * sph_harm(m2,l2,phi,theta)
-
-
-
-    def calc_potmatelem(self,l1,m1,l2,m2,rin):
+    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
         """calculate single element of potential matrix"""
-        scheme = quadpy.u3.get_good_scheme(47)
-        val = scheme.integrate_spherical(self.pot_integrand) 
+        #print(self.Hdeg)
+        #print(self.scheme)
+        myscheme = quadpy.u3.schemes[scheme]()
+
+        #print(myscheme)
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1, theta_phi[1], theta_phi[0])) * sph_harm(m2, l2, theta_phi[1], theta_phi[0]) )#* self.pot_ocs_pc(rin,theta_phi[0]) )
         return val
     
+
+
+    def test_angular_convergence(self,lmin,lmax,quad_tol):
+        
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+
+        #convergence test over matrix elements:
+        val =  np.zeros(shape=(len(anglist)**2))
+        val_prev = np.zeros(shape=(len(anglist)**2))
+
+
+        #pull out Lebedev schemes into a list
+        spherical_schemes = []
+        for elem in list(quadpy.u3.schemes.keys()):
+            if 'lebedev' in elem:
+                spherical_schemes.append(elem)
+        print("Available schemes: " + str(spherical_schemes))
+
+        #iterate over the schemes
+        for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+
+            i=0
+            for l1,m1 in anglist:
+                for l2,m2 in anglist:
+                
+                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,1.0,scheme)
+                    print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i])
+                    i+=1
+            
+            #check for convergence
+            diff = np.abs(val - val_prev)
+
+            if (np.any(diff>quad_tol)):
+                print(str(scheme)+" convergence not reached") 
+                for i in range(len(val_prev)):
+                    val_prev[i] = val[i]
+
+            elif (np.all(diff<quad_tol)):     
+                print(str(scheme)+" convergence reached!!!")
+                exit()
+
+            #if no convergence reached raise warning
+            if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
 
 
@@ -143,10 +162,10 @@ if __name__ == "__main__":
 
    # potmatrix.calc_potmatelem(l1=0,m1=0,l2=1,m2=1,0.0)
 
-    potmatrix = integration()
-
+    """ Test angular convergence of the potential matrix elements """
     lmin = 0
-    lmax = 2
-    hdeg = 47
-    potmatrix.test_angular_int(lmin,lmax,hdeg)
+    lmax = 4
+    quad_tol = 1e-9
 
+    potmatrix = potmat(scheme='lebedev_005')
+    potmatrix.test_angular_convergence(lmin,lmax,quad_tol)
