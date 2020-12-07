@@ -53,8 +53,10 @@ class potential():
         return pot
 
     def pot_test(self,r,theta,phi):
+        d = 1.0
         """test potential for quadrature integration"""
-        return np.cos(theta)**2
+       
+        return d * np.cos(theta) / r**2
 
 
     def plot_pot_2D(self):
@@ -95,17 +97,24 @@ class potmat(potential):
 
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
         """calculate single element of potential matrix"""
-        #print(self.Hdeg)
-        #print(self.scheme)
         myscheme = quadpy.u3.schemes[scheme]()
-
         #print(myscheme)
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1, theta_phi[1], theta_phi[0])) * sph_harm(m2, l2, theta_phi[1], theta_phi[0]) )#* self.pot_ocs_pc(rin,theta_phi[0]) )
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0])  * self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+
         return val
     
 
 
-    def test_angular_convergence(self,lmin,lmax,quad_tol):
+    def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
+        """
+        rin: radial coordinate
+        """
         
         #create list of basis set indices
         anglist = []
@@ -124,7 +133,7 @@ class potmat(potential):
         for elem in list(quadpy.u3.schemes.keys()):
             if 'lebedev' in elem:
                 spherical_schemes.append(elem)
-        print("Available schemes: " + str(spherical_schemes))
+        #print("Available schemes: " + str(spherical_schemes))
 
         #iterate over the schemes
         for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
@@ -133,8 +142,8 @@ class potmat(potential):
             for l1,m1 in anglist:
                 for l2,m2 in anglist:
                 
-                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,1.0,scheme)
-                    print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i])
+                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme)
+                    #print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i])
                     i+=1
             
             #check for convergence
@@ -147,7 +156,7 @@ class potmat(potential):
 
             elif (np.all(diff<quad_tol)):     
                 print(str(scheme)+" convergence reached!!!")
-                exit()
+                break
 
             #if no convergence reached raise warning
             if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
@@ -165,7 +174,10 @@ if __name__ == "__main__":
     """ Test angular convergence of the potential matrix elements """
     lmin = 0
     lmax = 4
-    quad_tol = 1e-9
-
+    quad_tol = 1e-6
     potmatrix = potmat(scheme='lebedev_005')
-    potmatrix.test_angular_convergence(lmin,lmax,quad_tol)
+    rin = np.linspace(0.01,100.0,10,endpoint=True)
+    print(rin)
+    for r in rin:
+        print("radial coordinate = "+str(r))
+        potmatrix.test_angular_convergence(lmin,lmax,quad_tol,r)
