@@ -16,27 +16,14 @@ class potential():
     def __init__(self):
         pass
 
-    def pot_sph(self,r):
-        #spherical test potential
-        #partial charges in OCS
-        deltaC=0.177e0
-        deltaO=-0.226e0
-        deltaS=0.049e0
-        
-        rOC=115.78 #pm
-        rCS=156.01 #pm
-
-        pot=-1.0/r
-        return pot
-
-
     def pot_ocs_pc(self,r,theta):
         #point charges from rigid OCS
         #partial charges in OCS
-        #print(np.shape(theta))
+
         deltaC=0.177+0.3333
         deltaO=-0.226+0.3333
         deltaS=0.049+0.3333
+
         #OCS is aligned along z-axis. The potential is therefore phi-symmetric
         rOC=115.78 #pm
         rCS=156.01 #pm
@@ -55,7 +42,7 @@ class potential():
     def pot_test(self,r,theta,phi):
         d = 1.0
         """test potential for quadrature integration"""
-       
+        #d * np.cos(theta)**2 * np.cos(phi) / r**2
         return d * np.cos(theta) / r**2
 
 
@@ -78,8 +65,25 @@ class potmat(potential):
             for m in range(0,l+1):
                 anglist.append([l,m])
 
-        #calc_potmatelem(self,l1,m1,l2,m2,rin,scheme)
+        Nbas = int(len(anglist) * len(rin))
+        vmat = np.zeros((Nbas,Nbas), dtype = float)
 
+        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+        for i in range(Nbas):
+            ivec = [indmap[i][0],indmap[i][1],indmap[i][2]]
+            print(type(ivec))
+            print(ivec)
+            for j in range(Nbas):
+                jvec = [indmap[j][0],indmap[j][1],indmap[j][2]]
+                #hmat[ivec,jvec] = self.helem(ivec,jvec,grid_dp,weights_dp)
+                vmat[i,j] = self.calc_potmatelem(l1,m1,l2,m2,rin,self.scheme)
+
+
+        print(vmat)
+        eval, eigvec = np.linalg.eigh(hmat)
+        print(eval)
+        return eval
+        
 
     def spharmcart(self,l,m,x):
         tol = 1e-8
@@ -105,7 +109,7 @@ class potmat(potential):
                 theta_phi[1] = phi  in [-pi,pi]
                 sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
         """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0])  * self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
 
         return val
     
