@@ -10,6 +10,44 @@ from scipy.special import sph_harm
 from basis import radbas
 #print(quadpy.__version__)
 
+class mapping():
+
+    def __init__(self,lmin,lmax,nbins,nlobatto):
+        self.lmin = lmin
+        self.lmax = lmax
+        self.nbins = nbins
+        self.nlobatto = nlobatto
+
+
+    def gen_map(self):
+        imap=0
+        maparray= []
+
+        for l in range(0,lmax+1):
+            for m in range(-l,l+1):
+                for i in range(0,self.nbins):
+                    for n in range (0,self.nlobatto):
+                        if n==self.nlobatto-1:
+                            continue        
+                        elif n==0 and i==self.nbins-1:
+                            continue
+                        else:
+                                imap+=1
+                                #print(l,m,i,n,imap)
+                                maparray.append([l,m,i,n,imap])
+                
+        fl = open('map.dat','w')
+        for elem in maparray:
+            #other formatting option:   	   	    
+            #print("%5d %5d %5d %5d %5d"%[elem[i] for i in range(len(elem))]+"\n")
+
+            print(['{:5d}'.format(i) for i in elem])
+ 	   	    #fl.write("%5d"%elem[0]+"  %5d"%elem[1]+"  %5d"%elem[2]+" %5d"%elem[3]+" %5d"%elem[4]+"\n")
+        fl.close()
+        
+        return imap
+
+
 class potential():
     """Class containing methods for the representation of the PES"""
 
@@ -44,7 +82,6 @@ class potential():
         """test potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
         return d * np.cos(theta) / r**2
-
 
     def plot_pot_2D(self):
         """plot the potential"""
@@ -83,19 +120,6 @@ class potmat(potential):
         print(eval)
         return eval
         
-    def spharmcart(self,l,m,x):
-        tol = 1e-8
-        #print(np.shape(x[0]))
-        if all(np.abs(x[0])>tol) and all(np.abs(x[2])>tol): 
-            r=np.sqrt(x[0]**2+x[1]**2+x[2]**2)
-            theta=np.arctan(np.sqrt(x[0]**2+x[1]**2)/x[2])
-            phi=np.arctan(x[1]/x[0])
-        else:
-            r = 0
-            theta = 0.0
-            phi = 0.0
-        #print(theta,phi)
-        return sph_harm(m, l, phi, theta)
 
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
         """calculate single element of potential matrix"""
@@ -290,12 +314,12 @@ class keomat(radbas):
 if __name__ == "__main__":      
 
     lmin = 0
-    lmax = 0
+    lmax = 2
     # potmatrix.calc_potmatelem(l1=0,m1=0,l2=1,m2=1,0.0)
 
     """ Test angular convergence of the potential matrix elements """
 
-    quad_tol = 1e-6
+    """ quad_tol = 1e-6
 
     potmatrix = potmat(scheme='lebedev_005')
     rin = np.linspace(0.01,100.0,10,endpoint=True)
@@ -303,8 +327,12 @@ if __name__ == "__main__":
     for r in rin:
         print("radial coordinate = "+str(r))
         potmatrix.test_angular_convergence(lmin,lmax,quad_tol,r)
-
+    """
 
     """ Test print the KEO matrix """
-    keomatrix = keomat()
-    keomatrix.calc_mat
+    """keomatrix = keomat()
+    keomatrix.calc_mat"""
+
+    """ Generate map """
+    mymap = mapping(lmin = 0, lmax = 2, nbins = 3, nlobatto=4)
+    mymap.gen_map()

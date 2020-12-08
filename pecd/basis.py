@@ -46,6 +46,21 @@ class angbas():
     def spharm(self,l,m,theta,phi):
         return sph_harm(m, l, phi, theta)
 
+    def spharmcart(self,l,m,x):
+        tol = 1e-8
+        #print(np.shape(x[0]))
+        if all(np.abs(x[0])>tol) and all(np.abs(x[2])>tol): 
+            r=np.sqrt(x[0]**2+x[1]**2+x[2]**2)
+            theta=np.arctan(np.sqrt(x[0]**2+x[1]**2)/x[2])
+            phi=np.arctan(x[1]/x[0])
+        else:
+            r = 0
+            theta = 0.0
+            phi = 0.0
+        #print(theta,phi)
+        return sph_harm(m, l, phi, theta)
+
+
     def spharm_rot(self,l,m,phi,theta,alpha,beta,zgamma):
         #return rotated spherical harmonic in active transformation from MF to LAB frame. 
         Yrot=0.0    
