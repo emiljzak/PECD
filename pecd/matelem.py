@@ -7,6 +7,7 @@ import numpy as np
 from basis import angbas
 import quadpy
 from scipy.special import sph_harm
+from basis import radbas
 #print(quadpy.__version__)
 
 
@@ -168,7 +169,133 @@ class potmat(potential):
 
 
 
+class keomat(radbas):
+    """Class containing methods for the calculation of the KEO matrix elements"""
 
+    def __init__(self):
+        pass
+
+    def calc_mat(self,Ntotal):
+        "we define the KEO matrix through mapping into 2-D array"
+        nlobatto=globals.nlobatto
+        "initialize the KEO matrix:"
+        KEO=np.zeros(shape=(Ntotal,Ntotal), dtype=float)
+        "print(KEO[0][5])"
+        "print(KEO.shape)"
+        
+        """call Gauss-Lobatto rule """
+        x=np.zeros(nlobatto)
+        w=np.zeros(nlobatto)
+        x,w=gauss_lobatto(nlobatto,14)
+        x=np.array(x)
+        w=np.array(w)
+
+        
+        "Read the mapping table"
+        maparray=np.ndarray(shape=(Ntotal,5), dtype=int)
+        with open("map.txt", "r") as mapfile:                  
+            maparray=np.loadtxt(mapfile,dtype=int)
+        #print(maparray)
+        """print(maparray[3][2],maparray[3][3],maparray[3][0],maparray[3][1],
+                maparray[2][2],maparray[2][3],maparray[2][0],maparray[2][1])"""
+        np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
+        for alpha in range(0,Ntotal):
+            for beta in range(0,Ntotal):
+                KEO[alpha][beta]=1.0*KEO_matel(maparray[alpha][0],maparray[alpha][1],maparray[alpha][2],maparray[alpha][3],
+                maparray[beta][0],maparray[beta][1],maparray[beta][2],maparray[beta][3],x,w)
+            "print(KEO[alpha])"
+        
+        with open("KEO.txt", "wb") as KEOfile:   #Pickling                
+            np.savetxt(KEOfile,KEO,fmt='%10.3f')
+        return KEO
+
+    def calc_keomatel(self,l1,m1,i1,n1,l2,m2,i2,n2,x,w):
+        "calculate matrix element of the KEO"
+        
+        if l1==l2 and m1==m2:
+            
+            if i1==i2 and n1==n2:
+                KEO=KEO_matel_ang(i1,n1,l1,x)+KEO_matel_rad(i1,n1,i2,n2,x,w)
+                return KEO
+            else:
+                KEO=KEO_matel_rad(i1,n1,i2,n2,x,w)
+                return KEO
+        else:
+            return 0.0
+
+            
+            
+    def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
+        
+        if n1>0 and n2>0:
+            if i1==i2:
+                #single x single
+                KEO=0.5*self.KEO_matel_fpfp(i1,n1,n2,x,w_i1) 
+                return KEO/sqrt(w_i1[n1]*w_i2[n2])
+            else:
+                return 0.0
+        if n1==0 and n2>0:
+            #bridge x single
+            if i1==i2: 
+                KEO=0.5*KEO_matel_fpfp(i1,nlobatto-1,n2,x,w_i2) 
+                return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
+            elif i1==i2-1:
+                KEO=0.5*KEO_matel_fpfp(i2,0,n2,x,w_i2) 
+                return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
+            else:
+                return 0.0
+        elif n2==0 and n1>0:
+            #single x bridge
+            if i1==i2: 
+                KEO=0.5*KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1) 
+                return KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
+            elif i1==i2+1:
+                KEO=0.5*KEO_matel_fpfp(i1,n1,0,x,w_i1) 
+                return KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
+            else:
+                return 0.0
+                
+        elif n1==0 and n2==0:
+            #bridge x bridge
+            if i1==i2: 
+                KEO=0.5*(KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1)+KEO_matel_fpfp(i1+1,0,0,x,w_i1))
+                #print("shape of w is", np.shape(KEO), "and type of w is", type(w_i1))
+            
+                return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
+            elif i1==i2-1:
+                KEO=0.5*KEO_matel_fpfp(i2,0,nlobatto-1,x,w_i2)
+                return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
+            elif i1==i2+1:
+                KEO=0.5*KEO_matel_fpfp(i1,0,nlobatto-1,x,w_i1)
+                return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
+            else:
+                return 0.0
+
+
+
+    def KEO_matel_ang(self,l,rgrid):
+
+        """Calculate the anglar momentum part of the KEO"""
+        """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
+        #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
+        return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
+
+    def KEO_matel_fpfp(self,i,n1,n2,x,w):
+        "Calculate int_r_i^r_i+1 f'(r)f'(r) dr in the radial part of the KEO"
+        # f'(r) functions from different bins are orthogonal
+        #scale the Gauss-Lobatto points
+        x = 0.5e00 * ( self.binwidth * x + self.binwidth * (i+1) + self.binwidth * i ) + self.rshift
+        #scale the G-L quadrature weights
+        w = 0.5 * self.binwidth * w
+
+        fpfpint=0.0e00
+        for k in range(0, self.nlobatto):
+            y1 = self.fp(i,n1,k,x)
+            y2 = self.fp(i,n2,k,x)
+            fpfpint += w[k] * y1 * y2
+    
+        return float(fpfpint)
+        
 
 if __name__ == "__main__":      
 

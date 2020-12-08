@@ -163,60 +163,61 @@ class radbas():
         else:
             prod=np.ones(np.size(r), dtype=float)
             for j in range(0,np.size(r)):
+
                 if  r[j] >= rgrid[i,0] and r[j] <= rgrid[i,self.nlobatto-1]:
+
                     for mu in range(0,self.nlobatto):
                         if mu !=n:
                             prod[j] *= (r[j]-rgrid[i,mu])/(rgrid[i,n]-rgrid[i,mu])
                         else:
                             prod[j] *= 1.0
+                else:
+                    prod[j] = 0.0
         return prod
 
-
-
-    def plot_f(self):
+    def plot_f(self,rmin,rmax,npoints):
         """plot the selected radial basis functions"""
-        r = np.linspace(0.0,1.0,1000,endpoint=True,dtype=float)
+        r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
 
         rgrid  = self.r_grid()
         print(np.shape(rgrid))
-        print(rgrid)
-        #rgrid = rgrid.reshape((40,1))
-        #print(np.shape(rgrid))
-        #print(rgrid)
-        y = np.zeros((len(r),self.nlobatto))
-        for n in range(self.nlobatto):
-            y[:,n] = self.f(0,n,r,rgrid)
+
+        y = np.zeros((len(r),self.nlobatto * self.nbins))
+
+
+        counter = 0
+        for i in range(self.nbins):
+
+            for n in range(self.nlobatto):
+                y[:,counter] = self.f(i,n,r,rgrid)
+                counter += 1
         #print(y)
 
         figLob = plt.figure()
         plt.xlabel('r/a.u.')
-        plt.ylabel('Lagrange basis function')
-        plt.title('Lagrange basis functions')
+        plt.ylabel('Lobatto basis function')
         plt.legend()   
  
         plt.plot(r, y) 
         plt.show()     
 
-    
-
-    def fp(self,n,i,k,rgrid):
+    def fp(self,i,n,k,rgrid):
         "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
         if n!=k:
             fprime=(rgrid[n]-rgrid[k])
             prod=1.0e00
-            for mu in range(0,globals.nlobatto):
+            for mu in range(0,self.nlobatto):
                 if mu !=k and mu !=n:
                     prod=prod*(rgrid[k]-rgrid[mu])/(rgrid[n]-rgrid[mu])
             fprime=fprime*prod
         elif n==k:
             fprime=1.0
             summ=0.0e00
-            for mu in range(0,globals.nlobatto):
+            for mu in range(0,self.nlobatto):
                     if mu !=n:
                         summ=summ+(rgrid[n]-rgrid[mu])**(-1)
             fprime=fprime*summ
         return fprime
-
         
     def gauss_lobatto(self,n, n_digits):
         """
@@ -291,64 +292,55 @@ class radbas():
         w.append((S(2)/(n*(n-1))).n(n_digits))
         return xi, w
         
-    def chi(self,n,i,r,rgrid,w):
+    def chi(self,i,n,r,rgrid,w):
         # r is the argument f(r)
         # rgrid is the radial grid rgrid[i][n]
         # w are the unscaled lobatto weights
-        w=w*(0.5*globals.Rbin)#*sum(w[:])
+
+        w *= (0.5 * self.binwidth)#*sum(w[:])
         val=np.zeros(np.size(r))
         
-        if n==0 and i<globals.imax-1:
+        if n==0 and i<self.nbins-1:
             #print("bridge: ", n,i)
-            val=(f(globals.nlobatto-1,i,r,rgrid)+f(0,i+1,r,rgrid))*np.sqrt(float(w[globals.nlobatto-1])+float(w[0]))**(-1)/2.0
+            val = ( self.f(i,self.nlobatto-1,r,rgrid) + self.f(i+1,0,r,rgrid) ) * np.sqrt( float( w[self.nlobatto-1] ) + float( 2.0 *w[0] ) )**(-1)
             #print(type(val),np.shape(val))
             return val 
-        elif n>0 and n<globals.nlobatto-1:
-            val=f(n,i,r,rgrid)*np.sqrt(float(w[n])**(-1))
+        elif n>0 and n<self.nlobatto-1:
+            val = self.f(i,n,r,rgrid) * np.sqrt( float( w[n] ) ) **(-1) 
             #print(type(val),np.shape(val))
             return val
         else:
             return val
             
+    def plot_chi(self,rmin,rmax,npoints):
+        """plot the selected radial basis functions"""
+        r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
 
+        rgrid  = self.r_grid()
+        print(np.shape(rgrid))
 
-        
-    def plot_chi(self):
-        plt.clf()
-        nlobatto=globals.nlobatto
-        epsilon=globals.epsilon
-        x=np.zeros(nlobatto)
-        w=np.zeros(nlobatto)
+        x=np.zeros(self.nlobatto)
+        w=np.zeros(self.nlobatto)
+        x,w=self.gauss_lobatto(self.nlobatto,14)
         w=np.array(w)
-        x,w=gauss_lobatto(nlobatto,14)
-        rgrid=r_grid()
-        r=np.arange(epsilon, globals.Rmax+epsilon, 0.001)
-        y=np.zeros(np.size(r))
-        #print(rgrid)
-        #print(r)
-        #print(w)
-        #print(x)
-        #print("shape of w is", np.shape(w), "and type of w is", type(w))
-        w=np.array(w)
-        x=np.array(x)
+        x=np.array(x) # convert back to np arrays
 
-        #scale the weights
-        #w=w*globals.Rbin/2.0
+        y = np.zeros((len(r),self.nlobatto * self.nbins))
 
+        counter = 0
+        for i in range(self.nbins):
+
+            for n in range(self.nlobatto):
+                y[:,counter] = self.chi(i,n,r,rgrid,w)
+                counter += 1
+
+        figLob = plt.figure()
         plt.xlabel('r/a.u.')
         plt.ylabel('Lobatto basis function')
-        plt.title('Lobatto functions')
         plt.legend()   
-        print("imax = ",globals.imax)
-        
-        for i in range(0,globals.imax):
-            for n in range(0,globals.nlobatto):
-                for j in range(0,np.size(r)):
-                    y[j]=chi(n,i,r[j],rgrid,w)
-                plt.plot(r, y) 
-                plt.show()         
-
-
+ 
+        plt.plot(r, y) 
+        plt.show()     
 
 
 if __name__ == "__main__":      
@@ -357,7 +349,10 @@ if __name__ == "__main__":
     #Ylm = angbas()    
     #Ylm.show_Y_lm(l=40,m=40)
 
-    rbas = radbas(nlobatto = 10, nbins = 4, binwidth = 1.0, rshift=0.0)
+    rbas = radbas(nlobatto = 10, nbins = 3, binwidth = 1.0, rshift=0.0)
 
     #rbas.r_grid()
-    rbas.plot_f()
+    """ Test plot the f-radial functions"""
+    #rbas.plot_f(rmin = 0.0, rmax = 10.0, npoints = 10000)
+    """ Test plot the chi-radial functions"""
+    rbas.plot_chi(rmin = 0.0, rmax = 3.0, npoints = 1000)
