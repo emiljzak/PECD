@@ -25,14 +25,11 @@ from sympy.core.compatibility import range
 
 
 class angbas():
-    """comment"""
+    """Class of angular basis functions"""
 
     def __init__(self):
         """To do: add here attributes of the basis such as lmin,lmax"""
         pass
-    
-    def orth_test(self):
-        """test orthogonality relations for the basis set"""
 
     def sph_cart(self,r,theta,phi):
         x=r*np.sin(theta)*np.cos(phi)
@@ -65,7 +62,6 @@ class angbas():
         elif m<0:
             SH=((-1.0)**m)*np.sqrt(8.0*np.pi/(2.0*float(l)+1))*(r**l)*np.imag(sph_harm(-m, l, phi, theta))
         return SH
-
 
     def show_Y_lm(self,l, m):
         """plot the angular basis"""

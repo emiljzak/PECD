@@ -10,7 +10,6 @@ from scipy.special import sph_harm
 from basis import radbas
 #print(quadpy.__version__)
 
-
 class potential():
     """Class containing methods for the representation of the PES"""
 
@@ -50,7 +49,6 @@ class potential():
     def plot_pot_2D(self):
         """plot the potential"""
 
-
 class potmat(potential):
     """Class containing methods for the calculation of the potential matrix elements"""
 
@@ -85,7 +83,6 @@ class potmat(potential):
         print(eval)
         return eval
         
-
     def spharmcart(self,l,m,x):
         tol = 1e-8
         #print(np.shape(x[0]))
@@ -114,8 +111,6 @@ class potmat(potential):
 
         return val
     
-
-
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
         """
         rin: radial coordinate
@@ -167,8 +162,6 @@ class potmat(potential):
             if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
                 print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
-
-
 class keomat(radbas):
     """Class containing methods for the calculation of the KEO matrix elements"""
 
@@ -201,7 +194,7 @@ class keomat(radbas):
         np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
         for alpha in range(0,Ntotal):
             for beta in range(0,Ntotal):
-                KEO[alpha][beta]=1.0*KEO_matel(maparray[alpha][0],maparray[alpha][1],maparray[alpha][2],maparray[alpha][3],
+                KEO[alpha][beta] = 1.0 * self.calc_keomatel(maparray[alpha][0],maparray[alpha][1],maparray[alpha][2],maparray[alpha][3],\
                 maparray[beta][0],maparray[beta][1],maparray[beta][2],maparray[beta][3],x,w)
             "print(KEO[alpha])"
         
@@ -215,16 +208,14 @@ class keomat(radbas):
         if l1==l2 and m1==m2:
             
             if i1==i2 and n1==n2:
-                KEO=KEO_matel_ang(i1,n1,l1,x)+KEO_matel_rad(i1,n1,i2,n2,x,w)
+                KEO = self.KEO_matel_ang(i1,n1,l1,x) + self.KEO_matel_rad(i1,n1,i2,n2,x,w)
                 return KEO
             else:
-                KEO=KEO_matel_rad(i1,n1,i2,n2,x,w)
+                KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
                 return KEO
         else:
             return 0.0
-
-            
-            
+                   
     def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
         
         if n1>0 and n2>0:
@@ -271,15 +262,6 @@ class keomat(radbas):
             else:
                 return 0.0
 
-
-
-    def KEO_matel_ang(self,l,rgrid):
-
-        """Calculate the anglar momentum part of the KEO"""
-        """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
-        #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
-        return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
-
     def KEO_matel_fpfp(self,i,n1,n2,x,w):
         "Calculate int_r_i^r_i+1 f'(r)f'(r) dr in the radial part of the KEO"
         # f'(r) functions from different bins are orthogonal
@@ -297,18 +279,32 @@ class keomat(radbas):
         return float(fpfpint)
         
 
+    def KEO_matel_ang(self,l,rgrid):
+        """Calculate the anglar momentum part of the KEO"""
+        """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
+        #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
+        return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
+
+  
+
 if __name__ == "__main__":      
 
-
-   # potmatrix.calc_potmatelem(l1=0,m1=0,l2=1,m2=1,0.0)
+    lmin = 0
+    lmax = 0
+    # potmatrix.calc_potmatelem(l1=0,m1=0,l2=1,m2=1,0.0)
 
     """ Test angular convergence of the potential matrix elements """
-    lmin = 0
-    lmax = 4
+
     quad_tol = 1e-6
+
     potmatrix = potmat(scheme='lebedev_005')
     rin = np.linspace(0.01,100.0,10,endpoint=True)
     print(rin)
     for r in rin:
         print("radial coordinate = "+str(r))
         potmatrix.test_angular_convergence(lmin,lmax,quad_tol,r)
+
+
+    """ Test print the KEO matrix """
+    keomatrix = keomat()
+    keomatrix.calc_mat
