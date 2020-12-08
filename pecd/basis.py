@@ -143,18 +143,17 @@ class radbas():
                 for n in range(0,self.nlobatto):
                     xgrid[i,n]=x[n]*0.5*Rbin+0.5*Rbin+float(i)*Rbin+epsilon
         return xgrid"""
+        return xgrid
 
-
-    def f(self,n,i,r,rgrid): 
-        "calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) " 
-        self.nlobatto=globals.nlobatto 
+    def f(self,i,n,r,rgrid): 
+        """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
         
         #print("shape of r is", np.shape(r), "and type of r is", type(r))
 
         if np.isscalar(r):
             prod=1.0
-            if  r>= rgrid[i][0] and r <= rgrid[i][nlobatto-1]:
-                for mu in range(0,nlobatto):
+            if  r>= rgrid[i][0] and r <= rgrid[i][self.nlobatto-1]:
+                for mu in range(0,self.nlobatto):
                     if mu !=n:
                         prod*=(r-rgrid[i][mu])/(rgrid[i][n]-rgrid[i][mu])
                 return prod
@@ -164,14 +163,41 @@ class radbas():
         else:
             prod=np.ones(np.size(r), dtype=float)
             for j in range(0,np.size(r)):
-                if  r[j] >= rgrid[i][0] and r[j] <= rgrid[i][nlobatto-1]:
-                    for mu in range(0,nlobatto):
+                if  r[j] >= rgrid[i,0] and r[j] <= rgrid[i,self.nlobatto-1]:
+                    for mu in range(0,self.nlobatto):
                         if mu !=n:
-                            prod[j]*=(r[j]-rgrid[i][mu])/(rgrid[i][n]-rgrid[i][mu])
-                else:
-                    prod[j]=0.0
-            return prod
+                            prod[j] *= (r[j]-rgrid[i,mu])/(rgrid[i,n]-rgrid[i,mu])
+                        else:
+                            prod[j] *= 1.0
+        return prod
 
+
+
+    def plot_f(self):
+        """plot the selected radial basis functions"""
+        r = np.linspace(0.0,1.0,1000,endpoint=True,dtype=float)
+
+        rgrid  = self.r_grid()
+        print(np.shape(rgrid))
+        print(rgrid)
+        #rgrid = rgrid.reshape((40,1))
+        #print(np.shape(rgrid))
+        #print(rgrid)
+        y = np.zeros((len(r),self.nlobatto))
+        for n in range(self.nlobatto):
+            y[:,n] = self.f(0,n,r,rgrid)
+        #print(y)
+
+        figLob = plt.figure()
+        plt.xlabel('r/a.u.')
+        plt.ylabel('Lagrange basis function')
+        plt.title('Lagrange basis functions')
+        plt.legend()   
+ 
+        plt.plot(r, y) 
+        plt.show()     
+
+    
 
     def fp(self,n,i,k,rgrid):
         "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
@@ -323,38 +349,6 @@ class radbas():
                 plt.show()         
 
 
-    def plot_f(self):
-        nlobatto=globals.nlobatto
-        epsilon=globals.epsilon
-        x=np.zeros(nlobatto)
-        w=np.zeros(nlobatto)
-        w=np.array(w)
-        x,w=gauss_lobatto(nlobatto,14)
-        rgrid=r_grid()
-        print(rgrid)
-        r=np.arange(epsilon, globals.Rmax+epsilon, 0.001)
-        y=np.zeros(np.size(r))
-
-    
-        w=np.array(w)
-        x=np.array(x)
-
-
-
-        figLob = plt.figure()
-        plt.xlabel('r/a.u.')
-        plt.ylabel('Lagrange basis function')
-        plt.title('Lagrange basis functions')
-        plt.legend()   
-    
-
-        for n in range(0,globals.nlobatto):
-            for j in range(0,np.size(r)):
-                y[j]=f(n,0,r[j],rgrid)
-            plt.plot(r, y) 
-            plt.show()     
-
-    
 
 
 if __name__ == "__main__":      
@@ -365,4 +359,5 @@ if __name__ == "__main__":
 
     rbas = radbas(nlobatto = 10, nbins = 4, binwidth = 1.0, rshift=0.0)
 
-    rbas.r_grid()
+    #rbas.r_grid()
+    rbas.plot_f()
