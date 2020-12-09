@@ -4,7 +4,8 @@
 # Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 #
 import numpy as np
-from matelem import hmat
+import sys
+import matelem
 
 
 class propagate():
@@ -12,7 +13,7 @@ class propagate():
     def __init__(self):
         pass
 
-    def prop_wf(self,method,basis,ini_state,params):
+    def prop_wf(self,method,basis,ini_state,params,potential,field,scheme):
         """ main method for propagating the wavefunction"""
         """ method (str):       'static' - solve time-independent Schrodinger equation at time t=t0
                                 'direct' - propagate the wavefunction with direct exponentiation of the Hamiltonian
@@ -27,11 +28,12 @@ class propagate():
             params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances
             potential (str):    name of the potential energy function (for now it is in an analytic form)
             field (str):        name of the electric field function used (it can further read from file or return analytic field)
+            scheme (str):       quadrature scheme used in angular integration
         """
 
         if method == 'static':
-            hamiltonian = hmat(potential,field,params,t=params['t0'])
-            hmat = hamiltonian.calc_mat()
+            hamiltonian = matelem.hmat(params,potential,field,scheme,t=params['t0'])
+            hmat = hamiltonian.calc_hmat()
 
 
     def plot_mat(self,mat):
@@ -136,8 +138,9 @@ if __name__ == "__main__":
 
     field = "field.txt"
 
+    scheme = "lebedev"
 
 
     hydrogen = propagate()
 
-    hydrogen.prop_wf(method,basis,ini_state,params)
+    hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)
