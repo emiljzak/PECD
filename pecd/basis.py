@@ -60,7 +60,6 @@ class angbas():
         #print(theta,phi)
         return sph_harm(m, l, phi, theta)
 
-
     def spharm_rot(self,l,m,phi,theta,alpha,beta,zgamma):
         #return rotated spherical harmonic in active transformation from MF to LAB frame. 
         Yrot=0.0    
@@ -111,7 +110,6 @@ class angbas():
                 
         plt.show()
 
-
 class radbas():
     """Class of radial basis functions"""
     def __init__(self,nlobatto,nbins,binwidth,rshift):
@@ -143,7 +141,7 @@ class radbas():
 
         Translvec = np.zeros(self.nlobatto)
         for i in range(len(Translvec)):
-            Translvec[i] = float(i) * self.binwidth 
+            Translvec[i] = float(i) * self.binwidth + self.rshift
 
         for ibin in range(self.nbins):    
             xgrid[ibin,:] += Translvec[ibin]
