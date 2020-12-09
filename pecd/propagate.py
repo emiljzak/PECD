@@ -128,13 +128,13 @@ if __name__ == "__main__":
     
     """====basis set parameters===="""
     
-    params['nlobatto'] = 4
-    params['nbins'] = 3
+    params['nlobatto'] = 3
+    params['nbins'] = 1
     params['binwidth'] = 1.0
     params['rshift'] = 0.01
 
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 2
     
     """====runtime controls===="""
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     field = "field.txt"
 
-    scheme = "lebedev_005"
+    scheme = "lebedev_019"
 
 
     hydrogen = propagate()
