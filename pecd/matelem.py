@@ -23,7 +23,7 @@ class mapping():
         imap=0
         maparray= []
 
-        for l in range(0,lmax+1):
+        for l in range(0,self.lmax+1):
             for m in range(-l,l+1):
                 for i in range(0,self.nbins):
                     for n in range (0,self.nlobatto):
@@ -33,7 +33,7 @@ class mapping():
                             continue
                         else:
                                 imap+=1
-                                #print(l,m,i,n,imap)
+                                print(l,m,i,n,imap)
                                 maparray.append([l,m,i,n,imap])
                 
         fl = open('map.dat','w')
@@ -41,11 +41,11 @@ class mapping():
             #other formatting option:   	   	    
             #print("%5d %5d %5d %5d %5d"%[elem[i] for i in range(len(elem))]+"\n")
 
-            print(['{:5d}'.format(i) for i in elem])
- 	   	    #fl.write("%5d"%elem[0]+"  %5d"%elem[1]+"  %5d"%elem[2]+" %5d"%elem[3]+" %5d"%elem[4]+"\n")
+            #print(['{:5d}'.format(i) for i in elem])
+ 	   	    fl.write("%5d"%elem[0]+"  %5d"%elem[1]+"  %5d"%elem[2]+" %5d"%elem[3]+" %5d"%elem[4]+"\n")
         fl.close()
         
-        return imap
+        return maparray
 
 class potential():
     """Class containing methods for the representation of the PES"""
@@ -85,113 +85,41 @@ class potential():
     def plot_pot_2D(self):
         """plot the potential"""
 
-class potmat(potential):
-    """Class containing methods for the calculation of the potential matrix elements"""
-
-    def __init__(self,scheme):
+ 
+class hmat():
+    def __init__(self,params,potential,field,scheme,t):
+        self.params = params
+        self.potential = potential
+        self.field = field #field file
         self.scheme  =  scheme #name of the quadrature scheme used (Lebedev)
-    
-    def calc_mat(self,lmin,lmax,rin):
-        """calculate full potential matrix"""
-        print("hello")
-        #create list of basis set indices
-        anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])
+        self.t = t #time at which hamiltonian is evaluated
 
-        Nbas = int(len(anglist) * len(rin))
-        vmat = np.zeros((Nbas,Nbas), dtype = float)
+    def calc_hmat(self):
+        """ calculate full Hamiltonian matrix """
+        """ only called when using method = 'static','direct'"""
 
-        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
-        for i in range(Nbas):
-            ivec = [indmap[i][0],indmap[i][1],indmap[i][2]]
-            print(type(ivec))
-            print(ivec)
-            for j in range(Nbas):
-                jvec = [indmap[j][0],indmap[j][1],indmap[j][2]]
-                #hmat[ivec,jvec] = self.helem(ivec,jvec,grid_dp,weights_dp)
-                vmat[i,j] = self.calc_potmatelem(l1,m1,l2,m2,rin,self.scheme)
-
-
-        print(vmat)
-        eval, eigvec = np.linalg.eigh(hmat)
-        print(eval)
-        return eval
+        #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
         
-
-    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
-        """calculate single element of potential matrix"""
-        myscheme = quadpy.u3.schemes[scheme]()
-        #print(myscheme)
-        """
-        Symbols: 
-                theta_phi[0] = theta in [0,pi]
-                theta_phi[1] = phi  in [-pi,pi]
-                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-        """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
-
-        return val
-    
-    def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
-        """
-        rin: radial coordinate
-        """
-        
-        #create list of basis set indices
-        anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])
+        """ Generate map - this will have to be moved out of the time-loop"""
+        mymap = mapping(int(self.params['lmin']), int(self.params['lmax']), int(self.params['nbins']), int(self.params['nlobatto']))
 
 
-        #convergence test over matrix elements:
-        val =  np.zeros(shape=(len(anglist)**2))
-        val_prev = np.zeros(shape=(len(anglist)**2))
+        imap = mymap.gen_map()
+        print(imap)
+        Nbas = len(imap)
+        print("Nbas = "+str(Nbas))
+        exit()
+
+        #hmat = np.zeros((Nbas,Nbas),dtype=float)
+        #calculate KEO and Pot
+
+        #hmat = self.calc_keomat() + self.calc_potmat()
+
+        return hmat
 
 
-        #pull out Lebedev schemes into a list
-        spherical_schemes = []
-        for elem in list(quadpy.u3.schemes.keys()):
-            if 'lebedev' in elem:
-                spherical_schemes.append(elem)
-        #print("Available schemes: " + str(spherical_schemes))
 
-        #iterate over the schemes
-        for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-
-            i=0
-            for l1,m1 in anglist:
-                for l2,m2 in anglist:
-                
-                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme)
-                    #print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i])
-                    i+=1
-            
-            #check for convergence
-            diff = np.abs(val - val_prev)
-
-            if (np.any(diff>quad_tol)):
-                print(str(scheme)+" convergence not reached") 
-                for i in range(len(val_prev)):
-                    val_prev[i] = val[i]
-
-            elif (np.all(diff<quad_tol)):     
-                print(str(scheme)+" convergence reached!!!")
-                break
-
-            #if no convergence reached raise warning
-            if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
-                print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
-
-class keomat(radbas):
-    """Class containing methods for the calculation of the KEO matrix elements"""
-
-    def __init__(self):
-        pass
-
-    def calc_mat(self,Ntotal):
+    def calc_keomat(self,Ntotal):
         "we define the KEO matrix through mapping into 2-D array"
         nlobatto=globals.nlobatto
         "initialize the KEO matrix:"
@@ -301,26 +229,108 @@ class keomat(radbas):
     
         return float(fpfpint)
         
-
     def KEO_matel_ang(self,l,rgrid):
         """Calculate the anglar momentum part of the KEO"""
         """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
         #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
         return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
 
-class hmat():
-    def __init__(self,potential,field,params,t):
-        self.potential = potential
-        self.params = params
-        self.t = t #time at which hamiltonian is evaluated
-        self.field = field #field file
+    def calc_potmat(self,lmin,lmax,rin):
+        """calculate full potential matrix"""
+        print("hello")
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
 
-    def calc_mat(self):
-        """ calculate full Hamiltonian matrix """
-        """ only called when using method = 'static','direct'"""
+        Nbas = int(len(anglist) * len(rin))
+        vmat = np.zeros((Nbas,Nbas), dtype = float)
+
+        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+        for i in range(Nbas):
+            ivec = [indmap[i][0],indmap[i][1],indmap[i][2]]
+            print(type(ivec))
+            print(ivec)
+            for j in range(Nbas):
+                jvec = [indmap[j][0],indmap[j][1],indmap[j][2]]
+                #hmat[ivec,jvec] = self.helem(ivec,jvec,grid_dp,weights_dp)
+                vmat[i,j] = self.calc_potmatelem(l1,m1,l2,m2,rin,self.scheme)
 
 
-        return hmat
+        print(vmat)
+        eval, eigvec = np.linalg.eigh(hmat)
+        print(eval)
+        return eval
+        
+    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
+        """calculate single element of potential matrix"""
+        myscheme = quadpy.u3.schemes[scheme]()
+        #print(myscheme)
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+
+        return val
+    
+    def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
+        """
+        rin: radial coordinate
+        """
+        
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+
+        #convergence test over matrix elements:
+        val =  np.zeros(shape=(len(anglist)**2))
+        val_prev = np.zeros(shape=(len(anglist)**2))
+
+
+        #pull out Lebedev schemes into a list
+        spherical_schemes = []
+        for elem in list(quadpy.u3.schemes.keys()):
+            if 'lebedev' in elem:
+                spherical_schemes.append(elem)
+        #print("Available schemes: " + str(spherical_schemes))
+
+        #iterate over the schemes
+        for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+
+            i=0
+            for l1,m1 in anglist:
+                for l2,m2 in anglist:
+                
+                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme)
+                    #print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i])
+                    i+=1
+            
+            #check for convergence
+            diff = np.abs(val - val_prev)
+
+            if (np.any(diff>quad_tol)):
+                print(str(scheme)+" convergence not reached") 
+                for i in range(len(val_prev)):
+                    val_prev[i] = val[i]
+
+            elif (np.all(diff<quad_tol)):     
+                print(str(scheme)+" convergence reached!!!")
+                break
+
+            #if no convergence reached raise warning
+            if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+
+
+
+
 
 if __name__ == "__main__":      
 
@@ -344,6 +354,3 @@ if __name__ == "__main__":
     """keomatrix = keomat()
     keomatrix.calc_mat"""
 
-    """ Generate map """
-    mymap = mapping(lmin = 0, lmax = 2, nbins = 3, nlobatto=4)
-    mymap.gen_map()
