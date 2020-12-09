@@ -6,9 +6,11 @@
 import numpy as np
 import sys
 import matelem
+import timeit
+from basis import radbas
+from matelem import mapping
 
-
-class propagate():
+class propagate(radbas,mapping):
 
     def __init__(self):
         pass
@@ -32,9 +34,17 @@ class propagate():
         """
 
         if method == 'static':
-            hamiltonian = matelem.hmat(params,potential,field,scheme,t=params['t0'])
-            hmat = hamiltonian.calc_hmat()
+            #we need to create rgrid only once, i.e. static grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            rgrid = rbas.r_grid()
+            
+            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray, Nbas = mymap.gen_map()
+            params['Nbas'] = Nbas
+            print("Nbas = "+str(Nbas))
 
+            hamiltonian = matelem.hmat(params,potential,field,scheme,params['t0'],rgrid,maparray)
+            hmat = hamiltonian.calc_hmat()
 
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
@@ -119,7 +129,7 @@ if __name__ == "__main__":
     """====basis set parameters===="""
     
     params['nlobatto'] = 4
-    params['nbins'] = 2
+    params['nbins'] = 3
     params['binwidth'] = 1.0
     params['rshift'] = 0.01
 
@@ -138,9 +148,38 @@ if __name__ == "__main__":
 
     field = "field.txt"
 
-    scheme = "lebedev"
+    scheme = "lebedev_005"
 
 
     hydrogen = propagate()
 
     hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)
+
+    #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
+
+    """ code profiling
+    
+    
+    cprofile:
+    with cProfile.Profile() as pr
+        function()
+
+        pr.dump_stats('function')
+
+
+
+        python -m cProfile -o myscript.prof myscript.py
+
+        snakewiz myscript.prof
+
+        python -m line_profiles myprofile.prof
+
+        %timeit  #gives statistics
+        function()
+
+        %%time
+        function() -single call time
+
+        timestart = time.perf_counter()
+        function()
+        timeend = time.perf_counter()"""

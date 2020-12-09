@@ -8,6 +8,7 @@ from basis import angbas
 import quadpy
 from scipy.special import sph_harm
 from basis import radbas
+
 #print(quadpy.__version__)
 
 class mapping():
@@ -45,7 +46,7 @@ class mapping():
  	   	    fl.write("%5d"%elem[0]+"  %5d"%elem[1]+"  %5d"%elem[2]+" %5d"%elem[3]+" %5d"%elem[4]+"\n")
         fl.close()
         
-        return maparray
+        return maparray, imap
 
 class potential():
     """Class containing methods for the representation of the PES"""
@@ -53,67 +54,31 @@ class potential():
     def __init__(self):
         pass
 
-    def pot_ocs_pc(self,r,theta):
-        #point charges from rigid OCS
-        #partial charges in OCS
 
-        deltaC=0.177+0.3333
-        deltaO=-0.226+0.3333
-        deltaS=0.049+0.3333
-
-        #OCS is aligned along z-axis. The potential is therefore phi-symmetric
-        rOC=115.78 #pm
-        rCS=156.01 #pm
-        rOC/=100.0 #to angstrom
-        rCS/=100.0
-
-        rO=np.sqrt(rOC**2+r**2+2.0*rOC*r*np.cos(theta))
-        rS=np.sqrt(rCS**2+r**2-2.0*rCS*r*np.cos(theta))
-        
-        #x=r*np.cos(theta)
-        #y=r*np.sin(theta)
-        #Veff=-(deltaC/r+deltaO/np.sqrt((x+rOC)**2+y**2+x**2)+deltaS/np.sqrt((x-rCS)**2+y**2+x**2)) #cartesian projection method
-        pot = - (deltaC/r + deltaO/rO + deltaS/rS)
-        return pot
-
-    def pot_test(self,r,theta,phi):
-        d = 1.0
-        """test potential for quadrature integration"""
-        #d * np.cos(theta)**2 * np.cos(phi) / r**2
-        return d * np.cos(theta) / r**2
-
-    def plot_pot_2D(self):
         """plot the potential"""
 
  
 class hmat():
-    def __init__(self,params,potential,field,scheme,t):
+    def __init__(self,params,potential,field,scheme,t,rgrid,maparray):
         self.params = params
         self.potential = potential
         self.field = field #field file
         self.scheme  =  scheme #name of the quadrature scheme used (Lebedev)
         self.t = t #time at which hamiltonian is evaluated
+        self.rgrid = rgrid
+        self.maparray = maparray
 
     def calc_hmat(self):
         """ calculate full Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
         #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
-        
-        """ Generate map - this will have to be moved out of the time-loop"""
-        mymap = mapping(int(self.params['lmin']), int(self.params['lmax']), int(self.params['nbins']), int(self.params['nlobatto']))
+    
+        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
-
-        imap = mymap.gen_map()
-        print(imap)
-        Nbas = len(imap)
-        print("Nbas = "+str(Nbas))
-        exit()
-
-        #hmat = np.zeros((Nbas,Nbas),dtype=float)
         #calculate KEO and Pot
 
-        #hmat = self.calc_keomat() + self.calc_potmat()
+        hmat = self.calc_potmat()#self.calc_keomat() #+ self.calc_potmat()
 
         return hmat
 
@@ -235,48 +200,7 @@ class hmat():
         #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
         return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
 
-    def calc_potmat(self,lmin,lmax,rin):
-        """calculate full potential matrix"""
-        print("hello")
-        #create list of basis set indices
-        anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])
-
-        Nbas = int(len(anglist) * len(rin))
-        vmat = np.zeros((Nbas,Nbas), dtype = float)
-
-        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
-        for i in range(Nbas):
-            ivec = [indmap[i][0],indmap[i][1],indmap[i][2]]
-            print(type(ivec))
-            print(ivec)
-            for j in range(Nbas):
-                jvec = [indmap[j][0],indmap[j][1],indmap[j][2]]
-                #hmat[ivec,jvec] = self.helem(ivec,jvec,grid_dp,weights_dp)
-                vmat[i,j] = self.calc_potmatelem(l1,m1,l2,m2,rin,self.scheme)
-
-
-        print(vmat)
-        eval, eigvec = np.linalg.eigh(hmat)
-        print(eval)
-        return eval
-        
-    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
-        """calculate single element of potential matrix"""
-        myscheme = quadpy.u3.schemes[scheme]()
-        #print(myscheme)
-        """
-        Symbols: 
-                theta_phi[0] = theta in [0,pi]
-                theta_phi[1] = phi  in [-pi,pi]
-                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-        """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
-
-        return val
-    
+ 
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
         """
         rin: radial coordinate
@@ -328,9 +252,90 @@ class hmat():
             if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
                 print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
+    def pot_ocs_pc(self,r,theta):
+        #point charges from rigid OCS
+        #partial charges in OCS
+
+        deltaC=0.177+0.3333
+        deltaO=-0.226+0.3333
+        deltaS=0.049+0.3333
+
+        #OCS is aligned along z-axis. The potential is therefore phi-symmetric
+        rOC=115.78 #pm
+        rCS=156.01 #pm
+        rOC/=100.0 #to angstrom
+        rCS/=100.0
+
+        rO=np.sqrt(rOC**2+r**2+2.0*rOC*r*np.cos(theta))
+        rS=np.sqrt(rCS**2+r**2-2.0*rCS*r*np.cos(theta))
+        
+        #x=r*np.cos(theta)
+        #y=r*np.sin(theta)
+        #Veff=-(deltaC/r+deltaO/np.sqrt((x+rOC)**2+y**2+x**2)+deltaS/np.sqrt((x-rCS)**2+y**2+x**2)) #cartesian projection method
+        pot = - (deltaC/r + deltaO/rO + deltaS/rS)
+        return pot
+
+    def pot_test(self,r,theta,phi):
+        d = 1.0
+        """test potential for quadrature integration"""
+        #d * np.cos(theta)**2 * np.cos(phi) / r**2
+        return d * np.cos(theta) / r**2
 
 
 
+
+
+
+    def calc_potmat(self):  
+        """calculate full potential matrix"""
+        lmax = self.params['lmax']
+        lmin = self.params['lmin']
+        Nbas = self.params['Nbas']
+
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
+
+        """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+
+
+  
+
+        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+
+        for i in range(Nbas):
+            ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+            print(ivec)
+            rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+            for j in range(Nbas):
+                jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                #hmat[ivec,jvec] = self.helem(ivec,jvec,grid_dp,weights_dp)
+                potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,self.scheme)
+
+
+        print(potmat)
+        eval, eigvec = np.linalg.eigh(potmat)
+
+        return eval
+        
+    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
+        """calculate single element of potential matrix"""
+        myscheme = quadpy.u3.schemes[scheme]()
+        #print(myscheme)
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+
+        return val
+   
 
 if __name__ == "__main__":      
 
