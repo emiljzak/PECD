@@ -47,7 +47,6 @@ class mapping():
         
         return imap
 
-
 class potential():
     """Class containing methods for the representation of the PES"""
 
@@ -309,7 +308,19 @@ class keomat(radbas):
         #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
         return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
 
-  
+class hmat():
+    def __init__(self,potential,field,params,t):
+        self.potential = potential
+        self.params = params
+        self.t = t #time at which hamiltonian is evaluated
+        self.field = field #field file
+
+    def calc_mat(self):
+        """ calculate full Hamiltonian matrix """
+        """ only called when using method = 'static','direct'"""
+
+
+        return hmat
 
 if __name__ == "__main__":      
 

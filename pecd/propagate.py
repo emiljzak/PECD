@@ -4,6 +4,8 @@
 # Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 #
 import numpy as np
+from matelem import hmat
+
 
 class propagate():
 
@@ -26,6 +28,79 @@ class propagate():
             potential (str):    name of the potential energy function (for now it is in an analytic form)
             field (str):        name of the electric field function used (it can further read from file or return analytic field)
         """
+
+        if method == 'static':
+            hamiltonian = hmat(potential,field,params,t=params['t0'])
+            hmat = hamiltonian.calc_mat()
+
+
+    def plot_mat(self,mat):
+        """ plot 2D array with color-coded magnitude"""
+        pass
+
+    def ini_wf(self,ini_state):
+        """ plot 2D array with color-coded magnitude"""
+        wf0=0
+        return wf0
+
+    def plot_wf_2d(self):
+        pass
+
+    def Lanczos(self,Psi, t, HMVP, m, Ntotal, timestep,Ham0):
+        Psi1=Psi.copy()
+        #Psi is the input vector of coefficients of size N
+        # run Lanczos algorithm to calculate basis of Krylov space
+        H=[] #full Hamiltonian matrix
+        H=ham(Ham0,t,Ntotal)
+        #m is the size of the Krylov space
+        q, v=[],[]
+        Hm=zeros((m, m)) #Hamiltonian in Krylov space
+        norms=zeros(m)
+        
+        H=ham(Ham0,t,Ntotal)
+        
+        for j in range(0, m):
+            norms[j]=norm(Psi1) #beta_j
+            # q builds up the basis of Krylov space
+            q=Psi1/norms[j] #q
+            
+            Psi1=HMVP(H,q) #r=H*q
+            
+            if j>0:
+                Hm[j-1, j]=Hm[j, j-1]=vdot(v, Psi1).real
+                Psi1-=Hm[j-1, j]*v
+                
+            Hm[j, j]=vdot(q, Psi1).real #alpha_0
+            Psi1-=Hm[j, j]*q #new r:=r-alpha0*q
+            v, q=q, v
+        # diagonalize A
+        dm, Zm=eigh(Hm) #dm are eigenvalues of Hm and Zm are eigenvectors of size m.
+        
+        # calculate matrix exponential in Krylov space
+        zdprod=dot(Zm, dot(diag(exp(-1j*dm*timestep)), Zm[0, :]*norms[0]))
+        
+        # run Lanczos algorithm 2nd time to transform result into original space
+        
+        Psi1, Psi=Psi, zeros_like(Psi)
+        
+        for j in range(0, m):
+            q=Psi1/norms[j]
+            np.add(Psi, zdprod[j]*q, out=Psi, casting="unsafe")
+        # Psi+=zdprod[j]*q
+            
+            Psi1=HMVP(H,q)
+            
+            if j>0:
+                Hm[j-1, j]=Hm[j, j-1]=vdot(v, Psi1).real
+                Psi1-=Hm[j-1, j]*v
+            Hm[j, j]=vdot(q, Psi1).real
+            Psi1-=Hm[j, j]*q
+            v, q=q, v
+        return Psi
+    
+    def mvp(self,H,q): #for now we are passing the precomuted Hamiltonian matrix into the MVP routine, which is inefficient.
+        # I will have to code MVP without invoking the Hamiltonian matrix.
+        return np.matmul(H,q)
 
 
 
@@ -60,3 +135,9 @@ if __name__ == "__main__":
     potential = "hydrogen"
 
     field = "field.txt"
+
+
+
+    hydrogen = propagate()
+
+    hydrogen.prop_wf(method,basis,ini_state,params)
