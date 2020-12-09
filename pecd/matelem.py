@@ -4,10 +4,9 @@
 # Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 #
 import numpy as np
-from basis import angbas
 import quadpy
 from scipy.special import sph_harm
-from basis import radbas
+from basis import angbas,radbas
 
 #print(quadpy.__version__)
 
@@ -48,16 +47,6 @@ class mapping():
         
         return maparray, imap
 
-class potential():
-    """Class containing methods for the representation of the PES"""
-
-    def __init__(self):
-        pass
-
-
-        """plot the potential"""
-
- 
 class hmat():
     def __init__(self,params,potential,field,scheme,t,rgrid,maparray):
         self.params = params
@@ -78,7 +67,7 @@ class hmat():
 
         #calculate KEO and Pot
 
-        hmat = self.calc_potmat()#self.calc_keomat() #+ self.calc_potmat()
+        hmat = self.calc_potmat() #+self.calc_keomat() 
 
         return hmat
 
@@ -280,8 +269,11 @@ class hmat():
         """test potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
         return d * np.cos(theta) / r**2
-
-
+  
+    def pot_hydrogen(self,r,theta,phi):
+        """test H-atom potential for quadrature integration"""
+        #d * np.cos(theta)**2 * np.cos(phi) / r**2
+        return -1./r
 
 
 
@@ -332,7 +324,7 @@ class hmat():
                 theta_phi[1] = phi  in [-pi,pi]
                 sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
         """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_hydrogen(rin,theta_phi[0],theta_phi[1]+np.pi)) #self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
 
         return val
    
