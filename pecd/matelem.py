@@ -7,6 +7,7 @@ import numpy as np
 import quadpy
 from scipy.special import sph_harm
 from basis import angbas,radbas
+import matplotlib.pyplot as plt
 
 #the imports below will have to be removed and calling of gauss lobatto should be made from another class
 from sympy import symbols
@@ -89,16 +90,27 @@ class hmat():
         print("Eigenvalues"+'\n')
         eval, eigvec = np.linalg.eigh(hmat)
 
+        eval /=1.0
+
         evalhydrogen = np.zeros((self.params['Nbas']),dtype=float)
         for i in range(1,self.params['Nbas']+1):
             evalhydrogen[i-1] = - 1./(2.0 * float(i **2))
 
-        evals = np.concatenate(eva,evalhydrogen)
+        evals = np.column_stack((eval-eval[0],evalhydrogen-evalhydrogen[0]))
 
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=20):
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=40):
             #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
             print(evals)
-            
+
+        figenr = plt.figure()
+        plt.xlabel('levels')
+        plt.ylabel('energy / a.u.')
+        plt.legend()   
+ 
+        plt.plot(np.linspace(0,1,np.size(eval[:10])), eval[:10]-eval[0],'bo-') 
+        plt.plot(np.linspace(0,1,np.size(evalhydrogen[:10])), evalhydrogen[:10]-evalhydrogen[0],'ro-') 
+        plt.show()     
+
         exit()
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
         return hmat
@@ -200,15 +212,15 @@ class hmat():
         binwidth = self.params['binwidth']
         rshift = self.params['rshift']
         nlobatto = self.params['nlobatto']
-        x = 0.5e00 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift
+        x_new = 0.5e00 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift
         #scale the G-L quadrature weights
         w = 0.5 * binwidth * w
 
         fpfpint=0.0e00
         for k in range(0, nlobatto):
-            y1 = self.rbas.fp(i,n1,k,x)
-            y2 = self.rbas.fp(i,n2,k,x)
-            fpfpint += w[k] * y1 * y2
+            y1 = self.rbas.fp(i,n1,k,x_new)
+            y2 = self.rbas.fp(i,n2,k,x_new)
+            fpfpint += w[k] * y1 * y2 #* x_new[k]**2
     
         return fpfpint
         
@@ -346,7 +358,7 @@ class hmat():
                 theta_phi[1] = phi  in [-pi,pi]
                 sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
         """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_hydrogen(rin,theta_phi[0],theta_phi[1]+np.pi)) * rin**2 #self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_hydrogen(rin,theta_phi[0],theta_phi[1]+np.pi)) #* rin**2 #self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
 
         return val
    
