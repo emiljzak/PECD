@@ -98,6 +98,7 @@ class hmat():
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=20):
             #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
             print(evals)
+            
         exit()
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
         return hmat
