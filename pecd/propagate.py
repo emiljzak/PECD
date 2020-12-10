@@ -37,7 +37,7 @@ class propagate(radbas,mapping):
             #we need to create rgrid only once, i.e. static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
-            
+            #rbas.plot_chi(rmin=0.0,rmax=3.0,npoints=1000)
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
@@ -128,13 +128,13 @@ if __name__ == "__main__":
     
     """====basis set parameters===="""
     
-    params['nlobatto'] = 3
-    params['nbins'] = 1
+    params['nlobatto'] = 4
+    params['nbins'] = 3
     params['binwidth'] = 1.0
     params['rshift'] = 0.01
 
     params['lmin'] = 0
-    params['lmax'] = 2
+    params['lmax'] = 1
     
     """====runtime controls===="""
 
@@ -156,6 +156,27 @@ if __name__ == "__main__":
     hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)
 
     #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
+
+    
+
+    
+    
+    """ Test angular convergence of the potential matrix elements """
+
+    """ quad_tol = 1e-6
+
+    potmatrix = potmat(scheme='lebedev_005')
+    rin = np.linspace(0.01,100.0,10,endpoint=True)
+    print(rin)
+    for r in rin:
+        print("radial coordinate = "+str(r))
+        potmatrix.test_angular_convergence(lmin,lmax,quad_tol,r)
+    """
+
+    """ Test print the KEO matrix """
+    """keomatrix = keomat()
+    keomatrix.calc_mat"""
+
 
     """ code profiling
     
