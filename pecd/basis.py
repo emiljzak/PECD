@@ -122,7 +122,6 @@ class radbas():
         self.binwidth = binwidth
         self.rshift = rshift #shift of the radial grid away from 0.0 to avoid singularity in the potential (beginning of the radial grid)
         
-
     def r_grid(self):
         """radial grid of Gauss-Lobatto quadrature points"""        
         #return radial coordinate r_in for given i and n
