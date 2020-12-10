@@ -55,6 +55,40 @@ class propagate(radbas,mapping):
         wf0=0
         return wf0
 
+    def plot_wf_rad(self,rmin,rmax,npoints,coeffs):
+        """plot the selected wavefunctions functions"""
+        """ Only radial part is plotted"""
+
+        r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+
+        rgrid  = self.r_grid()
+        print(np.shape(rgrid))
+
+        x=np.zeros(self.nlobatto)
+        w=np.zeros(self.nlobatto)
+        x,w=self.gauss_lobatto(self.nlobatto,14)
+        w=np.array(w)
+        x=np.array(x) # convert back to np arrays
+
+        y = np.zeros((len(r),self.nlobatto * self.nbins))
+
+        counter = 0
+        for i in range(self.nbins):
+
+            for n in range(self.nlobatto):
+                y[:,counter] = self.chi(i,n,r,rgrid,w)
+                counter += 1
+
+        figLob = plt.figure()
+        plt.xlabel('r/a.u.')
+        plt.ylabel('Lobatto basis function')
+        plt.legend()   
+ 
+        plt.plot(r, y) 
+        plt.show()     
+
+
+
     def plot_wf_2d(self):
         pass
 
@@ -128,13 +162,13 @@ if __name__ == "__main__":
     
     """====basis set parameters===="""
     
-    params['nlobatto'] = 4
-    params['nbins'] = 3
-    params['binwidth'] = 1.0
-    params['rshift'] = 0.01
+    params['nlobatto'] = 8
+    params['nbins'] = 2
+    params['binwidth'] = 10.0
+    params['rshift'] = 0.1
 
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 0
     
     """====runtime controls===="""
 
