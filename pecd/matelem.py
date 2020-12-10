@@ -7,6 +7,7 @@ import numpy as np
 import quadpy
 from scipy.special import sph_harm
 from basis import angbas,radbas
+
 #the imports below will have to be removed and calling of gauss lobatto should be made from another class
 from sympy import symbols
 from sympy.core import S, Dummy, pi
@@ -60,6 +61,7 @@ class mapping():
 
 class hmat():
     def __init__(self,params,potential,field,scheme,t,rgrid,maparray):
+
         self.params = params
         self.potential = potential
         self.field = field #field file
@@ -67,14 +69,14 @@ class hmat():
         self.t = t #time at which hamiltonian is evaluated
         self.rgrid = rgrid
         self.maparray = maparray
-
+        self.rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
 
     def calc_hmat(self):
         """ calculate full Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
         #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
-    
+        
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
         #calculate KEO and Pot
@@ -82,10 +84,20 @@ class hmat():
         hmat = self.calc_potmat() + self.calc_keomat() 
         print(type(hmat))
 
-        rbas = radbas(self.params['nlobatto'], self.params['nbins'], self.params['binwidth'], self.params['rshift'])
-
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
+        print("Eigenvalues"+'\n')
+        eval, eigvec = np.linalg.eigh(hmat)
+
+        evalhydrogen = np.zeros((self.params['Nbas']),dtype=float)
+        for i in range(1,self.params['Nbas']+1):
+            evalhydrogen[i-1] = - 1./(2.0 * float(i **2))
+
+        evals = np.concatenate(eva,evalhydrogen)
+
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=20):
+            #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
+            print(evals)
         exit()
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
         return hmat
@@ -104,24 +116,27 @@ class hmat():
         x=np.array(x)
         w=np.array(w)
 
+
+
         """calculate full keo matrix"""
         keomat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
 
         """ K(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
         for i in range(Nbas):
+            rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
             for j in range(Nbas):
-                keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w)
+                keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
-        return -0.5 * keomat
+        return  keomat
 
-    def calc_keomatel(self,l1,m1,i1,n1,l2,m2,i2,n2,x,w):
+    def calc_keomatel(self,l1,m1,i1,n1,l2,m2,i2,n2,x,w,rin):
         "calculate matrix element of the KEO"
         
         if l1==l2 and m1==m2:
             
             if i1==i2 and n1==n2:
-                KEO = self.KEO_matel_ang(i1,n1,l1,x) + self.KEO_matel_rad(i1,n1,i2,n2,x,w)
+                KEO = self.KEO_matel_ang(i1,n1,l1,rin) + self.KEO_matel_rad(i1,n1,i2,n2,x,w)
                 return KEO
             else:
                 KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
@@ -190,11 +205,11 @@ class hmat():
 
         fpfpint=0.0e00
         for k in range(0, nlobatto):
-            y1 = rbas.fp(i,n1,k,x)
-            y2 = rbas.fp(i,n2,k,x)
+            y1 = self.rbas.fp(i,n1,k,x)
+            y2 = self.rbas.fp(i,n2,k,x)
             fpfpint += w[k] * y1 * y2
     
-        return float(fpfpint)
+        return fpfpint
         
     def KEO_matel_ang(self,i1,n1,l,rgrid):
         """Calculate the anglar momentum part of the KEO"""
