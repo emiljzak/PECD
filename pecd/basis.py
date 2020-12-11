@@ -6,7 +6,7 @@
 #import sys
 #print(sys.version)#
 import numpy as np
-from scipy.special import sph_harm
+from scipy.special import sph_harm,genlaguerre
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
@@ -349,6 +349,44 @@ class radbas():
  
         plt.plot(r, y) 
         plt.show()     
+
+
+    def plot_wf_rad(self,rmin,rmax,npoints,coeffs,maparray,rgrid):
+        """plot the selected wavefunctions functions"""
+        """ Only radial part is plotted"""
+
+        r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+
+        x=np.zeros(self.nlobatto)
+        w=np.zeros(self.nlobatto)
+        x,w=self.gauss_lobatto(self.nlobatto,14)
+        w=np.array(w)
+        x=np.array(x) # convert back to np arrays
+        nprint = 4 #how many functions to print
+
+        y = np.zeros((len(r),nprint))
+
+
+        h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
+
+
+        for l in range(0,nprint): #loop over eigenfunctions
+            #counter = 0
+            for ipoint in maparray:
+                #print(ipoint)
+                print(coeffs[ipoint[4]-1,l])
+                y[:,l] +=  coeffs[ipoint[4]-1,l] * self.chi(ipoint[2],ipoint[3],r,rgrid,w) /r
+                    #counter += 1
+
+        plt.xlabel('r/a.u.')
+        plt.ylabel('Radial eigenfunction')
+        plt.legend()   
+        for n in range(nprint):
+            plt.plot(r, y[:,0])
+            
+            plt.plot(r, h_radial(r,1,0))
+        plt.show()     
+
 
 
 if __name__ == "__main__":      
