@@ -17,7 +17,7 @@ Current maintainer: Emil Zak <emil.zak@cfel.de>
 
 setup(name=name,
       python_requires     = '>=3.6',
-      author              = "Emil Zak",
+      author              = "Emil Zak, Andrey Yachmenev",
       author_email        = "emil.zak@cfel.de",
       maintainer          = "Emil Zak",
       maintainer_email    = "emil.zak@cfel.de",
