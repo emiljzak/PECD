@@ -102,7 +102,7 @@ class hmat():
             #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
             print(evals)
 
-        figenr = plt.figure()
+        """figenr = plt.figure()
         plt.xlabel('levels')
         plt.ylabel('energy / a.u.')
         plt.legend()   
@@ -110,10 +110,10 @@ class hmat():
         plt.plot(np.linspace(0,1,np.size(eval[:10])), eval[:10]-eval[0],'bo-') 
         plt.plot(np.linspace(0,1,np.size(evalhydrogen[:10])), evalhydrogen[:10]-evalhydrogen[0],'ro-') 
         plt.show()     
-
-        exit()
+        """
+        #exit()
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
-        return hmat
+        return evals, eigvec
 
 
 
@@ -141,6 +141,9 @@ class hmat():
             for j in range(Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
+        print("KEO matrix")
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+            print(keomat)
         return  keomat
 
     def calc_keomatel(self,l1,m1,i1,n1,l2,m2,i2,n2,x,w,rin):
@@ -343,8 +346,9 @@ class hmat():
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,self.scheme)
 
-        #print(potmat)
-        #eval, eigvec = np.linalg.eigh(potmat)
+        print("Potential matrix")
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+            print(potmat)
 
         return potmat
         

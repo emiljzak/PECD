@@ -9,6 +9,7 @@ import matelem
 import timeit
 from basis import radbas
 from matelem import mapping
+import matplotlib.pyplot as plt
 
 class propagate(radbas,mapping):
 
@@ -37,14 +38,20 @@ class propagate(radbas,mapping):
             #we need to create rgrid only once, i.e. static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
-            #rbas.plot_chi(rmin=0.0,rmax=3.0,npoints=1000)
+            #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
 
+            #print(type(maparray))
+            #print(maparray)
+
             hamiltonian = matelem.hmat(params,potential,field,scheme,params['t0'],rgrid,maparray)
-            hmat = hamiltonian.calc_hmat()
+            evals, coeffs = hamiltonian.calc_hmat()
+            #print(type(coeffs))
+            #print(np.shape(coeffs))
+            rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
 
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
@@ -55,39 +62,7 @@ class propagate(radbas,mapping):
         wf0=0
         return wf0
 
-    def plot_wf_rad(self,rmin,rmax,npoints,coeffs):
-        """plot the selected wavefunctions functions"""
-        """ Only radial part is plotted"""
-
-        r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
-
-        rgrid  = self.r_grid()
-        print(np.shape(rgrid))
-
-        x=np.zeros(self.nlobatto)
-        w=np.zeros(self.nlobatto)
-        x,w=self.gauss_lobatto(self.nlobatto,14)
-        w=np.array(w)
-        x=np.array(x) # convert back to np arrays
-
-        y = np.zeros((len(r),self.nlobatto * self.nbins))
-
-        counter = 0
-        for i in range(self.nbins):
-
-            for n in range(self.nlobatto):
-                y[:,counter] = self.chi(i,n,r,rgrid,w)
-                counter += 1
-
-        figLob = plt.figure()
-        plt.xlabel('r/a.u.')
-        plt.ylabel('Lobatto basis function')
-        plt.legend()   
- 
-        plt.plot(r, y) 
-        plt.show()     
-
-
+   
 
     def plot_wf_2d(self):
         pass
@@ -162,9 +137,9 @@ if __name__ == "__main__":
     
     """====basis set parameters===="""
     
-    params['nlobatto'] = 30
-    params['nbins'] = 2
-    params['binwidth'] = 40.0
+    params['nlobatto'] = 10
+    params['nbins'] = 1
+    params['binwidth'] = 10.0
     params['rshift'] = 0.1
 
     params['lmin'] = 0
