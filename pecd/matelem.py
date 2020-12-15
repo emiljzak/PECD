@@ -42,8 +42,8 @@ class mapping():
                     for n in range (0,self.nlobatto):
                         if n==self.nlobatto-1:
                             continue        
-                        elif n==0 and i==self.nbins-1:
-                            continue
+                        #elif n==0 and i==self.nbins-1:
+                        #    continue
                         else:
                                 imap+=1
                                 print(l,m,i,n,imap)
@@ -82,21 +82,23 @@ class hmat():
 
         #calculate KEO and Pot
 
-        hmat = self.calc_potmat() + self.calc_keomat() 
+        hmat = self.calc_potmat() + self.calc_keomat()
         print(type(hmat))
 
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
         print("Eigenvalues"+'\n')
-        eval, eigvec = np.linalg.eigh(hmat)
+        eval, eigvec = np.linalg.eigh(hmat,UPLO='U')
 
         eval /=1.0
+
 
         evalhydrogen = np.zeros((self.params['Nbas']),dtype=float)
         for i in range(1,self.params['Nbas']+1):
             evalhydrogen[i-1] = - 1./(2.0 * float(i **2))
 
-        evals = np.column_stack((eval-eval[0],evalhydrogen-evalhydrogen[0]))
+        #evals = np.column_stack((eval-eval[0],evalhydrogen-evalhydrogen[0]))
+        evals = np.column_stack((eval,evalhydrogen))
 
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=40):
             #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
@@ -128,6 +130,8 @@ class hmat():
         x,w=self.gauss_lobatto(nlobatto,14)
         x=np.array(x)
         w=np.array(w)
+        print("sum of weights")
+        print(sum(w[:]))
 
 
 
@@ -138,7 +142,7 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(Nbas):
+            for j in range(i,Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         print("KEO matrix")
@@ -152,7 +156,7 @@ class hmat():
         if l1==l2 and m1==m2:
             
             if i1==i2 and n1==n2:
-                KEO = self.KEO_matel_ang(i1,n1,l1,rin) + self.KEO_matel_rad(i1,n1,i2,n2,x,w)
+                KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) #+self.KEO_matel_ang(i1,n1,l1,rin) 
                 return KEO
             else:
                 KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
@@ -161,8 +165,8 @@ class hmat():
             return 0.0
                    
     def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
-        w_i1 = w
-        w_i2 = w
+        w_i1 = w/sum(w[:])
+        w_i2 = w/sum(w[:])
         nlobatto = self.params['nlobatto']
         if n1>0 and n2>0:
             if i1==i2:
@@ -181,7 +185,7 @@ class hmat():
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             else:
                 return 0.0
-        elif n2==0 and n1>0:
+        elif n1>0 and n2==0:
             #single x bridge
             if i1==i2: 
                 KEO=0.5*self.KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1) 
@@ -215,7 +219,7 @@ class hmat():
         binwidth = self.params['binwidth']
         rshift = self.params['rshift']
         nlobatto = self.params['nlobatto']
-        x_new = 0.5e00 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift
+        x_new = 0.5e00 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift #checked
         #scale the G-L quadrature weights
         w = 0.5 * binwidth * w
 
@@ -223,7 +227,7 @@ class hmat():
         for k in range(0, nlobatto):
             y1 = self.rbas.fp(i,n1,k,x_new)
             y2 = self.rbas.fp(i,n2,k,x_new)
-            fpfpint += w[k] * y1 * y2 #* x_new[k]**2
+            fpfpint += w[k] * y1 * y2/sum(w[:])# * x_new[k]**2
     
         return fpfpint
         
@@ -341,7 +345,7 @@ class hmat():
             ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(Nbas):
+            for j in range(i,Nbas):
                 jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,self.scheme)
