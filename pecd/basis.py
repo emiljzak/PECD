@@ -212,19 +212,17 @@ class radbas():
     def fp(self,i,n,k,rgrid):
         "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
         if n!=k:
-            fprime=(rgrid[n]-rgrid[k])
+            fprime=(rgrid[n]-rgrid[k])**(-1)
             prod=1.0e00
             for mu in range(0,self.nlobatto):
                 if mu !=k and mu !=n:
-                    prod=prod*(rgrid[k]-rgrid[mu])/(rgrid[n]-rgrid[mu])
+                    prod *= (rgrid[k]-rgrid[mu])/(rgrid[n]-rgrid[mu])
             fprime=fprime*prod
         elif n==k:
-            fprime=1.0
-            summ=0.0e00
+            fprime=0.0
             for mu in range(0,self.nlobatto):
                     if mu !=n:
-                        summ=summ+(rgrid[n]-rgrid[mu])**(-1)
-            fprime=fprime*summ
+                        fprime += (rgrid[n]-rgrid[mu])**(-1)
         return fprime
         
     def gauss_lobatto(self,n, n_digits):
@@ -305,7 +303,7 @@ class radbas():
         # rgrid is the radial grid rgrid[i][n]
         # w are the unscaled lobatto weights
 
-        w *= (0.5 * self.binwidth)#*sum(w[:])
+        w *= (0.5 * self.binwidth)/sum(w[:]) #normalization!!!
         val=np.zeros(np.size(r))
         
         if n==0 and i<self.nbins-1:
@@ -374,17 +372,22 @@ class radbas():
             #counter = 0
             for ipoint in maparray:
                 #print(ipoint)
-                print(coeffs[ipoint[4]-1,l])
-                y[:,l] +=  coeffs[ipoint[4]-1,l] * self.chi(ipoint[2],ipoint[3],r,rgrid,w) /r
+                #print(coeffs[ipoint[4]-1,l])
+                y[:,l] +=  coeffs[ipoint[4]-1,l] * self.chi(ipoint[2],ipoint[3],r,rgrid,w) 
                     #counter += 1
 
         plt.xlabel('r/a.u.')
         plt.ylabel('Radial eigenfunction')
         plt.legend()   
         for n in range(nprint):
-            plt.plot(r, y[:,0])
+            plt.plot(r, y[:,0]**2)
+            plt.plot(r, y[:,1]**2)
+            plt.plot(r, y[:,2]**2)
+            plt.plot(r, y[:,3]**2)
+            plt.plot(r, y[:,4]**2)
+            plt.plot(r, y[:,5]**2)
             
-            plt.plot(r, h_radial(r,1,0))
+           # plt.plot(r, h_radial(r,1,0))
         plt.show()     
 
 

@@ -132,15 +132,15 @@ if __name__ == "__main__":
     """==== propagation parameters ===="""
     params['t0'] = 0.0
     params['tend'] = 0.0
-    params['dt'] = 0.5
+    params['dt'] = 0.01
 
     
     """====basis set parameters===="""
     
-    params['nlobatto'] = 10
+    params['nlobatto'] = 30
     params['nbins'] = 1
-    params['binwidth'] = 10.0
-    params['rshift'] = 0.1
+    params['binwidth'] = 50.0
+    params['rshift'] = 0.001
 
     params['lmin'] = 0
     params['lmax'] = 0
