@@ -38,7 +38,7 @@ class propagate(radbas,mapping):
             #we need to create rgrid only once, i.e. static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
-            #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
+            rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
@@ -137,10 +137,10 @@ if __name__ == "__main__":
     
     """====basis set parameters===="""
     
-    params['nlobatto'] = 30
+    params['nlobatto'] = 10
     params['nbins'] = 1
-    params['binwidth'] = 50.0
-    params['rshift'] = 0.001
+    params['binwidth'] = 30.0
+    params['rshift'] = 0.001 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
     params['lmax'] = 0
