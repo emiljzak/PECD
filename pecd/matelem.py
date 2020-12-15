@@ -85,8 +85,8 @@ class hmat():
         hmat = self.calc_potmat() + self.calc_keomat()
         print(type(hmat))
 
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
-            print(hmat)
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #    print(hmat)
         print("Eigenvalues"+'\n')
         eval, eigvec = np.linalg.eigh(hmat,UPLO='U')
 
@@ -146,8 +146,8 @@ class hmat():
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         print("KEO matrix")
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
-            print(keomat)
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #    print(keomat)
         return  keomat
 
     def calc_keomatel(self,l1,m1,i1,n1,l2,m2,i2,n2,x,w,rin):
@@ -156,7 +156,7 @@ class hmat():
         if l1==l2 and m1==m2:
             
             if i1==i2 and n1==n2:
-                KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) #+self.KEO_matel_ang(i1,n1,l1,rin) 
+                KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) +self.KEO_matel_ang(i1,n1,l1,rin) 
                 return KEO
             else:
                 KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
@@ -171,27 +171,27 @@ class hmat():
         if n1>0 and n2>0:
             if i1==i2:
                 #single x single
-                KEO=0.5*self.KEO_matel_fpfp(i1,n1,n2,x,w_i1) 
+                KEO=0.5*self.KEO_matel_fpfp(i1,n1,n2,x,w_i1) #checked
                 return KEO/sqrt(w_i1[n1]*w_i2[n2])
             else:
                 return 0.0
         if n1==0 and n2>0:
             #bridge x single
             if i1==i2: 
-                KEO=0.5*self.KEO_matel_fpfp(i1,nlobatto-1,n2,x,w_i2) 
+                KEO=0.5*self.KEO_matel_fpfp(i2,nlobatto-1,n2,x,w_i2) #checked
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             elif i1==i2-1:
-                KEO=0.5*self.KEO_matel_fpfp(i2,0,n2,x,w_i2) 
+                KEO=0.5*self.KEO_matel_fpfp(i2,0,n2,x,w_i2) #checked ??? i2 or i1?
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             else:
                 return 0.0
         elif n1>0 and n2==0:
             #single x bridge
             if i1==i2: 
-                KEO=0.5*self.KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1) 
+                KEO=0.5*self.KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1) #check
                 return KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
             elif i1==i2+1:
-                KEO=0.5*self.KEO_matel_fpfp(i1,n1,0,x,w_i1) 
+                KEO=0.5*self.KEO_matel_fpfp(i1,n1,0,x,w_i1) #check
                 return KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
             else:
                 return 0.0
@@ -199,12 +199,10 @@ class hmat():
         elif n1==0 and n2==0:
             #bridge x bridge
             if i1==i2: 
-                KEO=0.5*(self.KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1)+self.KEO_matel_fpfp(i1+1,0,0,x,w_i1))
-                #print("shape of w is", np.shape(KEO), "and type of w is", type(w_i1))
-            
+                KEO=0.5*(self.KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1)+self.KEO_matel_fpfp(i1+1,0,0,x,w_i1))   #check         
                 return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
             elif i1==i2-1:
-                KEO=0.5*self.KEO_matel_fpfp(i2,0,nlobatto-1,x,w_i2)
+                KEO=0.5*self.KEO_matel_fpfp(i2,0,nlobatto-1,x,w_i2) #check
                 return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
             elif i1==i2+1:
                 KEO=0.5*self.KEO_matel_fpfp(i1,0,nlobatto-1,x,w_i1)
@@ -351,8 +349,8 @@ class hmat():
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,self.scheme)
 
         print("Potential matrix")
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
-            print(potmat)
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #    print(potmat)
 
         return potmat
         

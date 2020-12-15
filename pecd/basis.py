@@ -334,11 +334,12 @@ class radbas():
         y = np.zeros((len(r),self.nlobatto * self.nbins))
 
         counter = 0
+        wcounter = 0
         for i in range(self.nbins):
-
             for n in range(self.nlobatto):
-                y[:,counter] = self.chi(i,n,r,rgrid,w)
+                y[:,counter] = self.chi(i,n,r,rgrid,w) #* w[wcounter]**(0.5)
                 counter += 1
+            wcounter +=1
 
         figLob = plt.figure()
         plt.xlabel('r/a.u.')
@@ -360,7 +361,7 @@ class radbas():
         x,w=self.gauss_lobatto(self.nlobatto,14)
         w=np.array(w)
         x=np.array(x) # convert back to np arrays
-        nprint = 4 #how many functions to print
+        nprint = 6 #how many functions to print
 
         y = np.zeros((len(r),nprint))
 
