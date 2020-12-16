@@ -303,12 +303,12 @@ class radbas():
         # rgrid is the radial grid rgrid[i][n]
         # w are the unscaled lobatto weights
 
-        w *= (0.5 * self.binwidth)/sum(w[:]) #normalization!!!
+        w /=sum(w[:]) #normalization!!!
         val=np.zeros(np.size(r))
         
-        if n==0 and i<self.nbins-1:
+        if n==0 and i<self.nbins-1: #bridge functions
             #print("bridge: ", n,i)
-            val = ( self.f(i,self.nlobatto-1,r,rgrid) + self.f(i+1,0,r,rgrid) ) * np.sqrt( float( w[self.nlobatto-1] ) + float( 2.0 *w[0] ) )**(-1)
+            val = ( self.f(i,self.nlobatto-1,r,rgrid) + self.f(i+1,0,r,rgrid) ) * np.sqrt( float( w[self.nlobatto-1] ) + float( w[0] ) )**(-1)
             #print(type(val),np.shape(val))
             return val 
         elif n>0 and n<self.nlobatto-1:
@@ -361,7 +361,7 @@ class radbas():
         x,w=self.gauss_lobatto(self.nlobatto,14)
         w=np.array(w)
         x=np.array(x) # convert back to np arrays
-        nprint = 6 #how many functions to print
+        nprint = 10 #how many functions to print
 
         y = np.zeros((len(r),nprint))
 
@@ -380,13 +380,8 @@ class radbas():
         plt.xlabel('r/a.u.')
         plt.ylabel('Radial eigenfunction')
         plt.legend()   
-        for n in range(nprint):
-            plt.plot(r, y[:,0]**2)
-            plt.plot(r, y[:,1]**2)
-            plt.plot(r, y[:,2]**2)
-            plt.plot(r, y[:,3]**2)
-            plt.plot(r, y[:,4]**2)
-            plt.plot(r, y[:,5]**2)
+        for n in range(1,nprint):
+            plt.plot(r, y[:,n]**2)
             
            # plt.plot(r, h_radial(r,1,0))
         plt.show()     

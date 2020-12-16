@@ -61,12 +61,9 @@ class mapping():
         return maparray, imap
 
 class hmat():
-    def __init__(self,params,potential,field,scheme,t,rgrid,maparray):
+    def __init__(self,params,t,rgrid,maparray):
 
         self.params = params
-        self.potential = potential
-        self.field = field #field file
-        self.scheme  =  scheme #name of the quadrature scheme used (Lebedev)
         self.t = t #time at which hamiltonian is evaluated
         self.rgrid = rgrid
         self.maparray = maparray
@@ -84,9 +81,9 @@ class hmat():
 
         hmat = self.calc_potmat() + self.calc_keomat()
         print(type(hmat))
-
-        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
-        #    print(hmat)
+        print("Hamiltonian Matrix")
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+            print(hmat)
         print("Eigenvalues"+'\n')
         eval, eigvec = np.linalg.eigh(hmat,UPLO='U')
 
@@ -156,7 +153,7 @@ class hmat():
         if l1==l2 and m1==m2:
             
             if i1==i2 and n1==n2:
-                KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) +self.KEO_matel_ang(i1,n1,l1,rin) 
+                KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) + self.KEO_matel_ang(i1,n1,l1,rin) 
                 return KEO
             else:
                 KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
@@ -181,7 +178,7 @@ class hmat():
                 KEO=0.5*self.KEO_matel_fpfp(i2,nlobatto-1,n2,x,w_i2) #checked
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             elif i1==i2-1:
-                KEO=0.5*self.KEO_matel_fpfp(i2,0,n2,x,w_i2) #checked ??? i2 or i1?
+                KEO=0.5*self.KEO_matel_fpfp(i2,0,n2,x,w_i2) # i2 or i1?
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             else:
                 return 0.0
@@ -326,7 +323,7 @@ class hmat():
         lmax = self.params['lmax']
         lmin = self.params['lmin']
         Nbas = self.params['Nbas']
-
+        scheme = self.params['scheme']
         #create list of basis set indices
         """anglist = []
         for l in range(lmin,lmax+1):
@@ -346,7 +343,7 @@ class hmat():
             for j in range(i,Nbas):
                 jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,self.scheme)
+                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
 
         print("Potential matrix")
         #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
@@ -440,3 +437,38 @@ class hmat():
             w.insert(0, (S(2)/(n*(n-1))).n(n_digits))
             w.append((S(2)/(n*(n-1))).n(n_digits))
             return xi, w
+
+
+
+    def calc_intmat(self):  
+        """calculate full interaction matrix"""
+        lmax = self.params['lmax']
+        lmin = self.params['lmin']
+        Nbas = self.params['Nbas']
+        scheme = self.params['scheme']
+        #create list of basis set indices
+        """anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])"""
+
+        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
+
+        """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+
+        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+
+        for i in range(Nbas):
+            ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+            #print(ivec)
+            rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+            for j in range(i,Nbas):
+                jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
+
+        print("Potential matrix")
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #    print(potmat)
+
+        return potmat
