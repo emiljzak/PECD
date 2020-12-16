@@ -75,14 +75,11 @@ class hmat():
         """ only called when using method = 'static','direct'"""
 
         #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
-        
+    
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
-        #calculate KEO and Pot
+        hmat = self.calc_potmat() + self.calc_keomat() + self.calc_intmat()
 
-        #hmat = self.calc_potmat() + self.calc_keomat()
-        hmat = self.calc_intmat()
-        print(type(hmat))
         print("Hamiltonian Matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
