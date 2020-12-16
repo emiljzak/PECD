@@ -16,8 +16,10 @@ class propagate(radbas,mapping):
     def __init__(self):
         pass
 
-    def prop_wf(self,method,basis,ini_state,params,potential,field,scheme):
+    def prop_wf(self,params):
         """ main method for propagating the wavefunction"""
+        """params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances,etc."""
+
         """ method (str):       'static' - solve time-independent Schrodinger equation at time t=t0
                                 'direct' - propagate the wavefunction with direct exponentiation of the Hamiltonian
                                 'krylov' - propagate the wavefunction with iterative method (Lanczos: Krylov subspace method)
@@ -28,17 +30,18 @@ class propagate(radbas,mapping):
                                               file - read the inititial state from file given in primitive basis
                                               calc - calculate initial state from given orbitals, by projection onto the primitive basis (tbd)
                                     'filename': filename - filename containing the initial state
-            params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances
+
             potential (str):    name of the potential energy function (for now it is in an analytic form)
+            field_type (str):   type of field: analytic or numerical
             field (str):        name of the electric field function used (it can further read from file or return analytic field)
             scheme (str):       quadrature scheme used in angular integration
         """
 
-        if method == 'static':
+        if params['method'] == 'static':
             #we need to create rgrid only once, i.e. static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
-            rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
+            #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
@@ -47,7 +50,7 @@ class propagate(radbas,mapping):
             #print(type(maparray))
             #print(maparray)
 
-            hamiltonian = matelem.hmat(params,potential,field,scheme,params['t0'],rgrid,maparray)
+            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             evals, coeffs = hamiltonian.calc_hmat()
             #print(type(coeffs))
             #print(np.shape(coeffs))
@@ -136,33 +139,32 @@ if __name__ == "__main__":
 
     
     """====basis set parameters===="""
-    
-    params['nlobatto'] = 10
-    params['nbins'] = 1
+
+
+    params['nlobatto'] = 12
+    params['nbins'] = 3
     params['binwidth'] = 30.0
-    params['rshift'] = 0.001 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
+    params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
     params['lmax'] = 0
     
     """====runtime controls===="""
+    params['method'] = "static"
+    params['ini_state'] = "manual" #or file
+    params['basis'] = "prim" # or adiab
+    params['potential'] = "hydrogen"
+    params['scheme'] = "lebedev_019"
 
-    method = "static"
 
-    ini_state = "manual"
-
-    basis = "prim"
-
-    potential = "hydrogen"
-
-    field = "field.txt"
-
-    scheme = "lebedev_019"
-
+    """====field controls===="""
+    params['field_type'] = "analytic" #or file
+    params['field'] = "static_uniform"
+    params['E0'] = 1.0
 
     hydrogen = propagate()
 
-    hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)
+    hydrogen.prop_wf(params)
 
     #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
 
