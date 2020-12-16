@@ -141,9 +141,9 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 4
+    params['nlobatto'] = 20
     params['nbins'] = 1
-    params['binwidth'] = 30.0
+    params['binwidth'] = 40.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
@@ -154,13 +154,13 @@ if __name__ == "__main__":
     params['ini_state'] = "manual" #or file
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen"
-    params['scheme'] = "lebedev_019"
+    params['scheme'] = "lebedev_025"
 
 
     """====field controls===="""
     params['field_type'] = "analytic" #or file
     params['field'] = "static_uniform"
-    params['E0'] = 1.0
+    params['E0'] = 0.1
 
     """ We have two options for calculating the potential matrix elements: 
     1) cartesian: we use cartesian elements of the dipole moment operator and the electric field. Lebedev quadratures are used to compute matrix elements
@@ -176,7 +176,23 @@ if __name__ == "__main__":
     #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
 
     
-
+    """0.49842426     -0.12500000]
+    [    -0.12500000     -0.05555556]
+    [    -0.12500000     -0.03125000]
+    [    -0.12500000     -0.02000000]
+    [    -0.12480328     -0.01388889]
+    [    -0.05555477     -0.01020408]
+    [    -0.05555477     -0.00781250]
+    [    -0.05555477     -0.00617284]
+    [    -0.05549590     -0.00500000]
+    [    -0.03071003     -0.00413223]
+    [    -0.03071003     -0.00347222]
+    [    -0.03071003     -0.00295858]
+    [    -0.03052275     -0.00255102]
+    [    -0.01221203     -0.00222222]
+    [    -0.01221203     -0.00195312]
+    [    -0.01221203     -0.00173010]
+    [    -0.01102194     -0.00154321]"""
     
     
     """ Test angular convergence of the potential matrix elements """
