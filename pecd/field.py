@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; fill-column: 120 -*-
 #
+import numpy as np
 
 class Field(object):
     """Class representing electric field"""
@@ -16,4 +17,4 @@ class Field(object):
                 fieldvec = [0.0,0.0,self.params['E0']]
 
 
-        return fieldvec
+        return np.asarray(fieldvec)

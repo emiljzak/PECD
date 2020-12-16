@@ -54,7 +54,7 @@ class propagate(radbas,mapping):
             evals, coeffs = hamiltonian.calc_hmat()
             #print(type(coeffs))
             #print(np.shape(coeffs))
-            rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+            #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
 
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
@@ -141,13 +141,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 12
-    params['nbins'] = 3
+    params['nlobatto'] = 4
+    params['nbins'] = 1
     params['binwidth'] = 30.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 0
+    params['lmax'] = 1
     
     """====runtime controls===="""
     params['method'] = "static"
@@ -161,6 +161,13 @@ if __name__ == "__main__":
     params['field_type'] = "analytic" #or file
     params['field'] = "static_uniform"
     params['E0'] = 1.0
+
+    """ We have two options for calculating the potential matrix elements: 
+    1) cartesian: we use cartesian elements of the dipole moment operator and the electric field. Lebedev quadratures are used to compute matrix elements
+    2) spherical-tensor: sphereical tensor representation of the field and the dipole moment. The matrix elements are computed analytically with 3-j symbols.
+    """
+   
+    params['int_rep_type'] = 'cartesian'
 
     hydrogen = propagate()
 

@@ -7,6 +7,7 @@ import numpy as np
 import quadpy
 from scipy.special import sph_harm
 from basis import angbas,radbas
+from field import Field
 import matplotlib.pyplot as plt
 
 #the imports below will have to be removed and calling of gauss lobatto should be made from another class
@@ -79,7 +80,8 @@ class hmat():
 
         #calculate KEO and Pot
 
-        hmat = self.calc_potmat() + self.calc_keomat()
+        #hmat = self.calc_potmat() + self.calc_keomat()
+        hmat = self.calc_intmat()
         print(type(hmat))
         print("Hamiltonian Matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
@@ -446,29 +448,54 @@ class hmat():
         lmin = self.params['lmin']
         Nbas = self.params['Nbas']
         scheme = self.params['scheme']
-        #create list of basis set indices
-        """anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])"""
+        int_rep_type = self.params['int_rep_type']
 
-        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
+        """Load electric field at time t """
+        Elfield = Field(self.params)
+        Fvec = Elfield.gen_field()
+        print("Electric field vector")
+        print(Fvec)
 
-        """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+        intmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
 
-        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+        """ Hint(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+
+        """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
 
         for i in range(Nbas):
-            ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
-            #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
             for j in range(i,Nbas):
-                jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
+                    intmat[i,j] = rin * self.calc_intmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],scheme,Fvec,int_rep_type)
 
-        print("Potential matrix")
-        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
-        #    print(potmat)
+        print("Interaction matrix")
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+            print(intmat)
 
-        return potmat
+        return intmat
+
+
+    def calc_intmatelem(self,l1,m1,l2,m2,scheme,field,rep_type):
+            """calculate single element of the interaction matrix"""
+            myscheme = quadpy.u3.schemes[scheme]()
+            #print(myscheme)
+            """
+            Symbols: 
+                    theta_phi[0] = theta in [0,pi]
+                    theta_phi[1] = phi  in [-pi,pi]
+                    sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+            """
+
+            """ int_rep_type: cartesian or spherical"""
+            T = np.zeros(3)
+            if rep_type == 'cartesian':
+                T[0] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) )
+                T[1] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) )
+                T[2] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * np.cos(theta_phi[0])  )
+                val = np.dot(field,T)  
+
+            elif rep_type == 'spherical':
+                return 0
+  
+            return val
+
