@@ -111,7 +111,7 @@ class hmat():
         """
         #exit()
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
-        return evals, eigvec
+        return evals, eigvec, hmat
 
 
 
@@ -138,7 +138,7 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         print("KEO matrix")
@@ -339,7 +339,7 @@ class hmat():
             ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
