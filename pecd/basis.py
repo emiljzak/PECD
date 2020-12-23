@@ -365,10 +365,6 @@ class radbas():
 
         y = np.zeros((len(r),nprint))
 
-
-        h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
-
-
         for l in range(0,nprint): #loop over eigenfunctions
             #counter = 0
             for ipoint in maparray:
