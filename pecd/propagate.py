@@ -51,14 +51,81 @@ class propagate(radbas,mapping):
             #print(maparray)
 
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            evals, coeffs = hamiltonian.calc_hmat()
+            evals, coeffs, hmat = hamiltonian.calc_hmat()
             #print(type(coeffs))
             #print(np.shape(coeffs))
             #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+            return hmat
 
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
-        pass
+        fig, ax = plt.subplots()
+
+        im, cbar = self.heatmap(mat, 0, 0, ax=ax, cmap="gnuplot", cbarlabel="Hij")
+
+        fig.tight_layout()
+        plt.show()
+
+
+    def heatmap(self, data, row_labels, col_labels, ax=None,
+                cbar_kw={}, cbarlabel="", **kwargs):
+        """
+        Create a heatmap from a numpy array and two lists of labels.
+
+        Parameters
+        ----------
+        data
+            A 2D numpy array of shape (N, M).
+        row_labels
+            A list or array of length N with the labels for the rows.
+        col_labels
+            A list or array of length M with the labels for the columns.
+        ax
+            A `matplotlib.axes.Axes` instance to which the heatmap is plotted.  If
+            not provided, use current axes or create a new one.  Optional.
+        cbar_kw
+            A dictionary with arguments to `matplotlib.Figure.colorbar`.  Optional.
+        cbarlabel
+            The label for the colorbar.  Optional.
+        **kwargs
+            All other arguments are forwarded to `imshow`.
+        """
+
+        if not ax:
+            ax = plt.gca()
+
+        # Plot the heatmap
+        im = ax.imshow(data, **kwargs)
+
+        # Create colorbar
+        cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+        cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
+
+        # We want to show all ticks...
+        ax.set_xticks(np.arange(data.shape[1]))
+        ax.set_yticks(np.arange(data.shape[0]))
+        # ... and label them with the respective list entries.
+        """ax.set_xticklabels(col_labels)
+        ax.set_yticklabels(row_labels)"""
+
+        # Let the horizontal axes labeling appear on top.
+        ax.tick_params(top=True, bottom=False,
+                    labeltop=True, labelbottom=False)
+
+        # Rotate the tick labels and set their alignment.
+        #plt.setp(ax.get_xticklabels(), rotation=-30, ha="right",rotation_mode="anchor")
+
+        # Turn spines off and create white grid.
+        for edge, spine in ax.spines.items():
+            spine.set_visible(False)
+
+        ax.set_xticks(np.arange(data.shape[1]+1)-.5, minor=True)
+        ax.set_yticks(np.arange(data.shape[0]+1)-.5, minor=True)
+        ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
+        ax.tick_params(which="minor", bottom=False, left=False)
+
+        return im, cbar
+
 
     def ini_wf(self,ini_state):
         """ plot 2D array with color-coded magnitude"""
@@ -141,13 +208,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 20
-    params['nbins'] = 1
-    params['binwidth'] = 40.0
+    params['nlobatto'] = 5
+    params['nbins'] = 5 #bug
+    params['binwidth'] = 4.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 0
     
     """====runtime controls===="""
     params['method'] = "static"
@@ -170,8 +237,11 @@ if __name__ == "__main__":
     params['int_rep_type'] = 'cartesian'
 
     hydrogen = propagate()
+    hmat = hydrogen.prop_wf(params)
+    hydrogen.plot_mat(np.abs(hmat[1:,1:]))
+    exit()
 
-    hydrogen.prop_wf(params)
+
 
     #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
 

@@ -388,7 +388,44 @@ class radbas():
 
 
 
-if __name__ == "__main__":      
+
+if __name__=="__main__":
+
+    # equilibrium/reference coordinates
+    ref_coords = [1.3359007, 1.3359007, 92.265883/180.0*np.pi]
+    masses=[31.97207070, 1.00782505, 1.00782505]
+
+    """generate mapping function"""
+    b = 2 #basis set pruning parameters
+
+    simpleMap = indexmap(b,'simple',3)
+    #bas_ind = np.asarray(simpleMap.gen_map())
+    bas_ind = simpleMap.gen_map()
+    print(type(simpleMap.gen_map()))
+
+    Nbas = np.size(bas_ind , axis =0)
+    #print(bas_ind)
+    print(type(bas_ind))
+    Nquad1D_herm = 8
+    Nquad1D_leg = 8
+    grid_type = 'dp'
+
+    """Grid types:
+                    'dp': direct product Nquad1D_herm x Nquad1D_herm x Nquad1D_leg
+                    'ndp_weights': non-direct product with pruning based on product weights (w_tol)
+    """
+
+    w_tol =  1e-15 #threshold value for keeping 3D quadrature product-weights
+
+    """generate 3D quadrature grid (for now direct product, only indices)"""
+    qgrid = gridmap(Nquad1D_herm, 'dp', 3, w_tol, Nquad1D_herm, Nquad1D_herm, Nquad1D_leg)
+    qgrid_ind = np.asarray(qgrid.gen_map())
+    Ngrid = np.size(qgrid_ind , axis =0)
+    #print(qgrid_ind)
+
+    init(Nbas, Ngrid, Nquad1D_herm, Nquad1D_leg, ref_coords, masses) #hamiltonian class
+    hmat(bas_ind,qgrid_ind)
+
     print("hello")
 
     #Ylm = angbas()    
@@ -401,3 +438,80 @@ if __name__ == "__main__":
     #rbas.plot_f(rmin = 0.0, rmax = 10.0, npoints = 10000)
     """ Test plot the chi-radial functions"""
     rbas.plot_chi(rmin = 0.0, rmax = 3.0, npoints = 1000)
+
+
+
+
+
+
+
+
+def matelem_keo( ivec, jvec, psi_i, dpsi_i, psi_j, dpsi_j, x1,x2,x3,  qgrid_ind):
+    """
+    This routine calculates the matrix element of the kinetic energy operator.
+
+    Input:
+    ivec: a vector of shape (3, ) containing i1,i2,i3 (left indices)
+    jvec: a vector of shape (3, ) containing j1,j2,j3 (right indices)
+    psi_ivec: array (Nquad, 3) of values of the three basis functions (phi_r_i1,phi_r_i2,phi_theta_i3), whose indices correspond to multiindex ivec = (i1,i2,i3).
+            The functions are evaluated on respective quadrature grids.
+    dpsi_ivec: array (Nquad, 3) of values of the three basis functions derivatives (dphi_r_i1,dphi_r_i2,dphi_theta_i3), whose indices correspond to multiindex ivec = (i1,i2,i3).
+            The derivatives are evaluated on respective quadrature grids.
+    weights: array (Nquad,) of product quadrature weights weigths[k] = w1[k1] * w2[k2] * w3[k3]
+    G: array ((3,3,Nquad, Nquad?)) of values of G-matrix elements on the quadrature grid
+
+    Returns:
+    keo_elem: matrix element of the KEO
+    """
+
+    keo_elem = np.zeros((1,))
+    f_int = np.zeros(np.size(qgrid_ind,axis=0))
+
+
+    #print(np.shape(keo_jax.Gmat(icoords))) #need to add here full
+    keo_jax.init(masses=masses, internal_to_cartesian=internal_to_cartesian)
+    for ipoint in range(np.size(qgrid_ind,axis=0)):
+        qcoords = [x1[qgrid_ind[ipoint][0]],x2[qgrid_ind[ipoint][1]],x3[qgrid_ind[ipoint][2]]]
+        start = time.time()
+        G = keo_jax.Gmat(qcoords)
+        end = time.time()
+        #print("time for keo_jax.Gmat(qcoords) =  ", str(end-start))
+        #print(' '.join(["  %15.8f"%item for item in qcoords]))
+        #print(dpsi_i[qgrid_ind[ipoint,0], 0 ] * psi_i[qgrid_ind[ipoint,1], 1 ] * psi_i[qgrid_ind[ipoint,2], 2 ] * G[0][0] * dpsi_j[qgrid_ind[ipoint,0], 0 ] * psi_j[qgrid_ind[ipoint,1], 1] * psi_j[qgrid_ind[ipoint,2], 2])
+        #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in G]))
+
+        """start = time.time()
+            jax.ops.index_add(f_int,ipoint, dpsi_i[qgrid_ind[ipoint,0], 0 ] * psi_i[qgrid_ind[ipoint,1], 1 ] * psi_i[qgrid_ind[ipoint,2], 2 ] * G[0][0] * dpsi_j[qgrid_ind[ipoint,0], 0 ] * psi_j[qgrid_ind[ipoint,1], 1] * psi_j[qgrid_ind[ipoint,2], 2] \
+            + dpsi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ]* G[0][1]* psi_j[qgrid_ind[ipoint,0], 0 ]*dpsi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + dpsi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ]* G[0][2] * psi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*dpsi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*dpsi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ]* G[1][0] * dpsi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*dpsi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ]* G[1][1] * psi_j[qgrid_ind[ipoint,0], 0 ]*dpsi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*dpsi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ]* G[1][2] * psi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*dpsi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*dpsi_i[qgrid_ind[ipoint,2], 2 ]* G[2][0]* dpsi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*dpsi_i[qgrid_ind[ipoint,2], 2 ]* G[2][1] * psi_j[qgrid_ind[ipoint,0], 0 ]*dpsi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*dpsi_i[qgrid_ind[ipoint,2], 2 ]* G[2][2] * psi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*dpsi_j[qgrid_ind[ipoint,2], 2 ])
+
+        end = time.time()
+        print("time for jax.ops.index_add( =  ", str(end-start))"""
+
+
+        start = time.time()
+        keo_elem += dpsi_i[qgrid_ind[ipoint,0], 0 ] * psi_i[qgrid_ind[ipoint,1], 1 ] * psi_i[qgrid_ind[ipoint,2], 2 ] * dpsi_j[qgrid_ind[ipoint,0], 0 ] * psi_j[qgrid_ind[ipoint,1], 1] * psi_j[qgrid_ind[ipoint,2], 2] \
+            + dpsi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ] * psi_j[qgrid_ind[ipoint,0], 0 ]*dpsi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + dpsi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ] * psi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*dpsi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*dpsi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ] * dpsi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*dpsi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ] * psi_j[qgrid_ind[ipoint,0], 0 ]*dpsi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*dpsi_i[qgrid_ind[ipoint,1], 1]*psi_i[qgrid_ind[ipoint,2], 2 ] * psi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*dpsi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*dpsi_i[qgrid_ind[ipoint,2], 2 ]* dpsi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*dpsi_i[qgrid_ind[ipoint,2], 2 ] * psi_j[qgrid_ind[ipoint,0], 0 ]*dpsi_j[qgrid_ind[ipoint,1], 1]*psi_j[qgrid_ind[ipoint,2], 2 ] \
+            + psi_i[qgrid_ind[ipoint,0], 0 ]*psi_i[qgrid_ind[ipoint,1], 1]*dpsi_i[qgrid_ind[ipoint,2], 2 ] * psi_j[qgrid_ind[ipoint,0], 0 ]*psi_j[qgrid_ind[ipoint,1], 1]*dpsi_j[qgrid_ind[ipoint,2], 2 ]
+        end = time.time()
+        print("time for jax.ops.index_add =  ", str(end-start))
+
+    #jax.ops.index_update(f,ipoint,f_int)
+    #print(type(f))
+    #keo_elem = np.sum(f)
+    #print(f_int)
+    print("we are returning value")
+
+    return keo_elem
