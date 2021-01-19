@@ -133,17 +133,19 @@ class propagate(radbas,mapping):
         return im, cbar
 
 
-    def ini_wf(self,params,test=False):
+    def gen_psi0(self,params,test=False):
         psi0 = []
         """ generate initial conditions for TDSE """
+
         """psi0 (array: Nx4): l(int),m(int),i(int),n(int),s_xi(complex128) """
-        """ ordering n,i,l,m major"""
+        """ ordering l,m,i,n in descening hierarchy"""
 
         if params['ini_state'] == "manual":
             print("defining initial wavefunction manually \n")
             psi0.append([0,0,0,0,1.0+0.0j])
             print("initial wavefunction:")
             print(psi0)
+            return psi0
 
         elif params['ini_state'] == "file":
             print("reading initial wavefunction from file \n")
@@ -171,31 +173,33 @@ class propagate(radbas,mapping):
                 psi0[ind][4] /= np.sqrt(norm)
                 sum += np.conj(psi0[ind][4]) * psi0[ind][4]
             print(psi0)
-
+            return psi0
 
         elif params['ini_state'] == "projection":
             print("generating initial wavefunction by projection of a given function onto our basis \n")
 
             if test == True:
-                print("generating test wavefunction on a grid")
+                print("Testing the generation of the initial wavefunction on a grid on the example of hydrogen atoms wavefunctions")
       
-                """ plot the radial part """
-                h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
-                radgrid = np.linspace(0.0,10.0,10)
-                thetagrid = np.linspace(0,np.pi,10)
-                phigrid  = np.linspace(0,2*np.pi,10)
+                """ generate the radial part """
+                #Test radial function:
+                #h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
+                
+                #3D grid
+                radgrid = np.linspace(0.0,20.0,100)
+                thetagrid = np.linspace(0,np.pi,20)
+                phigrid  = np.linspace(0,2*np.pi,20)
                 grid3d = np.meshgrid(radgrid,thetagrid,phigrid)
                 nodes = list(zip(*(dim.flat for dim in grid3d)))
-                print(np.shape(nodes))
-                
                 nodes = np.asarray(nodes)
 
                 #for node in nodes:
                 #    print(node)
-                plt.plot(nodes[:,0],h_radial(nodes[:,0],3,0)**2 * nodes[:,0]**2)
+                #plt.plot(nodes[:,0],h_radial(nodes[:,0],2,0)**2 * nodes[:,0]**2)
                 #plt.show()
+ 
 
-                """plot the angular part"""
+                """generate the angular part"""
                 theta_2d, phi_2d = np.meshgrid(thetagrid, phigrid)
                 xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
                 colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
@@ -204,26 +208,24 @@ class propagate(radbas,mapping):
 
                 plt.figure()
                 ax = plt.gca(projection = "3d")
-                
-                Y_lm = sph_harm(1,1, phi_2d,theta_2d)
+                #Test angular function
+                Y_lm = sph_harm(1,0, phi_2d,theta_2d)
                 print(np.shape(Y_lm))
                 #r = np.abs(Y_lm.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
                 #r = np.abs(iniwf(2.0,theta_2d, phi_2d))*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)  
-                r = self.custom_wf(1.0,theta_2d, phi_2d)*xyz_2d 
+                r = self.test_hydrogen_wf(1.0, theta_2d, phi_2d) * xyz_2d 
                 ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
                 ax.set_xlim(-limit,limit)
                 ax.set_ylim(-limit,limit)
                 ax.set_zlim(-limit,limit)
-                #plt.show()
+                plt.show()
 
                 #save function in wf0grid.txt
-
                 fl_out = open( params['ini_state_file_grid'],'w')
                 for i in range(len(nodes)):
-                    fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.custom_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
+                    fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.test_hydrogen_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
 
-            # read coefficients from file
-
+            # readf= function on a grid from file
             fl = open(params['ini_state_file_grid'],'r')
             iniwf = []
             for line in fl:
@@ -238,27 +240,40 @@ class propagate(radbas,mapping):
 
             """ project the wavefunction onto our basis """
 
+
+            """Interpolate the wf"""
+
+
+            """calculate overlap integrals"""
+            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray, Nbas = mymap.gen_map()
+            #l,m,i,n
+            for elem in maparray:
+                psi0.append([ elem[0], elem[1], self.overlap_grid(iniwf,elem[1],elem[0])])
+
+
             """ 
             input: complex wavefunction on r,theta,phi grid
             return: set of coefficients in l,m,i,n basis""" 
 
-            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
-            maparray, Nbas = mymap.gen_map()
-
-            for elem in maparray:
-                psi0.append([ elem[0], elem[1], self.overlap_grid(iniwf,elem[1],elem[0])])
 
         return psi0
 
     def overlap_grid(self,psi0,m,l):
+        #returns the expansion coefficient in spherical harmonics + lobatto basis.
+
         Nlag = 10
         x,w = laggauss(Nlag)
         #psi0 is the projected function on the grid
         myscheme = quadpy.u3.schemes["lebedev_025"]()
 
+        """ Here we need to interpolate psi0 """
+        """ RESUME HERE"""
         overlap = 0.0
         for k in range(Nlag):
-            overlap += w[k] *  myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])  )
+            overlap += w[k] * self.chi(i,n,x[k],rgrid,wlobatto)
+        #for k in range(Nlag):
+        #    overlap += w[k] *  myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])  )
 
         #print(myscheme)
         """
@@ -269,24 +284,25 @@ class propagate(radbas,mapping):
         """
         return overlap
 
-    def custom_wf(self,r,theta,phi):
+
+    def gen_hydrogen_wf(self,n,l,m,r,theta,phi):
+        Rnl = (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
+        Ylm = sph_harm(m,l, phi,theta)
+        return Rnl, Ylm, Rnl * Ylm
+
+    def test_hydrogen_wf(self,r,theta,phi):
         """ return custom function in the hydrogen atom orbital basis"""
         h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
-        nmax = 2
-        mmax = 1 
-        lmax = 1
+        nmax = 1
         f = 0.0
         counter =0
-        """wavefunction definition"""
         for n in range(1,nmax+1):
             for l in range(0,n):
                 counter += 1
                 for m in range(-l,l+1):
-                    print(n,l,m)
-
                     f +=   h_radial(r,n,l) * sph_harm(m,l, phi,theta)
         f /= np.sqrt(float(counter)) 
-        return f.real
+        return f
 
 
 
@@ -366,13 +382,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 4
+    params['nlobatto'] = 3
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 4.0
+    params['binwidth'] = 3.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 2
+    params['lmax'] = 1
     
     """====runtime controls===="""
     params['method'] = "static"
@@ -396,8 +412,9 @@ if __name__ == "__main__":
    
     params['int_rep_type'] = 'cartesian'
 
+
     hydrogen = propagate()
-    print(hydrogen.ini_wf(params,test=True))
+    print(hydrogen.gen_psi0(params,test=True)) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
     #hmat = hydrogen.prop_wf(params)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
