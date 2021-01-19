@@ -10,7 +10,7 @@ import timeit
 import quadpy
 from basis import radbas
 from matelem import mapping
-from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial
+from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial,roots_hermite
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
@@ -133,21 +133,21 @@ class propagate(radbas,mapping):
         return im, cbar
 
 
-    def gen_psi0(self,params,test=False):
+    def gen_psi0(self,params):
         psi0 = []
         """ generate initial conditions for TDSE """
 
-        """psi0 (array: Nx4): l(int),m(int),i(int),n(int),s_xi(complex128) """
+        """returns: psi0 (array: Nx4): l(int),m(int),i(int),n(int),c_lmin(complex128) """
         """ ordering l,m,i,n in descening hierarchy"""
 
-        if params['ini_state'] == "manual":
+        if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
             psi0.append([0,0,0,0,1.0+0.0j])
             print("initial wavefunction:")
             print(psi0)
             return psi0
 
-        elif params['ini_state'] == "file":
+        elif params['ini_state'] == "spectral_file":
             print("reading initial wavefunction from file \n")
             fl = open(params['ini_state_file_coeffs'],'r')
 
@@ -175,35 +175,30 @@ class propagate(radbas,mapping):
             print(psi0)
             return psi0
 
-        elif params['ini_state'] == "projection":
+        elif params['ini_state'] == "grid_1d_rad":
             print("generating initial wavefunction by projection of a given function onto our basis \n")
-
-            if test == True:
-                print("Testing the generation of the initial wavefunction on a grid on the example of hydrogen atoms wavefunctions")
-                #test plotting of single Hydrogen atom functions
-                #plot_hydrogen_wfs()
-
-                #pick one hydrogen atom basis function
-
+            print("1D radial coordinate only \n")
+          
                 mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
                 maparray, Nbas = mymap.gen_map()
                 #l,m,i,n
-                Rnl = lambda r,n,l: (2/n)**(3/2) * np.sqrt(factorial(n-l-1)/(2*n*factorial(n+1))) * (2*r/n)**l  * genlaguerre(n-l-1,2*l+1)(2*r/n) * np.exp(-r/n)
 
-                #generate gauss-Lagueere quadrature
-                Nlag = 100
-                #x,w = laggauss(Nlag)
+                #generate requested quadrature
+                if params['ini_state_quad'][0] == "Gauss-Laguerre":
+                    Nquad = params['ini_state_quad'][1]
+                    x,w = roots_genlaguerre(Nquad ,1)
+                    inv_weight_func = lambda: r, np.exp(r**2)
+                elif params['ini_state_quad'][0] == "Gauss-Hermite":
+                    Nquad = params['ini_state_quad'][1]
+                    x,w = roots_hermite(Nquad)
+                    inv_weight_func = lambda: r, np.exp(r**2)
 
-                x,w = roots_genlaguerre(Nlag,1)
 
                 #generate gauss-Lobatto global grid
                 rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
-
                 nlobatto = params['nlobatto']
                 nbins = params['nbins']
                 rgrid  = rbas.r_grid()
-
-
                 #generate Gauss-Lobatto quadrature
                 xlobatto=np.zeros(nlobatto)
                 wlobatto=np.zeros(nlobatto)
@@ -211,24 +206,13 @@ class propagate(radbas,mapping):
                 wlobatto=np.array(wlobatto)
                 xlobatto=np.array(xlobatto) # convert back to np arrays
 
-                norm = 0.0
-                n = 3
-                l = 1
-                for k in range(Nlag):
-                    norm += w[k] * x[k] * genlaguerre(n-l-1,2*l+1)(x[k])  * genlaguerre(n-l-1,2*l+1)(x[k]) 
-
-                norm = norm * factorial(n-l-1)/(2*n*factorial(n+l)) #* (2/n)**(3)
-
-                print("Gauss-Lagueere normalization:")
-                print(norm)
-              
 
                 for elem in maparray:
                     coeff = 0.0
-                    for k in range(Nlag):
-                        coeff += w[k] * rbas.chi(elem[2],elem[3],n*x[k],rgrid,wlobatto) * genlaguerre(n-l-1,2*l+1)(2*x[k]) * x[k]**(1-l)
+                    for k in range(Nquad):
+                        coeff += w[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto) 
 
-                    coeff *= (2/n)**(3/2) * n**2 * 2**l * np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))               
+                    coeff *= (2/n)**(3/2) * n**3 * 2**l * np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))               
                     print("coefficients")
                     print("%5d"%float(elem[0])+"  %5d"%float(elem[1])+"  %5d"%float(elem[2])+"  %5d"%float(elem[3])+"  %6.3f"%float(coeff))
                     psi0.append([ elem[0], elem[1], elem[2], elem[3], coeff])
@@ -237,7 +221,7 @@ class propagate(radbas,mapping):
 
                 #plot the test function and the projected function
 
-                r = np.linspace(0.0,20.0,500,True,dtype=float)
+                r = np.linspace(0.0,100.0,1000,True,dtype=float)
 
                 counter = 0
                 y = np.zeros(len(r))
@@ -252,8 +236,8 @@ class propagate(radbas,mapping):
                 plt.ylabel('Lobatto basis function')
                 plt.legend()   
         
-                plt.plot(r, y/50) 
-                plt.plot(r, Rnl(r,n,l)) 
+                plt.plot(r, r*y/50) 
+                plt.plot(r, r*Rnl(r,n,l)) 
                 plt.show()   
 
 
@@ -280,20 +264,6 @@ class propagate(radbas,mapping):
                 phi = float(words[2])
                 wf = float(words[3])
                 iniwf.append([r,theta,phi,wf]) #initial wavefunction on a grid
-
-            """ project the wavefunction onto our basis """
-
-
-            """Interpolate the wf"""
-
-
-            """calculate overlap integrals"""
-            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
-            maparray, Nbas = mymap.gen_map()
-            #l,m,i,n
-            for elem in maparray:
-                psi0.append([ elem[0], elem[1], self.overlap_grid(iniwf,elem[1],elem[0])])
-
 
             """ 
             input: complex wavefunction on r,theta,phi grid
@@ -464,23 +434,25 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 20
+    params['nlobatto'] = 40
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 30.0
+    params['binwidth'] = 100.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
     params['lmax'] = 0
     
     """====runtime controls===="""
-    params['method'] = "static"
-    params['ini_state'] = "projection" #or "file" or "projection" or "manual"
-    params['ini_state_file_coeffs'] = "wf0coeffs.txt" # name of file with coefficients of the initial wavefunction in our basis
-    params['ini_state_file_grid'] = "wf0grid.txt" #initial wavefunction on a 3D grid of (r,theta,phi)
+    params['method'] = "static" #static: solve time-independent SE for a given potential
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen"
     params['scheme'] = "lebedev_025"
 
+    """====initial state====""" 
+    params['ini_state'] = "grid_1d_rad" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
+    params['ini_state_quad'] = ("Gauss-Laguerre",100) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
+    params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
 
     """====field controls===="""
     params['field_type'] = "analytic" #or file
