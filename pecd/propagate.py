@@ -10,7 +10,7 @@ import timeit
 import quadpy
 from basis import radbas
 from matelem import mapping
-from scipy.special import genlaguerre,sph_harm
+from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
@@ -180,50 +180,93 @@ class propagate(radbas,mapping):
 
             if test == True:
                 print("Testing the generation of the initial wavefunction on a grid on the example of hydrogen atoms wavefunctions")
-      
-                """ generate the radial part """
-                #Test radial function:
-                #h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
-                
-                #3D grid
-                radgrid = np.linspace(0.0,20.0,100)
-                thetagrid = np.linspace(0,np.pi,20)
-                phigrid  = np.linspace(0,2*np.pi,20)
-                grid3d = np.meshgrid(radgrid,thetagrid,phigrid)
-                nodes = list(zip(*(dim.flat for dim in grid3d)))
-                nodes = np.asarray(nodes)
+                #test plotting of single Hydrogen atom functions
+                #plot_hydrogen_wfs()
 
-                #for node in nodes:
-                #    print(node)
-                #plt.plot(nodes[:,0],h_radial(nodes[:,0],2,0)**2 * nodes[:,0]**2)
-                #plt.show()
- 
+                #pick one hydrogen atom basis function
 
-                """generate the angular part"""
-                theta_2d, phi_2d = np.meshgrid(thetagrid, phigrid)
-                xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
-                colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
-                colormap.set_clim(-.45, .45)
-                limit = .5
+                mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+                maparray, Nbas = mymap.gen_map()
+                #l,m,i,n
+                Rnl = lambda r,n,l: (2/n)**(3/2) * np.sqrt(factorial(n-l-1)/(2*n*factorial(n+1))) * (2*r/n)**l  * genlaguerre(n-l-1,2*l+1)(2*r/n) * np.exp(-r/n)
 
-                plt.figure()
-                ax = plt.gca(projection = "3d")
-                #Test angular function
-                Y_lm = sph_harm(1,0, phi_2d,theta_2d)
-                print(np.shape(Y_lm))
-                #r = np.abs(Y_lm.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
-                #r = np.abs(iniwf(2.0,theta_2d, phi_2d))*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)  
-                r = self.test_hydrogen_wf(1.0, theta_2d, phi_2d) * xyz_2d 
-                ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
-                ax.set_xlim(-limit,limit)
-                ax.set_ylim(-limit,limit)
-                ax.set_zlim(-limit,limit)
-                plt.show()
+                #generate gauss-Lagueere quadrature
+                Nlag = 100
+                #x,w = laggauss(Nlag)
+
+                x,w = roots_genlaguerre(Nlag,1)
+
+                #generate gauss-Lobatto global grid
+                rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+
+                nlobatto = params['nlobatto']
+                nbins = params['nbins']
+                rgrid  = rbas.r_grid()
+
+
+                #generate Gauss-Lobatto quadrature
+                xlobatto=np.zeros(nlobatto)
+                wlobatto=np.zeros(nlobatto)
+                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+                wlobatto=np.array(wlobatto)
+                xlobatto=np.array(xlobatto) # convert back to np arrays
+
+                norm = 0.0
+                n = 3
+                l = 1
+                for k in range(Nlag):
+                    norm += w[k] * x[k] * genlaguerre(n-l-1,2*l+1)(x[k])  * genlaguerre(n-l-1,2*l+1)(x[k]) 
+
+                norm = norm * factorial(n-l-1)/(2*n*factorial(n+l)) #* (2/n)**(3)
+
+                print("Gauss-Lagueere normalization:")
+                print(norm)
+              
+
+                for elem in maparray:
+                    coeff = 0.0
+                    for k in range(Nlag):
+                        coeff += w[k] * rbas.chi(elem[2],elem[3],n*x[k],rgrid,wlobatto) * genlaguerre(n-l-1,2*l+1)(2*x[k]) * x[k]**(1-l)
+
+                    coeff *= (2/n)**(3/2) * n**2 * 2**l * np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))               
+                    print("coefficients")
+                    print("%5d"%float(elem[0])+"  %5d"%float(elem[1])+"  %5d"%float(elem[2])+"  %5d"%float(elem[3])+"  %6.3f"%float(coeff))
+                    psi0.append([ elem[0], elem[1], elem[2], elem[3], coeff])
+
+                print(psi0)
+
+                #plot the test function and the projected function
+
+                r = np.linspace(0.0,20.0,500,True,dtype=float)
+
+                counter = 0
+                y = np.zeros(len(r))
+
+                psi0 = np.asarray(psi0)
+
+                for elem in maparray:
+                    y[:] += rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * psi0[counter,4] / np.sqrt(np.sum(psi0[:,4] * psi0[:,4]))
+                    counter +=1
+
+                plt.xlabel('r/a.u.')
+                plt.ylabel('Lobatto basis function')
+                plt.legend()   
+        
+                plt.plot(r, y/50) 
+                plt.plot(r, Rnl(r,n,l)) 
+                plt.show()   
+
+
+                exit()
+
 
                 #save function in wf0grid.txt
                 fl_out = open( params['ini_state_file_grid'],'w')
                 for i in range(len(nodes)):
-                    fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.test_hydrogen_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
+                    fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.gen_test_hydrogen_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
+
+
+
 
             # readf= function on a grid from file
             fl = open(params['ini_state_file_grid'],'r')
@@ -290,7 +333,7 @@ class propagate(radbas,mapping):
         Ylm = sph_harm(m,l, phi,theta)
         return Rnl, Ylm, Rnl * Ylm
 
-    def test_hydrogen_wf(self,r,theta,phi):
+    def gen_test_hydrogen_wf(self,r,theta,phi):
         """ return custom function in the hydrogen atom orbital basis"""
         h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         nmax = 1
@@ -305,7 +348,46 @@ class propagate(radbas,mapping):
         return f
 
 
+    def plot_hydrogen_wfs(self):
 
+        """ generate the radial part """
+        #Test radial function:
+        h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
+        
+        #3D grid
+        radgrid = np.linspace(0.0,20.0,100)
+        thetagrid = np.linspace(0,np.pi,20)
+        phigrid  = np.linspace(0,2*np.pi,20)
+        grid3d = np.meshgrid(radgrid,thetagrid,phigrid)
+        nodes = list(zip(*(dim.flat for dim in grid3d)))
+        nodes = np.asarray(nodes)
+
+        for node in nodes:
+            print(node)
+        plt.plot(nodes[:,0],h_radial(nodes[:,0],2,0)**2 * nodes[:,0]**2)
+        plt.show()
+
+
+        """generate the angular part"""
+        theta_2d, phi_2d = np.meshgrid(thetagrid, phigrid)
+        xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
+        colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
+        colormap.set_clim(-.45, .45)
+        limit = .5
+
+        plt.figure()
+        ax = plt.gca(projection = "3d")
+        #Test angular function
+        Y_lm = sph_harm(1,0, phi_2d,theta_2d)
+        print(np.shape(Y_lm))
+        #r = np.abs(Y_lm.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
+        #r = np.abs(iniwf(2.0,theta_2d, phi_2d))*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)  
+        r = self.test_hydrogen_wf(1.0, theta_2d, phi_2d) * xyz_2d 
+        ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
+        ax.set_xlim(-limit,limit)
+        ax.set_ylim(-limit,limit)
+        ax.set_zlim(-limit,limit)
+        plt.show()
 
 
     def plot_wf_2d(self):
@@ -382,13 +464,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 3
+    params['nlobatto'] = 20
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 3.0
+    params['binwidth'] = 30.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 0
     
     """====runtime controls===="""
     params['method'] = "static"

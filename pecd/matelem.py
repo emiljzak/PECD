@@ -47,7 +47,7 @@ class mapping():
                         #    continue
                         else:
                                 imap+=1
-                                print(l,m,i,n,imap)
+                                #print(l,m,i,n,imap)
                                 maparray.append([l,m,i,n,imap])
                 
         fl = open('map.dat','w')
