@@ -10,6 +10,7 @@ import timeit
 import quadpy
 from basis import radbas
 from matelem import mapping
+from scipy.linalg import expm
 from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial,roots_hermite
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
@@ -65,6 +66,7 @@ class propagate(radbas,mapping):
 
 
         elif params['method'] == 'dynamic_lanczos':
+
             print("Solving TDSE with Lanczos method")
             #we need to create rgrid only once, i.e. static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
@@ -75,6 +77,11 @@ class propagate(radbas,mapping):
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
 
+
+            """Diagonal matrix for testing TDSE solver"""
+            hdiag = np.zeros((Nbas, Nbas), float)
+            np.fill_diagonal(hdiag, 1.0)
+
             #print(type(maparray))
             #print(maparray)
 
@@ -82,28 +89,36 @@ class propagate(radbas,mapping):
 
             dt = params['dt']
             psi0 = np.asarray(psi0)
+            psi = np.zeros(Nbas,dtype=complex)
+            psi[:] = psi0[:,4]
             wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing wavepacket coefficients in order given by the mapping function
 
 
-            psit1 = np.zeros((Nbas,5))
+            #normalize the wavefunction
+            psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
+
             for itime, t in enumerate(time):
                 print(t)
-                hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
-                evals, coeffs, hmat = hamiltonian.calc_hmat()
+                #hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
+                #evals, coeffs, hmat = hamiltonian.calc_hmat()
+                #energies, u = np.linalg.eigh(hmat)
+                #hdiag = np.dot(u.T,np.dot(hmat,u))
+                #psi0[:,4] = np.dot( np.exp(-1j*hdiag*dt) , psi0[:,4] )
+                #wavepacket[itime,:] = psi0[:,4]
+                """matrix exponentiation"""
+                umat = expm( -1.0j * hdiag * dt )
+                """action of the evolution operator"""
+                wavepacket[itime,:] = np.dot( umat , psi)
+                """update the wavefunction"""
+                psi[:] = wavepacket[itime,:] 
 
-                energies, u = np.linalg.eigh(hmat)
-
-                hdiag = np.dot(u.T,np.dot(hmat,u))
-                print("initial wavefunction")
-                print(psi0)
-                psi0[:,4] = np.dot( np.exp(-1j*hdiag*dt) , psi0[:,4] )
-                print("propagated wavefunction")   
-                print(psi0)
-                wavepacket[itime,:] = psi0[:,4]
+                #print(np.sqrt( np.sum( np.conj( psi0[:,4]) * psi0[:,4]  )))
 
             print("final wavepacket")
-            print(wavepacket)
-            plt.plot(time,wavepacket[:,1])
+
+            plt.plot(time,wavepacket[:,1].real)
+            plt.plot(time,wavepacket[:,1].imag)
+            plt.plot(time,np.sqrt(wavepacket[:,1].real**2+wavepacket[:,1].imag**2))
             plt.show()
                 #self.Lanczos(psi0, t, self.mvp, 5, 5, 0.25, hmat)
 
@@ -554,8 +569,8 @@ if __name__ == "__main__":
     params['potential'] = "hydrogen"
     params['scheme'] = "lebedev_025"
     params['t0'] = 0.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
-    params['tmax'] = 5.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
-    params['dt'] = 1.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['tmax'] = 10.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['dt'] = 0.2 #(a.u.) (1 a.u. = 2.41888 e-17 s)
 
     """====initial state====""" 
     params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
