@@ -100,6 +100,21 @@ class propagate(radbas,mapping):
             #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
+            #if requested: 
+            r = np.linspace(0.01,100.0,1000,True,dtype=float)
+            #generate gauss-Lobatto global grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            nlobatto = params['nlobatto']
+            nbins = params['nbins']
+            rgrid  = rbas.r_grid()
+            #generate Gauss-Lobatto quadrature
+            xlobatto=np.zeros(nlobatto)
+            wlobatto=np.zeros(nlobatto)
+            xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+            wlobatto=np.array(wlobatto)
+            xlobatto=np.array(xlobatto) # convert back to np arrays
+
+
             for itime, t in enumerate(time):
                 print(t)
                 #hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
@@ -113,17 +128,32 @@ class propagate(radbas,mapping):
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
-                #method for saving the wavepacket
+
+                #if requested: method for saving the wavepacket: switch it into a method of psi class?
 
                 fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%item for item in psi])+"\n")
-            print("final wavepacket")
+
+
+                #plot the wavepacket, if requested
+            
+            y = np.zeros(len(r),dtype=complex)
+            for ielem,elem in enumerate(maparray):
+                y[:] +=   psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto)
+            #y /= np.sqrt(np.sum(psi[:] * psi[:]))
+
+            plt.xlabel('r/a.u.')
+            plt.ylabel('radial wavepacket')
+    
+            plt.plot(r, np.abs(y)) 
+            plt.show()   
+            exit()
 
             for i in range(Nbas):
                 plt.plot(time,wavepacket[:,i].real)
                 plt.plot(time,wavepacket[:,i].imag)
                 plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2))
             plt.legend()
-            plt.show()
+            #plt.show()
 
             fname.close()
             """save the wavepacket in a file"""
@@ -211,10 +241,10 @@ class propagate(radbas,mapping):
 
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
-            psi0_mat.append([0,0,0,0,1.0+0.0j])
+            psi0_mat.append([0,0,0,0,0.0+0.0j])
             psi0_mat.append([0,0,0,1,1.0+0.0j])
-            psi0_mat.append([0,0,0,2,0.0+0.0j])
-            psi0_mat.append([0,0,0,3,0.0+0.0j])
+            psi0_mat.append([0,0,0,2,1.0+0.0j])
+            psi0_mat.append([0,0,0,3,1.0+0.0j])
 
             print("initial wavefunction:")
             print(psi0_mat)
