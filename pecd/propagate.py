@@ -22,13 +22,13 @@ class propagate(radbas,mapping):
     def __init__(self):
         pass
 
-    def prop_wf(self,params):
+    def prop_wf(self,params,psi0):
         """ main method for propagating the wavefunction"""
         """params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances,etc."""
-
+        """ psi0 (array): spectral representation of the initial wavefunction """
         """ method (str):       'static' - solve time-independent Schrodinger equation at time t=t0
-                                'direct' - propagate the wavefunction with direct exponentiation of the Hamiltonian
-                                'krylov' - propagate the wavefunction with iterative method (Lanczos: Krylov subspace method)
+                                'dynamic_direct' - propagate the wavefunction with direct exponentiation of the Hamiltonian
+                                'dynamic_lanczos' - propagate the wavefunction with iterative method (Lanczos: Krylov subspace method)
             basis (str):        'prim' - use primitive basis
                                 'adiab' - use adiabatic basis from t=t0
             ini_state (dict):   {'method': manual,file,calc 'filename':filename}
@@ -62,6 +62,53 @@ class propagate(radbas,mapping):
             #print(np.shape(coeffs))
             #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
             return hmat
+
+
+        elif params['method'] == 'dynamic_lanczos':
+            print("Solving TDSE with Lanczos method")
+            #we need to create rgrid only once, i.e. static grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            rgrid = rbas.r_grid()
+            #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
+            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray, Nbas = mymap.gen_map()
+            params['Nbas'] = Nbas
+            print("Nbas = "+str(Nbas))
+
+            #print(type(maparray))
+            #print(maparray)
+
+            time = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
+
+            dt = params['dt']
+            psi0 = np.asarray(psi0)
+            wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing wavepacket coefficients in order given by the mapping function
+
+
+            psit1 = np.zeros((Nbas,5))
+            for itime, t in enumerate(time):
+                print(t)
+                hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
+                evals, coeffs, hmat = hamiltonian.calc_hmat()
+
+                energies, u = np.linalg.eigh(hmat)
+
+                hdiag = np.dot(u.T,np.dot(hmat,u))
+                print("initial wavefunction")
+                print(psi0)
+                psi0[:,4] = np.dot( np.exp(-1j*hdiag*dt) , psi0[:,4] )
+                print("propagated wavefunction")   
+                print(psi0)
+                wavepacket[itime,:] = psi0[:,4]
+
+            print("final wavepacket")
+            print(wavepacket)
+            plt.plot(time,wavepacket[:,1])
+            plt.show()
+                #self.Lanczos(psi0, t, self.mvp, 5, 5, 0.25, hmat)
+
+            #print(type(coeffs))
+
 
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
@@ -143,6 +190,10 @@ class propagate(radbas,mapping):
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
             psi0_mat.append([0,0,0,0,1.0+0.0j])
+            psi0_mat.append([0,0,0,1,1.0+0.0j])
+            psi0_mat.append([0,0,0,2,0.0+0.0j])
+            psi0_mat.append([0,0,0,3,0.0+0.0j])
+            psi0_mat = np.asarray(psi0_mat)
             print("initial wavefunction:")
             print(psi0_mat)
             return psi0_mat
@@ -418,9 +469,6 @@ class propagate(radbas,mapping):
         plt.show()
 
 
-    def plot_wf_2d(self):
-        pass
-
     def Lanczos(self,Psi, t, HMVP, m, Ntotal, timestep,Ham0):
         Psi1=Psi.copy()
         #Psi is the input vector of coefficients of size N
@@ -492,22 +540,25 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 2
+    params['nlobatto'] = 5
     params['nbins'] = 1 #bug when nbins > nlobatto  
     params['binwidth'] = 25
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 10
+    params['lmax'] = 0
     
     """====runtime controls===="""
-    params['method'] = "static" #static: solve time-independent SE for a given potential
+    params['method'] = "dynamic_lanczos" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen"
     params['scheme'] = "lebedev_025"
+    params['t0'] = 0.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['tmax'] = 5.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['dt'] = 1.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
 
     """====initial state====""" 
-    params['ini_state'] = "grid_2d_sph" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
+    params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
     params['ini_state_quad'] = ("Gauss-Laguerre",30) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
@@ -526,8 +577,8 @@ if __name__ == "__main__":
 
 
     hydrogen = propagate()
-    print(hydrogen.gen_psi0(params)) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
-    #hmat = hydrogen.prop_wf(params)
+    psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
+    hmat = hydrogen.prop_wf(params,psi0)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
 
