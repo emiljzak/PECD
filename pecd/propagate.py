@@ -26,7 +26,7 @@ class propagate(radbas,mapping):
     def prop_wf(self,params,psi0):
         """ main method for propagating the wavefunction"""
         """params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances,etc."""
-        """ psi0 (array): spectral representation of the initial wavefunction """
+        """ psi0 (list): spectral representation of the initial wavefunction """
         """ method (str):       'static' - solve time-independent Schrodinger equation at time t=t0
                                 'dynamic_direct' - propagate the wavefunction with direct exponentiation of the Hamiltonian
                                 'dynamic_lanczos' - propagate the wavefunction with iterative method (Lanczos: Krylov subspace method)
@@ -65,9 +65,9 @@ class propagate(radbas,mapping):
             return hmat
 
 
-        elif params['method'] == 'dynamic_lanczos':
+        elif params['method'] == 'dynamic_direct':
 
-            print("Solving TDSE with Lanczos method")
+            print("Solving TDSE with a direct exponentiation method")
             #we need to create rgrid only once, i.e. static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
@@ -78,6 +78,7 @@ class propagate(radbas,mapping):
             print("Nbas = "+str(Nbas))
 
 
+            fname=open(params['wavepacket_file'],'w')
             """Diagonal matrix for testing TDSE solver"""
             hdiag = np.zeros((Nbas, Nbas), float)
             np.fill_diagonal(hdiag, 1.0)
@@ -88,13 +89,15 @@ class propagate(radbas,mapping):
             time = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
 
             dt = params['dt']
-            psi0 = np.asarray(psi0)
             psi = np.zeros(Nbas,dtype=complex)
-            psi[:] = psi0[:,4]
+            #HERE convert psi0 to an instance of the wavefunction class
+            for ielem,elem in enumerate(psi0):
+                psi[ielem] = elem[4]
+            
+            
             wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing wavepacket coefficients in order given by the mapping function
 
-
-            #normalize the wavefunction
+            #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
             for itime, t in enumerate(time):
@@ -103,26 +106,30 @@ class propagate(radbas,mapping):
                 #evals, coeffs, hmat = hamiltonian.calc_hmat()
                 #energies, u = np.linalg.eigh(hmat)
                 #hdiag = np.dot(u.T,np.dot(hmat,u))
-                #psi0[:,4] = np.dot( np.exp(-1j*hdiag*dt) , psi0[:,4] )
-                #wavepacket[itime,:] = psi0[:,4]
+
                 """matrix exponentiation"""
                 umat = expm( -1.0j * hdiag * dt )
                 """action of the evolution operator"""
-                wavepacket[itime,:] = np.dot( umat , psi)
+                wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
+                #method for saving the wavepacket
 
-                #print(np.sqrt( np.sum( np.conj( psi0[:,4]) * psi0[:,4]  )))
-
+                fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%item for item in psi])+"\n")
             print("final wavepacket")
 
-            plt.plot(time,wavepacket[:,1].real)
-            plt.plot(time,wavepacket[:,1].imag)
-            plt.plot(time,np.sqrt(wavepacket[:,1].real**2+wavepacket[:,1].imag**2))
+            for i in range(Nbas):
+                plt.plot(time,wavepacket[:,i].real)
+                plt.plot(time,wavepacket[:,i].imag)
+                plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2))
+            plt.legend()
             plt.show()
-                #self.Lanczos(psi0, t, self.mvp, 5, 5, 0.25, hmat)
 
-            #print(type(coeffs))
+            fname.close()
+            """save the wavepacket in a file"""
+
+
+                #self.Lanczos(psi0, t, self.mvp, 5, 5, 0.25, hmat)
 
 
     def plot_mat(self,mat):
@@ -199,7 +206,7 @@ class propagate(radbas,mapping):
         psi0_mat = []
         """ generate initial conditions for TDSE """
 
-        """returns: psi0_mat (array: Nx4): l(int),m(int),i(int),n(int),c_lmin(complex128) """
+        """returns: psi0_list (list: Nx4): l(int),m(int),i(int),n(int),c_lmin(complex128) """
         """ ordering l,m,i,n in descening hierarchy"""
 
         if params['ini_state'] == "spectral_manual":
@@ -208,7 +215,7 @@ class propagate(radbas,mapping):
             psi0_mat.append([0,0,0,1,1.0+0.0j])
             psi0_mat.append([0,0,0,2,0.0+0.0j])
             psi0_mat.append([0,0,0,3,0.0+0.0j])
-            psi0_mat = np.asarray(psi0_mat)
+
             print("initial wavefunction:")
             print(psi0_mat)
             return psi0_mat
@@ -564,13 +571,14 @@ if __name__ == "__main__":
     params['lmax'] = 0
     
     """====runtime controls===="""
-    params['method'] = "dynamic_lanczos" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
+    params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen"
     params['scheme'] = "lebedev_025"
     params['t0'] = 0.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
     params['tmax'] = 10.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
     params['dt'] = 0.2 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
 
     """====initial state====""" 
     params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)

@@ -56,7 +56,7 @@ class mapping():
             #print("%5d %5d %5d %5d %5d"%[elem[i] for i in range(len(elem))]+"\n")
 
             #print(['{:5d}'.format(i) for i in elem])
- 	   	    fl.write("%5d"%elem[0]+"  %5d"%elem[1]+"  %5d"%elem[2]+" %5d"%elem[3]+" %5d"%elem[4]+"\n")
+ 	   	    fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+  " %5d"%elem[3]+" %5d"%elem[4]+"\n")
         fl.close()
         
         return maparray, imap
