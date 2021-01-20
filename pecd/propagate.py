@@ -134,18 +134,18 @@ class propagate(radbas,mapping):
 
 
     def gen_psi0(self,params):
-        psi0 = []
+        psi0_mat = []
         """ generate initial conditions for TDSE """
 
-        """returns: psi0 (array: Nx4): l(int),m(int),i(int),n(int),c_lmin(complex128) """
+        """returns: psi0_mat (array: Nx4): l(int),m(int),i(int),n(int),c_lmin(complex128) """
         """ ordering l,m,i,n in descening hierarchy"""
 
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
-            psi0.append([0,0,0,0,1.0+0.0j])
+            psi0_mat.append([0,0,0,0,1.0+0.0j])
             print("initial wavefunction:")
-            print(psi0)
-            return psi0
+            print(psi0_mat)
+            return psi0_mat
 
         elif params['ini_state'] == "spectral_file":
             print("reading initial wavefunction from file \n")
@@ -160,142 +160,143 @@ class propagate(radbas,mapping):
                 i = int(words[2])
                 n = int(words[3])
                 coeff = float(words[4])
-                psi0.append([l,m,i,n,coeff])
+                psi0_mat.append([l,m,i,n,coeff])
 
             #normalize the w-f
 
             norm = 0.0
-            for ind in range(len(psi0)):
-                norm+=np.conj(psi0[ind][4]) * psi0[ind][4]
+            for ind in range(len(psi0_mat)):
+                norm+=np.conj(psi0_mat[ind][4]) * psi0_mat[ind][4]
 
             sum = 0 
-            for ind in range(len(psi0)):
-                psi0[ind][4] /= np.sqrt(norm)
-                sum += np.conj(psi0[ind][4]) * psi0[ind][4]
-            print(psi0)
-            return psi0
+            for ind in range(len(psi0_mat)):
+                psi0_mat[ind][4] /= np.sqrt(norm)
+                sum += np.conj(psi0_mat[ind][4]) * psi0_mat[ind][4]
+            print(psi0_mat)
+            return psi0_mat
 
         elif params['ini_state'] == "grid_1d_rad":
             print("generating initial wavefunction by projection of a given function onto our basis \n")
             print("1D radial coordinate only \n")
           
-                mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
-                maparray, Nbas = mymap.gen_map()
-                #l,m,i,n
+            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray, Nbas = mymap.gen_map()
+            #l,m,i,n
 
-                #generate requested quadrature
-                if params['ini_state_quad'][0] == "Gauss-Laguerre":
-                    Nquad = params['ini_state_quad'][1]
-                    x,w = roots_genlaguerre(Nquad ,1)
-                    inv_weight_func = lambda: r, np.exp(r**2)
-                elif params['ini_state_quad'][0] == "Gauss-Hermite":
-                    Nquad = params['ini_state_quad'][1]
-                    x,w = roots_hermite(Nquad)
-                    inv_weight_func = lambda: r, np.exp(r**2)
-
-
-                #generate gauss-Lobatto global grid
-                rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
-                nlobatto = params['nlobatto']
-                nbins = params['nbins']
-                rgrid  = rbas.r_grid()
-                #generate Gauss-Lobatto quadrature
-                xlobatto=np.zeros(nlobatto)
-                wlobatto=np.zeros(nlobatto)
-                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
-                wlobatto=np.array(wlobatto)
-                xlobatto=np.array(xlobatto) # convert back to np arrays
+            #generate requested quadrature
+            if params['ini_state_quad'][0] == "Gauss-Laguerre":
+                Nquad = params['ini_state_quad'][1]
+                x,w = roots_genlaguerre(Nquad ,1)
+                alpha = 1 #parameter of the G-Lag quadrature
+                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+            elif params['ini_state_quad'][0] == "Gauss-Hermite":
+                Nquad = params['ini_state_quad'][1]
+                x,w = roots_hermite(Nquad)
+                inv_weight_func = lambda r: np.exp(r**2)
 
 
-                for elem in maparray:
-                    coeff = 0.0
-                    for k in range(Nquad):
-                        coeff += w[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto) 
+            #generate gauss-Lobatto global grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            nlobatto = params['nlobatto']
+            nbins = params['nbins']
+            rgrid  = rbas.r_grid()
+            #generate Gauss-Lobatto quadrature
+            xlobatto=np.zeros(nlobatto)
+            wlobatto=np.zeros(nlobatto)
+            xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+            wlobatto=np.array(wlobatto)
+            xlobatto=np.array(xlobatto) # convert back to np arrays
 
-                    coeff *= (2/n)**(3/2) * n**3 * 2**l * np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))               
-                    print("coefficients")
-                    print("%5d"%float(elem[0])+"  %5d"%float(elem[1])+"  %5d"%float(elem[2])+"  %5d"%float(elem[3])+"  %6.3f"%float(coeff))
-                    psi0.append([ elem[0], elem[1], elem[2], elem[3], coeff])
 
-                print(psi0)
+            for elem in maparray:
+                coeff = 0.0
+                for k in range(Nquad):
+                    coeff += w[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * self.psi01d(x[k]) * inv_weight_func(x[k])
+            
 
-                #plot the test function and the projected function
+                print("%5d"%float(elem[0])+"  %5d"%float(elem[1])+"  %5d"%float(elem[2])+"  %5d"%float(elem[3])+"  %6.3f"%float(coeff))
+                psi0_mat.append([ elem[0], elem[1], elem[2], elem[3], coeff ])
 
-                r = np.linspace(0.0,100.0,1000,True,dtype=float)
+            #print(psi0_mat)
 
-                counter = 0
-                y = np.zeros(len(r))
+            #plot the test function and the projected function
 
-                psi0 = np.asarray(psi0)
 
-                for elem in maparray:
-                    y[:] += rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * psi0[counter,4] / np.sqrt(np.sum(psi0[:,4] * psi0[:,4]))
-                    counter +=1
+            r = np.linspace(0.01,100.0,1000,True,dtype=float)
+            y = np.zeros(len(r))
 
-                plt.xlabel('r/a.u.')
-                plt.ylabel('Lobatto basis function')
-                plt.legend()   
+            psi0_mat = np.asarray(psi0_mat)
+            counter = 0
+            for elem in maparray:
+                y[:] +=   psi0_mat[counter,4] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto)
+
+                counter +=1
+            y /= np.sqrt(np.sum(psi0_mat[:,4] * psi0_mat[:,4]))
+
+
+
+            plt.xlabel('r/a.u.')
+            plt.ylabel('orbitals')
+    
+            plt.plot(r, r*y/max(np.abs(y))) 
+            plt.plot(r, r*self.psi01d(r)/max(np.abs(self.psi01d(r))))
+            plt.show()   
+
+
+            #rbas.plot_chi(0.01,100,1000)
+
+            val = 0.0
+            for i in range(len(r)):
+                val += ( y[i]/max(np.abs(y)) - self.psi01d(r[i])/max(np.abs(self.psi01d(r))) ) **2
+            rmsd = np.sqrt( val/len(r) )  
         
-                plt.plot(r, r*y/50) 
-                plt.plot(r, r*Rnl(r,n,l)) 
-                plt.show()   
+            print("RMSD = " + str(rmsd))
+            fmax = max(np.abs(self.psi01d(r)))
+            print(fmax)
+            print("RMSD relative to maximum function value = " + str(rmsd / fmax * 100)+" %")
+            exit()
 
 
-                exit()
+        """#save function in wf0grid.txt
+        fl_out = open( params['ini_state_file_grid'],'w')
+        for i in range(len(nodes)):
+            fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.gen_test_hydrogen_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
 
 
-                #save function in wf0grid.txt
-                fl_out = open( params['ini_state_file_grid'],'w')
-                for i in range(len(nodes)):
-                    fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.gen_test_hydrogen_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
+        # readf= function on a grid from file
+        fl = open(params['ini_state_file_grid'],'r')
+        iniwf = []
+        for line in fl:
+            words = line.split()
+            # columns: l, m, i, n, coef
+
+            r = float(words[0])
+            theta = float(words[1])
+            phi = float(words[2])
+            wf = float(words[3])
+            iniwf.append([r,theta,phi,wf]) #initial wavefunction on a grid
 
 
-
-
-            # readf= function on a grid from file
-            fl = open(params['ini_state_file_grid'],'r')
-            iniwf = []
-            for line in fl:
-                words = line.split()
-                # columns: l, m, i, n, coef
-
-                r = float(words[0])
-                theta = float(words[1])
-                phi = float(words[2])
-                wf = float(words[3])
-                iniwf.append([r,theta,phi,wf]) #initial wavefunction on a grid
-
-            """ 
             input: complex wavefunction on r,theta,phi grid
-            return: set of coefficients in l,m,i,n basis""" 
+            return: set of coefficients in l,m,i,n basis
+            
+            myscheme = quadpy.u3.schemes["lebedev_025"]()
 
+            overlap = 0.0
+            for k in range(Nlag):
+                overlap += w[k] * self.chi(i,n,x[k],rgrid,wlobatto)
+            #for k in range(Nlag):
+            #    overlap += w[k] *  myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])  )
+ 
+            #print(myscheme)
 
-        return psi0
-
-    def overlap_grid(self,psi0,m,l):
-        #returns the expansion coefficient in spherical harmonics + lobatto basis.
-
-        Nlag = 10
-        x,w = laggauss(Nlag)
-        #psi0 is the projected function on the grid
-        myscheme = quadpy.u3.schemes["lebedev_025"]()
-
-        """ Here we need to interpolate psi0 """
-        """ RESUME HERE"""
-        overlap = 0.0
-        for k in range(Nlag):
-            overlap += w[k] * self.chi(i,n,x[k],rgrid,wlobatto)
-        #for k in range(Nlag):
-        #    overlap += w[k] *  myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m, l,  theta_phi[1]+np.pi, theta_phi[0])  )
-
-        #print(myscheme)
-        """
-        Symbols: 
-                theta_phi[0] = theta in [0,pi]
-                theta_phi[1] = phi  in [-pi,pi]
-                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-        """
-        return overlap
+            Symbols: 
+                    theta_phi[0] = theta in [0,pi]
+                    theta_phi[1] = phi  in [-pi,pi]
+                    sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+    
+            """
+        return psi0_mat
 
 
     def gen_hydrogen_wf(self,n,l,m,r,theta,phi):
@@ -303,18 +304,21 @@ class propagate(radbas,mapping):
         Ylm = sph_harm(m,l, phi,theta)
         return Rnl, Ylm, Rnl * Ylm
 
-    def gen_test_hydrogen_wf(self,r,theta,phi):
-        """ return custom function in the hydrogen atom orbital basis"""
+    def psi0(self,r,theta,phi):
+        """ return custom function in the hydrogen atom orbital basis. It can be multi-center molecular orbital"""
         h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
-        nmax = 1
         f = 0.0
-        counter =0
-        for n in range(1,nmax+1):
-            for l in range(0,n):
-                counter += 1
-                for m in range(-l,l+1):
-                    f +=   h_radial(r,n,l) * sph_harm(m,l, phi,theta)
+        f +=   h_radial(r,2,0) * sph_harm(m,l, phi,theta)
         f /= np.sqrt(float(counter)) 
+        return f
+
+
+    def psi01d(self,r):
+        """ return custom function in 1d in the hydrogen atom orbital basis"""
+        h_radial = lambda r,n,l: (2/n)**(3/2)*np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))*(2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
+        f = 0.0
+        f +=   h_radial(r,3,1)
+        f /= np.sqrt(float(1.0)) 
         return f
 
 
@@ -436,7 +440,7 @@ if __name__ == "__main__":
 
     params['nlobatto'] = 40
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 100.0
+    params['binwidth'] = 100
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
@@ -450,7 +454,7 @@ if __name__ == "__main__":
 
     """====initial state====""" 
     params['ini_state'] = "grid_1d_rad" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
-    params['ini_state_quad'] = ("Gauss-Laguerre",100) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state_quad'] = ("Gauss-Laguerre",30) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
 
@@ -468,7 +472,7 @@ if __name__ == "__main__":
 
 
     hydrogen = propagate()
-    print(hydrogen.gen_psi0(params,test=True)) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
+    print(hydrogen.gen_psi0(params)) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
     #hmat = hydrogen.prop_wf(params)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
