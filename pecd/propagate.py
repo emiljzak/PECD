@@ -447,18 +447,18 @@ class propagate(radbas,mapping):
             print(fmax)
             print("RMSD relative to maximum function value = " + str(rmsd / fmax * 100)+" %")"""
             exit()
-        """#save function in wf0grid.txt
-        fl_out = open( params['ini_state_file_grid'],'w')
-        for i in range(len(nodes)):
+            """#save function in wf0grid.txt
+            fl_out = open( params['ini_state_file_grid'],'w')
+            for i in range(len(nodes)):
             fl_out.write("%6.3f"%float(nodes[i][0])+"  %6.3f"%float(nodes[i][1])+"  %6.3f"%float(nodes[i][2])+" %6.3f"%self.gen_test_hydrogen_wf(nodes[i][0],nodes[i][1], nodes[i][2])+"\n")
 
 
-        # readf= function on a grid from file
-        fl = open(params['ini_state_file_grid'],'r')
-        iniwf = []
-        for line in fl:
-            words = line.split()
-            # columns: l, m, i, n, coef
+            # readf= function on a grid from file
+            fl = open(params['ini_state_file_grid'],'r')
+            iniwf = []
+            for line in fl:
+                words = line.split()
+                # columns: l, m, i, n, coef
 
             r = float(words[0])
             theta = float(words[1])
@@ -469,9 +469,110 @@ class propagate(radbas,mapping):
 
             input: complex wavefunction on r,theta,phi grid
             return: set of coefficients in l,m,i,n basis
-            
+             """
+
+        elif params['ini_state'] == "grid_3d":  
+            print("generating initial wavefunction by projection of a given function onto our basis \n")
+            print("3D spherical+radial coordinates\n")
+          
+            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray, Nbas = mymap.gen_map()
+            #l,m,i,n
+
+            myscheme = quadpy.u3.schemes["lebedev_025"]()
+
+            #generate requested quadrature
+            if params['ini_state_quad'][0] == "Gauss-Laguerre":
+                Nquad = params['ini_state_quad'][1]
+                x,w = roots_genlaguerre(Nquad ,1)
+                alpha = 1 #parameter of the G-Lag quadrature
+                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+            elif params['ini_state_quad'][0] == "Gauss-Hermite":
+                Nquad = params['ini_state_quad'][1]
+                x,w = roots_hermite(Nquad)
+                inv_weight_func = lambda r: np.exp(r**2)
+
+
+            #generate gauss-Lobatto global grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            nlobatto = params['nlobatto']
+            nbins = params['nbins']
+            rgrid  = rbas.r_grid()
+            #generate Gauss-Lobatto quadrature
+            xlobatto=np.zeros(nlobatto)
+            wlobatto=np.zeros(nlobatto)
+            xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+            wlobatto=np.array(wlobatto)
+            xlobatto=np.array(xlobatto) # convert back to np arrays
 
             """
+            Symbols: 
+                    theta_phi[0] = theta in [0,pi]
+                    theta_phi[1] = phi  in [-pi,pi]
+                    sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+            """
+
+            for elem in maparray:
+                coeff = 0.0 + 0.0j
+               
+                coefftemp = lambda r: myscheme.integrate_spherical( lambda theta_phi: np.conjugate(sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0])) * self.psi03d(r,theta_phi[0],theta_phi[1]+np.pi)  )
+
+                for k in range(Nquad):
+                    coeff += w[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * coefftemp(x[k]) * inv_weight_func(x[k])
+                    
+
+                print("%5d"%float(elem[0])+"  %5d"%float(elem[1])+"  %5d"%float(elem[2])+"  %5d"%float(elem[3])+ '%10.5f %10.5fi' % (coeff.real, coeff.imag))
+                psi0_mat.append([ elem[0], elem[1], elem[2], elem[3], coeff ])
+
+
+            #plot the test function and the projected function
+            
+
+            #spherical part
+            xr = np.arange(0, 1, 0.01)
+            theta = 2 * np.pi * xr
+            phi0 = np.pi/4 #at a fixed phi value
+            r0 = 1.0
+
+            y = np.zeros(len(theta),dtype=complex)
+            psi0_mat = np.asarray(psi0_mat)
+            counter = 0
+            for elem in maparray:
+                y[:] += psi0_mat[counter,4] * sph_harm(elem[1], elem[0],  phi0, theta) * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
+                counter +=1
+            
+            ax = plt.subplot(111, projection='polar')
+            ax.plot(theta, np.abs(y)/max(np.abs(y)), 'r+', label="projected wf",linewidth=3)
+            ax.plot(theta, np.abs(self.psi03d(r0,theta, phi0) )/max(np.abs(self.psi03d(r0,theta, phi0))), label="original wf")
+            ax.set_rmax(1)
+            ax.set_rticks([0.5, 1])  # Less radial ticks
+            ax.grid(True)
+            plt.legend()        
+            ax.set_title("Comparison of original and projected spherical funcitons", va='bottom')
+            plt.show()
+
+            #radial part
+            r = np.linspace(0.01,100.0,1000,True,dtype=float)
+            y = np.zeros(len(r),dtype=complex)
+
+            counter = 0
+            for elem in maparray:
+                y[:] +=   psi0_mat[counter,4] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, phi0)
+
+                counter +=1
+            y /= np.sqrt(np.sum(psi0_mat[:,4] * psi0_mat[:,4]))
+
+
+
+            plt.xlabel('r/a.u.')
+            plt.ylabel('orbitals')
+    
+            plt.plot(r, r * np.abs(y)/max(np.abs(y)), 'r+',label="projected wf" ) 
+            plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(self.psi03d(r,phi0, phi0))) ) 
+            plt.legend()     
+            plt.show()   
+
+           
         return psi0_mat
 
 
@@ -505,6 +606,18 @@ class propagate(radbas,mapping):
         f = 0.0
         f +=  1/(np.cos(theta)**2-2.0)#fsph(theta,phi,2,2)
         f /= np.sqrt(float(1.0)) 
+        return f
+
+
+    def psi03d(self,r,theta,phi):
+        """ return custom function in 2d in spherical coordintates"""
+        fsph = lambda theta,phi,l,m: sph_harm(m,l,phi,theta)
+        Rnl = lambda r,n,l: (2/n)**(3/2)*np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))*(2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
+        f = 0.0
+        f +=  Rnl(r,2,1) * fsph(theta,phi,1,0) #1/(r * np.cos(theta)**2+2.0)
+        # 2p0 orbital: Rnl(r,2,1) * fsph(theta,phi,1,0)
+        f /= np.sqrt(float(1.0)) 
+
         return f
 
 
@@ -621,13 +734,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 2
-    params['nbins'] = 1 #bug when nbins > nlobatto  
+    params['nlobatto'] = 20
+    params['nbins'] = 2 #bug when nbins > nlobatto  
     params['binwidth'] = 25
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 2
+    params['lmax'] = 1
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
@@ -640,7 +753,7 @@ if __name__ == "__main__":
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
 
     """====initial state====""" 
-    params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
+    params['ini_state'] = "grid_3d" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
     params['ini_state_quad'] = ("Gauss-Laguerre",30) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
@@ -660,7 +773,7 @@ if __name__ == "__main__":
 
     hydrogen = propagate()
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
-    hmat = hydrogen.prop_wf(params,psi0)
+    #hmat = hydrogen.prop_wf(params,psi0)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
 
