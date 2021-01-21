@@ -5,6 +5,8 @@
 #
 import numpy as np
 import quadpy
+from sympy.physics.wigner import gaunt
+from sympy import *
 from scipy.special import sph_harm
 from basis import angbas,radbas
 from field import Field
@@ -78,7 +80,7 @@ class hmat():
     
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
-        hmat = self.calc_potmat() + self.calc_keomat() + self.calc_intmat()
+        hmat = self.calc_potmat() + self.calc_keomat() #+ self.calc_intmat()
 
         print("Hamiltonian Matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
@@ -436,40 +438,73 @@ class hmat():
             w.insert(0, (S(2)/(n*(n-1))).n(n_digits))
             w.append((S(2)/(n*(n-1))).n(n_digits))
             return xi, w
+    """
+    def gen_gaunt(self,maparray):
+
+        lmin = min(maparray[:,0])
+        lmax = max(maparray[:,0])
+        Mmin = min(maparray[:,1])
+        Mmax = max(maparray[:,1])
+
+        gaunt_size = ( 2 * (lmax - lmin) + 1 ) * (2 * (Mmax - Mmin) + 1) 
+
+        gaunt_coefs = np.zeros((gaunt_size,gaunt_size,3)) # ordering -1,0,1
+
+        lindex = [l for l in range(lmin,lmax+1)]
+        mindex = [m for m in range(Mmin,Mmax+1)]
+
+        for il1,l1 in enumerate(lindex):
+            for im1,m1 in range(-l,l+1):
 
 
+                        for sigma in range(-1,2):
+                           gaunt_coefs() N(gaunt(l1,1,l2,m1,sigma,m2))
 
-    def calc_intmat(self):  
+
+        return gaunt_coefs
+        """
+    def calc_intmat(self,time,intmat):  
         """calculate full interaction matrix"""
-        lmax = self.params['lmax']
-        lmin = self.params['lmin']
         Nbas = self.params['Nbas']
-        scheme = self.params['scheme']
-        int_rep_type = self.params['int_rep_type']
 
         """Load electric field at time t """
-        Elfield = Field(self.params)
-        Fvec = Elfield.gen_field()
-        print("Electric field vector")
-        print(Fvec)
+        #Elfield = Field(self.params)
+        #Fvec = Elfield.gen_field()
 
-        intmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
+        #print("Electric field vector")
+        #print(Fvec)
+
+        field = 0.01 *  np.array([np.cos(time)+1j*np.sin(time),-(np.cos(time)-1j * np.sin(time)),0])
+        #field = np.array([1,1,1])
+
+        """ keep separate methods for cartesian and spherical tensor: to speed up by avoiding ifs"""
 
         """ Hint(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
         """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
 
+        T = np.zeros(3)
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+
             for j in range(i,Nbas):
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                    intmat[i,j] = rin * self.calc_intmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],scheme,Fvec,int_rep_type)
+
+                    T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
+                    T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
+                    T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
+
+                    intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T)  
+
+        intmat += np.conjugate(intmat.T)
 
         print("Interaction matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
             print(intmat)
 
         return intmat
+
+
 
 
     def calc_intmatelem(self,l1,m1,l2,m2,scheme,field,rep_type):
