@@ -474,8 +474,9 @@ class hmat():
         #print("Electric field vector")
         #print(Fvec)
 
-        field = 0.01 *  np.array([np.cos(time)+1j*np.sin(time),-(np.cos(time)-1j * np.sin(time)),0])
+        field =  200.0 *  np.array([np.cos(time)+1j*np.sin(time),-(np.cos(time)-1j * np.sin(time)),0])
         #field = np.array([1,1,1])
+        #field =  200.0 *  np.array([0,0,np.sin(time)])
 
         """ keep separate methods for cartesian and spherical tensor: to speed up by avoiding ifs"""
 
