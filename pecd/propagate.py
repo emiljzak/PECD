@@ -86,10 +86,11 @@ class propagate(radbas,mapping):
             #for i in range(Nbas):
             #    hdiag[i,i] += i
 
-            hdiag[1,1] = 1.0
-            hdiag[3,3] = 1.0
-            hdiag[5,5] = 1.0
-            hdiag[7,7] = 1.0
+            hdiag[1,1] = 0.0
+            hdiag[2,2] = 0.0
+            hdiag[3,3] = 0.0
+            #hdiag[5,5] = 1.0
+            #hdiag[7,7] = 1.0
 
             #print(type(maparray))
             #print(maparray)
@@ -156,7 +157,7 @@ class propagate(radbas,mapping):
 
                 #if requested: method for saving the wavepacket: switch it into a method of psi class?
            
-                fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%item for item in psi])+"\n")
+                fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
 
                 """
                 fname.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(Psi[i].real)+'{:16.8e}'.format(Psi[i].imag) for i in range(0,Ntotal))+\
@@ -270,11 +271,9 @@ class propagate(radbas,mapping):
 
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
-            psi0_mat.append([0,0,0,0,0.0+0.0j])
-            psi0_mat.append([1,1,0,1,1.0+0.0j])
-            psi0_mat.append([1,1,0,0,1.0+0.0j])
-            psi0_mat.append([1,-1,0,1,1.0+0.0j])
-            psi0_mat.append([1,-1,0,0,1.0+0.0j])
+            psi0_mat.append([0,0,0,0,1.0+0.0j])
+
+
 
             print("initial wavefunction:")
             print(psi0_mat)
@@ -622,13 +621,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 3
+    params['nlobatto'] = 2
     params['nbins'] = 1 #bug when nbins > nlobatto  
     params['binwidth'] = 25
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 2
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
