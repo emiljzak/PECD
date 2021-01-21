@@ -8,6 +8,7 @@ import sys
 import matelem
 import timeit
 import quadpy
+
 from basis import radbas
 from matelem import mapping
 from scipy.linalg import expm
@@ -81,7 +82,14 @@ class propagate(radbas,mapping):
             fname=open(params['wavepacket_file'],'w')
             """Diagonal matrix for testing TDSE solver"""
             hdiag = np.zeros((Nbas, Nbas), float)
-            np.fill_diagonal(hdiag, 1.0)
+            np.fill_diagonal(hdiag, 0.0)
+            #for i in range(Nbas):
+            #    hdiag[i,i] += i
+
+            hdiag[1,1] = 1.0
+            hdiag[3,3] = 1.0
+            hdiag[5,5] = 1.0
+            hdiag[7,7] = 1.0
 
             #print(type(maparray))
             #print(maparray)
@@ -96,12 +104,16 @@ class propagate(radbas,mapping):
             
             
             wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing wavepacket coefficients in order given by the mapping function
+            """ Initialize the interaction matrix """
+            intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
+
 
             #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
             #if requested: 
             r = np.linspace(0.01,100.0,1000,True,dtype=float)
+            y = np.zeros(len(r),dtype=complex)
             #generate gauss-Lobatto global grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             nlobatto = params['nlobatto']
@@ -115,6 +127,11 @@ class propagate(radbas,mapping):
             xlobatto=np.array(xlobatto) # convert back to np arrays
 
 
+            """ initialize Hamiltonian """
+
+            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
+            evals, coeffs, hmat = hamiltonian.calc_hmat()
+
             for itime, t in enumerate(time):
                 print(t)
                 #hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
@@ -122,30 +139,42 @@ class propagate(radbas,mapping):
                 #energies, u = np.linalg.eigh(hmat)
                 #hdiag = np.dot(u.T,np.dot(hmat,u))
 
+                """ calculate interaction matrix at time t """
+                
+                vint = hamiltonian.calc_intmat(t,intmat) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
+                """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
+  
                 """matrix exponentiation"""
-                umat = expm( -1.0j * hdiag * dt )
+                umat = expm( -1.0j * (hdiag + vint) * dt )
                 """action of the evolution operator"""
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
 
-                #if requested: method for saving the wavepacket: switch it into a method of psi class?
 
+
+
+                #if requested: method for saving the wavepacket: switch it into a method of psi class?
+           
                 fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%item for item in psi])+"\n")
 
+                """
+                fname.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(Psi[i].real)+'{:16.8e}'.format(Psi[i].imag) for i in range(0,Ntotal))+\
+                    '{:10.3f}'.format(wfnorm)+"\n")
+                """
 
                 #plot the wavepacket, if requested
-            
-            y = np.zeros(len(r),dtype=complex)
-            for ielem,elem in enumerate(maparray):
-                y[:] +=   psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto)
-            #y /= np.sqrt(np.sum(psi[:] * psi[:]))
 
-            plt.xlabel('r/a.u.')
-            plt.ylabel('radial wavepacket')
-    
-            plt.plot(r, np.abs(y)) 
-            plt.show()   
+                for ielem,elem in enumerate(maparray):
+                    y[:] +=   psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto)
+
+                plt.xlabel('r/a.u.')
+                plt.ylabel('radial wavepacket')
+        
+                plt.plot(r, y.real) 
+                plt.plot(r, y.imag) 
+                #plt.show()   
+
             exit()
 
             for i in range(Nbas):
@@ -242,9 +271,10 @@ class propagate(radbas,mapping):
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
             psi0_mat.append([0,0,0,0,0.0+0.0j])
-            psi0_mat.append([0,0,0,1,1.0+0.0j])
-            psi0_mat.append([0,0,0,2,1.0+0.0j])
-            psi0_mat.append([0,0,0,3,1.0+0.0j])
+            psi0_mat.append([1,1,0,1,1.0+0.0j])
+            psi0_mat.append([1,1,0,0,1.0+0.0j])
+            psi0_mat.append([1,-1,0,1,1.0+0.0j])
+            psi0_mat.append([1,-1,0,0,1.0+0.0j])
 
             print("initial wavefunction:")
             print(psi0_mat)
@@ -592,13 +622,13 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 5
+    params['nlobatto'] = 3
     params['nbins'] = 1 #bug when nbins > nlobatto  
     params['binwidth'] = 25
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
     params['lmin'] = 0
-    params['lmax'] = 0
+    params['lmax'] = 1
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
