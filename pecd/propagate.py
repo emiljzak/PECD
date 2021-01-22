@@ -112,9 +112,25 @@ class propagate(radbas,mapping):
             #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
+
+
             #if requested: 
+            """ Plot preparation """
+
+            plotrate = 1
+
+            # radial plot grid
             r = np.linspace(0.01,100.0,1000,True,dtype=float)
             y = np.zeros(len(r),dtype=complex)
+            # polar plot grid
+            xr = np.arange(0, 1, 0.01)
+            gridtheta = 2 * np.pi * xr
+            phi0 = np.pi/4 #at a fixed phi value
+            theta0 = np.pi/4 #at a fixed phi value
+            r0 = 1.0
+
+
+
             #generate gauss-Lobatto global grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             nlobatto = params['nlobatto']
@@ -152,10 +168,7 @@ class propagate(radbas,mapping):
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
 
-
-
-
-                #if requested: method for saving the wavepacket: switch it into a method of psi class?
+                #if requested: method for saving the wavepacket: switch it into a method of psi class?             """save the wavepacket in a file"""
            
                 fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
 
@@ -164,32 +177,58 @@ class propagate(radbas,mapping):
                     '{:10.3f}'.format(wfnorm)+"\n")
                 """
 
+                """ Plotting section """
+
+                """ Radial wavepacket at fixed phi and theta """
                 #plot the wavepacket, if requested
+                """
+                if int(itime)%plotrate == 0:
+      
+                    for ielem,elem in enumerate(maparray):
+                        y +=    psi[ielem] *rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) #* sph_harm(elem[1], elem[0],  phi0, theta0)
 
-                for ielem,elem in enumerate(maparray):
-                    y[:] +=   psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto)
+                    plt.xlabel('r/a.u.')
+                    plt.ylabel('radial wavepacket')
+                    print(y)
+                    plt.plot(r, y.real) 
+                    plt.plot(r, y.imag) 
+                    plt.show()   
+                
+                """
 
-                plt.xlabel('r/a.u.')
-                plt.ylabel('radial wavepacket')
-        
-                plt.plot(r, y.real) 
-                plt.plot(r, y.imag) 
-                #plt.show()   
+                """ Populations of states """
+                
+                if int(itime)%plotrate == 0:
+                    for i in range(Nbas):
+                        #plt.plot(time,wavepacket[:,i].real)
+                        #plt.plot(time,wavepacket[:,i].imag)
+                        plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+')
+                    plt.xlabel('t/a.u.')
+                    plt.ylabel('populations')
+                    plt.legend()
+                    plt.show()
 
+                
+                
+                """ Polar plot or (r,theta) at fixed phi """
+                """
+                angwf = np.zeros(len(gridtheta),dtype=complex)
+
+                if int(itime)%plotrate == 0:
+                    for ielem,elem in enumerate(maparray):
+                        angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
+
+                    
+                    ax = plt.subplot(111, projection='polar')
+                    ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
+                    #ax.set_rmax(1)
+                    ax.set_rticks([0.5, 1])  # Less radial ticks
+                    ax.grid(True)
+                    plt.legend()        
+                    ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
+                    plt.show()
+                """
             exit()
-
-            for i in range(Nbas):
-                plt.plot(time,wavepacket[:,i].real)
-                plt.plot(time,wavepacket[:,i].imag)
-                plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2))
-            plt.legend()
-            #plt.show()
-
-            fname.close()
-            """save the wavepacket in a file"""
-
-
-                #self.Lanczos(psi0, t, self.mvp, 5, 5, 0.25, hmat)
 
 
     def plot_mat(self,mat):
@@ -272,7 +311,8 @@ class propagate(radbas,mapping):
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
             psi0_mat.append([0,0,0,0,1.0+0.0j])
-
+            #psi0_mat.append([0,0,0,1,1.0+0.0j])
+            #psi0_mat.append([0,0,0,2,1.0+0.0j])
 
 
             print("initial wavefunction:")
@@ -446,7 +486,7 @@ class propagate(radbas,mapping):
             fmax = max(np.abs(self.psi01d(r)))
             print(fmax)
             print("RMSD relative to maximum function value = " + str(rmsd / fmax * 100)+" %")"""
-            exit()
+
             """#save function in wf0grid.txt
             fl_out = open( params['ini_state_file_grid'],'w')
             for i in range(len(nodes)):
@@ -581,6 +621,7 @@ class propagate(radbas,mapping):
         Ylm = sph_harm(m,l, phi,theta)
         return Rnl, Ylm, Rnl * Ylm
 
+
     def psi0(self,r,theta,phi):
         """ return custom function in the hydrogen atom orbital basis. It can be multi-center molecular orbital"""
         h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
@@ -597,7 +638,6 @@ class propagate(radbas,mapping):
         f +=   h_radial(r,3,1)
         f /= np.sqrt(float(1.0)) 
         return f
-
 
 
     def psi02d(self,theta,phi):
@@ -714,7 +754,8 @@ class propagate(radbas,mapping):
             Psi1-=Hm[j, j]*q
             v, q=q, v
         return Psi
-    
+
+
     def mvp(self,H,q): #for now we are passing the precomuted Hamiltonian matrix into the MVP routine, which is inefficient.
         # I will have to code MVP without invoking the Hamiltonian matrix.
         return np.matmul(H,q)
@@ -734,8 +775,8 @@ if __name__ == "__main__":
     """====basis set parameters===="""
 
 
-    params['nlobatto'] = 20
-    params['nbins'] = 2 #bug when nbins > nlobatto  
+    params['nlobatto'] = 4
+    params['nbins'] = 1 #bug when nbins > nlobatto  
     params['binwidth'] = 25
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
 
@@ -753,7 +794,7 @@ if __name__ == "__main__":
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
 
     """====initial state====""" 
-    params['ini_state'] = "grid_3d" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
+    params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
     params['ini_state_quad'] = ("Gauss-Laguerre",30) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
@@ -773,7 +814,7 @@ if __name__ == "__main__":
 
     hydrogen = propagate()
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
-    #hmat = hydrogen.prop_wf(params,psi0)
+    hmat = hydrogen.prop_wf(params,psi0)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
 
