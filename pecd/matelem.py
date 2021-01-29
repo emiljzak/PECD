@@ -113,8 +113,6 @@ class hmat():
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
         return evals, eigvec, hmat
 
-
-
     def calc_keomat(self):
 
         nlobatto = self.params['nlobatto']
@@ -227,7 +225,6 @@ class hmat():
     
         return fpfpint
         
- 
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
         """
         rin: radial coordinate
@@ -434,18 +431,15 @@ class hmat():
             w.append((S(2)/(n*(n-1))).n(n_digits))
             return xi, w
 
-    def calc_intmat(self,time,intmat):  
+    def calc_intmat(self,time,intmat,field):  
         """calculate full interaction matrix"""
         Nbas = self.params['Nbas']
 
-        """Load electric field at time t """
-        #Elfield = Field(self.params)
-        #Fvec = Elfield.gen_field()
-
         #print("Electric field vector")
         #print(Fvec)
+        #field: (E_1, E_-1, E_0) in spherical tensor form
 
-        field =  200.0 *  np.array([np.cos(time)+1j*np.sin(time),-(np.cos(time)-1j * np.sin(time)),0])
+        #field =  200.0 *  np.array([np.cos(time)-1j*np.sin(time),-(np.cos(time)+1j * np.sin(time)),0]) #L-CPL
         #field = np.array([1,1,1])
         #field =  200.0 *  np.array([0,0,np.sin(time)])
 
@@ -461,10 +455,10 @@ class hmat():
 
             for j in range(i,Nbas):
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                    T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
+                    T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
+                    T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
 
-                    T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
-                    T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
-                    T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
 
                     intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T)  
 
