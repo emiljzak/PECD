@@ -73,14 +73,13 @@ class hmat():
         self.rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
 
     def calc_hmat(self):
-        """ calculate full Hamiltonian matrix """
+        """ calculate static field-free Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
         #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
     
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
-
-        hmat = self.calc_potmat() + self.calc_keomat() #+ self.calc_intmat()
+        hmat = self.calc_potmat() + self.calc_keomat() 
 
         print("Hamiltonian Matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
@@ -90,12 +89,11 @@ class hmat():
 
         eval /=1.0
 
-
+        """ Exact energies of hydrogen atom """
         evalhydrogen = np.zeros((self.params['Nbas']),dtype=float)
         for i in range(1,self.params['Nbas']+1):
             evalhydrogen[i-1] = - 1./(2.0 * float(i **2))
 
-        #evals = np.column_stack((eval-eval[0],evalhydrogen-evalhydrogen[0]))
         evals = np.column_stack((eval,evalhydrogen))
 
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=40):
@@ -128,10 +126,6 @@ class hmat():
         x,w=self.gauss_lobatto(nlobatto,14)
         x=np.array(x)
         w=np.array(w)
-        print("sum of weights")
-        print(sum(w[:]))
-
-
 
         """calculate full keo matrix"""
         keomat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
@@ -143,7 +137,7 @@ class hmat():
             for j in range(Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
-        print("KEO matrix")
+        #print("KEO matrix")
         #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
         #    print(keomat)
         return  keomat
@@ -208,6 +202,12 @@ class hmat():
             else:
                 return 0.0
 
+    def KEO_matel_ang(self,i1,n1,l,rgrid):
+        """Calculate the anglar momentum part of the KEO"""
+        """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
+        #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
+        return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
+
     def KEO_matel_fpfp(self,i,n1,n2,x,w):
         "Calculate int_r_i^r_i+1 f'(r)f'(r) dr in the radial part of the KEO"
         # f'(r) functions from different bins are orthogonal
@@ -227,12 +227,6 @@ class hmat():
     
         return fpfpint
         
-    def KEO_matel_ang(self,i1,n1,l,rgrid):
-        """Calculate the anglar momentum part of the KEO"""
-        """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
-        #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
-        return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
-
  
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
         """
@@ -317,7 +311,8 @@ class hmat():
     def pot_hydrogen(self,r,theta,phi):
         """test H-atom potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
-        return -1./r
+        alpha = 0.005
+        return -1./np.sqrt(r**2+alpha**2)
 
     def calc_potmat(self):  
         """calculate full potential matrix"""
@@ -338,15 +333,15 @@ class hmat():
         """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
 
         for i in range(Nbas):
-            ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+            #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
             for j in range(Nbas):
-                jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
 
-        print("Potential matrix")
+        #print("Potential matrix")
         #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
         #    print(potmat)
 
@@ -362,7 +357,7 @@ class hmat():
                 theta_phi[1] = phi  in [-pi,pi]
                 sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
         """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_hydrogen(rin,theta_phi[0],theta_phi[1]+np.pi)) #* rin**2 #self.pot_ocs_pc(rin,theta_phi[0])) #* self.pot_test(rin, theta_phi[0], theta_phi[1]+np.pi) )
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_hydrogen(rin,theta_phi[0],theta_phi[1]+np.pi)) 
 
         return val
    
@@ -438,31 +433,7 @@ class hmat():
             w.insert(0, (S(2)/(n*(n-1))).n(n_digits))
             w.append((S(2)/(n*(n-1))).n(n_digits))
             return xi, w
-    """
-    def gen_gaunt(self,maparray):
 
-        lmin = min(maparray[:,0])
-        lmax = max(maparray[:,0])
-        Mmin = min(maparray[:,1])
-        Mmax = max(maparray[:,1])
-
-        gaunt_size = ( 2 * (lmax - lmin) + 1 ) * (2 * (Mmax - Mmin) + 1) 
-
-        gaunt_coefs = np.zeros((gaunt_size,gaunt_size,3)) # ordering -1,0,1
-
-        lindex = [l for l in range(lmin,lmax+1)]
-        mindex = [m for m in range(Mmin,Mmax+1)]
-
-        for il1,l1 in enumerate(lindex):
-            for im1,m1 in range(-l,l+1):
-
-
-                        for sigma in range(-1,2):
-                           gaunt_coefs() N(gaunt(l1,1,l2,m1,sigma,m2))
-
-
-        return gaunt_coefs
-        """
     def calc_intmat(self,time,intmat):  
         """calculate full interaction matrix"""
         Nbas = self.params['Nbas']
@@ -504,9 +475,6 @@ class hmat():
             print(intmat)
 
         return intmat
-
-
-
 
     def calc_intmatelem(self,l1,m1,l2,m2,scheme,field,rep_type):
             """calculate single element of the interaction matrix"""
