@@ -46,108 +46,116 @@ class propagate(radbas,mapping):
         """
 
         if params['method'] == 'static':
-            #we need to create rgrid only once, i.e. static grid
+
+            print("Setting up mixed DVR-Spectral basis set")
+            print("\n")
+
+            print("    1) Generating radial grid")
+            print("\n")
+            #we need to create rgrid only once, i.e. we use a static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
+            nlobatto = params['nlobatto']
             #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
+
+
+            print("    2) Generating mapping of basis set indices")
+            print("\n")
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
 
-            #print(type(maparray))
-            #print(maparray)
 
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             evals, coeffs, hmat = hamiltonian.calc_hmat()
             #print(type(coeffs))
             #print(np.shape(coeffs))
-            #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+            rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
             return hmat
 
 
         elif params['method'] == 'dynamic_direct':
 
+            """ To do: 1) cleanup; 2) better plotting and saving utilities; 3) fix bug in KEO -> static problem; 4) run orbital + CPL  """
+
             print("Solving TDSE with a direct exponentiation method")
-            #we need to create rgrid only once, i.e. static grid
+
+
+            print("Setting up mixed DVR-Spectral basis set")
+            print("\n")
+
+            print("    1) Generating radial grid")
+            print("\n")
+            #we need to create rgrid only once, i.e. we use a static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
             rgrid = rbas.r_grid()
+            nlobatto = params['nlobatto']
             #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
+
+
+            print("    2) Generating mapping of basis set indices")
+            print("\n")
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
 
+            print("Setting up propagation parameters")
+            print("\n")
 
-            fname=open(params['wavepacket_file'],'w')
-            """Diagonal matrix for testing TDSE solver"""
-            hdiag = np.zeros((Nbas, Nbas), float)
-            np.fill_diagonal(hdiag, 0.0)
-            #for i in range(Nbas):
-            #    hdiag[i,i] += i
 
-            hdiag[1,1] = 0.0
-            hdiag[2,2] = 0.0
-            hdiag[3,3] = 0.0
-            #hdiag[5,5] = 1.0
-            #hdiag[7,7] = 1.0
-
-            #print(type(maparray))
-            #print(maparray)
-
+            print("    1) time-grid")
+            print("\n")
             time = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
-
             dt = params['dt']
-            psi = np.zeros(Nbas,dtype=complex)
+
+            print("    2) initial wavefunction")
+            print("\n")
+            psi = np.zeros(Nbas,dtype=complex) #spectral representation of the wavefunciton
             #HERE convert psi0 to an instance of the wavefunction class
             for ielem,elem in enumerate(psi0):
                 psi[ielem] = elem[4]
-            
-            
-            wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing wavepacket coefficients in order given by the mapping function
-            """ Initialize the interaction matrix """
-            intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
-
-
             #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
+            print("    1) wavepacket parameters")
+            print("\n")
+            fname=open(params['wavepacket_file'],'w')
+            wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing the wavepacket coefficients in order given by the mapping function
 
 
-            #if requested: 
-            """ Plot preparation """
+            if params['plot_wf']  == True:     
+                """ Initialize plots """   
+                plotrate = 1
 
-            plotrate = 1
+                # radial plot grid
+                r = np.linspace(0.01,100.0,1000,True,dtype=float)
+                y = np.zeros(len(r),dtype=complex)
+                # polar plot grid
+                xr = np.arange(0, 1, 0.01)
+                gridtheta = 2 * np.pi * xr
+                phi0 = np.pi/4 #at a fixed phi value
+                theta0 = np.pi/4 #at a fixed phi value
+                r0 = 1.0
 
-            # radial plot grid
-            r = np.linspace(0.01,100.0,1000,True,dtype=float)
-            y = np.zeros(len(r),dtype=complex)
-            # polar plot grid
-            xr = np.arange(0, 1, 0.01)
-            gridtheta = 2 * np.pi * xr
-            phi0 = np.pi/4 #at a fixed phi value
-            theta0 = np.pi/4 #at a fixed phi value
-            r0 = 1.0
+                #generate Gauss-Lobatto quadrature
+                xlobatto=np.zeros(nlobatto)
+                wlobatto=np.zeros(nlobatto)
+                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+                wlobatto=np.array(wlobatto)
+                xlobatto=np.array(xlobatto) # convert back to np arrays
 
-
-
-            #generate gauss-Lobatto global grid
-            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
-            nlobatto = params['nlobatto']
-            nbins = params['nbins']
-            rgrid  = rbas.r_grid()
-            #generate Gauss-Lobatto quadrature
-            xlobatto=np.zeros(nlobatto)
-            wlobatto=np.zeros(nlobatto)
-            xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
-            wlobatto=np.array(wlobatto)
-            xlobatto=np.array(xlobatto) # convert back to np arrays
-
+            """ Initialize the interaction matrix """
+            intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
 
             """ initialize Hamiltonian """
-
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             evals, coeffs, hmat = hamiltonian.calc_hmat()
+
+            """Diagonal H0 matrix for testing TDSE solver"""
+            #hmat= np.zeros((Nbas, Nbas), float)
+            #np.fill_diagonal(hmat, 0.0)
 
             for itime, t in enumerate(time):
                 print(t)
@@ -157,19 +165,17 @@ class propagate(radbas,mapping):
                 #hdiag = np.dot(u.T,np.dot(hmat,u))
 
                 """ calculate interaction matrix at time t """
-                
-                vint = hamiltonian.calc_intmat(t,intmat) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
-  
+                vint = hamiltonian.calc_intmat(t,intmat) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
+
                 """matrix exponentiation"""
-                umat = expm( -1.0j * (hdiag + vint) * dt )
+                umat = expm( -1.0j * (hmat + vint) * dt )
                 """action of the evolution operator"""
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
 
                 #if requested: method for saving the wavepacket: switch it into a method of psi class?             """save the wavepacket in a file"""
-           
                 fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
 
                 """
@@ -178,56 +184,53 @@ class propagate(radbas,mapping):
                 """
 
                 """ Plotting section """
+                if params['plot_wf']  == True:
 
-                """ Radial wavepacket at fixed phi and theta """
-                #plot the wavepacket, if requested
-                """
-                if int(itime)%plotrate == 0:
-      
-                    for ielem,elem in enumerate(maparray):
-                        y +=    psi[ielem] *rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) #* sph_harm(elem[1], elem[0],  phi0, theta0)
+                    """ 1) Radial wavepacket at fixed phi and theta """
+                    #plot the wavepacket, if requested
+                    """
+                    if int(itime)%plotrate == 0:
+        
+                        for ielem,elem in enumerate(maparray):
+                            y +=    psi[ielem] *rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) #* sph_harm(elem[1], elem[0],  phi0, theta0)
 
-                    plt.xlabel('r/a.u.')
-                    plt.ylabel('radial wavepacket')
-                    print(y)
-                    plt.plot(r, y.real) 
-                    plt.plot(r, y.imag) 
-                    plt.show()   
-                
-                """
+                        plt.xlabel('r/a.u.')
+                        plt.ylabel('radial wavepacket')
+                        print(y)
+                        plt.plot(r, y.real) 
+                        plt.plot(r, y.imag) 
+                        plt.show()   
+                    """
 
-                """ Populations of states """
-                
-                if int(itime)%plotrate == 0:
-                    for i in range(Nbas):
-                        #plt.plot(time,wavepacket[:,i].real)
-                        #plt.plot(time,wavepacket[:,i].imag)
-                        plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+')
-                    plt.xlabel('t/a.u.')
-                    plt.ylabel('populations')
-                    plt.legend()
-                    plt.show()
+                    """  2) Populations of states """       
+                    if int(itime)%plotrate == 0:
+                        for i in range(Nbas):
+                            #plt.plot(time,wavepacket[:,i].real)
+                            #plt.plot(time,wavepacket[:,i].imag)
+                            plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+')
+                        plt.xlabel('t/a.u.')
+                        plt.ylabel('populations')
+                        plt.legend()
+                        plt.show()
 
-                
-                
-                """ Polar plot or (r,theta) at fixed phi """
-                """
-                angwf = np.zeros(len(gridtheta),dtype=complex)
+                    """ 3) Polar plot or (r,theta) at fixed phi """
+                    """
+                    angwf = np.zeros(len(gridtheta),dtype=complex)
 
-                if int(itime)%plotrate == 0:
-                    for ielem,elem in enumerate(maparray):
-                        angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
+                    if int(itime)%plotrate == 0:
+                        for ielem,elem in enumerate(maparray):
+                            angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
 
-                    
-                    ax = plt.subplot(111, projection='polar')
-                    ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
-                    #ax.set_rmax(1)
-                    ax.set_rticks([0.5, 1])  # Less radial ticks
-                    ax.grid(True)
-                    plt.legend()        
-                    ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
-                    plt.show()
-                """
+                        
+                        ax = plt.subplot(111, projection='polar')
+                        ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
+                        #ax.set_rmax(1)
+                        ax.set_rticks([0.5, 1])  # Less radial ticks
+                        ax.grid(True)
+                        plt.legend()        
+                        ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
+                        plt.show()
+                    """
             exit()
 
 
@@ -766,32 +769,25 @@ if __name__ == "__main__":
 
 
     params = {}
-    """==== propagation parameters ===="""
-    params['t0'] = 0.0
-    params['tend'] = 0.0
-    params['dt'] = 0.01
-
     
     """====basis set parameters===="""
-
-
-    params['nlobatto'] = 4
+    params['nlobatto'] = 50
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 25
-    params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
-
+    params['binwidth'] = 200
+    params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 0
     
     """====runtime controls===="""
-    params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
+    params['method'] = "static" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
-    params['potential'] = "hydrogen"
-    params['scheme'] = "lebedev_025"
+    params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
+    params['scheme'] = "lebedev_025" #angular integration rule
     params['t0'] = 0.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
-    params['tmax'] = 10.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['tmax'] = 5.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
     params['dt'] = 0.2 #(a.u.) (1 a.u. = 2.41888 e-17 s)
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
+    params['plot_wf'] = True #decide if you want to plot the wavefunction during propagation
 
     """====initial state====""" 
     params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
@@ -817,7 +813,6 @@ if __name__ == "__main__":
     hmat = hydrogen.prop_wf(params,psi0)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
-
 
 
     #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
