@@ -200,13 +200,13 @@ class propagate(radbas,mapping):
                     if int(itime)%plotrate == 0:
         
                         for ielem,elem in enumerate(maparray):
-                            y +=    psi[ielem] *rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) #* sph_harm(elem[1], elem[0],  phi0, theta0)
+                            y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
 
                         plt.xlabel('r/a.u.')
                         plt.ylabel('radial wavepacket')
-                        print(y)
-                        plt.plot(r, y.real) 
-                        plt.plot(r, y.imag) 
+                        #plt.plot(r, y.real) 
+                        #plt.plot(r, y.imag) 
+                        plt.plot(r,r*np.abs(y))
                         plt.show()   
                     """
 
@@ -215,7 +215,7 @@ class propagate(radbas,mapping):
                         for i in range(Nbas):
                             #plt.plot(time,wavepacket[:,i].real)
                             #plt.plot(time,wavepacket[:,i].imag)
-                            plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+')
+                            plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
                         plt.xlabel('t/a.u.')
                         plt.ylabel('populations')
                         plt.legend()
@@ -793,8 +793,8 @@ if __name__ == "__main__":
     params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
     params['scheme'] = "lebedev_025" #angular integration rule
     params['t0'] = 0.0 
-    params['tmax'] = 500.0 
-    params['dt'] = 20.0 
+    params['tmax'] = 50.0 
+    params['dt'] = 2.0 
     time_units = "as"
 
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
@@ -810,19 +810,21 @@ if __name__ == "__main__":
     params['field_form'] = "analytic" #or numerical
     params['field_name'] = "LP" #RCPL, LCPL, ...
     params['field_env'] = "gaussian" #"static_uniform"
-    params['t0'] = 0.0 
-    params['tmax'] = 500.0 
-    params['dt'] = 20.0 
-    time_units = "as"
 
-    params['omega'] =  800.0 #nm
+    params['omega'] =  400.0 #nm
+    #convert to THz:
+    vellgt     =  2.99792458E+8 # m/s
+    params['omega']= 10**9 *  vellgt / params['omega'] #Hz
+    params['omega'] /= 4.13e16 
+    print(2*np.pi *params['omega']) #checked
+
     frequency_units = "nm" #we later convert all units to atomic units
     
-    params['E0'] = 3.51e8 #V/cm
+    params['E0'] = 3.51e9 #V/cm
     field_units = "V/cm"
 
-    params['sigma'] = 200.0 #as
-    params['tau0'] = 200.0 #as #centre of the pulse
+    params['sigma'] = 20.0 #as
+    params['tau0'] = 20.0 #as #centre of the pulse
 
 
     # convert time units to atomic units
@@ -835,9 +837,7 @@ if __name__ == "__main__":
 
     # convert electric field from different units to atomic units
     field_to_au = {"debye" : np.float64(0.393456),
-                    "V/cm" : np.float64(5.14220652e+11)}
-
-
+                    "V/cm" :  np.float64(1.0/(5.14220652e+9))}
 
     #unit conversion
     #params = const.convert_units(params)

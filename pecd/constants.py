@@ -12,7 +12,7 @@ freq_to_au = {"nm" : np.float64(0.057/800.0)}
 
 # convert electric field from different units to atomic units
 efield_to_au = {"debye" : np.float64(0.393456),
-                "V/cm" : np.float64(1.0/(5.14220652e+11))}
+                "V/cm" : np.float64(1.0/(5.14220652e+9))}
 
 
 # Planck constants in cm^-1*[time units]
