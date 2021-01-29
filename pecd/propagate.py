@@ -9,8 +9,12 @@ import matelem
 import timeit
 import quadpy
 
+from field import Field
 from basis import radbas
 from matelem import mapping
+
+import constants 
+
 from scipy.linalg import expm
 from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial,roots_hermite
 import matplotlib.pyplot as plt
@@ -103,8 +107,6 @@ class propagate(radbas,mapping):
 
             print("Setting up propagation parameters")
             print("\n")
-
-
             print("    1) time-grid")
             print("\n")
             time = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
@@ -157,6 +159,11 @@ class propagate(radbas,mapping):
             #hmat= np.zeros((Nbas, Nbas), float)
             #np.fill_diagonal(hmat, 0.0)
 
+            """ create field object """
+
+            Elfield = Field(params)
+            #Fvec = Elfield.gen_field()
+
             for itime, t in enumerate(time):
                 print(t)
                 #hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
@@ -166,7 +173,8 @@ class propagate(radbas,mapping):
 
                 """ calculate interaction matrix at time t """
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
-                vint = hamiltonian.calc_intmat(t,intmat) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
+
+                vint = hamiltonian.calc_intmat(t,intmat,Elfield.gen_field(t)) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
 
                 """matrix exponentiation"""
                 umat = expm( -1.0j * (hmat + vint) * dt )
@@ -595,7 +603,7 @@ class propagate(radbas,mapping):
             plt.show()
 
             #radial part
-            r = np.linspace(0.01,100.0,1000,True,dtype=float)
+            r = np.linspace(0.01,float(params['binwidth'] * params['nbins']),1000,True,dtype=float)
             y = np.zeros(len(r),dtype=complex)
 
             counter = 0
@@ -653,12 +661,13 @@ class propagate(radbas,mapping):
 
 
     def psi03d(self,r,theta,phi):
-        """ return custom function in 2d in spherical coordintates"""
+        """ return custom function in 3D"""
         fsph = lambda theta,phi,l,m: sph_harm(m,l,phi,theta)
         Rnl = lambda r,n,l: (2/n)**(3/2)*np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))*(2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         f = 0.0
-        f +=  Rnl(r,2,1) * fsph(theta,phi,1,0) #1/(r * np.cos(theta)**2+2.0)
+        f +=  Rnl(r,1,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
         # 2p0 orbital: Rnl(r,2,1) * fsph(theta,phi,1,0)
+        # 1s orbital:  Rnl(r,1,0) * fsph(theta,phi,0,0)
         f /= np.sqrt(float(1.0)) 
 
         return f
@@ -771,35 +780,83 @@ if __name__ == "__main__":
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 50
+    params['nlobatto'] = 3
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 200
+    params['binwidth'] = 40
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 0
+    params['lmax'] = 1
     
     """====runtime controls===="""
-    params['method'] = "static" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
+    params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
     params['scheme'] = "lebedev_025" #angular integration rule
-    params['t0'] = 0.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
-    params['tmax'] = 5.0 #(a.u.) (1 a.u. = 2.41888 e-17 s)
-    params['dt'] = 0.2 #(a.u.) (1 a.u. = 2.41888 e-17 s)
+    params['t0'] = 0.0 
+    params['tmax'] = 500.0 
+    params['dt'] = 20.0 
+    time_units = "as"
+
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
     params['plot_wf'] = True #decide if you want to plot the wavefunction during propagation
 
     """====initial state====""" 
-    params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
-    params['ini_state_quad'] = ("Gauss-Laguerre",30) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state'] = "grid_3d" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
+    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
 
     """====field controls===="""
-    params['field_type'] = "analytic" #or file
-    params['field'] = "static_uniform"
-    params['E0'] = 0.1
+    params['field_form'] = "analytic" #or numerical
+    params['field_name'] = "LP" #RCPL, LCPL, ...
+    params['field_env'] = "gaussian" #"static_uniform"
+    params['t0'] = 0.0 
+    params['tmax'] = 500.0 
+    params['dt'] = 20.0 
+    time_units = "as"
 
+    params['omega'] =  800.0 #nm
+    frequency_units = "nm" #we later convert all units to atomic units
+    
+    params['E0'] = 3.51e8 #V/cm
+    field_units = "V/cm"
+
+    params['sigma'] = 200.0 #as
+    params['tau0'] = 200.0 #as #centre of the pulse
+
+
+    # convert time units to atomic units
+    time_to_au = {"as" : np.float64(1.0/24.188)}
+    # 1a.u. (time) = 2.418 e-17s = 24.18 as
+
+    # convert frequency units to atomic units
+    freq_to_au = {"nm" : np.float64(0.057/800.0)}
+    # 1a.u. (time) = 2.418 e-17s = 24.18 as
+
+    # convert electric field from different units to atomic units
+    field_to_au = {"debye" : np.float64(0.393456),
+                    "V/cm" : np.float64(5.14220652e+11)}
+
+
+
+    #unit conversion
+    #params = const.convert_units(params)
+    time_to_au = time_to_au[time_units]
+    params['sigma'] *= time_to_au 
+    params['tau0'] *= time_to_au 
+    params['t0'] *= time_to_au 
+    params['tmax'] *= time_to_au 
+    params['dt'] *= time_to_au 
+
+    freq_to_au = freq_to_au[frequency_units]
+    params['omega'] *= freq_to_au 
+
+    field_to_au = field_to_au[field_units]
+    params['E0'] *= field_to_au 
+
+    # 1a.u. (time) = 2.418 e-17s = 24.18 as
+    #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
+   
     """ We have two options for calculating the potential matrix elements: 
     1) cartesian: we use cartesian elements of the dipole moment operator and the electric field. Lebedev quadratures are used to compute matrix elements
     2) spherical-tensor: sphereical tensor representation of the field and the dipole moment. The matrix elements are computed analytically with 3-j symbols.

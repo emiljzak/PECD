@@ -8,14 +8,19 @@ class Field():
 
     def __init__(self,params):
         self.params = params
+        #params['field_form'] = "analytic" #or numerical
+        #params['field_name'] = "LP" #RCPL, LCPL, ...
+        #params['envelope_name'] = "gaussian" #"static_uniform"
 
-    def gen_field(self):
+
+    def gen_field(self,time):
         """main program constructing the electric field"""
-        if self.params['field_type'] == 'analytic':
-            if self.params['field_env'] == 'gaussian':
-                fieldvec = [0.0 for i in range(3)]
-            elif self.params['field_env'] == 'static_uniform':
-                fieldvec = [0.0,0.0,self.params['E0']]
+        if self.params['field_form'] == 'analytic':
+            if self.params['field_name'] == 'LP':
+                if self.params['field_env'] == 'gaussian':
+                    fieldvec = [0.0 for i in range(3)]
+                    fieldvec =  self.params['E0'] * np.array([0.0,0.0,np.cos(self.params['omega']*time)]) #R-CPL
+        
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
 

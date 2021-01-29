@@ -382,9 +382,6 @@ class radbas():
            # plt.plot(r, h_radial(r,1,0))
         plt.show()     
 
-
-
-
 if __name__=="__main__":
 
     # equilibrium/reference coordinates
@@ -434,12 +431,6 @@ if __name__=="__main__":
     #rbas.plot_f(rmin = 0.0, rmax = 10.0, npoints = 10000)
     """ Test plot the chi-radial functions"""
     rbas.plot_chi(rmin = 0.0, rmax = 3.0, npoints = 1000)
-
-
-
-
-
-
 
 
 def matelem_keo( ivec, jvec, psi_i, dpsi_i, psi_j, dpsi_j, x1,x2,x3,  qgrid_ind):
