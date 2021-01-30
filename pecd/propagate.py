@@ -131,14 +131,14 @@ class propagate(radbas,mapping):
                 """ Initialize plots """   
                 plotrate = 1
 
-                # radial plot grid
-                r = np.linspace(0.01,100.0,1000,True,dtype=float)
+                # radial plot grid    
+                r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
                 y = np.zeros(len(r),dtype=complex)
                 # polar plot grid
                 xr = np.arange(0, 1, 0.01)
                 gridtheta = 2 * np.pi * xr
-                phi0 = np.pi/4 #at a fixed phi value
-                theta0 = np.pi/4 #at a fixed phi value
+                phi0 = 0.0 #np.pi/4 #at a fixed phi value
+                theta0 = 0.0#np.pi/4 #at a fixed phi value
                 r0 = 1.0
 
                 #generate Gauss-Lobatto quadrature
@@ -153,11 +153,11 @@ class propagate(radbas,mapping):
 
             """ initialize Hamiltonian """
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            evals, coeffs, hmat = hamiltonian.calc_hmat()
+            #evals, coeffs, hmat = hamiltonian.calc_hmat()
 
             """Diagonal H0 matrix for testing TDSE solver"""
-            #hmat= np.zeros((Nbas, Nbas), float)
-            #np.fill_diagonal(hmat, 0.0)
+            hmat= np.zeros((Nbas, Nbas), float)
+            np.fill_diagonal(hmat, 0.0)
 
             """ create field object """
 
@@ -196,7 +196,7 @@ class propagate(radbas,mapping):
 
                     """ 1) Radial wavepacket at fixed phi and theta """
                     #plot the wavepacket, if requested
-                    """
+                    
                     if int(itime)%plotrate == 0:
         
                         for ielem,elem in enumerate(maparray):
@@ -206,12 +206,14 @@ class propagate(radbas,mapping):
                         plt.ylabel('radial wavepacket')
                         #plt.plot(r, y.real) 
                         #plt.plot(r, y.imag) 
-                        plt.plot(r,r*np.abs(y))
+                        plt.plot(r,r*np.abs(y),label="time = "+str(t/time_to_au)+ " as")
+                        #plt.plot(time[0:itime],np.cos(2.0*np.pi * params['omega']*time[0:itime]) ,label="time = "+str(t))
+                        plt.legend()
                         plt.show()   
-                    """
+                    
 
                     """  2) Populations of states """       
-                    if int(itime)%plotrate == 0:
+                    """if int(itime)%plotrate == 0:
                         for i in range(Nbas):
                             #plt.plot(time,wavepacket[:,i].real)
                             #plt.plot(time,wavepacket[:,i].imag)
@@ -220,7 +222,7 @@ class propagate(radbas,mapping):
                         plt.ylabel('populations')
                         plt.legend()
                         plt.show()
-
+                    """
                     """ 3) Polar plot or (r,theta) at fixed phi """
                     """
                     angwf = np.zeros(len(gridtheta),dtype=complex)
@@ -665,7 +667,7 @@ class propagate(radbas,mapping):
         fsph = lambda theta,phi,l,m: sph_harm(m,l,phi,theta)
         Rnl = lambda r,n,l: (2/n)**(3/2)*np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))*(2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         f = 0.0
-        f +=  Rnl(r,1,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
+        f +=  Rnl(r,2,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
         # 2p0 orbital: Rnl(r,2,1) * fsph(theta,phi,1,0)
         # 1s orbital:  Rnl(r,1,0) * fsph(theta,phi,0,0)
         f /= np.sqrt(float(1.0)) 
@@ -780,9 +782,9 @@ if __name__ == "__main__":
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 3
+    params['nlobatto'] = 50
     params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 40
+    params['binwidth'] = 200
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 1
@@ -791,10 +793,10 @@ if __name__ == "__main__":
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
-    params['scheme'] = "lebedev_025" #angular integration rule
+    params['scheme'] = "lebedev_019" #angular integration rule
     params['t0'] = 0.0 
-    params['tmax'] = 50.0 
-    params['dt'] = 2.0 
+    params['tmax'] = 600.0 
+    params['dt'] = 10.0 
     time_units = "as"
 
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
@@ -802,7 +804,7 @@ if __name__ == "__main__":
 
     """====initial state====""" 
     params['ini_state'] = "grid_3d" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
-    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state_quad'] = ("Gauss-Laguerre",80) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
 
@@ -811,16 +813,20 @@ if __name__ == "__main__":
     params['field_name'] = "LP" #RCPL, LCPL, ...
     params['field_env'] = "gaussian" #"static_uniform"
 
-    params['omega'] =  400.0 #nm
+    params['omega'] =  200.0 #nm
     #convert to THz:
     vellgt     =  2.99792458E+8 # m/s
     params['omega']= 10**9 *  vellgt / params['omega'] #Hz
-    params['omega'] /= 4.13e16 
-    print(2*np.pi *params['omega']) #checked
+
+    print("Electric field carrier frequency = "+str(params['omega']*1.0e-12)+" THz")
+    print("Electric field oscillation period = "+str(1.0e15/params['omega'])+" fs")
+ 
+    params['omega'] /= 4.13e16 #Hz to a.u.
+
 
     frequency_units = "nm" #we later convert all units to atomic units
     
-    params['E0'] = 3.51e9 #V/cm
+    params['E0'] = 3.51e8 #V/cm
     field_units = "V/cm"
 
     params['sigma'] = 20.0 #as
@@ -848,8 +854,8 @@ if __name__ == "__main__":
     params['tmax'] *= time_to_au 
     params['dt'] *= time_to_au 
 
-    freq_to_au = freq_to_au[frequency_units]
-    params['omega'] *= freq_to_au 
+    #freq_to_au = freq_to_au[frequency_units]
+    #params['omega'] *= freq_to_au 
 
     field_to_au = field_to_au[field_units]
     params['E0'] *= field_to_au 

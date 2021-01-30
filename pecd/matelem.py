@@ -464,9 +464,9 @@ class hmat():
 
         intmat += np.conjugate(intmat.T)
 
-        print("Interaction matrix")
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
-            print(intmat)
+        #print("Interaction matrix")
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #    print(intmat)
 
         return intmat
 
