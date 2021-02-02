@@ -20,6 +20,11 @@ class Field():
                 if self.params['field_env'] == 'gaussian':
                     fieldvec = [0.0 for i in range(3)]
                     fieldvec =  self.params['E0'] * np.array([0.0,0.0,np.cos(self.params['omega']*time)]) #R-CPL
+
+            if self.params['field_name'] == 'LCPL':
+                if self.params['field_env'] == 'gaussian':
+                    fieldvec = [0.0 for i in range(3)]
+                    fieldvec =  self.params['E0'] * np.array([np.cos(self.params['omega']*time) - 1j * np.sin(self.params['omega']*time),-(np.cos(self.params['omega']*time) + 1j * np.sin(self.params['omega']*time)),0.0]) #R-CPL
         
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
