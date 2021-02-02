@@ -78,11 +78,11 @@ class hmat():
 
         #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
     
-        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
+        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
         hmat = self.calc_potmat() + self.calc_keomat() 
 
         print("Hamiltonian Matrix")
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
         print("Eigenvalues"+'\n')
         eval, eigvec = np.linalg.eigh(hmat,UPLO='U')
@@ -126,7 +126,7 @@ class hmat():
         w=np.array(w)
 
         """calculate full keo matrix"""
-        keomat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
+        keomat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
 
         """ K(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
@@ -136,7 +136,7 @@ class hmat():
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         #print("KEO matrix")
-        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
         #    print(keomat)
         return  keomat
 
@@ -308,8 +308,9 @@ class hmat():
     def pot_hydrogen(self,r,theta,phi):
         """test H-atom potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
-        alpha = 0.005
+        alpha = 0.05
         return -1./np.sqrt(r**2+alpha**2)
+        #return -1.0/r
 
     def calc_potmat(self):  
         """calculate full potential matrix"""
@@ -323,7 +324,7 @@ class hmat():
             for m in range(0,l+1):
                 anglist.append([l,m])"""
 
-        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
+        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
 
         """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
@@ -339,7 +340,7 @@ class hmat():
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
 
         #print("Potential matrix")
-        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
         #    print(potmat)
 
         return potmat
@@ -465,7 +466,7 @@ class hmat():
         intmat += np.conjugate(intmat.T)
 
         #print("Interaction matrix")
-        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
         #    print(intmat)
 
         return intmat

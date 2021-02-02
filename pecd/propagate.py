@@ -101,6 +101,7 @@ class propagate(radbas,mapping):
             print("    2) Generating mapping of basis set indices")
             print("\n")
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            print("Number of bins = " + str(params['nbins']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
@@ -116,8 +117,11 @@ class propagate(radbas,mapping):
             print("\n")
             psi = np.zeros(Nbas,dtype=complex) #spectral representation of the wavefunciton
             #HERE convert psi0 to an instance of the wavefunction class
-            for ielem,elem in enumerate(psi0):
-                psi[ielem] = elem[4]
+
+            for ielem_map,elem_map in enumerate(maparray):
+                for ielem_wf0,elem_wf0 in enumerate(psi0):
+                    if elem_map[0] == elem_wf0[0] and elem_map[1] == elem_wf0[1] and elem_map[2] == elem_wf0[2] and elem_map[3] == elem_wf0[3]:
+                        psi[ielem_map] = elem_wf0[4]
             #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
@@ -153,11 +157,11 @@ class propagate(radbas,mapping):
 
             """ initialize Hamiltonian """
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            #evals, coeffs, hmat = hamiltonian.calc_hmat()
+            evals, coeffs, hmat = hamiltonian.calc_hmat()
 
             """Diagonal H0 matrix for testing TDSE solver"""
-            hmat= np.zeros((Nbas, Nbas), float)
-            np.fill_diagonal(hmat, 0.0)
+            #hmat= np.zeros((Nbas, Nbas), float)
+            #np.fill_diagonal(hmat, 0.0)
 
             """ create field object """
 
@@ -166,10 +170,6 @@ class propagate(radbas,mapping):
 
             for itime, t in enumerate(time):
                 print(t)
-                #hamiltonian = matelem.hmat(params,0.0,rgrid,maparray) #will have to add time to it
-                #evals, coeffs, hmat = hamiltonian.calc_hmat()
-                #energies, u = np.linalg.eigh(hmat)
-                #hdiag = np.dot(u.T,np.dot(hmat,u))
 
                 """ calculate interaction matrix at time t """
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
@@ -625,7 +625,60 @@ class propagate(radbas,mapping):
             plt.legend()     
             plt.show()   
 
-           
+        if params['ini_state'] == "eigenvec":
+            print("defining initial wavefunction by diagonalization of static Hamiltonian \n")
+            params['nbins'] = params['nbins_iniwf']
+            map_iniwf = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray_iniwf, Nbas0 = map_iniwf.gen_map()
+            params['Nbas'] = Nbas0
+            print("Number of basis functions used to diagonalize the static Hamiltonian = " + str(Nbas0))
+            #l,m,i,n
+
+            #generate gauss-Lobatto global grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            nlobatto = params['nlobatto']
+            nbins = params['nbins']
+            rgrid  = rbas.r_grid()
+            #generate Gauss-Lobatto quadrature
+            xlobatto=np.zeros(nlobatto)
+            wlobatto=np.zeros(nlobatto)
+            xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+            wlobatto=np.array(wlobatto)
+            xlobatto=np.array(xlobatto) # convert back to np arrays
+            phi0 = 0.0 #
+            theta0 = 0.0 #
+            r0 = 1.0
+
+            """ initialize Hamiltonian """
+            hamiltonian0 = matelem.hmat(params,0.0,rgrid,maparray_iniwf)
+            evals, coeffs, hmat = hamiltonian0.calc_hmat()
+
+            for ielem, elem in enumerate(maparray_iniwf):
+                psi0_mat.append([ elem[0], elem[1], elem[2], elem[3], coeffs[ielem,int(params['eigenvec_id'])]])
+
+            psi0_mat = np.asarray(psi0_mat)
+            #print("eivenvectors of static Hamiltonian")
+            #print(coeffs)
+
+            #radial part
+            r = np.linspace(params['rshift'],float(params['binwidth'] * params['nbins_iniwf']),1000,True,dtype=float)
+            y = np.zeros(len(r),dtype=complex)
+            for ielem,elem in enumerate(maparray_iniwf):
+                y[:] +=   coeffs[ielem,int(params['eigenvec_id'])] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm( elem[1], elem[0],  theta0, phi0)
+            y /= np.sqrt(np.sum(coeffs[:,int(params['eigenvec_id'])] * coeffs[:,int(params['eigenvec_id'])]))
+
+            plt.xlabel('r/a.u.')
+            plt.ylabel('orbitals')    
+            plt.plot(r, r * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
+            plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(self.psi03d(r,phi0, phi0))) ) 
+            plt.legend()     
+            plt.show()  
+
+            if params['save_ini_wf'] == True:
+                fname=open(params['wavepacket_file'],'w')
+                print("saving the initial wavefunction into file")
+                fname.write(' '.join(["  %15.8f"%np.abs(item) for item in psi0_mat])+"\n")
+
         return psi0_mat
 
 
@@ -639,8 +692,7 @@ class propagate(radbas,mapping):
         """ return custom function in the hydrogen atom orbital basis. It can be multi-center molecular orbital"""
         h_radial = lambda r,n,l: (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         f = 0.0
-        f +=   h_radial(r,2,2) * sph_harm(m,l, phi,theta)
-        f /= np.sqrt(float(counter)) 
+        f +=   h_radial(r,3,0) * sph_harm(0,0, phi,theta)
         return f
 
 
@@ -782,9 +834,9 @@ if __name__ == "__main__":
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 50
-    params['nbins'] = 1 #bug when nbins > nlobatto  
-    params['binwidth'] = 200
+    params['nlobatto'] = 15
+    params['nbins'] = 20 #bug when nbins > nlobatto  
+    params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 1
@@ -795,7 +847,7 @@ if __name__ == "__main__":
     params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
     params['scheme'] = "lebedev_019" #angular integration rule
     params['t0'] = 0.0 
-    params['tmax'] = 600.0 
+    params['tmax'] = 400.0 
     params['dt'] = 10.0 
     time_units = "as"
 
@@ -803,17 +855,21 @@ if __name__ == "__main__":
     params['plot_wf'] = True #decide if you want to plot the wavefunction during propagation
 
     """====initial state====""" 
-    params['ini_state'] = "grid_3d" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis)
+    params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",80) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
+    params['nbins_iniwf'] = 10 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation
+    params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
+
 
     """====field controls===="""
     params['field_form'] = "analytic" #or numerical
     params['field_name'] = "LP" #RCPL, LCPL, ...
     params['field_env'] = "gaussian" #"static_uniform"
 
-    params['omega'] =  200.0 #nm
+    params['omega'] =  400.0 #nm
     #convert to THz:
     vellgt     =  2.99792458E+8 # m/s
     params['omega']= 10**9 *  vellgt / params['omega'] #Hz
@@ -826,7 +882,7 @@ if __name__ == "__main__":
 
     frequency_units = "nm" #we later convert all units to atomic units
     
-    params['E0'] = 3.51e8 #V/cm
+    params['E0'] = 1.0e9 #V/cm
     field_units = "V/cm"
 
     params['sigma'] = 20.0 #as
