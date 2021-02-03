@@ -21,6 +21,11 @@ import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
 
+from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+import matplotlib.gridspec as gridspec
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import matplotlib.ticker as ticker
+
 from numpy.polynomial.laguerre import laggauss
 
 class propagate(radbas,mapping):
@@ -131,9 +136,8 @@ class propagate(radbas,mapping):
             wavepacket = np.zeros((len(timegrid),Nbas),dtype=complex) #array storing the wavepacket coefficients in order given by the mapping function
 
 
-            if params['plot_wf']  == True:     
-                """ Initialize plots """   
-                
+            if params['plot_modes']["single_shot"] == True:     
+                """ Initialize single_shot plots """   
                 # radial plot grid    
                 r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
                 y = np.zeros(len(r),dtype=complex)
@@ -143,7 +147,6 @@ class propagate(radbas,mapping):
                 phi0 = 0.0 #np.pi/4 #at a fixed phi value
                 theta0 = 0.0#np.pi/4 #at a fixed phi value
                 r0 = 1.0
-
                 #generate Gauss-Lobatto quadrature
                 xlobatto=np.zeros(nlobatto)
                 wlobatto=np.zeros(nlobatto)
@@ -170,8 +173,13 @@ class propagate(radbas,mapping):
             Elfield = Field(params)
             #Fvec = Elfield.gen_field()
 
+
+            print("==========================")
+            print("==wavepacket propagation==")
+            print("==========================")
+
             for itime, t in enumerate(timegrid): #only high-level operations
-                print(t)
+                print("t = " + str("%10.1f"%t))
 
                 """ calculate interaction matrix at time t """
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
@@ -198,58 +206,129 @@ class propagate(radbas,mapping):
                     '{:10.3f}'.format(wfnorm)+"\n")
                 """
 
-                #call plotting function
-                """ Plotting section """
-                if params['plot_wf']  == True:
+                
+            """ ========= POST-PROCESSING ========= """ 
 
-                    """ 1) Radial wavepacket at fixed phi and theta """
-                    #plot the wavepacket, if requested
-                    
-                    if int(itime)%params['plotrate'] == 0:
-        
-                        for ielem,elem in enumerate(maparray):
-                            y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
+            print("=====================================")
+            print("==post-processing of the wavepacket==")
+            print("=====================================")
 
-                        plt.xlabel('r/a.u.')
-                        plt.ylabel('radial wavepacket')
-                        #plt.plot(r, y.real) 
-                        #plt.plot(r, y.imag) 
-                        plt.plot(r,r*np.abs(y),label="time = "+str(t/time_to_au)+ " as")
-                        #plt.plot(time[0:itime],np.cos(2.0*np.pi * params['omega']*time[0:itime]) ,label="time = "+str(t))
-                        plt.legend()
-                        plt.show()   
-                    
 
-                    """  2) Populations of states """       
-                    """if int(itime)%params['plotrate']== 0:
-                        for i in range(Nbas):
-                            #plt.plot(timegrid,wavepacket[:,i].real)
-                            #plt.plot(timegrid,wavepacket[:,i].imag)
-                            plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
-                        plt.xlabel('t/a.u.')
-                        plt.ylabel('populations')
-                        plt.legend()
-                        plt.show()
-                    """
-                    """ 3) Polar plot or (r,theta) at fixed phi """
-                    """
-                    angwf = np.zeros(len(gridtheta),dtype=complex)
+            """ calculate timegrid indices at which the relevant observables are plotted"""
 
-                    if int(itime)%params['plotrate'] == 0:
-                        for ielem,elem in enumerate(maparray):
-                            angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
 
-                        
-                        ax = plt.subplot(111, projection='polar')
-                        ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
-                        #ax.set_rmax(1)
-                        ax.set_rticks([0.5, 1])  # Less radial ticks
-                        ax.grid(True)
-                        plt.legend()        
-                        ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
-                        plt.show()
-                    """
-            exit()
+            """    params['plot_modes'] = {"single_shot": True, "animation": False}
+
+                    params['plot_types'] = { "radial": True,
+                             "angular": True,
+                             "r-radial_angular": True, 
+                             "k-radial_angular": True} #decide which of the available observables you wish to plot
+
+                    params['plot_controls'] = { "plotrate": 1, 
+                                "plottimes": [10.0,50.0,76.0,120.0],
+                                "save_static": True,
+                                "save_anim": False,
+                                "show_static": True,
+                                "show_anim": False 
+                                "static_filename": "obs"
+                                "animation_filename":"anim_obs"}
+            """
+
+            iplot = np.floor(params['plot_controls']["plottimes"]/dt)
+            print("iplot list: " + str(iplot))
+            for enum, indt in enumerate(iplot):
+                if indt > len(timegrid):
+                    print("removing time: "+str(params['plot_times'][enum]+" from plotting list. Time exceeds the propagation time-grid!"))
+                    iplot.remove(indt)
+            print("Final list of plot times:")
+            print(iplot)
+
+
+            for itime, t in enumerate(timegrid): 
+                print("t = " + str("%10.1f"%t))
+
+                if params['plot_modes']["single_shot"] == True:
+                    for ielem in iplot:
+                        if itime == ielem:
+                            psi[:] = wavepacket[itime,:]
+                            #plot format
+                            plot_format = int([params['plot_controls']["radial"],params['plot_controls']["angular"],params['plot_controls']["r-radial_angular"],params['plot_controls']["k-radial_angular"]])
+
+                            plot_snapshot(params['plot_controls'],plot_format)
+
+
+    def plot_snapshot(self,plot_controls,plot_format):
+
+        if sum(plot_format) == 4:
+            print("plotting all static graphs")
+
+            fig = plt.figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+
+            spec = gridspec.GridSpec(ncols=2, nrows=2,figure=fig)
+            axradang_r = fig.add_subplot(spec[0, 0])
+            axradang_k = fig.add_subplot(spec[1, 1])
+            axrad = fig.add_subplot(spec[0, 1])
+            axang = fig.add_subplot(spec[1, 0])
+
+            #plt.tight_layout()
+            #plt.subplots_adjust(left=0.07, bottom=0.01, right=0.95,top=0.94, hspace=0.0, wspace=0.0)
+
+
+            # subplots:
+
+            #================ pulse and traces ===============#
+            ax1.set_xlabel('time (ps)')
+            ax1.set_ylabel(r'$\langle\cos^2 (\theta_{2D})\rangle$')
+            ax1.set_xlim(t_start ,t_end)
+            ax1.set_ylim(0.0, 1.0)
+
+
+            line_ph, = ax2.plot(x, y,color='green', marker='o', linestyle='dashed', linewidth=2, markersize=12)
+
+        """ 1) Radial wavepacket at fixed phi and theta """
+        for ielem,elem in enumerate(maparray):
+            y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
+
+        plt.xlabel('r/a.u.')
+        plt.ylabel('radial wavepacket')
+        #plt.plot(r, y.real) 
+        #plt.plot(r, y.imag) 
+        plt.plot(r,r*np.abs(y),label="time = "+str(t/time_to_au)+ " as")
+        #plt.plot(time[0:itime],np.cos(2.0*np.pi * params['omega']*time[0:itime]) ,label="time = "+str(t))
+        plt.legend()
+        plt.show()   
+    
+
+        """  2) Populations of states """       
+        """if int(itime)%params['plotrate']== 0:
+            for i in range(Nbas):
+                #plt.plot(timegrid,wavepacket[:,i].real)
+                #plt.plot(timegrid,wavepacket[:,i].imag)
+                plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
+            plt.xlabel('t/a.u.')
+            plt.ylabel('populations')
+            plt.legend()
+            plt.show()
+        """
+        """ 3) Polar plot or (r,theta) at fixed phi """
+        """
+        angwf = np.zeros(len(gridtheta),dtype=complex)
+
+        if int(itime)%params['plotrate'] == 0:
+            for ielem,elem in enumerate(maparray):
+                angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
+
+            
+            ax = plt.subplot(111, projection='polar')
+            ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
+            #ax.set_rmax(1)
+            ax.set_rticks([0.5, 1])  # Less radial ticks
+            ax.grid(True)
+            plt.legend()        
+            ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
+            plt.show()
+        """
+
 
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
@@ -318,6 +397,8 @@ class propagate(radbas,mapping):
         #ax.tick_params(which="minor", bottom=False, left=False)
 
         return im, cbar
+
+    def plotwf(self,psi)
 
     def gen_psi0(self,params):
         psi0_mat = []
@@ -850,10 +931,37 @@ if __name__ == "__main__":
     params['dt'] = 10.0 
     time_units = "as"
 
+
     """===== post-processing and analysis ====="""
+
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_controls'] = {"plot_wf": True,  "radial": True, "angular": True, "r-radial_angular": True, "k-radial_angular": True, "plot_filename": "observables"} #decide if you want to plot the wavefunction during propagation
-    params['plotrate'] = 1 #rate of plotting observables in timestep units
+    params['plot_modes'] = {"single_shot": True, "animation": False}
+
+    params['plot_types'] = { "radial": True,
+                             "angular": True,
+                             "r-radial_angular": True, 
+                             "k-radial_angular": True} #decide which of the available observables you wish to plot
+
+    params['plot_controls'] = { "plotrate": 1, 
+                                "plottimes": [10.0,50.0,76.0,120.0],
+                                "save_static": True,
+                                "save_anim": False,
+                                "show_static": True,
+                                "show_anim": False 
+                                "static_filename": "obs"
+                                "animation_filename":"anim_obs"}
+
+    """ plotrate : rate of plotting observables in timestep units in animated plots
+        plottimes: times (in time_units) at which we plot selected observables in a static graph
+        save_static: save single shot plots to appropriate files (named separately for each plottime)
+        save_anim: save animation in a file
+        show_static: show single shot plots during the analysis
+        show_anim: show animation at the end of analysis
+        static_filename: name of the file into which the snapshots will be saved
+        animation_filename: name of the file into which animations will be saved
+    """
+
+
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
