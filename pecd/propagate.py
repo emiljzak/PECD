@@ -6,7 +6,7 @@
 import numpy as np
 import sys
 import matelem
-import timeit
+import time
 import quadpy
 
 from field import Field
@@ -110,7 +110,7 @@ class propagate(radbas,mapping):
             print("\n")
             print("    1) time-grid")
             print("\n")
-            time = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
+            timegrid = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
             dt = params['dt']
 
             print("    2) initial wavefunction")
@@ -125,16 +125,15 @@ class propagate(radbas,mapping):
             #normalize the wavefunction: we can move this method to the wavefunction class
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
-            print("    1) wavepacket parameters")
+            print("    3) wavepacket parameters")
             print("\n")
             fname=open(params['wavepacket_file'],'w')
-            wavepacket = np.zeros((len(time),Nbas),dtype=complex) #array storing the wavepacket coefficients in order given by the mapping function
+            wavepacket = np.zeros((len(timegrid),Nbas),dtype=complex) #array storing the wavepacket coefficients in order given by the mapping function
 
 
             if params['plot_wf']  == True:     
                 """ Initialize plots """   
-                plotrate = 1
-
+                
                 # radial plot grid    
                 r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
                 y = np.zeros(len(r),dtype=complex)
@@ -156,8 +155,11 @@ class propagate(radbas,mapping):
             intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
 
             """ initialize Hamiltonian """
+            start_time = time.time()    
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             evals, coeffs, hmat = hamiltonian.calc_hmat()
+            end_time = time.time()
+            print("The execution time for building the field-free Hamiltonian is: " + str(end_time-start_time))
 
             """Diagonal H0 matrix for testing TDSE solver"""
             #hmat= np.zeros((Nbas, Nbas), float)
@@ -168,21 +170,26 @@ class propagate(radbas,mapping):
             Elfield = Field(params)
             #Fvec = Elfield.gen_field()
 
-            for itime, t in enumerate(time):
+            for itime, t in enumerate(timegrid): #only high-level operations
                 print(t)
 
                 """ calculate interaction matrix at time t """
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
 
+                start_time = time.time()    
                 vint = hamiltonian.calc_intmat(t,intmat,Elfield.gen_field(t)) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
 
                 """matrix exponentiation"""
-                umat = expm( -1.0j * (hmat + vint) * dt )
+                umat = expm( -1.0j * (hmat + vint) * dt ) #later: call iterative eigensolver function
                 """action of the evolution operator"""
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
+                end_time = time.time()
 
+                print("The execution time for single-step wavefunction propagation is: " + str(end_time-start_time))
+                
+                #call saving function
                 #if requested: method for saving the wavepacket: switch it into a method of psi class?             """save the wavepacket in a file"""
                 fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
 
@@ -191,13 +198,14 @@ class propagate(radbas,mapping):
                     '{:10.3f}'.format(wfnorm)+"\n")
                 """
 
+                #call plotting function
                 """ Plotting section """
                 if params['plot_wf']  == True:
 
                     """ 1) Radial wavepacket at fixed phi and theta """
                     #plot the wavepacket, if requested
                     
-                    if int(itime)%plotrate == 0:
+                    if int(itime)%params['plotrate'] == 0:
         
                         for ielem,elem in enumerate(maparray):
                             y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
@@ -213,11 +221,11 @@ class propagate(radbas,mapping):
                     
 
                     """  2) Populations of states """       
-                    """if int(itime)%plotrate == 0:
+                    """if int(itime)%params['plotrate']== 0:
                         for i in range(Nbas):
-                            #plt.plot(time,wavepacket[:,i].real)
-                            #plt.plot(time,wavepacket[:,i].imag)
-                            plt.plot(time,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
+                            #plt.plot(timegrid,wavepacket[:,i].real)
+                            #plt.plot(timegrid,wavepacket[:,i].imag)
+                            plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
                         plt.xlabel('t/a.u.')
                         plt.ylabel('populations')
                         plt.legend()
@@ -227,7 +235,7 @@ class propagate(radbas,mapping):
                     """
                     angwf = np.zeros(len(gridtheta),dtype=complex)
 
-                    if int(itime)%plotrate == 0:
+                    if int(itime)%params['plotrate'] == 0:
                         for ielem,elem in enumerate(maparray):
                             angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
 
@@ -243,7 +251,6 @@ class propagate(radbas,mapping):
                     """
             exit()
 
-
     def plot_mat(self,mat):
         """ plot 2D array with color-coded magnitude"""
         fig, ax = plt.subplots()
@@ -252,7 +259,6 @@ class propagate(radbas,mapping):
 
         fig.tight_layout()
         plt.show()
-
 
     def heatmap(self, data, row_labels, col_labels, ax=None,
                 cbar_kw={}, cbarlabel="", **kwargs):
@@ -312,7 +318,6 @@ class propagate(radbas,mapping):
         #ax.tick_params(which="minor", bottom=False, left=False)
 
         return im, cbar
-
 
     def gen_psi0(self,params):
         psi0_mat = []
@@ -627,7 +632,9 @@ class propagate(radbas,mapping):
 
         if params['ini_state'] == "eigenvec":
             print("defining initial wavefunction by diagonalization of static Hamiltonian \n")
+            temp = params['nbins'] 
             params['nbins'] = params['nbins_iniwf']
+
             map_iniwf = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray_iniwf, Nbas0 = map_iniwf.gen_map()
             params['Nbas'] = Nbas0
@@ -678,15 +685,13 @@ class propagate(radbas,mapping):
                 fname=open(params['wavepacket_file'],'w')
                 print("saving the initial wavefunction into file")
                 fname.write(' '.join(["  %15.8f"%np.abs(item) for item in psi0_mat])+"\n")
-
+            params['nbins'] = temp 
         return psi0_mat
-
 
     def gen_hydrogen_wf(self,n,l,m,r,theta,phi):
         Rnl = (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         Ylm = sph_harm(m,l, phi,theta)
         return Rnl, Ylm, Rnl * Ylm
-
 
     def psi0(self,r,theta,phi):
         """ return custom function in the hydrogen atom orbital basis. It can be multi-center molecular orbital"""
@@ -694,7 +699,6 @@ class propagate(radbas,mapping):
         f = 0.0
         f +=   h_radial(r,3,0) * sph_harm(0,0, phi,theta)
         return f
-
 
     def psi01d(self,r):
         """ return custom function in 1d in the hydrogen atom orbital basis"""
@@ -704,7 +708,6 @@ class propagate(radbas,mapping):
         f /= np.sqrt(float(1.0)) 
         return f
 
-
     def psi02d(self,theta,phi):
         """ return custom function in 2d in spherical coordintates"""
         fsph = lambda theta,phi,l,m: sph_harm(m,l,phi,theta)
@@ -712,7 +715,6 @@ class propagate(radbas,mapping):
         f +=  1/(np.cos(theta)**2-2.0)#fsph(theta,phi,2,2)
         f /= np.sqrt(float(1.0)) 
         return f
-
 
     def psi03d(self,r,theta,phi):
         """ return custom function in 3D"""
@@ -725,7 +727,6 @@ class propagate(radbas,mapping):
         f /= np.sqrt(float(1.0)) 
 
         return f
-
 
     def plot_hydrogen_wfs(self):
 
@@ -767,7 +768,6 @@ class propagate(radbas,mapping):
         ax.set_ylim(-limit,limit)
         ax.set_zlim(-limit,limit)
         plt.show()
-
 
     def Lanczos(self,Psi, t, HMVP, m, Ntotal, timestep,Ham0):
         Psi1=Psi.copy()
@@ -821,7 +821,6 @@ class propagate(radbas,mapping):
             v, q=q, v
         return Psi
 
-
     def mvp(self,H,q): #for now we are passing the precomuted Hamiltonian matrix into the MVP routine, which is inefficient.
         # I will have to code MVP without invoking the Hamiltonian matrix.
         return np.matmul(H,q)
@@ -834,8 +833,8 @@ if __name__ == "__main__":
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 15
-    params['nbins'] = 20 #bug when nbins > nlobatto  
+    params['nlobatto'] = 10
+    params['nbins'] = 10 #bug when nbins > nlobatto  
     params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
@@ -847,12 +846,14 @@ if __name__ == "__main__":
     params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
     params['scheme'] = "lebedev_019" #angular integration rule
     params['t0'] = 0.0 
-    params['tmax'] = 400.0 
+    params['tmax'] = 100.0 
     params['dt'] = 10.0 
     time_units = "as"
 
+    """===== post-processing and analysis ====="""
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_wf'] = True #decide if you want to plot the wavefunction during propagation
+    params['plot_controls'] = {"plot_wf": True,  "radial": True, "angular": True, "r-radial_angular": True, "k-radial_angular": True, "plot_filename": "observables"} #decide if you want to plot the wavefunction during propagation
+    params['plotrate'] = 1 #rate of plotting observables in timestep units
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
@@ -868,26 +869,18 @@ if __name__ == "__main__":
     params['field_form'] = "analytic" #or numerical
     params['field_name'] = "LP" #RCPL, LCPL, ...
     params['field_env'] = "gaussian" #"static_uniform"
-
     params['omega'] =  400.0 #nm
     #convert to THz:
     vellgt     =  2.99792458E+8 # m/s
     params['omega']= 10**9 *  vellgt / params['omega'] #Hz
-
     print("Electric field carrier frequency = "+str(params['omega']*1.0e-12)+" THz")
     print("Electric field oscillation period = "+str(1.0e15/params['omega'])+" fs")
- 
     params['omega'] /= 4.13e16 #Hz to a.u.
-
-
-    frequency_units = "nm" #we later convert all units to atomic units
-    
+    frequency_units = "nm" #we later convert all units to atomic unit
     params['E0'] = 1.0e9 #V/cm
     field_units = "V/cm"
-
     params['sigma'] = 20.0 #as
     params['tau0'] = 20.0 #as #centre of the pulse
-
 
     # convert time units to atomic units
     time_to_au = {"as" : np.float64(1.0/24.188)}
@@ -912,13 +905,14 @@ if __name__ == "__main__":
 
     #freq_to_au = freq_to_au[frequency_units]
     #params['omega'] *= freq_to_au 
-
     field_to_au = field_to_au[field_units]
     params['E0'] *= field_to_au 
-
     # 1a.u. (time) = 2.418 e-17s = 24.18 as
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
    
+
+
+
     """ We have two options for calculating the potential matrix elements: 
     1) cartesian: we use cartesian elements of the dipole moment operator and the electric field. Lebedev quadratures are used to compute matrix elements
     2) spherical-tensor: sphereical tensor representation of the field and the dipole moment. The matrix elements are computed analytically with 3-j symbols.
@@ -927,7 +921,8 @@ if __name__ == "__main__":
     params['int_rep_type'] = 'cartesian'
 
 
-    hydrogen = propagate()
+    hydrogen = propagate() #!!!name of the potential should be one of the attributes of the propagate class!!!
+
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
     hmat = hydrogen.prop_wf(params,psi0)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
