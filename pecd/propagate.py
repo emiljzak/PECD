@@ -263,15 +263,15 @@ class propagate(radbas,mapping):
 
     def plot_snapshot(self,psi,plot_controls,plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
         if sum(plot_format) == 4:
-            print("plotting all static graphs")
+            print("plotting all static graphs at time "+ str(t))
 
             fig = plt.figure(figsize=(10, 5), dpi=300, constrained_layout=True)
 
             spec = gridspec.GridSpec(ncols=2, nrows=2,figure=fig)
-            axradang_r = fig.add_subplot(spec[0, 0])
-            axradang_k = fig.add_subplot(spec[1, 1])
-            axrad = fig.add_subplot(spec[0, 1])
-            axang = fig.add_subplot(spec[1, 0])
+            axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+            axradang_k = fig.add_subplot(spec[0, 1])
+            axrad = fig.add_subplot(spec[1, 0])
+            axang = fig.add_subplot(spec[1, 1])
             y = np.zeros(len(r),dtype=complex)
             #plt.tight_layout()
             #================ radial wf ===============#
@@ -279,16 +279,36 @@ class propagate(radbas,mapping):
             axrad.set_ylabel(r'$r|\psi(r,\theta_0,\phi_0)|^2$')
             axrad.set_xlim( params['rshift'] , params['binwidth'] * params['nbins'] + params['rshift'] )
             #axrad.set_ylim(0.0, 1.0)
-            """ 1) Radial wavepacket at fixed phi and theta """
             for ielem,elem in enumerate(maparray):
                 y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
 
 
-            line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str(t/time_to_au)+ " as", color='black', marker='.', linestyle='solid', linewidth=2)
-            plt.legend()
+            line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str(t/time_to_au)+ " as", color='black', linestyle='solid', linewidth=2)
+            axrad.legend()
+
+            #================ radial-angular in real space ===============#
+            #axradang_r.set_xlabel('r (a.u.)')
+            #axradang_r.set_ylabel(r'$r|\psi(r,\theta_0,\phi_0)|^2$')
+            #axradang_r.set_xlim( params['rshift'] , params['binwidth'] * params['nbins'] + params['rshift'] )
+
+            rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],60,True,dtype=float)
+            gridtheta1d = 2 * np.pi * rang
+            rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+
+            y = np.zeros((len(rang),len(rang)),dtype=complex)
+
+            for ielem,elem in enumerate(maparray):
+                for i in range(len(rang)):
+                        y[i,:] +=    psi[ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
+
+            line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
+            plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
 
             if plot_controls["show_static"] == True:
                 plt.show()   
+
+            if plot_controls["save_static"] == True:
+                fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%10.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
     
 
             """  2) Populations of states """       
@@ -904,9 +924,9 @@ if __name__ == "__main__":
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 8
-    params['nbins'] = 5 #bug when nbins > nlobatto  
-    params['binwidth'] = 3.0
+    params['nlobatto'] = 5
+    params['nbins'] = 3 #bug when nbins > nlobatto  
+    params['binwidth'] = 5.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 1
@@ -933,7 +953,7 @@ if __name__ == "__main__":
                              "k-radial_angular": True} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [10.0,50.0,76.0,120.0],
+                                "plottimes": [0.0,25.0,50.0,75.0,120.0],
                                 "save_static": True,
                                 "save_anim": False,
                                 "show_static": True,
@@ -955,10 +975,10 @@ if __name__ == "__main__":
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
-    params['ini_state_quad'] = ("Gauss-Laguerre",80) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
