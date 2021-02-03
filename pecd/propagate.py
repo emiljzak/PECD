@@ -140,7 +140,7 @@ class propagate(radbas,mapping):
                 """ Initialize single_shot plots """   
                 # radial plot grid    
                 r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
-                y = np.zeros(len(r),dtype=complex)
+
                 # polar plot grid
                 xr = np.arange(0, 1, 0.01)
                 gridtheta = 2 * np.pi * xr
@@ -233,13 +233,14 @@ class propagate(radbas,mapping):
                                 "static_filename": "obs"
                                 "animation_filename":"anim_obs"}
             """
+            iplot = []
+            for index,item in enumerate(params['plot_controls']["plottimes"]):
 
-            iplot = np.floor(params['plot_controls']["plottimes"]/dt)
-            print("iplot list: " + str(iplot))
-            for enum, indt in enumerate(iplot):
-                if indt > len(timegrid):
-                    print("removing time: "+str(params['plot_times'][enum]+" from plotting list. Time exceeds the propagation time-grid!"))
-                    iplot.remove(indt)
+                if int(np.float64(1.0/24.188)* item/dt) > len(timegrid):
+                    print("removing time: "+str(item)+" from plotting list. Time exceeds the propagation time-grid!")
+                else:
+                    iplot.append(int(np.float64(1.0/24.188)* item/dt))
+
             print("Final list of plot times:")
             print(iplot)
 
@@ -252,13 +253,15 @@ class propagate(radbas,mapping):
                         if itime == ielem:
                             psi[:] = wavepacket[itime,:]
                             #plot format
-                            plot_format = int([params['plot_controls']["radial"],params['plot_controls']["angular"],params['plot_controls']["r-radial_angular"],params['plot_controls']["k-radial_angular"]])
+                            plot_format = [int(params['plot_types']["radial"]),
+                             int(params['plot_types']["angular"]),
+                             int(params['plot_types']["r-radial_angular"]),
+                            int(params['plot_types']["k-radial_angular"])]
+                            self.plot_snapshot(psi,params['plot_controls'],plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
 
-                            plot_snapshot(params['plot_controls'],plot_format)
 
 
-    def plot_snapshot(self,plot_controls,plot_format):
-
+    def plot_snapshot(self,psi,plot_controls,plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
         if sum(plot_format) == 4:
             print("plotting all static graphs")
 
@@ -269,65 +272,54 @@ class propagate(radbas,mapping):
             axradang_k = fig.add_subplot(spec[1, 1])
             axrad = fig.add_subplot(spec[0, 1])
             axang = fig.add_subplot(spec[1, 0])
-
+            y = np.zeros(len(r),dtype=complex)
             #plt.tight_layout()
-            #plt.subplots_adjust(left=0.07, bottom=0.01, right=0.95,top=0.94, hspace=0.0, wspace=0.0)
+            #================ radial wf ===============#
+            axrad.set_xlabel('r (a.u.)')
+            axrad.set_ylabel(r'$r|\psi(r,\theta_0,\phi_0)|^2$')
+            axrad.set_xlim( params['rshift'] , params['binwidth'] * params['nbins'] + params['rshift'] )
+            #axrad.set_ylim(0.0, 1.0)
+            """ 1) Radial wavepacket at fixed phi and theta """
+            for ielem,elem in enumerate(maparray):
+                y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
 
 
-            # subplots:
+            line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str(t/time_to_au)+ " as", color='black', marker='.', linestyle='solid', linewidth=2)
+            plt.legend()
 
-            #================ pulse and traces ===============#
-            ax1.set_xlabel('time (ps)')
-            ax1.set_ylabel(r'$\langle\cos^2 (\theta_{2D})\rangle$')
-            ax1.set_xlim(t_start ,t_end)
-            ax1.set_ylim(0.0, 1.0)
-
-
-            line_ph, = ax2.plot(x, y,color='green', marker='o', linestyle='dashed', linewidth=2, markersize=12)
-
-        """ 1) Radial wavepacket at fixed phi and theta """
-        for ielem,elem in enumerate(maparray):
-            y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
-
-        plt.xlabel('r/a.u.')
-        plt.ylabel('radial wavepacket')
-        #plt.plot(r, y.real) 
-        #plt.plot(r, y.imag) 
-        plt.plot(r,r*np.abs(y),label="time = "+str(t/time_to_au)+ " as")
-        #plt.plot(time[0:itime],np.cos(2.0*np.pi * params['omega']*time[0:itime]) ,label="time = "+str(t))
-        plt.legend()
-        plt.show()   
+            if plot_controls["show_static"] == True:
+                plt.show()   
     
 
-        """  2) Populations of states """       
-        """if int(itime)%params['plotrate']== 0:
-            for i in range(Nbas):
-                #plt.plot(timegrid,wavepacket[:,i].real)
-                #plt.plot(timegrid,wavepacket[:,i].imag)
-                plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
-            plt.xlabel('t/a.u.')
-            plt.ylabel('populations')
-            plt.legend()
-            plt.show()
-        """
-        """ 3) Polar plot or (r,theta) at fixed phi """
-        """
-        angwf = np.zeros(len(gridtheta),dtype=complex)
+            """  2) Populations of states """       
+            """if int(itime)%params['plotrate']== 0:
+                for i in range(Nbas):
+                    #plt.plot(timegrid,wavepacket[:,i].real)
+                    #plt.plot(timegrid,wavepacket[:,i].imag)
+                    plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
+                plt.xlabel('t/a.u.')
+                plt.ylabel('populations')
+                plt.legend()
+                plt.show()
+            """
+            """ 3) Polar plot or (r,theta) at fixed phi """
+            """
+            angwf = np.zeros(len(gridtheta),dtype=complex)
 
-        if int(itime)%params['plotrate'] == 0:
-            for ielem,elem in enumerate(maparray):
-                angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
+            if int(itime)%params['plotrate'] == 0:
+                for ielem,elem in enumerate(maparray):
+                    angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
 
-            
-            ax = plt.subplot(111, projection='polar')
-            ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
-            #ax.set_rmax(1)
-            ax.set_rticks([0.5, 1])  # Less radial ticks
-            ax.grid(True)
-            plt.legend()        
-            ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
-            plt.show()
-        """
+                
+                ax = plt.subplot(111, projection='polar')
+                ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
+                #ax.set_rmax(1)
+                ax.set_rticks([0.5, 1])  # Less radial ticks
+                ax.grid(True)
+                plt.legend()        
+                ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
+                plt.show()
+            """
 
 
     def plot_mat(self,mat):
@@ -397,8 +389,6 @@ class propagate(radbas,mapping):
         #ax.tick_params(which="minor", bottom=False, left=False)
 
         return im, cbar
-
-    def plotwf(self,psi)
 
     def gen_psi0(self,params):
         psi0_mat = []
@@ -914,8 +904,8 @@ if __name__ == "__main__":
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 10
-    params['nbins'] = 10 #bug when nbins > nlobatto  
+    params['nlobatto'] = 8
+    params['nbins'] = 5 #bug when nbins > nlobatto  
     params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
@@ -947,9 +937,9 @@ if __name__ == "__main__":
                                 "save_static": True,
                                 "save_anim": False,
                                 "show_static": True,
-                                "show_anim": False 
-                                "static_filename": "obs"
-                                "animation_filename":"anim_obs"}
+                                "show_anim": False, 
+                                "static_filename": "obs",
+                                "animation_filename": "anim_obs"}
 
     """ plotrate : rate of plotting observables in timestep units in animated plots
         plottimes: times (in time_units) at which we plot selected observables in a static graph
@@ -968,7 +958,7 @@ if __name__ == "__main__":
     params['ini_state_quad'] = ("Gauss-Laguerre",80) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 10 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
