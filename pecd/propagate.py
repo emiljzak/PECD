@@ -15,6 +15,7 @@ from matelem import mapping
 
 import constants 
 
+from scipy import fft
 from scipy.linalg import expm
 from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial,roots_hermite
 import matplotlib.pyplot as plt
@@ -142,8 +143,6 @@ class propagate(radbas,mapping):
                 r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
 
                 # polar plot grid
-                xr = np.arange(0, 1, 0.01)
-                gridtheta = 2 * np.pi * xr
                 phi0 = 0.0 #np.pi/4 #at a fixed phi value
                 theta0 = 0.0#np.pi/4 #at a fixed phi value
                 r0 = 1.0
@@ -247,7 +246,7 @@ class propagate(radbas,mapping):
 
             for itime, t in enumerate(timegrid): 
                 print("t = " + str("%10.1f"%t))
-
+                
                 if params['plot_modes']["single_shot"] == True:
                     for ielem in iplot:
                         if itime == ielem:
@@ -257,6 +256,9 @@ class propagate(radbas,mapping):
                              int(params['plot_types']["angular"]),
                              int(params['plot_types']["r-radial_angular"]),
                             int(params['plot_types']["k-radial_angular"])]
+
+                            """ Calculate FFT (numpy) of the wavefunction """
+
                             self.plot_snapshot(psi,params['plot_controls'],plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
 
 
@@ -269,9 +271,9 @@ class propagate(radbas,mapping):
 
             spec = gridspec.GridSpec(ncols=2, nrows=2,figure=fig)
             axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
-            axradang_k = fig.add_subplot(spec[0, 1])
+            axradang_k = fig.add_subplot(spec[0, 1],projection='polar')
             axrad = fig.add_subplot(spec[1, 0])
-            axang = fig.add_subplot(spec[1, 1])
+            axang = fig.add_subplot(spec[1, 1],projection='polar')
             y = np.zeros(len(r),dtype=complex)
             #plt.tight_layout()
             #================ radial wf ===============#
@@ -287,10 +289,6 @@ class propagate(radbas,mapping):
             axrad.legend()
 
             #================ radial-angular in real space ===============#
-            #axradang_r.set_xlabel('r (a.u.)')
-            #axradang_r.set_ylabel(r'$r|\psi(r,\theta_0,\phi_0)|^2$')
-            #axradang_r.set_xlim( params['rshift'] , params['binwidth'] * params['nbins'] + params['rshift'] )
-
             rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],60,True,dtype=float)
             gridtheta1d = 2 * np.pi * rang
             rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
@@ -304,12 +302,69 @@ class propagate(radbas,mapping):
             line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
             plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
 
-            if plot_controls["show_static"] == True:
-                plt.show()   
+            
+            #================ angular plot along a chosen ray ===============#
+            """ here we can calculate expectation value of r(t) or max{r}"""
 
-            if plot_controls["save_static"] == True:
-                fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%10.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
-    
+            rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
+            gridtheta1d = 2 * np.pi * rang
+            y = np.zeros((len(rang)),dtype=complex)
+
+            for ielem,elem in enumerate(maparray):
+                        y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d)
+
+            axang.set_rmax(1)
+            axang.set_rticks([0.25, 0.5, 1.0])  # less radial ticks
+            #axang.set_rlabel_position(-22.5)  # get radial labels away from plotted line
+            axang.grid(True)
+
+            #axang.set_title("Angular probability distribution at distance r0 ="+str(r0), va='bottom')
+            line_ang = axang.plot(gridtheta1d, r0*np.abs(y)/np.max(r0*np.abs(y)),color='red', marker='o', linestyle='solid',linewidth=2, markersize=2) 
+
+
+            #================ radial-angular in momentum space (2D, with phi0 fixed) ===============#
+            kgrid = np.linspace(0.0,2.0,20,True,dtype=float)
+            ang_grid = np.linspace(0.0,1.0,80,True,dtype=float)
+            theta_k_grid = 2 * np.pi * ang_grid # we can use different number of points in the angular and radial dimensions
+            phi_k_0 = 0.0
+
+            kmesh, theta_k_mesh = np.meshgrid(kgrid, theta_k_grid )
+
+            y = np.zeros((len(theta_k_grid),len(kgrid)),dtype=complex)
+
+            #calculate FT of the wavefunction
+
+            if params['FT_method'] == "quadrature": #set up quadratures
+                print("Using quadratures to calculate FT of the wavefunction")
+
+                FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+
+                if params['schemeFT_rad'][0] == "Gauss-Laguerre":
+                    Nquad = params['schemeFT_rad'][1] 
+                    x,w = roots_genlaguerre(Nquad ,1)
+                    alpha = 1 #parameter of the G-Lag quadrature
+                    inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+                elif params['schemeFT_rad'][0] == "Gauss-Hermite":
+                    Nquad = params['schemeFT_rad'][1] 
+                    x,w = roots_hermite(Nquad)
+                    inv_weight_func = lambda r: np.exp(r**2)
+
+            elif params['FT_method'] == "fftn":
+                print("Using numpy's fftn method to calculate FT of the wavefunction")
+
+            print("shape of kmesh: "+str(np.shape(kmesh)))
+            print("shape of theta_k_mesh: "+str(np.shape(theta_k_mesh)))
+            
+            for i in range(len(theta_k_grid)):
+                for j in range(len(kgrid)):
+                    start_time = time.time()    
+                    y[i,j] = self.FTpsi(kgrid[j],theta_k_grid[i],phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas)
+                    end_time = time.time()
+                    print("Execution time for FT-transformed wf at a single point: " + str(end_time-start_time))
+        
+            line_angrad_k = axradang_k.contourf( theta_k_mesh, kmesh,  np.abs(y)/np.max(np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
+            plt.colorbar(line_angrad_k,ax=axradang_k,aspect=30)
+
 
             """  2) Populations of states """       
             """if int(itime)%params['plotrate']== 0:
@@ -322,24 +377,101 @@ class propagate(radbas,mapping):
                 plt.legend()
                 plt.show()
             """
-            """ 3) Polar plot or (r,theta) at fixed phi """
-            """
-            angwf = np.zeros(len(gridtheta),dtype=complex)
 
-            if int(itime)%params['plotrate'] == 0:
-                for ielem,elem in enumerate(maparray):
-                    angwf[:] += psi[ielem]  * sph_harm(elem[1], elem[0],  phi0, gridtheta)# * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) 
+            if plot_controls["show_static"] == True:
+                plt.show()   
 
-                
-                ax = plt.subplot(111, projection='polar')
-                ax.plot(gridtheta, np.abs(angwf), 'r+', label="angular-radial wf",linewidth=3)
-                #ax.set_rmax(1)
-                ax.set_rticks([0.5, 1])  # Less radial ticks
-                ax.grid(True)
-                plt.legend()        
-                ax.set_title("Radial-angular representation of photo-electron wavepacket", va='bottom')
-                plt.show()
+            if plot_controls["save_static"] == True:
+                fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
+    
+
+    def FTpsi(self,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas):
+
+        val = 0.0 + 1j * 0.0
+        for ielem,elem in enumerate(maparray):
             """
+            Symbols: 
+                    theta_phi[0] = theta in [0,pi]
+                    theta_phi[1] = phi  in [-pi,pi]
+                    sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+            """
+            """val_rad = lambda r: FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0]) *   
+            np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) * np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * np.sin(theta_k_mesh) * 
+            np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
+            """
+            val_elem = 0.0 + 1j * 0.0
+
+            for k in range(len(x)):
+                val_elem += w[k] * x[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0]) *   
+            np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) * np.cos(phi_k_0) * x[k] * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * np.sin(theta_k_mesh) * 
+            np.sin(phi_k_0) * x[k] * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) + kmesh * np.cos(theta_k_mesh) * x[k] * np.cos(theta_phi[0]))) ) * inv_weight_func(x[k])
+                        
+
+            val += psi[ielem] * val_elem
+
+        print(val)
+        return val
+
+
+    def calc_FT(self,psi):
+        x = np.linspace(params['rshift'], params['nbins']*params['binwidth'],20, True, dtype=float)
+        y = np.linspace(params['rshift'], params['nbins']*params['binwidth'],20, True, dtype=float)
+        z = np.linspace(params['rshift'], params['nbins']*params['binwidth'],20, True, dtype=float)
+
+        grid_z, grid_y, grid_x = np.meshgrid(z, y, x, indexing='ij')
+        psf = np.abs(grid_x**2 +  grid_y**2 - grid_z)
+
+
+        psf = psf / np.sum(psf)
+
+        fpsf = np.fft.fftn(psf)
+        print(psf)
+        print(fpsf)
+        return psf, fpsf 
+
+
+
+
+    def ft_rad_ang_quad(self,ielem,elem,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,FTscheme_ang,x,w):
+
+
+        for ielem,elem in enumerate(maparray):
+            """
+            Symbols: 
+                    theta_phi[0] = theta in [0,pi]
+                    theta_phi[1] = phi  in [-pi,pi]
+                    sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+            """
+            val_rad = lambda r: FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0]) *   np.exp(-1j*(kmesh * np.sin(theta_k_mesh) * np.cos(phi_k_0)* r * np.sin(theta)*np.cos(phi)+k*np.sin(theta_k)*np.sin(phi_k)*r*np.sin(theta)*np.sin(phi)+
+                        k*np.cos(theta_k)*r*np.cos(theta))) )
+
+            for k in range(Nquad):
+                val += w[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * val_rad(x[k]) * inv_weight_func(x[k])
+                        
+
+        return val
+
+
+    def fcoeff(self,l,m,r,k,theta_k,phi_k):
+        #start_time = time.time()
+
+        myscheme = quadpy.u3.schemes[scheme]()
+        #print(myscheme)
+
+
+        val = quadpy.sphere.integrate_spherical(lambda phi, theta:
+        solidharm(l,m,r,phi,theta)*sph_exp(k,theta_k,phi_k,r,theta,phi) ,rule=quadpy.sphere.Lebedev("7"))
+        #print("foeff = ", val)
+        #elapsed_time = time.time() - start_time
+        #print("time for fcoeff = ", elapsed_time)
+        return val
+
+    def sph_exp(self,k,theta_k,phi_k,r,theta,phi):
+        #Numba can go in here2
+        val=np.exp(-1j*(k*np.sin(theta_k)*np.cos(phi_k)*r*np.sin(theta)*np.cos(phi)+k*np.sin(theta_k)*np.sin(phi_k)*r*np.sin(theta)*np.sin(phi)+
+                    k*np.cos(theta_k)*r*np.cos(theta)))
+        
+        return val
 
 
     def plot_mat(self,mat):
@@ -522,9 +654,6 @@ class propagate(radbas,mapping):
             plt.plot(r, r*y/max(np.abs(y))) 
             plt.plot(r, r*self.psi01d(r)/max(np.abs(self.psi01d(r))))
             plt.show()   
-
-
-            #rbas.plot_chi(0.01,100,1000)
 
             val = 0.0
             for i in range(len(r)):
@@ -936,6 +1065,8 @@ if __name__ == "__main__":
     params['basis'] = "prim" # or adiab
     params['potential'] = "hydrogen" # 1) diagonal (for tests); 2) hydrogen
     params['scheme'] = "lebedev_019" #angular integration rule
+
+
     params['t0'] = 0.0 
     params['tmax'] = 100.0 
     params['dt'] = 10.0 
@@ -943,6 +1074,7 @@ if __name__ == "__main__":
 
 
     """===== post-processing and analysis ====="""
+    
 
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
     params['plot_modes'] = {"single_shot": True, "animation": False}
@@ -953,8 +1085,8 @@ if __name__ == "__main__":
                              "k-radial_angular": True} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [0.0,25.0,50.0,75.0,120.0],
-                                "save_static": True,
+                                "plottimes": [50.0,75.0,120.0],
+                                "save_static": False,
                                 "save_anim": False,
                                 "show_static": True,
                                 "show_anim": False, 
@@ -970,8 +1102,9 @@ if __name__ == "__main__":
         static_filename: name of the file into which the snapshots will be saved
         animation_filename: name of the file into which animations will be saved
     """
-
-
+    params['FT_method'] = "quadrature" #method of calculating the FT of the wavefunction: quadrature or fftn
+    params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
+    params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
@@ -985,8 +1118,10 @@ if __name__ == "__main__":
 
     """====field controls===="""
     params['field_form'] = "analytic" #or numerical
-    params['field_name'] = "LP" #RCPL, LCPL, ...
-    params['field_env'] = "gaussian" #"static_uniform"
+    params['field_type'] = field_CPL 
+    params['field_env'] = env_gaussian #"static_uniform"
+
+    """ put most of what's below into a converion function """
     params['omega'] =  400.0 #nm
     #convert to THz:
     vellgt     =  2.99792458E+8 # m/s
@@ -1029,7 +1164,10 @@ if __name__ == "__main__":
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
    
 
+    """==== field dictionaries ===="""
+    field_CPL = {"field_type": "CPL", "omega": params['omega'], "E0": params['E0'], "CEP": 0.0, "spherical": True, "type": LCPL}
 
+    env_gaussian = {"FWHM": 40.0, "t0": 50.0}
 
     """ We have two options for calculating the potential matrix elements: 
     1) cartesian: we use cartesian elements of the dipole moment operator and the electric field. Lebedev quadratures are used to compute matrix elements
