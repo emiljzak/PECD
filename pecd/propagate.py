@@ -26,6 +26,7 @@ from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.ticker as ticker
+import matplotlib.animation as animation
 
 from numpy.polynomial.laguerre import laggauss
 
@@ -87,14 +88,9 @@ class propagate(radbas,mapping):
 
         elif params['method'] == 'dynamic_direct':
 
-            """ To do: 1) cleanup; 2) better plotting and saving utilities; 3) fix bug in KEO -> static problem; 4) run orbital + CPL  """
-
             print("Solving TDSE with a direct exponentiation method")
-
-
             print("Setting up mixed DVR-Spectral basis set")
             print("\n")
-
             print("    1) Generating radial grid")
             print("\n")
             #we need to create rgrid only once, i.e. we use a static grid
@@ -153,6 +149,23 @@ class propagate(radbas,mapping):
                 wlobatto=np.array(wlobatto)
                 xlobatto=np.array(xlobatto) # convert back to np arrays
 
+
+            if params['plot_modes']["animation"] == True:     
+                """ Initialize animation plots """   
+                # radial plot grid    
+                r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
+
+                # polar plot grid
+                phi0 = 0.0 #np.pi/4 #at a fixed phi value
+                theta0 = 0.0#np.pi/4 #at a fixed phi value
+                r0 = 1.0
+                #generate Gauss-Lobatto quadrature
+                xlobatto=np.zeros(nlobatto)
+                wlobatto=np.zeros(nlobatto)
+                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+                wlobatto=np.array(wlobatto)
+                xlobatto=np.array(xlobatto) # convert back to np arrays
+
             """ Initialize the interaction matrix """
             intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
 
@@ -170,7 +183,14 @@ class propagate(radbas,mapping):
             """ create field object """
 
             Elfield = Field(params)
-            #Fvec = Elfield.gen_field()
+            
+            #Fvec = Elfield.gen_field(timegrid)
+
+            """ ********* PLOT ELECTRIC FIELD ***********"""
+            #fig = plt.figure()
+            #ax = plt.axes()
+            #ax.plot(timegrid/ time_to_au,Fvec)
+            #plt.show()
 
 
             print("==========================")
@@ -178,7 +198,7 @@ class propagate(radbas,mapping):
             print("==========================")
 
             for itime, t in enumerate(timegrid): #only high-level operations
-                print("t = " + str("%10.1f"%t))
+                print("t = " + str("%10.1f"%(t/time_to_au)))
 
                 """ calculate interaction matrix at time t """
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
@@ -198,12 +218,9 @@ class propagate(radbas,mapping):
                 
                 #call saving function
                 #if requested: method for saving the wavepacket: switch it into a method of psi class?             """save the wavepacket in a file"""
-                fname.write(' '.join(["%15.8f"%t])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
-
-                """
-                fname.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(Psi[i].real)+'{:16.8e}'.format(Psi[i].imag) for i in range(0,Ntotal))+\
-                    '{:10.3f}'.format(wfnorm)+"\n")
-                """
+                #fname.write(' '.join(["%15.8f"%(t/time_to_au)])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
+                fname.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:10.3f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
+                
 
                 
             """ ========= POST-PROCESSING ========= """ 
@@ -244,10 +261,14 @@ class propagate(radbas,mapping):
             print(iplot)
 
 
-            for itime, t in enumerate(timegrid): 
-                print("t = " + str("%10.1f"%t))
-                
-                if params['plot_modes']["single_shot"] == True:
+            #set up animation if requested
+            if params['plot_modes']["animation"] == True:
+                #update animation
+                self.plot_animation(wavepacket,params['plot_controls'],rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
+
+            if params['plot_modes']["single_shot"] == True:
+                for itime, t in enumerate(timegrid): 
+                    print("t = " + str("%10.1f"%t))
                     for ielem in iplot:
                         if itime == ielem:
                             psi[:] = wavepacket[itime,:]
@@ -274,109 +295,123 @@ class propagate(radbas,mapping):
             axradang_k = fig.add_subplot(spec[0, 1],projection='polar')
             axrad = fig.add_subplot(spec[1, 0])
             axang = fig.add_subplot(spec[1, 1],projection='polar')
-            y = np.zeros(len(r),dtype=complex)
             #plt.tight_layout()
-            #================ radial wf ===============#
-            axrad.set_xlabel('r (a.u.)')
-            axrad.set_ylabel(r'$r|\psi(r,\theta_0,\phi_0)|^2$')
-            axrad.set_xlim( params['rshift'] , params['binwidth'] * params['nbins'] + params['rshift'] )
-            #axrad.set_ylim(0.0, 1.0)
-            for ielem,elem in enumerate(maparray):
-                y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
 
 
-            line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str(t/time_to_au)+ " as", color='black', linestyle='solid', linewidth=2)
-            axrad.legend()
+        if sum(plot_format) == 1:
+            print("plotting one static graph at time "+ str(t))
 
-            #================ radial-angular in real space ===============#
-            rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],60,True,dtype=float)
-            gridtheta1d = 2 * np.pi * rang
-            rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+            fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
 
-            y = np.zeros((len(rang),len(rang)),dtype=complex)
+            spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
+            axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+            #plt.tight_layout()
 
-            for ielem,elem in enumerate(maparray):
-                for i in range(len(rang)):
-                        y[i,:] +=    psi[ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
-
-            line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
-            plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
-
-            
-            #================ angular plot along a chosen ray ===============#
-            """ here we can calculate expectation value of r(t) or max{r}"""
-
-            rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
-            gridtheta1d = 2 * np.pi * rang
-            y = np.zeros((len(rang)),dtype=complex)
-
-            for ielem,elem in enumerate(maparray):
-                        y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d)
-
-            axang.set_rmax(1)
-            axang.set_rticks([0.25, 0.5, 1.0])  # less radial ticks
-            #axang.set_rlabel_position(-22.5)  # get radial labels away from plotted line
-            axang.grid(True)
-
-            #axang.set_title("Angular probability distribution at distance r0 ="+str(r0), va='bottom')
-            line_ang = axang.plot(gridtheta1d, r0*np.abs(y)/np.max(r0*np.abs(y)),color='red', marker='o', linestyle='solid',linewidth=2, markersize=2) 
-
-
-            #================ radial-angular in momentum space (2D, with phi0 fixed) ===============#
-            kgrid = np.linspace(0.0,2.0,20,True,dtype=float)
-            ang_grid = np.linspace(0.0,1.0,80,True,dtype=float)
-            theta_k_grid = 2 * np.pi * ang_grid # we can use different number of points in the angular and radial dimensions
-            phi_k_0 = 0.0
-
-            kmesh, theta_k_mesh = np.meshgrid(kgrid, theta_k_grid )
-
-            y = np.zeros((len(theta_k_grid),len(kgrid)),dtype=complex)
-
-            #calculate FT of the wavefunction
-
-            if params['FT_method'] == "quadrature": #set up quadratures
-                print("Using quadratures to calculate FT of the wavefunction")
-
-                FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
-
-                if params['schemeFT_rad'][0] == "Gauss-Laguerre":
-                    Nquad = params['schemeFT_rad'][1] 
-                    x,w = roots_genlaguerre(Nquad ,1)
-                    alpha = 1 #parameter of the G-Lag quadrature
-                    inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
-                elif params['schemeFT_rad'][0] == "Gauss-Hermite":
-                    Nquad = params['schemeFT_rad'][1] 
-                    x,w = roots_hermite(Nquad)
-                    inv_weight_func = lambda r: np.exp(r**2)
-
-            elif params['FT_method'] == "fftn":
-                print("Using numpy's fftn method to calculate FT of the wavefunction")
-
-            print("shape of kmesh: "+str(np.shape(kmesh)))
-            print("shape of theta_k_mesh: "+str(np.shape(theta_k_mesh)))
-            
-            for i in range(len(theta_k_grid)):
-                for j in range(len(kgrid)):
-                    start_time = time.time()    
-                    y[i,j] = self.FTpsi(kgrid[j],theta_k_grid[i],phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas)
-                    end_time = time.time()
-                    print("Execution time for FT-transformed wf at a single point: " + str(end_time-start_time))
         
-            line_angrad_k = axradang_k.contourf( theta_k_mesh, kmesh,  np.abs(y)/np.max(np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
-            plt.colorbar(line_angrad_k,ax=axradang_k,aspect=30)
+            if params['plot_types']['radial'] == True:
+                #================ radial wf ===============#
+                y = np.zeros(len(r),dtype=complex)
+                axrad.set_xlabel('r (a.u.)')
+                axrad.set_ylabel(r'$r|\psi(r,\theta_0,\phi_0)|^2$')
+                axrad.set_xlim( params['rshift'] , params['binwidth'] * params['nbins'] + params['rshift'] )
+                #axrad.set_ylim(0.0, 1.0)
+                for ielem,elem in enumerate(maparray):
+                    y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
 
 
-            """  2) Populations of states """       
-            """if int(itime)%params['plotrate']== 0:
-                for i in range(Nbas):
-                    #plt.plot(timegrid,wavepacket[:,i].real)
-                    #plt.plot(timegrid,wavepacket[:,i].imag)
-                    plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
-                plt.xlabel('t/a.u.')
-                plt.ylabel('populations')
-                plt.legend()
-                plt.show()
-            """
+                line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str(t/time_to_au)+ " as", color='black', linestyle='solid', linewidth=2)
+                axrad.legend()
+
+            if params['plot_types']['r-radial_angular'] == True:
+                #================ radial-angular in real space ===============#
+                rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],200,True,dtype=float)
+                gridtheta1d = 2 * np.pi * rang
+                rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+
+                y = np.zeros((len(rang),len(rang)),dtype=complex)
+
+                for ielem,elem in enumerate(maparray):
+                    for i in range(len(rang)):
+                            y[i,:] +=    psi[ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
+
+                line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
+                plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
+
+            if params['plot_types']['angular'] == True:          
+                #================ angular plot along a chosen ray ===============#
+                """ here we can calculate expectation value of r(t) or max{r}"""
+
+                rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
+                gridtheta1d = 2 * np.pi * rang
+                y = np.zeros((len(rang)),dtype=complex)
+
+                for ielem,elem in enumerate(maparray):
+                            y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r0,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d)
+
+                axang.set_rmax(1)
+                axang.set_rticks([0.25, 0.5, 1.0])  # less radial ticks
+                #axang.set_rlabel_position(-22.5)  # get radial labels away from plotted line
+                axang.grid(True)
+
+                #axang.set_title("Angular probability distribution at distance r0 ="+str(r0), va='bottom')
+                line_ang = axang.plot(gridtheta1d, r0*np.abs(y)/np.max(r0*np.abs(y)),color='red', marker='o', linestyle='solid',linewidth=2, markersize=2) 
+
+            if params['plot_types']['k-radial_angular'] == True:
+                #================ radial-angular in momentum space (2D, with phi0 fixed) ===============#
+                kgrid = np.linspace(0.0,2.0,20,True,dtype=float)
+                ang_grid = np.linspace(0.0,1.0,80,True,dtype=float)
+                theta_k_grid = 2 * np.pi * ang_grid # we can use different number of points in the angular and radial dimensions
+                phi_k_0 = 0.0
+
+                kmesh, theta_k_mesh = np.meshgrid(kgrid, theta_k_grid )
+
+                y = np.zeros((len(theta_k_grid),len(kgrid)),dtype=complex)
+
+                #calculate FT of the wavefunction
+
+                if params['FT_method'] == "quadrature": #set up quadratures
+                    print("Using quadratures to calculate FT of the wavefunction")
+
+                    FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+
+                    if params['schemeFT_rad'][0] == "Gauss-Laguerre":
+                        Nquad = params['schemeFT_rad'][1] 
+                        x,w = roots_genlaguerre(Nquad ,1)
+                        alpha = 1 #parameter of the G-Lag quadrature
+                        inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+                    elif params['schemeFT_rad'][0] == "Gauss-Hermite":
+                        Nquad = params['schemeFT_rad'][1] 
+                        x,w = roots_hermite(Nquad)
+                        inv_weight_func = lambda r: np.exp(r**2)
+
+                elif params['FT_method'] == "fftn":
+                    print("Using numpy's fftn method to calculate FT of the wavefunction")
+
+                print("shape of kmesh: "+str(np.shape(kmesh)))
+                print("shape of theta_k_mesh: "+str(np.shape(theta_k_mesh)))
+                
+                for i in range(len(theta_k_grid)):
+                    for j in range(len(kgrid)):
+                        start_time = time.time()    
+                        y[i,j] = self.FTpsi(kgrid[j],theta_k_grid[i],phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas)
+                        end_time = time.time()
+                        print("Execution time for FT-transformed wf at a single point: " + str(end_time-start_time))
+            
+                line_angrad_k = axradang_k.contourf( theta_k_mesh, kmesh,  np.abs(y)/np.max(np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
+                plt.colorbar(line_angrad_k,ax=axradang_k,aspect=30)
+
+
+                """  2) Populations of states """       
+                """if int(itime)%params['plotrate']== 0:
+                    for i in range(Nbas):
+                        #plt.plot(timegrid,wavepacket[:,i].real)
+                        #plt.plot(timegrid,wavepacket[:,i].imag)
+                        plt.plot(timegrid,np.sqrt(wavepacket[:,i].real**2+wavepacket[:,i].imag**2),'-+',label=str(i))
+                    plt.xlabel('t/a.u.')
+                    plt.ylabel('populations')
+                    plt.legend()
+                    plt.show()
+                """
 
             if plot_controls["show_static"] == True:
                 plt.show()   
@@ -384,6 +419,54 @@ class propagate(radbas,mapping):
             if plot_controls["save_static"] == True:
                 fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
     
+
+
+    def plot_animation(self,wavepacket,plot_controls,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
+        #================ radial-angular in real space ===============#
+        fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
+
+        spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
+        axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+        #plt.tight_layout()
+        rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],200,True,dtype=float)
+        gridtheta1d = 2 * np.pi * rang
+        rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+
+        y = np.zeros((len(rang),len(rang)),dtype=complex)
+
+        for ielem,elem in enumerate(maparray):
+            for i in range(len(rang)):
+                y[i,:] +=    wavepacket[0,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
+
+        line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2, extend='both'
+        plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
+
+        anim = animation.FuncAnimation(fig, self.animate,frames=10, interval=500, blit=True)
+
+        if plot_controls["show_anim"] == True:
+            plt.show()   
+
+        if plot_controls["save_anim"] == True:
+           anim.save(params['plot_controls']["animation_filename"]+".gif",writer='imagemagick',fps=2)
+           
+
+    # animation function.  This is called sequentially
+    def animate(self,iteration):
+        
+        for ielem,elem in enumerate(maparray):
+            for i in range(len(rang)):
+                y[i,:] +=    wavepacket[iteration,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
+
+        line_angrad_r.set_data(y)
+
+        return line_angrad_r,
+
+
+
+
+
+
+
 
     def FTpsi(self,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas):
 
@@ -653,7 +736,7 @@ class propagate(radbas,mapping):
     
             plt.plot(r, r*y/max(np.abs(y))) 
             plt.plot(r, r*self.psi01d(r)/max(np.abs(self.psi01d(r))))
-            plt.show()   
+            #plt.show()   
 
             val = 0.0
             for i in range(len(r)):
@@ -893,14 +976,14 @@ class propagate(radbas,mapping):
             for ielem,elem in enumerate(maparray_iniwf):
                 y[:] +=   coeffs[ielem,int(params['eigenvec_id'])] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm( elem[1], elem[0],  theta0, phi0)
             y /= np.sqrt(np.sum(coeffs[:,int(params['eigenvec_id'])] * coeffs[:,int(params['eigenvec_id'])]))
-
+            """
             plt.xlabel('r/a.u.')
             plt.ylabel('orbitals')    
             plt.plot(r, r * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
             plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(self.psi03d(r,phi0, phi0))) ) 
             plt.legend()     
             plt.show()  
-
+            """
             if params['save_ini_wf'] == True:
                 fname=open(params['wavepacket_file'],'w')
                 print("saving the initial wavefunction into file")
@@ -1068,28 +1151,26 @@ if __name__ == "__main__":
 
 
     params['t0'] = 0.0 
-    params['tmax'] = 100.0 
-    params['dt'] = 10.0 
+    params['tmax'] = 10000.0 
+    params['dt'] = 100.0 
     time_units = "as"
 
 
     """===== post-processing and analysis ====="""
-    
-
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": True, "animation": False}
+    params['plot_modes'] = {"single_shot": False, "animation": True}
 
-    params['plot_types'] = { "radial": True,
-                             "angular": True,
+    params['plot_types'] = { "radial": False,
+                             "angular": False,
                              "r-radial_angular": True, 
-                             "k-radial_angular": True} #decide which of the available observables you wish to plot
+                             "k-radial_angular": False} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [50.0,75.0,120.0],
+                                "plottimes": [100.0,200.0,300.0,400.0,500.0,600.0,900.0],
                                 "save_static": False,
-                                "save_anim": False,
-                                "show_static": True,
-                                "show_anim": False, 
+                                "save_anim": True,
+                                "show_static": False,
+                                "show_anim": True, 
                                 "static_filename": "obs",
                                 "animation_filename": "anim_obs"}
 
@@ -1120,7 +1201,7 @@ if __name__ == "__main__":
    
 
     """ put most of what's below into a converion function """
-    params['omega'] =  400.0 #nm
+    params['omega'] =  100.0 #nm
     #convert to THz:
     vellgt     =  2.99792458E+8 # m/s
     params['omega']= 10**9 *  vellgt / params['omega'] #Hz
@@ -1130,8 +1211,6 @@ if __name__ == "__main__":
     frequency_units = "nm" #we later convert all units to atomic unit
     params['E0'] = 1.0e9 #V/cm
     field_units = "V/cm"
-    params['sigma'] = 20.0 #as
-    params['tau0'] = 20.0 #as #centre of the pulse
 
     # convert time units to atomic units
     time_to_au = {"as" : np.float64(1.0/24.188)}
@@ -1148,9 +1227,7 @@ if __name__ == "__main__":
     #unit conversion
     #params = const.convert_units(params)
     time_to_au = time_to_au[time_units]
-    params['sigma'] *= time_to_au 
-    params['tau0'] *= time_to_au 
-    params['t0'] *= time_to_au 
+
     params['tmax'] *= time_to_au 
     params['dt'] *= time_to_au 
 
@@ -1163,12 +1240,13 @@ if __name__ == "__main__":
    
 
     """==== field dictionaries ===="""
-    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": True, "typef": "LCPL"}
+    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": False, "typef": "LCPL"}
+    field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
 
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 40.0, "t0": 50.0}
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 4000.0 * time_to_au , "t0": 5000.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_CPL 
+    params['field_type'] = field_LP 
     """ Available field types :
         1) field_CPL
         2) field_LP
@@ -1186,7 +1264,7 @@ if __name__ == "__main__":
 
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
     hmat = hydrogen.prop_wf(params,psi0)
-    hydrogen.plot_mat(np.abs(hmat[1:,1:]))
+    #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
 
 

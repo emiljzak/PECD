@@ -10,26 +10,30 @@ class Field():
         self.params = params
 
     """ =================================== FIELD TYPES =================================== """
-    def fieldCPL(self,t, omega, E0, CEP0, spherical, typef):
+    def fieldCPL(self,t, function_name, omega, E0, CEP0, spherical, typef):
    
-        fieldvec = [0.0 for i in range(3)]
-
         if spherical == True:
             if typef == "LCPL":
 
                 fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , - (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ), 0.0] ) 
         else:
-
+            if typef == "LCPL":
+                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 )  , -np.sin( omega * t + CEP0 ), 0.0] ) 
         return fieldvec
 
-    def printdummy(self,a):
-        print("this is a: "+str(a))
+    def fieldLP(self, t, function_name, omega, E0, CEP0):
+        #fieldvec = t
+        #print("shapes in fieldLP")
+        #print(np.shape(t))
+        #print(np.shape(np.cos( omega * t + CEP0 )))
+        return 0.0, 0.0, np.cos( omega * t + CEP0 )
+
+
 
 
     """ =================================== FIELD ENVELOPES =================================== """
-    def envgaussian(self,t,fwhm,t0):
-        fieldenv = 0.0
-        fieldenv = np.exp(-4*np.log(2)*(t-t0)**2/fwhm**2)
+    def envgaussian(self,t,function_name,FWHM,t0):
+        fieldenv = np.exp(-4*np.log(2)*(t-t0)**2/FWHM**2)
         return fieldenv
 
 
@@ -46,15 +50,19 @@ class Field():
             if not field_env_function:
                 raise NotImplementedError("Method %s not implemented" % self.params['field_env']['env_type'])
 
-            self.params['field_type'].pop('function_name')
 
-            fieldvec = field_type_function(t,**self.params['field_type'])
-            exit()
+            fieldx, fieldy , fieldz = field_type_function(t, **self.params['field_type'])
             fieldenv = field_env_function(t, **self.params['field_env'])
-            print(fieldvec,fieldenv)
+
+            #print(np.shape(output))
+            print(np.shape(fieldenv))
+
+            #fieldvec2 = np.multiply(fieldenv,fieldz)
+            #print("fieldvec2")
+            #print(np.shape(fieldvec2))
 
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
 
-        return np.asarray(fieldvec)
+        return fieldx * fieldenv , fieldy * fieldenv, fieldz * fieldenv
 
