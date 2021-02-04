@@ -261,11 +261,6 @@ class propagate(radbas,mapping):
             print(iplot)
 
 
-            #set up animation if requested
-            if params['plot_modes']["animation"] == True:
-                #update animation
-                self.plot_animation(wavepacket,params['plot_controls'],rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
-
             if params['plot_modes']["single_shot"] == True:
                 for itime, t in enumerate(timegrid): 
                     print("t = " + str("%10.1f"%t))
@@ -419,54 +414,6 @@ class propagate(radbas,mapping):
             if plot_controls["save_static"] == True:
                 fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
     
-
-
-    def plot_animation(self,wavepacket,plot_controls,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
-        #================ radial-angular in real space ===============#
-        fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
-
-        spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
-        axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
-        #plt.tight_layout()
-        rang = np.linspace(params['rshift'],params['nbins']*params['binwidth'],200,True,dtype=float)
-        gridtheta1d = 2 * np.pi * rang
-        rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
-
-        y = np.zeros((len(rang),len(rang)),dtype=complex)
-
-        for ielem,elem in enumerate(maparray):
-            for i in range(len(rang)):
-                y[i,:] +=    wavepacket[0,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
-
-        line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2, extend='both'
-        plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
-
-        anim = animation.FuncAnimation(fig, self.animate,frames=10, interval=500, blit=True)
-
-        if plot_controls["show_anim"] == True:
-            plt.show()   
-
-        if plot_controls["save_anim"] == True:
-           anim.save(params['plot_controls']["animation_filename"]+".gif",writer='imagemagick',fps=2)
-           
-
-    # animation function.  This is called sequentially
-    def animate(self,iteration):
-        
-        for ielem,elem in enumerate(maparray):
-            for i in range(len(rang)):
-                y[i,:] +=    wavepacket[iteration,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
-
-        line_angrad_r.set_data(y)
-
-        return line_angrad_r,
-
-
-
-
-
-
-
 
     def FTpsi(self,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas):
 
@@ -1128,10 +1075,7 @@ class propagate(radbas,mapping):
         # I will have to code MVP without invoking the Hamiltonian matrix.
         return np.matmul(H,q)
 
-
-
-if __name__ == "__main__":      
-
+def gen_input():
 
     params = {}
     
@@ -1257,8 +1201,17 @@ if __name__ == "__main__":
         1) env_gaussian
         2) env_flat
     """
+    return params
 
+if __name__ == "__main__":      
 
+    time_to_au =  np.float64(1.0/24.188)
+
+    freq_to_au = np.float64(0.057/800.0)
+
+    field_to_au =  np.float64(1.0/(5.14220652e+9))
+
+    params = gen_input()
 
     hydrogen = propagate() #!!!name of the potential should be one of the attributes of the propagate class!!!
 
