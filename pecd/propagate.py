@@ -664,7 +664,7 @@ class propagate(radbas,mapping):
             fmax = max(np.abs(self.psi01d(r)))
             print(fmax)
             print("RMSD relative to maximum function value = " + str(rmsd / fmax * 100)+" %")
-            exit()
+
 
         elif params['ini_state'] == "grid_2d_sph":  
             print("generating initial wavefunction by projection of a given function onto our basis \n")
@@ -1117,9 +1117,7 @@ if __name__ == "__main__":
 
 
     """====field controls===="""
-    params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_CPL 
-    params['field_env'] = env_gaussian #"static_uniform"
+   
 
     """ put most of what's below into a converion function """
     params['omega'] =  400.0 #nm
@@ -1165,25 +1163,35 @@ if __name__ == "__main__":
    
 
     """==== field dictionaries ===="""
-    field_CPL = {"field_type": "CPL", "omega": params['omega'], "E0": params['E0'], "CEP": 0.0, "spherical": True, "type": LCPL}
+    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": True, "typef": "LCPL"}
 
-    env_gaussian = {"FWHM": 40.0, "t0": 50.0}
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 40.0, "t0": 50.0}
 
-    """ We have two options for calculating the potential matrix elements: 
-    1) cartesian: we use cartesian elements of the dipole moment operator and the electric field. Lebedev quadratures are used to compute matrix elements
-    2) spherical-tensor: sphereical tensor representation of the field and the dipole moment. The matrix elements are computed analytically with 3-j symbols.
+    params['field_form'] = "analytic" #or numerical
+    params['field_type'] = field_CPL 
+    """ Available field types :
+        1) field_CPL
+        2) field_LP
+        3) field_omega2omega
     """
-   
-    params['int_rep_type'] = 'cartesian'
+    params['field_env'] = env_gaussian 
+    """ Available envelopes :
+        1) env_gaussian
+        2) env_flat
+    """
+
 
 
     hydrogen = propagate() #!!!name of the potential should be one of the attributes of the propagate class!!!
 
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
     hmat = hydrogen.prop_wf(params,psi0)
-    #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
+    hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
 
+
+
+    """ ====== CLUTTER ======"""
 
     #print(timeit.timeit('hydrogen.prop_wf(method,basis,ini_state,params,potential,field,scheme)',setup='from matelem import hmat', number = 100))  
 
