@@ -189,9 +189,9 @@ class propagate(radbas,mapping):
             """ ********* PLOT ELECTRIC FIELD ***********"""
             #fig = plt.figure()
             #ax = plt.axes()
-            #ax.plot(timegrid/ time_to_au,Fvec)
+            #ax.plot(timegrid/time_to_au,Fvec[2])
             #plt.show()
-
+            #exit()
 
             print("==========================")
             print("==wavepacket propagation==")
@@ -280,7 +280,7 @@ class propagate(radbas,mapping):
 
 
     def plot_snapshot(self,psi,plot_controls,plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
-        if sum(plot_format) == 4:
+        if sum(plot_format) >= 3:
             print("plotting all static graphs at time "+ str(t))
 
             fig = plt.figure(figsize=(10, 5), dpi=300, constrained_layout=True)
@@ -293,13 +293,13 @@ class propagate(radbas,mapping):
             #plt.tight_layout()
 
 
-        if sum(plot_format) == 1:
+        if sum(plot_format) >= 1:
             print("plotting one static graph at time "+ str(t))
 
-            fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
+            """fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
 
             spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
-            axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+            axradang_r = fig.add_subplot(spec[0, 0],projection='polar')"""
             #plt.tight_layout()
 
         
@@ -414,6 +414,7 @@ class propagate(radbas,mapping):
             if plot_controls["save_static"] == True:
                 fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
     
+
 
     def FTpsi(self,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas):
 
@@ -1102,19 +1103,19 @@ def gen_input():
 
     """===== post-processing and analysis ====="""
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": False, "animation": True}
+    params['plot_modes'] = {"single_shot": True, "animation": False}
 
-    params['plot_types'] = { "radial": False,
-                             "angular": False,
+    params['plot_types'] = { "radial": True,
+                             "angular": True,
                              "r-radial_angular": True, 
-                             "k-radial_angular": False} #decide which of the available observables you wish to plot
+                             "k-radial_angular": True} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
                                 "plottimes": [100.0,200.0,300.0,400.0,500.0,600.0,900.0],
                                 "save_static": False,
-                                "save_anim": True,
-                                "show_static": False,
-                                "show_anim": True, 
+                                "save_anim": False,
+                                "show_static": True,
+                                "show_anim": False, 
                                 "static_filename": "obs",
                                 "animation_filename": "anim_obs"}
 
@@ -1187,7 +1188,7 @@ def gen_input():
     field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": False, "typef": "LCPL"}
     field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
 
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 4000.0 * time_to_au , "t0": 5000.0 * time_to_au }
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 400.0 * time_to_au , "t0": 500.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_LP 
