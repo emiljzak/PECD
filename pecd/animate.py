@@ -75,31 +75,34 @@ y = np.zeros((len(rang),len(rang)),dtype=complex)
 fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
 
 spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
-axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
-
+axradang_r = fig.add_subplot(spec[0, 0])
+#,projection='polar'
 for ielem,elem in enumerate(maparray):
     for i in range(len(rang)):
             y[i,:] +=    wavepacket[0,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
 
-line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
-#line_angrad_r, = axradang_r.contourf([],[], [],cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
-plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
+line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y))) #cmap = jet, gnuplot, gnuplot2
+#line_angrad_r, = axradang_r.plot([],[]) #cmap = jet, gnuplot, gnuplot2
+#plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
 
+def init():  
+    line_angrad_r.set_data([], [],[])  
+    return line_angrad_r,
 
 # animation function.  This is called sequentially
 def animate(iteration):
-    
+
     for ielem,elem in enumerate(maparray):
         for i in range(len(rang)):
             y[i,:] +=    wavepacket[iteration,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
-
-    line_angrad_r.set_data(y)
-    plt.show()   
+    
+    line_angrad_r.set_data(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)))
+ 
     return line_angrad_r,
 
-anim = animation.FuncAnimation(fig, animate,frames=10, interval=500, blit=True)
+anim = animation.FuncAnimation(fig, animate,init_func = init, frames=3, interval=500)
 
-
+#plt.show()  
 
 anim.save(params['plot_controls']["animation_filename"]+".gif",writer='imagemagick',fps=2)
     
