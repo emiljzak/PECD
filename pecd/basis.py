@@ -133,12 +133,12 @@ class radbas():
         x=np.array(x) # convert back to np arrays
         xgrid=np.zeros((self.nbins,self.nlobatto),dtype=float) # appropriate for row-major language
         
-        bingrid = np.zeros(self.nlobatto)
-        bingrid = x*0.5*self.binwidth+0.5*self.binwidth
+        bingrid = np.zeros(self.nbins)
+        bingrid = x * 0.5 * self.binwidth + 0.5 * self.binwidth
 
         xgrid[:,] = bingrid
 
-        Translvec = np.zeros(self.nlobatto)
+        Translvec = np.zeros(self.nbins)
         for i in range(len(Translvec)):
             Translvec[i] = float(i) * self.binwidth + self.rshift
 

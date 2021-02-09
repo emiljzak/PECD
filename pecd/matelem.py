@@ -132,7 +132,7 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(Nbas):
+            for j in range(i,Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         #print("KEO matrix")
@@ -312,6 +312,9 @@ class hmat():
         return -1./np.sqrt(r**2+alpha**2)
         #return -1.0/r
 
+    def pot_null(self,r,theta,phi):
+        return 0.0 #zero-potential
+
     def calc_potmat(self):  
         """calculate full potential matrix"""
         lmax = self.params['lmax']
@@ -326,6 +329,14 @@ class hmat():
 
         potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
 
+
+        """ Choose the potential function to be used """
+        potential_function = getattr(self, self.params['potential'] )
+        if not potential_function:
+            raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
+        print("potential function chosen: " + str(potential_function))
+        
+
         """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
         """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
@@ -334,10 +345,10 @@ class hmat():
             #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(Nbas):
+            for j in range(i,Nbas):
                 #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme)
+                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
 
         #print("Potential matrix")
         #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
@@ -345,7 +356,7 @@ class hmat():
 
         return potmat
         
-    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme):
+    def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme,potential_function):
         """calculate single element of potential matrix"""
         myscheme = quadpy.u3.schemes[scheme]()
         #print(myscheme)
@@ -355,7 +366,7 @@ class hmat():
                 theta_phi[1] = phi  in [-pi,pi]
                 sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
         """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_hydrogen(rin,theta_phi[0],theta_phi[1]+np.pi)) 
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * potential_function(rin,theta_phi[0],theta_phi[1]+np.pi)) 
 
         return val
    
@@ -471,7 +482,7 @@ class hmat():
 
         return intmat
 
-    def calc_intmatelem(self,l1,m1,l2,m2,scheme,field,rep_type):
+    def calc_intmatelem(self,l1,m1,i1,n1,l2,m2,i2,n2,scheme,field,rep_type,rin):
             """calculate single element of the interaction matrix"""
             myscheme = quadpy.u3.schemes[scheme]()
             #print(myscheme)
@@ -491,7 +502,10 @@ class hmat():
                 val = np.dot(field,T)  
 
             elif rep_type == 'spherical':
-                return 0
-  
-            return val
 
+                T[0] = N(gaunt(l1,1,l2,m1,1,m2))
+                T[1] = N(gaunt(l1,1,l2,m1,-1,m2))
+                T[2] = N(gaunt(l1,1,l2,m1,0,m2))
+                val =  np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T) 
+                val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T)  )
+            return val
