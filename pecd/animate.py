@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8; fill-column: 120 -*-
-#
-# Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
-#
 
 from propagate import gen_input
 from matelem  import mapping
@@ -69,46 +64,36 @@ rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
 
 y = np.zeros((len(rang),len(rang)),dtype=complex)
 
-
-
-#================ radial-angular in real space ===============#
 fig = plt.figure(figsize=(5, 5), dpi=300, constrained_layout=True)
 
 spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
-axradang_r = fig.add_subplot(spec[0, 0])
-#,projection='polar'
-for ielem,elem in enumerate(maparray):
-    for i in range(len(rang)):
-            y[i,:] +=    wavepacket[0,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
+ax = fig.add_subplot(spec[0, 0],projection='polar')
 
-line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y))) #cmap = jet, gnuplot, gnuplot2
-#line_angrad_r, = axradang_r.plot([],[]) #cmap = jet, gnuplot, gnuplot2
-#plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
 
-def init():  
-    line_angrad_r.set_data([], [],[])  
-    return line_angrad_r,
 
-# animation function.  This is called sequentially
-def animate(iteration):
-
+def some_data(i):   # function returns a 2D data array
     for ielem,elem in enumerate(maparray):
-        for i in range(len(rang)):
-            y[i,:] +=    wavepacket[iteration,ielem] * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[i])
-    
-    line_angrad_r.set_data(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)))
- 
-    return line_angrad_r,
+        for j in range(len(rang)):
+            
+            y[j,:] +=    (wavepacket[i,2*ielem+1].real+1j * wavepacket[i,2*ielem+2].imag) * rbas.chi(elem[2],elem[3],rang[:],rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, gridtheta1d[j]) 
 
-anim = animation.FuncAnimation(fig, animate,init_func = init, frames=3, interval=500)
-
-#plt.show()  
-
-anim.save(params['plot_controls']["animation_filename"]+".gif",writer='imagemagick',fps=2)
-    
+    return  rmesh*np.abs(y)/np.max(rmesh*np.abs(y))
 
 
+cont = plt.contourf(thetamesh, rmesh, some_data(0),cmap = 'jet',vmin=0.0, vmax=1.0)    # first image on screen
+plt.colorbar()
 
+# animation function
+def animate(i):
+    global cont
+    z = some_data(i)
+    for c in cont.collections:
+        c.remove()  # removes only the contours, leaves the rest intact
+    cont = plt.contourf(thetamesh, rmesh, z,cmap = 'jet',vmin=0.0, vmax=1.0)
+    #plt.title('t = %i:  %.2f' % (i,z[5,5]))
+    return cont
 
+anim = animation.FuncAnimation(fig, animate, frames=100, repeat=False)
 
-
+anim.save("test.gif",writer='imagemagick',fps=5)
+#anim.save('animation.mp4', writer=animation.FFMpegWriter())

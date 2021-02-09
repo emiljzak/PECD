@@ -184,14 +184,18 @@ class propagate(radbas,mapping):
 
             Elfield = Field(params)
             
-            #Fvec = Elfield.gen_field(timegrid)
+
 
             """ ********* PLOT ELECTRIC FIELD ***********"""
-            #fig = plt.figure()
-            #ax = plt.axes()
-            #ax.plot(timegrid/time_to_au,Fvec[2])
-            #plt.show()
-            #exit()
+
+            if params['plot_elfield'] == True:
+                print("plotting the z-component of the electric field:")
+                Fvec = Elfield.gen_field(timegrid)
+                fig = plt.figure()
+                ax = plt.axes()
+                ax.plot(timegrid/time_to_au,Fvec[2])
+                plt.show()
+
 
             print("==========================")
             print("==wavepacket propagation==")
@@ -280,10 +284,10 @@ class propagate(radbas,mapping):
 
 
     def plot_snapshot(self,psi,plot_controls,plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
-        if sum(plot_format) >= 3:
+        if sum(plot_format) >= 1:
             print("plotting all static graphs at time "+ str(t))
 
-            fig = plt.figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+            fig = plt.figure(figsize=(5, 3), dpi=200, constrained_layout=True)
 
             spec = gridspec.GridSpec(ncols=2, nrows=2,figure=fig)
             axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
@@ -1081,9 +1085,9 @@ def gen_input():
     params = {}
     
     """====basis set parameters===="""
-    params['nlobatto'] = 5
-    params['nbins'] = 3 #bug when nbins > nlobatto  
-    params['binwidth'] = 5.0
+    params['nlobatto'] = 10
+    params['nbins'] = 10 #bug when nbins > nlobatto  
+    params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 1
@@ -1096,8 +1100,8 @@ def gen_input():
 
 
     params['t0'] = 0.0 
-    params['tmax'] = 10000.0 
-    params['dt'] = 100.0 
+    params['tmax'] = 18000.0 
+    params['dt'] = 20.0 
     time_units = "as"
 
 
@@ -1106,12 +1110,12 @@ def gen_input():
     params['plot_modes'] = {"single_shot": True, "animation": False}
 
     params['plot_types'] = { "radial": True,
-                             "angular": True,
-                             "r-radial_angular": True, 
-                             "k-radial_angular": True} #decide which of the available observables you wish to plot
+                             "angular": False,
+                             "r-radial_angular": False, 
+                             "k-radial_angular": False} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [100.0,200.0,300.0,400.0,500.0,600.0,900.0],
+                                "plottimes": [100.0,2000.0,4000.0,9000.0],
                                 "save_static": False,
                                 "save_anim": False,
                                 "show_static": True,
@@ -1137,17 +1141,19 @@ def gen_input():
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 10 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
 
     """====field controls===="""
    
-
+    params['plot_elfield'] = True #plot z-component of the electric field
     """ put most of what's below into a converion function """
-    params['omega'] =  100.0 #nm
-    #convert to THz:
+    params['omega'] =  23.128 #nm or eV
+
+
+    #convert nm to THz:
     vellgt     =  2.99792458E+8 # m/s
     params['omega']= 10**9 *  vellgt / params['omega'] #Hz
     print("Electric field carrier frequency = "+str(params['omega']*1.0e-12)+" THz")
@@ -1156,6 +1162,15 @@ def gen_input():
     frequency_units = "nm" #we later convert all units to atomic unit
     params['E0'] = 1.0e9 #V/cm
     field_units = "V/cm"
+
+    #convert from W/cm^2 to V/cm
+    epsilon0=8.85e-12
+    intensity = 7e16 #W/cm^2 #peak intensity
+    field_strength = np.sqrt(intensity/(vellgt * epsilon0))
+    print("field strength")
+    print("  %8.2e"%field_strength)
+    params['E0'] =field_strength
+
 
     # convert time units to atomic units
     time_to_au = {"as" : np.float64(1.0/24.188)}
@@ -1188,7 +1203,10 @@ def gen_input():
     field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": False, "typef": "LCPL"}
     field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
 
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 400.0 * time_to_au , "t0": 500.0 * time_to_au }
+    # if gaussian width is given: e^-t^2/sigma^2
+    # FWHM = 2.355 * sigma/sqrt(2)
+
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 3000.0/np.sqrt(2.0) * time_to_au , "t0": 9000.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_LP 
