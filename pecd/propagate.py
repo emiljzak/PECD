@@ -13,11 +13,11 @@ import timeit
 from field import Field
 from basis import radbas
 from matelem import mapping
-
+import input
 import constants 
 
 from scipy import fft
-from scipy.linalg import expm
+from scipy.sparse import linalg
 from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial,roots_hermite
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
@@ -80,7 +80,7 @@ class propagate(radbas,mapping):
 
 
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            evals, coeffs, hmat = hamiltonian.calc_hmat()
+            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
             #print(type(coeffs))
             #print(np.shape(coeffs))
             rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
@@ -178,10 +178,19 @@ class propagate(radbas,mapping):
 
             start_time = time.time()    
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            evals, coeffs, hmat = hamiltonian.calc_hmat()
+            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
             end_time = time.time()
             print("The execution time for building the field-free Hamiltonian is: " + str(end_time-start_time))
 
+            if params['calc_inst_energy'] == True:
+                print("saving KEO and POT matrix for later use in instantaneous energy calculations")
+        
+                #keomat = hamiltonian.calc_keomat()
+                #potmat = hamiltonian.calc_potmat()
+
+                #pre-calculate time-independent part of the dipole interaction matrix element: only linearly polarized pulse
+                vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
+     
             """Diagonal H0 matrix for testing TDSE solver"""
             #hmat= np.zeros((Nbas, Nbas), float)
             #np.fill_diagonal(hmat, 0.0)
@@ -214,22 +223,22 @@ class propagate(radbas,mapping):
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
 
                 start_time = time.time()    
-                vint = hamiltonian.calc_intmat(t,intmat,Elfield.gen_field(t)) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
-
+                #vint = hamiltonian.calc_intmat(t,intmat,Elfield.gen_field(t)) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
+                vint = Elfield.gen_field(t)[2] * vint0 #only for linear polarisation
                 """matrix exponentiation"""
-                umat = expm( -1.0j * (hmat + vint) * dt ) #later: call iterative eigensolver function
+                umat = linalg.expm( -1.0j * (hmat +  vint) * dt ) #later: call iterative eigensolver function
                 """action of the evolution operator"""
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
                 psi[:] = wavepacket[itime,:] 
                 end_time = time.time()
 
-                print("The execution time for single-step wavefunction propagation is: " +  str("%10.3f"%(end_time-start_time)) + "s")
+                print("Execution time for single-step wavefunction propagation is: " +  str("%10.3f"%(end_time-start_time)) + "s")
                 
                 #call saving function
                 #if requested: method for saving the wavepacket: switch it into a method of psi class?             """save the wavepacket in a file"""
                 #fname.write(' '.join(["%15.8f"%(t/time_to_au)])+' '.join(["  %15.8f"%np.abs(item) for item in psi])+"\n")
-                fname.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:10.3f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
+                fname.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
                 
             end_time_global = time.time()
             print("The execution time for complete wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
@@ -277,11 +286,9 @@ class propagate(radbas,mapping):
                     print("t = " + str("%10.1f"%t))
                     psi[:] = wavepacket[itime,:]    
                     fieldvec = Elfield.gen_field(t)
-                    maparraynumpy = maparray
-                    maparraynumpy = np.asarray(maparraynumpy)
+        
                     start_time = time.time()
-                    energy[itime] = self.get_inst_energy(t, psi, maparraynumpy, rgrid, rbas, params['scheme'], fieldvec, params['int_rep_type'], x, w, hamiltonian)
-
+                    energy[itime] = self.get_inst_energy(t, psi, fieldvec, keomat, potmat, vint0)
                     end_time = time.time()
                     print("The execution time for complete single-point instantaneous energy calculation: " + str("%10.3f"%(end_time-start_time)) + "s")
                     print(energy[itime])
@@ -316,14 +323,12 @@ class propagate(radbas,mapping):
 
                             self.plot_snapshot(psi,params['plot_controls'],plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
 
-    def get_inst_energy(self,t,psi,maparray,rgrid,rbas,scheme,field,int_rep_type,xlobatto,wlobatto,hamiltonian):
+    def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
         en = 0.0+ 1j * 0.0
         for ibas in range(len(psi)):
-            rin = rgrid[maparray[ibas][2],maparray[ibas][3]]   
-            valtemp = np.conjugate( psi[ibas]) * psi[:]  * ( hamiltonian.calc_keomatel(maparray[ibas][0],maparray[ibas][1],maparray[ibas][2],maparray[ibas][3],maparray[:][0],maparray[:][1],maparray[:][2],maparray[:][3],xlobatto,wlobatto,rin) \
-                +  hamiltonian.calc_intmatelem(maparray[ibas][0],maparray[ibas][1],maparray[ibas][2],maparray[ibas][3],maparray[:[0],maparray[:][1],maparray[:][2],maparray[:][3],scheme,field,int_rep_type,rin) )
+            valtemp = np.conjugate( psi[ibas]) * psi[:]  *  (keomat[ibas,:] + field[2] * vint0[ibas,:])# (maparray[ibas][0],maparray[ibas][1],maparray[ibas][2],maparray[ibas][3],maparray[jbas][0],maparray[jbas][1],maparray[jbas][2],maparray[jbas][3],xlobatto,wlobatto,rin) #\
+                #+  hamiltonian.calc_intmatelem(maparray[ibas][0],maparray[ibas][1],maparray[ibas][2],maparray[ibas][3],maparray[jbas][0],maparray[jbas][1],maparray[jbas][2],maparray[jbas][3],scheme,field,int_rep_type,rin) )
             en += np.sum(valtemp)
-
         return en
 
     def plot_snapshot(self,psi,plot_controls,plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas):
@@ -361,7 +366,7 @@ class propagate(radbas,mapping):
                     y +=    psi[ielem] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm(elem[1], elem[0],  phi0, theta0)
 
 
-                line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str(t/time_to_au)+ " as", color='black', linestyle='solid', linewidth=2)
+                line_rad, = axrad.plot(r, r*np.abs(y), label="time = "+str("%5.0f"%(t/time_to_au))+ " as", color='black', linestyle='solid', linewidth=2)
                 axrad.legend()
 
             if params['plot_types']['r-radial_angular'] == True:
@@ -953,7 +958,7 @@ class propagate(radbas,mapping):
 
             """ initialize Hamiltonian """
             hamiltonian0 = matelem.hmat(params,0.0,rgrid,maparray_iniwf)
-            evals, coeffs, hmat = hamiltonian0.calc_hmat()
+            evals, coeffs, hmat, keomat, potmat = hamiltonian0.calc_hmat()
 
             for ielem, elem in enumerate(maparray_iniwf):
                 psi0_mat.append([ elem[0], elem[1], elem[2], elem[3], coeffs[ielem,int(params['eigenvec_id'])]])
@@ -1120,167 +1125,14 @@ class propagate(radbas,mapping):
         # I will have to code MVP without invoking the Hamiltonian matrix.
         return np.matmul(H,q)
 
-def gen_input():
-
-    params = {}
-    
-    """====basis set parameters===="""
-    params['nlobatto'] = 5
-    params['nbins'] = 5 #bug when nbins > nlobatto  
-    params['binwidth'] = 3.0
-    params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
-    params['lmin'] = 0
-    params['lmax'] = 1
-    
-    """====runtime controls===="""
-    params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
-    params['basis'] = "prim" # or adiab
-    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null
-    params['scheme'] = "lebedev_019" #angular integration rule
-    params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
-    params['t0'] = 0.0 
-    params['tmax'] = 300.0 
-    params['dt'] = 3.0 
-    time_units = "as"
-
-
-    """===== post-processing and analysis ====="""
-    params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": False, "animation": False}
-
-    params['plot_types'] = { "radial": True,
-                             "angular": False,
-                             "r-radial_angular": False, 
-                             "k-radial_angular": False} #decide which of the available observables you wish to plot
-
-    params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [0.0,200.0,400.0,600.0,800.0],
-                                "save_static": False,
-                                "save_anim": False,
-                                "show_static": True,
-                                "show_anim": False, 
-                                "static_filename": "obs",
-                                "animation_filename": "anim_obs"}
-
-    """ plotrate : rate of plotting observables in timestep units in animated plots
-        plottimes: times (in time_units) at which we plot selected observables in a static graph
-        save_static: save single shot plots to appropriate files (named separately for each plottime)
-        save_anim: save animation in a file
-        show_static: show single shot plots during the analysis
-        show_anim: show animation at the end of analysis
-        static_filename: name of the file into which the snapshots will be saved
-        animation_filename: name of the file into which animations will be saved
-    """
-    params['FT_method'] = "quadrature" #method of calculating the FT of the wavefunction: quadrature or fftn
-    params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
-    params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
-
-    params['calc_inst_energy'] = True #calculate instantaneous energy of a free-electron wavepacket?
-
-    """====initial state====""" 
-    params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
-    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
-    params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
-    params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
-    params['eigenvec_id'] = 0 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
-    params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
-
-
-    """====field controls===="""
-   
-    params['plot_elfield'] = True #plot z-component of the electric field
-    """ put most of what's below into a converion function """
-    params['omega'] =  23.128 #nm or eV
-
-
-    #convert nm to THz:
-    vellgt     =  2.99792458E+8 # m/s
-    params['omega']= 10**9 *  vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
-    opt_cycle = 1.0e18/params['omega']
-    suggested_no_pts_per_cycle = 25     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
-    # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
-    print("Electric field carrier frequency = "+str(params['omega']*1.0e-12)+" THz")
-    print("Electric field oscillation period (optical cycle) = "+str(1.0e15/params['omega'])+" fs")
-    print("suggested time-step for field linear frequency = "+str("%12.3f"%(params['omega']/1e12))+" THz is: " + str(opt_cycle/suggested_no_pts_per_cycle ) +" as")
-
-
-    params['omega'] *= 2.0 * np.pi # linear to angular frequency
-    params['omega'] /= 4.13e16 #Hz to a.u.
-    frequency_units = "nm" #we later convert all units to atomic unit
-
-
-    params['E0'] = 1.0e9 #V/cm
-    field_units = "V/cm"
-
-    #convert from W/cm^2 to V/cm
-    epsilon0=8.85e-12
-    intensity = 7e16 #W/cm^2 #peak intensity
-    field_strength = np.sqrt(intensity/(vellgt * epsilon0))
-    print("field strength")
-    print("  %8.2e"%field_strength)
-    params['E0'] = field_strength
-
-
-    # convert time units to atomic units
-    time_to_au = {"as" : np.float64(1.0/24.188)}
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-
-    # convert frequency units to atomic units
-    freq_to_au = {"nm" : np.float64(0.057/800.0)}
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-
-    # convert electric field from different units to atomic units
-    field_to_au = {"debye" : np.float64(0.393456),
-                    "V/cm" :  np.float64(1.0/(5.14220652e+9))}
-
-    #unit conversion
-    #params = const.convert_units(params)
-    time_to_au = time_to_au[time_units]
-
-    params['tmax'] *= time_to_au 
-    params['dt'] *= time_to_au 
-
-    #freq_to_au = freq_to_au[frequency_units]
-    #params['omega'] *= freq_to_au 
-    field_to_au = field_to_au[field_units]
-    params['E0'] *= field_to_au 
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-    #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
-   
-
-    """==== field dictionaries ===="""
-    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": False, "typef": "LCPL"}
-    field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
-
-    # if gaussian width is given: e^-t^2/sigma^2
-    # FWHM = 2.355 * sigma/sqrt(2)
-
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 3000.0/np.sqrt(2.0) * time_to_au , "t0": 6000.0 * time_to_au }
-
-    params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_LP 
-    """ Available field types :
-        1) field_CPL
-        2) field_LP
-        3) field_omega2omega
-    """
-    params['field_env'] = env_gaussian 
-    """ Available envelopes :
-        1) env_gaussian
-        2) env_flat
-    """
-    return params
 
 if __name__ == "__main__":      
-
     time_to_au =  np.float64(1.0/24.188)
 
     freq_to_au = np.float64(0.057/800.0)
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
-
-    params = gen_input()
+    params = input.gen_input()
 
     hydrogen = propagate() #!!!name of the potential should be one of the attributes of the propagate class!!!
 

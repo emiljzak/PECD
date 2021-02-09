@@ -7,11 +7,12 @@ import numpy as np
 import quadpy
 from sympy.physics.wigner import gaunt
 from sympy import *
+from scipy.sparse import linalg
 from scipy.special import sph_harm
 from basis import angbas,radbas
 from field import Field
 import matplotlib.pyplot as plt
-
+import time
 #the imports below will have to be removed and calling of gauss lobatto should be made from another class
 from sympy import symbols
 from sympy.core import S, Dummy, pi
@@ -79,22 +80,38 @@ class hmat():
         #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
     
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
-        hmat = self.calc_potmat() + self.calc_keomat() 
+        keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
+        potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
 
+        start_time = time.time()
+        keomat = self.calc_potmat()
+        potmat = self.calc_keomat() 
+        hmat = keomat + potmat
+        end_time = time.time()
+
+        print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        neval = 10 #params["n"]
         print("Hamiltonian Matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
-        print("Eigenvalues"+'\n')
-        eval, eigvec = np.linalg.eigh(hmat,UPLO='U')
+        start_time = time.time()
+        #eval, eigvec = linalg.eigs(-1.0 * hmat,k=neval,which='LM')
+        eval, eigvec = np.linalg.eigh(hmat)
+        end_time = time.time()
 
+        print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+        print("ZPE = " + str(eval[0]))
         eval /=1.0
-
+        print("Eigenvalues:"+'\n')
         """ Exact energies of hydrogen atom """
-        evalhydrogen = np.zeros((self.params['Nbas']),dtype=float)
-        for i in range(1,self.params['Nbas']+1):
+        evalhydrogen = np.zeros(neval,dtype=float)
+        for i in range(1,neval+1):
             evalhydrogen[i-1] = - 1./(2.0 * float(i **2))
 
-        evals = np.column_stack((eval,evalhydrogen))
+        evals = np.column_stack((eval[:neval],evalhydrogen))
 
         with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=40):
             #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
@@ -111,7 +128,7 @@ class hmat():
         """
         #exit()
         #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
-        return evals, eigvec, hmat
+        return evals, eigvec, hmat, keomat, potmat
 
     def calc_keomat(self):
 
@@ -132,7 +149,7 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         #print("KEO matrix")
@@ -309,8 +326,8 @@ class hmat():
         """test H-atom potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
         alpha = 0.05
-        return -1./np.sqrt(r**2+alpha**2)
-        #return -1.0/r
+        #return -1./np.sqrt(r**2+alpha**2)
+        return -1.0/r
 
     def pot_null(self,r,theta,phi):
         return 0.0 #zero-potential
@@ -345,7 +362,7 @@ class hmat():
             #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
@@ -447,13 +464,11 @@ class hmat():
         """calculate full interaction matrix"""
         Nbas = self.params['Nbas']
 
+        #we keep the time variable if we wish to add analytic functions here
+
         #print("Electric field vector")
         #print(Fvec)
         #field: (E_1, E_-1, E_0) in spherical tensor form
-
-        #field =  200.0 *  np.array([np.cos(time)-1j*np.sin(time),-(np.cos(time)+1j * np.sin(time)),0]) #L-CPL
-        #field = np.array([1,1,1])
-        #field =  200.0 *  np.array([0,0,np.sin(time)])
 
         """ keep separate methods for cartesian and spherical tensor: to speed up by avoiding ifs"""
 
@@ -465,14 +480,14 @@ class hmat():
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
                     T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
                     T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
 
 
-                    intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T)  
+                    intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin 
 
         intmat += np.conjugate(intmat.T)
 
@@ -506,6 +521,6 @@ class hmat():
                 T[0] = N(gaunt(l1,1,l2,m1,1,m2))
                 T[1] = N(gaunt(l1,1,l2,m1,-1,m2))
                 T[2] = N(gaunt(l1,1,l2,m1,0,m2))
-                val =  np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T) 
-                val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0) * rin * np.dot(field,T)  )
+                val =  np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin
+                val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0)  * np.dot(field,T) * rin )
             return val
