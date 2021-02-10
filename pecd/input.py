@@ -8,9 +8,9 @@ def gen_input():
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
-    params['nlobatto'] = 8
-    params['nbins'] = 50 
-    params['binwidth'] = 3.0
+    params['nlobatto'] = 50
+    params['nbins'] = 1 
+    params['binwidth'] = 200.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 0
@@ -22,7 +22,7 @@ def gen_input():
     params['scheme'] = "lebedev_019" #angular integration rule
     params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
-    params['tmax'] = 2100.0 
+    params['tmax'] = 10.0 
     params['dt'] = 3.0 
     time_units = "as"
 
@@ -37,7 +37,7 @@ def gen_input():
                              "k-radial_angular": False} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [0.0,20.0,40.0,60.0,80.0,100.0,200.0,300.0,600.0,1000.0,2000.0],
+                                "plottimes": [0.0,20.0,40.0,60.0,80.0,100.0,200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_static": False,
                                 "save_anim": False,
                                 "show_static": True,
@@ -65,7 +65,7 @@ def gen_input():
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 8 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 1 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
@@ -93,12 +93,12 @@ def gen_input():
     frequency_units = "nm" #we later convert all units to atomic unit
 
 
-    params['E0'] = 1.0e9 #V/cm
+    #params['E0'] = 1.0e9 #V/cm
     field_units = "V/cm"
 
     #convert from W/cm^2 to V/cm
     epsilon0=8.85e-12
-    intensity = 7e16 #W/cm^2 #peak intensity
+    intensity = 0.0 #7e16 #W/cm^2 #peak intensity
     field_strength = np.sqrt(intensity/(vellgt * epsilon0))
     print("field strength")
     print("  %8.2e"%field_strength)
@@ -139,7 +139,7 @@ def gen_input():
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
 
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 500.0/np.sqrt(2.0) * time_to_au , "t0": 1000.0 * time_to_au }
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 2000.0/np.sqrt(2.0) * time_to_au , "t0": 5000.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_LP 

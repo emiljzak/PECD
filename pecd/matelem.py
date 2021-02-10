@@ -77,20 +77,13 @@ class hmat():
         """ calculate static field-free Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
-        #print(self.params['lmin'], self.params['lmax'], self.params['nbins'], self.params['nlobatto'])
-    
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
         keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
         potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
 
-        start_time = time.time()
-        keomat = self.calc_potmat()
-        potmat = self.calc_keomat() 
-        hmat = keomat + potmat
-        end_time = time.time()
-
-        print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
+        potmat = self.calc_potmat()
+        keomat = self.calc_keomat() 
+        hmat =  potmat +keomat 
 
         neval = 10 #params["n"]
         print("Hamiltonian Matrix")
@@ -98,7 +91,7 @@ class hmat():
             print(hmat)
         start_time = time.time()
         #eval, eigvec = linalg.eigs(-1.0 * hmat,k=neval,which='LM')
-        eval, eigvec = np.linalg.eigh(hmat)
+        eval, eigvec = np.linalg.eigh(hmat, UPLO='U')
         end_time = time.time()
 
         print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -109,11 +102,11 @@ class hmat():
         """ Exact energies of hydrogen atom """
         evalhydrogen = np.zeros(neval,dtype=float)
         for i in range(1,neval+1):
-            evalhydrogen[i-1] = - 1./(2.0 * float(i **2))
+            evalhydrogen[i-1] = - 1./(2.0 * float(i ** 2))
 
         evals = np.column_stack((eval[:neval],evalhydrogen))
 
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=40):
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
             #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
             print(evals)
 
@@ -149,7 +142,7 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(Nbas):
+            for j in range(i,Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         #print("KEO matrix")
@@ -172,8 +165,9 @@ class hmat():
             return 0.0
                    
     def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
-        w_i1 = w/sum(w[:])
-        w_i2 = w/sum(w[:])
+        w_i1 = w#/sum(w[:])
+        w_i2 = w#/sum(w[:]) #Seems I forgot to multiply by scaling factor from coordinate transformation!!!!!!!!!!!!!!
+
         nlobatto = self.params['nlobatto']
         if n1>0 and n2>0:
             if i1==i2:
@@ -230,15 +224,15 @@ class hmat():
         binwidth = self.params['binwidth']
         rshift = self.params['rshift']
         nlobatto = self.params['nlobatto']
-        x_new = 0.5e00 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift #checked
+        x_new = 0.5 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift #checked
         #scale the G-L quadrature weights
-        w = 0.5 * binwidth * w
+        w *= 0.5 * binwidth 
 
         fpfpint=0.0e00
         for k in range(0, nlobatto):
             y1 = self.rbas.fp(i,n1,k,x_new)
             y2 = self.rbas.fp(i,n2,k,x_new)
-            fpfpint += w[k] * y1 * y2/sum(w[:])# * x_new[k]**2
+            fpfpint += w[k] * y1 * y2 #/sum(w[:])# 
     
         return fpfpint
         
@@ -325,8 +319,8 @@ class hmat():
     def pot_hydrogen(self,r,theta,phi):
         """test H-atom potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
-        alpha = 0.05
-        #return -1./np.sqrt(r**2+alpha**2)
+        #alpha = 0.005
+        #return  -1./np.sqrt(r**2+alpha**2)
         return -1.0/r
 
     def pot_null(self,r,theta,phi):
@@ -362,7 +356,7 @@ class hmat():
             #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(Nbas):
+            for j in range(i,Nbas):
                 #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
@@ -520,7 +514,7 @@ class hmat():
 
                 T[0] = N(gaunt(l1,1,l2,m1,1,m2))
                 T[1] = N(gaunt(l1,1,l2,m1,-1,m2))
-                T[2] = N(gaunt(l1,1,l2,m1,0,m2))
+                T[2] = N(gaunt(l1,1,l2,m1,0,m2)) * np.sqrt(2.0) #spherical tensor rank-1 coefficient
                 val =  np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin
                 val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0)  * np.dot(field,T) * rin )
-            return val
+            return val/2.0 #?

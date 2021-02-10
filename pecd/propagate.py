@@ -174,13 +174,13 @@ class propagate(radbas,mapping):
 
             if params['calc_inst_energy'] == True:
                 print("setting up a binding-potential-free hamiltonian for tests of pondermotive energy of a free-electron wavepacket")
-                params['potential'] = "pot_null" # 1) diagonal (for tests); 2) pot_hydrogen; 3) pot_null
+                params['potential'] = "pot_hydrogen" # 1) diagonal (for tests); 2) pot_hydrogen; 3) pot_null
 
             start_time = time.time()    
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
             end_time = time.time()
-            print("The execution time for building the field-free Hamiltonian is: " + str(end_time-start_time))
+            print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
             if params['calc_inst_energy'] == True:
                 print("saving KEO and POT matrix for later use in instantaneous energy calculations")
@@ -251,29 +251,14 @@ class propagate(radbas,mapping):
 
 
             """ calculate timegrid indices at which the relevant observables are plotted"""
-
-
-            """    params['plot_modes'] = {"single_shot": True, "animation": False}
-
-                    params['plot_types'] = { "radial": True,
-                             "angular": True,
-                             "r-radial_angular": True, 
-                             "k-radial_angular": True} #decide which of the available observables you wish to plot
-
-                    params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [10.0,50.0,76.0,120.0],
-                                "save_static": True,
-                                "save_anim": False,
-                                "show_static": True,
-                                "show_anim": False 
-                                "static_filename": "obs"
-                                "animation_filename":"anim_obs"}
-            """
             
             if params['calc_inst_energy'] == True:
+                print("========================")
+                print("==Instantaneous energy==")
+                print("========================")
                 nlobatto = params['nlobatto']
                 Nbas = params['Nbas']
-
+    
                 """call Gauss-Lobatto rule """
                 x=np.zeros(nlobatto)
                 w=np.zeros(nlobatto)
@@ -295,19 +280,25 @@ class propagate(radbas,mapping):
                 plt.plot(timegrid/time_to_au, energy.real, color='red', marker='o', linestyle='solid',linewidth=2, markersize=2) 
                 plt.show()
 
-            iplot = []
-            for index,item in enumerate(params['plot_controls']["plottimes"]):
-
-                if int(np.float64(1.0/24.188)* item/dt) > len(timegrid):
-                    print("removing time: "+str(item)+" from plotting list. Time exceeds the propagation time-grid!")
-                else:
-                    iplot.append(int(np.float64(1.0/24.188)* item/dt))
-
-            print("Final list of plot times:")
-            print(iplot)
+                exit()
 
 
             if params['plot_modes']["single_shot"] == True:
+                print("=========")
+                print("==Plots==")
+                print("=========")
+           
+                iplot = []
+                for index,item in enumerate(params['plot_controls']["plottimes"]):
+
+                    if int(np.float64(1.0/24.188)* item/dt) > len(timegrid):
+                        print("removing time: "+str(item)+" from plotting list. Time exceeds the propagation time-grid!")
+                    else:
+                        iplot.append(int(np.float64(1.0/24.188)* item/dt))
+
+                print("Final list of plot times:")
+                print(iplot)
+
                 for itime, t in enumerate(timegrid): 
                     print("t = " + str("%10.1f"%t))
                     for ielem in iplot:
@@ -326,8 +317,7 @@ class propagate(radbas,mapping):
     def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
         en = 0.0+ 1j * 0.0
         for ibas in range(len(psi)):
-            valtemp = np.conjugate( psi[ibas]) * psi[:]  *  (keomat[ibas,:] + field[2] * vint0[ibas,:])# (maparray[ibas][0],maparray[ibas][1],maparray[ibas][2],maparray[ibas][3],maparray[jbas][0],maparray[jbas][1],maparray[jbas][2],maparray[jbas][3],xlobatto,wlobatto,rin) #\
-                #+  hamiltonian.calc_intmatelem(maparray[ibas][0],maparray[ibas][1],maparray[ibas][2],maparray[ibas][3],maparray[jbas][0],maparray[jbas][1],maparray[jbas][2],maparray[jbas][3],scheme,field,int_rep_type,rin) )
+            valtemp = np.conjugate( psi[ibas]) * psi[:]  *  (keomat[ibas,:] + field[2] * vint0[ibas,:])
             en += np.sum(valtemp)
         return en
 
@@ -973,19 +963,19 @@ class propagate(radbas,mapping):
             for ielem,elem in enumerate(maparray_iniwf):
                 y[:] +=   coeffs[ielem,int(params['eigenvec_id'])] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm( elem[1], elem[0],  theta0, phi0)
             y /= np.sqrt(np.sum(coeffs[:,int(params['eigenvec_id'])] * coeffs[:,int(params['eigenvec_id'])]))
-            """
+            
             plt.xlabel('r/a.u.')
             plt.ylabel('orbitals')    
             plt.plot(r, r * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
             plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(self.psi03d(r,phi0, phi0))) ) 
             plt.legend()     
             plt.show()  
-            """
+            
             if params['save_ini_wf'] == True:
                 fname=open(params['wavepacket_file'],'w')
                 print("saving the initial wavefunction into file")
                 fname.write(' '.join(["  %15.8f"%np.abs(item) for item in psi0_mat])+"\n")
-            params['nbins'] = temp 
+            params['nbins'] = temp #coming back to full number of bins
         return psi0_mat
 
     def gen_hydrogen_wf(self,n,l,m,r,theta,phi):
@@ -1021,7 +1011,7 @@ class propagate(radbas,mapping):
         fsph = lambda theta,phi,l,m: sph_harm(m,l,phi,theta)
         Rnl = lambda r,n,l: (2/n)**(3/2)*np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))*(2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         f = 0.0
-        f +=  Rnl(r,2,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
+        f +=  Rnl(r,1,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
         # 2p0 orbital: Rnl(r,2,1) * fsph(theta,phi,1,0)
         # 1s orbital:  Rnl(r,1,0) * fsph(theta,phi,0,0)
         f /= np.sqrt(float(1.0)) 
@@ -1137,6 +1127,7 @@ if __name__ == "__main__":
     hydrogen = propagate() #!!!name of the potential should be one of the attributes of the propagate class!!!
 
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
+
     hmat = hydrogen.prop_wf(params,psi0)
     #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
     exit()
