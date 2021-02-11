@@ -8,9 +8,9 @@ def gen_input():
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
-    params['nlobatto'] = 50
-    params['nbins'] = 1 
-    params['binwidth'] = 200.0
+    params['nlobatto'] = 8
+    params['nbins'] = 5 
+    params['binwidth'] = 10.0
     params['rshift'] = 1e-3 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 0
@@ -22,14 +22,14 @@ def gen_input():
     params['scheme'] = "lebedev_019" #angular integration rule
     params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
-    params['tmax'] = 10.0 
+    params['tmax'] = 3.0 
     params['dt'] = 3.0 
     time_units = "as"
 
 
     """===== post-processing and analysis ====="""
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": True, "animation": False}
+    params['plot_modes'] = {"single_shot": False, "animation": False}
 
     params['plot_types'] = { "radial": True,
                              "angular": False,
@@ -58,21 +58,21 @@ def gen_input():
     params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
 
-    params['calc_inst_energy'] = True #calculate instantaneous energy of a free-electron wavepacket?
+    params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 1 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
 
     """====field controls===="""
    
-    params['plot_elfield'] = True #plot z-component of the electric field
+    params['plot_elfield'] = False #plot z-component of the electric field
     """ put most of what's below into a converion function """
     params['omega'] =  23.128 #nm or eV
 

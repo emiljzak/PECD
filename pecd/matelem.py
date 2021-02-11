@@ -46,8 +46,8 @@ class mapping():
                     for n in range (0,self.nlobatto):
                         if n==self.nlobatto-1:
                             continue        
-                        #elif n==0 and i==self.nbins-1:
-                        #    continue
+                        elif n==0 and i==self.nbins-1:
+                            continue
                         else:
                                 imap+=1
                                 #print(l,m,i,n,imap)
@@ -81,9 +81,15 @@ class hmat():
         keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
         potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
 
-        potmat = self.calc_potmat()
+
+        start_time = time.time()
         keomat = self.calc_keomat() 
-        hmat =  potmat +keomat 
+        end_time = time.time()
+        print("Time for construction of the KEO: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        #exit()
+        potmat = self.calc_potmat()
+
+        hmat =  potmat + keomat 
 
         neval = 10 #params["n"]
         print("Hamiltonian Matrix")
@@ -136,33 +142,30 @@ class hmat():
         w=np.array(w)
 
         """calculate full keo matrix"""
-        keomat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
+        keomat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
 
         """ K(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
             for j in range(i,Nbas):
-                keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3],self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3],x,w,rin)
+                keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][2],self.maparray[i][3],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
-        #print("KEO matrix")
-        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
-        #    print(keomat)
+        print("KEO matrix")
+        with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+            print(keomat)
         return  keomat
 
-    def calc_keomatel(self,l1,m1,i1,n1,l2,m2,i2,n2,x,w,rin):
+    def calc_keomatel(self,l1,i1,n1,i2,n2,x,w,rin):
         "calculate matrix element of the KEO"
-        
-        if l1==l2 and m1==m2:
-            
-            if i1==i2 and n1==n2:
-                KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) + self.KEO_matel_ang(i1,n1,l1,rin) 
-                return KEO
-            else:
-                KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
-                return KEO
+
+        if i1==i2 and n1==n2:
+            KEO =  self.KEO_matel_rad(i1,n1,i2,n2,x,w) + self.KEO_matel_ang(i1,n1,l1,rin) 
+            return KEO
         else:
-            return 0.0
+            KEO = self.KEO_matel_rad(i1,n1,i2,n2,x,w)
+            return KEO
+
                    
     def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
         w_i1 = w#/sum(w[:])
@@ -200,8 +203,8 @@ class hmat():
         elif n1==0 and n2==0:
             #bridge x bridge
             if i1==i2: 
-                KEO=0.5*(self.KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1)+self.KEO_matel_fpfp(i1+1,0,0,x,w_i1))   #check         
-                return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
+                KEO=0.5 * ( self.KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1) + self.KEO_matel_fpfp(i1,0,0,x,w_i1) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #check         
+                return KEO
             elif i1==i2-1:
                 KEO=0.5*self.KEO_matel_fpfp(i2,0,nlobatto-1,x,w_i2) #check
                 return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
