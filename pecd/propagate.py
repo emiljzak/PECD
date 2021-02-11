@@ -182,6 +182,9 @@ class propagate(radbas,mapping):
             end_time = time.time()
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
+            vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
+            self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:]))+np.abs(vint0[1:,1:]))
+            exit()
             if params['calc_inst_energy'] == True:
                 print("saving KEO and POT matrix for later use in instantaneous energy calculations")
         
@@ -189,7 +192,8 @@ class propagate(radbas,mapping):
                 #potmat = hamiltonian.calc_potmat()
 
                 #pre-calculate time-independent part of the dipole interaction matrix element: only linearly polarized pulse
-                vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
+            
+
      
             """Diagonal H0 matrix for testing TDSE solver"""
             #hmat= np.zeros((Nbas, Nbas), float)
@@ -280,7 +284,7 @@ class propagate(radbas,mapping):
                 plt.plot(timegrid/time_to_au, energy.real, color='red', marker='o', linestyle='solid',linewidth=2, markersize=2) 
                 plt.show()
 
-                exit()
+            
 
 
             if params['plot_modes']["single_shot"] == True:
@@ -584,7 +588,8 @@ class propagate(radbas,mapping):
         im = ax.imshow(data, **kwargs)
 
         # Create colorbar
-        cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+        #im.set_clim(0, 50.0)
+        cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
         cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
         # We want to show all ticks...
@@ -1129,7 +1134,7 @@ if __name__ == "__main__":
     psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
 
     hmat = hydrogen.prop_wf(params,psi0)
-    #hydrogen.plot_mat(np.abs(hmat[1:,1:]))
+
     exit()
 
 
