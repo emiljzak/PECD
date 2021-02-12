@@ -89,7 +89,7 @@ class hmat():
         #exit()
         potmat = self.calc_potmat()
 
-        hmat =  potmat + keomat 
+        hmat =   keomat + potmat
 
         neval = 10 #params["n"]
         print("Hamiltonian Matrix")
@@ -153,8 +153,8 @@ class hmat():
 
         print("KEO matrix")
         with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-            print(keomat)
-        return  keomat
+            print(0.5*keomat)
+        return  0.5*keomat
 
     def calc_keomatel(self,l1,i1,n1,i2,n2,x,w,rin):
         "calculate matrix element of the KEO"
@@ -169,33 +169,33 @@ class hmat():
                    
     def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
         w_i1 = w#/sum(w[:])
-        w_i2 = w#/sum(w[:]) #Seems I forgot to multiply by scaling factor from coordinate transformation!!!!!!!!!!!!!!
+        w_i2 = w#/sum(w[:]) 
 
         nlobatto = self.params['nlobatto']
         if n1>0 and n2>0:
             if i1==i2:
                 #single x single
-                KEO=0.5*self.KEO_matel_fpfp(i1,n1,n2,x,w_i1) #checked
-                return KEO/sqrt(w_i1[n1]*w_i2[n2])
+                KEO = self.KEO_matel_fpfp(i1,n1,n2,x,w_i1) #checked
+                return KEO/sqrt(w_i1[n1] * w_i2[n2])
             else:
                 return 0.0
         if n1==0 and n2>0:
             #bridge x single
             if i1==i2: 
-                KEO=0.5*self.KEO_matel_fpfp(i2,nlobatto-1,n2,x,w_i2) #checked
+                KEO = self.KEO_matel_fpfp(i2,nlobatto-1,n2,x,w_i2) # not nlobatto -2?
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             elif i1==i2-1:
-                KEO=0.5*self.KEO_matel_fpfp(i2,0,n2,x,w_i2) # i2 or i1?
+                KEO=self.KEO_matel_fpfp(i2,0,n2,x,w_i2) # i2 checked  Double checked Feb 12
                 return KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
             else:
                 return 0.0
         elif n1>0 and n2==0:
             #single x bridge
             if i1==i2: 
-                KEO=0.5*self.KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1) #check
+                KEO=self.KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1) #check  Double checked Feb 12
                 return KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
             elif i1==i2+1:
-                KEO=0.5*self.KEO_matel_fpfp(i1,n1,0,x,w_i1) #check
+                KEO=self.KEO_matel_fpfp(i1,n1,0,x,w_i1) #check  Double checked Feb 12
                 return KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
             else:
                 return 0.0
@@ -203,13 +203,13 @@ class hmat():
         elif n1==0 and n2==0:
             #bridge x bridge
             if i1==i2: 
-                KEO=0.5 * ( self.KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1) + self.KEO_matel_fpfp(i1,0,0,x,w_i1) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #check         
+                KEO= ( self.KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1) + self.KEO_matel_fpfp(i1+1,0,0,x,w_i1) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
                 return KEO
             elif i1==i2-1:
-                KEO=0.5*self.KEO_matel_fpfp(i2,0,nlobatto-1,x,w_i2) #check
+                KEO = self.KEO_matel_fpfp(i2,nlobatto-1,0,x,w_i2) #checked 10feb 2021 Double checked Feb 12
                 return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
             elif i1==i2+1:
-                KEO=0.5*self.KEO_matel_fpfp(i1,0,nlobatto-1,x,w_i1)
+                KEO = self.KEO_matel_fpfp(i1,nlobatto-1,0,x,w_i1) #checked 10feb 2021. Double checked Feb 12
                 return KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
             else:
                 return 0.0
@@ -218,7 +218,7 @@ class hmat():
         """Calculate the anglar momentum part of the KEO"""
         """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
         #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
-        return float(l)*(float(l)+1)/(2.0*(rgrid)**2)
+        return float(l)*(float(l)+1)/((rgrid)**2)
 
     def KEO_matel_fpfp(self,i,n1,n2,x,w):
         "Calculate int_r_i^r_i+1 f'(r)f'(r) dr in the radial part of the KEO"
@@ -227,17 +227,17 @@ class hmat():
         binwidth = self.params['binwidth']
         rshift = self.params['rshift']
         nlobatto = self.params['nlobatto']
-        x_new = 0.5 * ( binwidth * x + binwidth * (i+1) + binwidth * i ) + rshift #checked
+        x_new = 0.5 * ( binwidth * x + binwidth * (i+1) + binwidth * i + rshift)  #checked
         #scale the G-L quadrature weights
-        w *= 0.5 * binwidth 
+        #w *= 0.5 * binwidth 
 
         fpfpint=0.0e00
         for k in range(0, nlobatto):
-            y1 = self.rbas.fp(i,n1,k,x_new)
-            y2 = self.rbas.fp(i,n2,k,x_new)
-            fpfpint += w[k] * y1 * y2 #/sum(w[:])# 
+            y1 = self.rbas.fp(i,n1,k,x_new)#*sqrt(w[n1])
+            y2 = self.rbas.fp(i,n2,k,x_new)#*sqrt(w[n2])
+            fpfpint += w[k] * y1 * y2 #*0.5 * binwidth # 
     
-        return fpfpint
+        return fpfpint#/sum(w[:])
         
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
         """
@@ -322,9 +322,9 @@ class hmat():
     def pot_hydrogen(self,r,theta,phi):
         """test H-atom potential for quadrature integration"""
         #d * np.cos(theta)**2 * np.cos(phi) / r**2
-        #alpha = 0.005
-        #return  -1./np.sqrt(r**2+alpha**2)
-        return -1.0/r
+        alpha = 0.005
+        return  -1./np.sqrt(r**2+alpha**2)
+        #return -1.0/r
 
     def pot_null(self,r,theta,phi):
         return 0.0 #zero-potential
@@ -359,6 +359,7 @@ class hmat():
             #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+
             for j in range(i,Nbas):
                 #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
