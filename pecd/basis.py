@@ -209,20 +209,20 @@ class radbas():
         plt.plot(r, y) 
         plt.show()     
 
-    def fp(self,i,n,k,rgrid):
+    def fp(self,i,n,k,x):
         "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
         if n!=k:
-            fprime=(rgrid[n]-rgrid[k])**(-1)
+            fprime=(x[n]-x[k])**(-1)
             prod=1.0e00
             for mu in range(0,self.nlobatto):
                 if mu !=k and mu !=n:
-                    prod *= (rgrid[k]-rgrid[mu])/(rgrid[n]-rgrid[mu])
+                    prod *= (x[k]-x[mu])/(x[n]-x[mu])
             fprime=fprime*prod
         elif n==k:
             fprime=0.0
             for mu in range(0,self.nlobatto):
                     if mu !=n:
-                        fprime += (rgrid[n]-rgrid[mu])**(-1)
+                        fprime += (x[n]-x[mu])**(-1)
         return fprime
         
     def gauss_lobatto(self,n, n_digits):

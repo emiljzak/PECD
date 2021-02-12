@@ -172,6 +172,9 @@ class propagate(radbas,mapping):
 
             """ initialize Hamiltonian """
 
+            """ plot radial basis """
+            #rbas.plot_chi( params['rshift'], params['binwidth'] * params['nbins'] + params['rshift'], npoints = 1000)
+
             if params['calc_inst_energy'] == True:
                 print("setting up a binding-potential-free hamiltonian for tests of pondermotive energy of a free-electron wavepacket")
                 params['potential'] = "pot_hydrogen" # 1) diagonal (for tests); 2) pot_hydrogen; 3) pot_null
@@ -183,8 +186,8 @@ class propagate(radbas,mapping):
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
             vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
-            self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:]))+np.abs(vint0[1:,1:]))
-            exit()
+            self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint0[1:,1:])) #
+            #exit()
             if params['calc_inst_energy'] == True:
                 print("saving KEO and POT matrix for later use in instantaneous energy calculations")
         
@@ -588,7 +591,7 @@ class propagate(radbas,mapping):
         im = ax.imshow(data, **kwargs)
 
         # Create colorbar
-        #im.set_clim(0, 50.0)
+        im.set_clim(0, 0.5)
         cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
         cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
@@ -971,8 +974,8 @@ class propagate(radbas,mapping):
             
             plt.xlabel('r/a.u.')
             plt.ylabel('orbitals')    
-            plt.plot(r, r * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
-            plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(self.psi03d(r,phi0, phi0))) ) 
+            plt.plot(r, r * (1/r) * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
+            plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(r * self.psi03d(r,phi0, phi0))) ) 
             plt.legend()     
             plt.show()  
             
@@ -1016,7 +1019,7 @@ class propagate(radbas,mapping):
         fsph = lambda theta,phi,l,m: sph_harm(m,l,phi,theta)
         Rnl = lambda r,n,l: (2/n)**(3/2)*np.sqrt(factorial(n-l-1)/(2*n*factorial(n+l)))*(2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
         f = 0.0
-        f +=  Rnl(r,1,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
+        f +=  Rnl(r,2,0) * fsph(theta,phi,0,0) #1/(r * np.cos(theta)**2+2.0)
         # 2p0 orbital: Rnl(r,2,1) * fsph(theta,phi,1,0)
         # 1s orbital:  Rnl(r,1,0) * fsph(theta,phi,0,0)
         f /= np.sqrt(float(1.0)) 
