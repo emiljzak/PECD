@@ -168,6 +168,7 @@ class hmat():
 
                    
     def KEO_matel_rad(self,i1,n1,i2,n2,x,w):
+        #w /= sqrt(sum(w[:]))
         w_i1 = w#/sum(w[:])
         w_i2 = w#/sum(w[:]) 
 
@@ -237,7 +238,7 @@ class hmat():
             y2 = self.rbas.fp(i,n2,k,x_new)#*sqrt(w[n2])
             fpfpint += w[k] * y1 * y2 #*0.5 * binwidth # 
     
-        return fpfpint#/sum(w[:])
+        return fpfpint#sum(w[:])
         
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
         """

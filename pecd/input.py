@@ -8,12 +8,12 @@ def gen_input():
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
-    params['nlobatto'] = 15
-    params['nbins'] = 20 
-    params['binwidth'] = 3.0
+    params['nlobatto'] = 10
+    params['nbins'] = 8 
+    params['binwidth'] = 4.0
     params['rshift'] = 1e-5#rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 0
+    params['lmax'] = 1
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
@@ -62,10 +62,10 @@ def gen_input():
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
-    params['ini_state_quad'] = ("Gauss-Laguerre",80) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 20 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 8 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
@@ -98,7 +98,7 @@ def gen_input():
 
     #convert from W/cm^2 to V/cm
     epsilon0=8.85e-12
-    intensity = 0.0 #7e16 #W/cm^2 #peak intensity
+    intensity = 7e16 #7e16 #W/cm^2 #peak intensity
     field_strength = np.sqrt(intensity/(vellgt * epsilon0))
     print("field strength")
     print("  %8.2e"%field_strength)
