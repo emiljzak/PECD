@@ -1,0 +1,11 @@
+Matrix: 5k, rho = 1e-4
+========= Numpy eigh =========
+time.time():    17.815s
+time.process_time():    55.172s
+time.perf_counter():    17.815s
+========= Scipy eigh =========
+time.time():    29.312s
+time.process_time():    97.269s
+time.perf_counter():    29.312s
+
+eigenvalue compatibility: machine precision
