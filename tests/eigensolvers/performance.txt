@@ -1,5 +1,9 @@
+System: MacBook Pro , Mojave, 3,1 GHz Intel Core i5 (2 cores with hyperthreading), 8GB RAM 133 MHz LPDDR3, Intel Iris Plus Graphics 650 1536 MB
+
+
 Matrix: 5k, rho = 1e-4
-========= Numpy eigh =========
+
+========= Numpy eigh (UPLO='L') =========
 time.time():    17.815s
 time.process_time():    55.172s
 time.perf_counter():    17.815s
@@ -7,5 +11,22 @@ time.perf_counter():    17.815s
 time.time():    29.312s
 time.process_time():    97.269s
 time.perf_counter():    29.312s
-
+========= Scipy.sparse eigsh: k=6 =========
+time.time():     3.256s
+time.process_time():     8.399s
+time.perf_counter():     3.256s
+========= Scipy.sparse eigsh: k=10 =========
+time.time():    10.161s
+time.process_time():    26.929s
+time.perf_counter():    10.161s
 eigenvalue compatibility: machine precision
+
+Matrix: 10k, rho = 1e-4
+========= Numpy eigh (UPLO='L') =========
+time.time():   345.955s
+time.process_time():   721.354s
+time.perf_counter():   345.953s
+========= Scipy eigh =========
+time.time():   591.466s
+time.process_time():  1730.683s
+time.perf_counter():   591.463s
