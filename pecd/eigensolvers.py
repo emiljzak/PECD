@@ -111,7 +111,8 @@ def read_matlab():
 
 def Lanczos_stackoverflow( A, v, m=100 ):
     n = len(v)
-    if m>n: m = n;
+    if m>n: 
+        m = n
     # from here https://en.wikipedia.org/wiki/Lanczos_algorithm
     V = np.zeros( (m,n) )
     T = np.zeros( (m,m) )
@@ -199,51 +200,66 @@ def run_lanczos(read_npz):
 
 def test_expms(filename):
     dt = 0.01
-    m = 1097
-    nprint = 20
+    m = 52
+    nprint = 30
     H = np.loadtxt(filename,dtype=float)
     v0   = np.random.rand( np.size(H,axis=0) )
     v0 /= np.sqrt( np.dot( v0, v0 ) )
-    
+    v1_lan = np.copy(v0)
     # 1 PyExpokit
     #print(expmv(dt, H, v0, tol=1e-7,krylov_dim=m))
 
     # 3 Lanczos - own implementation
     T, V = Lanczos_stackoverflow( H, v0, m=m )
-    evalsLan, vecLan = np.linalg.eigh(T)
+    #plt.spy(T)
+    #plt.show()
+    print("checking if Lanczos vectors have NaNs")
+    if np.any(np.isnan(V))==True:
+        print("nan found in V")
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):            
+        #    print(V)
 
+  
+
+    #exit()
+    evalsLan, vecLan = np.linalg.eigh(T)
+    #evalsLan = np.sort(evalsLan)
     print("T: " + str(np.shape(T)))
     print("V: " + str(np.shape(V)))
     print("vecLan: " + str(np.shape(vecLan)))    
 
-    expkrylov = np.dot(vecLan, np.dot( np.diag( np.exp(-1j*evalsLan * dt) ) , vecLan.T ))
+    print("exp(-i*D*t): "+str(np.shape(np.diag( np.exp(-1j*evalsLan * dt)) )))
+
+    expkrylov = np.dot(vecLan.T, np.dot( np.diag( np.exp(-1j*evalsLan * dt) ) , vecLan ))
     print("expkrylov: " + str(np.shape(expkrylov )))    
 
     Vexpkrylov = np.dot(V.T,expkrylov)
     print("Vexpkrylov: " + str(np.shape(Vexpkrylov))) 
     myexp =    np.dot(Vexpkrylov, V)
+
     print("exp(-i*H*t): "+str(np.shape(myexp)) )
-    v1_lan = np.dot( myexp , v0)
+    v1_lan = np.matmul( myexp , v0)
+    print(v0)
     print("v1: " + str(np.shape(v1_lan)))    
-    print("v0:"+str(v0))
-    print("v1:"+str(v1_lan))
-    print("v1-v0:" + str(v1_lan-v0)  )
+    #print("v0:"+str(v0))
+    #print("v1:"+str(v1_lan))
+    #print("v1-v0:" + str(v1_lan-v0)  )
 
 
     # 2 Scipy
     print("sparse.Scipy expm:")
     v1_sparsescipy = np.dot(expm(-1j*H*dt),v0)
-    print(v1_sparsescipy)
+    #print(v1_sparsescipy)
 
     # 2 Scipy
     print("Scipy expm:")
     v1_scipy = np.dot(linalg.expm(-1j*H*dt),v0)
-    print(v1_scipy)
+    #print(v1_scipy)
     print("v1: scipy, sparse.scipy, lanczos")
     for i in range(nprint):
          print('%10.5f %10.5fi' % (v1_scipy[i].real, v1_scipy[i].imag)+'%10.5f %10.5fi' % (v1_sparsescipy[i].real, v1_sparsescipy[i].imag)+'%10.5f %10.5fi' % (v1_lan[i].real, v1_lan[i].imag))
 
-filename = "hmat1k.dat"
+filename = "hmat54.dat"
 
 
 #read_matlab()

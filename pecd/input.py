@@ -9,7 +9,7 @@ def gen_input():
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
     params['nlobatto'] = 12
-    params['nbins'] = 100
+    params['nbins'] = 5
     params['binwidth'] = 3.0
     params['rshift'] = 1e-3#rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
@@ -65,7 +65,7 @@ def gen_input():
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 100 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
