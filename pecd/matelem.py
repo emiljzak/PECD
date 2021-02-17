@@ -77,10 +77,9 @@ class hmat():
         """ calculate static field-free Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
-        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
-        keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
-        potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
-
+        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
+        keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
+        potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
         start_time = time.time()
         keomat = self.calc_keomat() 
@@ -90,6 +89,8 @@ class hmat():
         potmat = self.calc_potmat()
 
         hmat =   keomat + potmat
+
+        np.savetxt('hmat.dat', hmat[2:,2:], fmt='%16.8e') 
 
         neval = 10 #params["n"]
         print("Hamiltonian Matrix")
@@ -148,7 +149,7 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][2],self.maparray[i][3],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         print("KEO matrix")
@@ -342,7 +343,7 @@ class hmat():
             for m in range(0,l+1):
                 anglist.append([l,m])"""
 
-        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
+        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
 
 
         """ Choose the potential function to be used """
@@ -361,7 +362,7 @@ class hmat():
             #print(ivec)
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
-            for j in range(i,Nbas):
+            for j in range(Nbas):
                 #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                     potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
