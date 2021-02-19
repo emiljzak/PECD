@@ -19,10 +19,11 @@ import constants
 from scipy import fft
 from scipy.sparse import linalg
 from scipy.special import genlaguerre,sph_harm,roots_genlaguerre,factorial,roots_hermite
+from scipy import interpolate
+
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
-
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -88,6 +89,8 @@ class propagate(radbas,mapping):
 
 
         elif params['method'] == 'dynamic_direct':
+
+
 
             print("Solving TDSE with a direct exponentiation method")
             print("Setting up mixed DVR-Spectral basis set")
@@ -186,8 +189,8 @@ class propagate(radbas,mapping):
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
             vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
-            vint1 = Elfield.gen_field(0)[2] * vint0 
-            self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint1[1:,1:])) #
+            #vint1 = Elfield.gen_field(0)[2] * vint0 
+            #self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint1[1:,1:])) #
             #exit()
             if params['calc_inst_energy'] == True:
                 print("saving KEO and POT matrix for later use in instantaneous energy calculations")
@@ -321,6 +324,19 @@ class propagate(radbas,mapping):
                             """ Calculate FFT (numpy) of the wavefunction """
 
                             self.plot_snapshot(psi,params['plot_controls'],plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
+
+
+            if params['calculate_pecd'] == True:
+                print("Testing Photo-electron momentum distributions")
+
+                # preparing the wavefunction coefficients
+                print(int(params['time_pecd']/params['dt']))
+
+                psi[:] = wavepacket[int(params['time_pecd']/params['dt']-1),:]    
+                thetak = np.pi /4.0
+                phik = 0.0
+                k = 1.0
+                self.momentum_pad_expansion(psi,k,thetak,phik)
 
     def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
         en = 0.0+ 1j * 0.0
@@ -481,17 +497,70 @@ class propagate(radbas,mapping):
             np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
             """
             val_elem = 0.0 + 1j * 0.0
-
+            """
             for k in range(len(x)):
                 val_elem += w[k] * x[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0]) *   
             np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) * np.cos(phi_k_0) * x[k] * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * np.sin(theta_k_mesh) * 
             np.sin(phi_k_0) * x[k] * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) + kmesh * np.cos(theta_k_mesh) * x[k] * np.cos(theta_phi[0]))) ) * inv_weight_func(x[k])
-                        
+            """            
 
-            val += psi[ielem] * val_elem
+            #val += psi[ielem] * theta_k_mesh #np.random.rand(1)# val_elem
 
-        print(val)
+        val = np.sin(theta_k_mesh)
+        #print(val)
         return val
+
+
+    def interpolate_FT(self, psi):
+        """this function returns the interpolant of the fourier transform of the total wavefunction, for later use in spherical harmonics decomposition and plotting"""
+        """ For now we work on 2D grid of (k,theta), at fixed value of phi """
+        phi_k_0 = 0.0
+        k_1d = np.linspace( params['momentum_range'][0], params['momentum_range'][1], 10)
+        thetak_1d = np.linspace(0,   np.pi,  2*91) # 
+        #phik_1d   = np.linspace(0, 2*np.pi, 2*181) # 
+
+        #generate gauss-Lobatto global grid
+        rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+        nlobatto = params['nlobatto']
+        nbins = params['nbins']
+        rgrid  = rbas.r_grid()
+        #generate Gauss-Lobatto quadrature
+        xlobatto=np.zeros(nlobatto)
+        wlobatto=np.zeros(nlobatto)
+        xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+        wlobatto=np.array(wlobatto)
+        xlobatto=np.array(xlobatto) # convert back to np arrays
+
+        mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+        maparray, Nbas = mymap.gen_map()
+
+        if params['FT_method'] == "quadrature": #set up quadratures
+            #print("Using quadratures to calculate FT of the wavefunction")
+
+            FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+
+            if params['schemeFT_rad'][0] == "Gauss-Laguerre":
+                Nquad = params['schemeFT_rad'][1] 
+                x,w = roots_genlaguerre(Nquad ,1)
+                alpha = 1 #parameter of the G-Lag quadrature
+                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+            elif params['schemeFT_rad'][0] == "Gauss-Hermite":
+                Nquad = params['schemeFT_rad'][1] 
+                x,w = roots_hermite(Nquad)
+                inv_weight_func = lambda r: np.exp(r**2)
+
+
+        k_mesh, theta_mesh= np.meshgrid(k_1d, thetak_1d )
+        values = self.FTpsi(k_mesh,theta_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas)
+
+        #print(values)
+        #print(np.shape(values))
+        #print(np.shape(theta_mesh))
+        #print(np.shape(k_mesh))
+        #exit()
+        FTinterp = interpolate.interp2d(k_mesh, theta_mesh, values.real, kind='cubic')
+        #FTinterp = interpolate.RectBivariateSpline(k_1d,thetak_1d,values.real)
+        return FTinterp
 
 
     def calc_FT(self,psi):
@@ -978,7 +1047,7 @@ class propagate(radbas,mapping):
             plt.plot(r, r * (1/r) * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
             plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(r * self.psi03d(r,phi0, phi0))) ) 
             plt.legend()     
-            plt.show()  
+            #plt.show()  
             
             if params['save_ini_wf'] == True:
                 fname=open(params['wavepacket_file'],'w')
@@ -1124,6 +1193,46 @@ class propagate(radbas,mapping):
         # I will have to code MVP without invoking the Hamiltonian matrix.
         return np.matmul(H,q)
 
+
+    def momentum_pad_expansion(self,psi,k,thetak,phik):
+        """This method expands the square modulus of the momentum-representation wavefunction into spherical harmonics
+            and returns its value at a point"""
+        val = 0.0 + 1j*0.0
+        W_array = [] #array of legendre expansion coefficients
+
+        myscheme = quadpy.u3.schemes[params['schemeFT_ang']]()
+        for L in range(0,params['pecd_lmax']+1):
+            for M in range(-L,L + 1):
+                wlm = self.wLM(k,L,M,psi,myscheme)[10] #array on theta,k grid
+                print(np.shape(wlm))
+                val+= wlm * sph_harm(M, L,  phik, thetak)
+                W_array.append([L,M,wlm]) 
+        print("done")
+        print("array of legendre expansion coefficients")
+        print(W_array)
+        exit()
+        return W_array
+
+    def wLM(self,k,L,M,psi,myscheme):
+        #calculate wLM(k) expansion coefficients in spherical harmonics for given value of k
+
+        start_time = time.time()    
+        ft_interp = self.interpolate_FT(psi)
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(M, L,  theta_phi[1]+np.pi, theta_phi[0])) * np.abs(ft_interp(k,theta_phi[0]))**2 )
+
+        end_time = time.time()
+        print("Execution time for FT-transformed wf at a single point: " + str(end_time-start_time))
+
+        return val
+        
+    def pecd(self,w10):
+        return  2*w10          
 
 if __name__ == "__main__":      
     time_to_au =  np.float64(1.0/24.188)

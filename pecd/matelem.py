@@ -25,6 +25,13 @@ from sympy.polys.orthopolys import (legendre_poly, laguerre_poly,
 from sympy.polys.rootoftools import RootOf
 from sympy.core.compatibility import range
 
+import matplotlib.pyplot as plt
+from matplotlib import cm, colors
+from mpl_toolkits.mplot3d import Axes3D
+
+from multipoles import MultipoleExpansion
+
+
 #print(quadpy.__version__)
 
 class mapping():
@@ -314,6 +321,36 @@ class hmat():
         pot = - (deltaC/r + deltaO/rO + deltaS/rS)
         return pot
 
+
+    def vecdist(self,r,theta,phi,r0,theta0,phi0):
+        return np.sqrt( r**2 + r0**2 - 2 * r * r0 * (np.sin(theta) * np.sin(theta0) * np.cos(phi - phi0) + np.cos(theta) * np.cos(theta0)) )
+
+    def integrate_ee_pot(self,i,x,w):
+        for k in range(len(x)):
+            val_elem += w[k] * inv_weight_func(x[k]) * self.params['scheme'].integrate_spherical(lambda theta_phi: np.exp(- 1.0 * self.vecdist(r,theta,phi,r0,theta0,phi0) ) / self.vecdist(r,theta,phi,r0,theta0,phi0))
+
+    def pot_chiral1(self,r,theta,phi):
+
+        rn = np.array([0.0, 2.5, 1.5])
+        thetan = np.array([0.0, np.pi /2, 0.0])
+        phin = np.array([0.0, np.pi /2, 0.0])
+        q = np.array([-1.5, -0.75 , -0.75])
+        Q = np.array([2.0, 1.0 , 1.0])
+
+        Vne = 0.0
+        for i in range(3):
+            Vne += Q[i] / self.vecdist(r,theta,phi,rn[i],thetan[i],phin[i])
+
+
+        Vee = 0.0
+        for i in range(3):
+            Vee += q[i] * self.vecdist(r,theta,phi,rn[i],thetan[i],phin[i])
+
+
+        return Vne + Vee
+
+
+
     def pot_test(self,r,theta,phi):
         d = 1.0
         """test potential for quadrature integration"""
@@ -523,3 +560,126 @@ class hmat():
                 val =  np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin
                 val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0)  * np.dot(field,T) * rin )
             return val/2.0 #?
+
+
+
+
+def gaussian(XYZ, xyz0, sigma):
+    g = np.ones_like(XYZ[0])
+    for k in range(3):
+        g *= np.exp(-(XYZ[k] - xyz0[k])**2 / sigma**2)
+    g *= (sigma**2*np.pi)**-1.5
+    return g
+
+
+def test_multipoles():
+    # First we set up our grid, a cube of length 10 centered at the origin:
+
+    npoints = 101
+    edge = 10
+    x, y, z = [np.linspace(-edge/2., edge/2., npoints)]*3
+    XYZ = np.meshgrid(x, y, z, indexing='ij')
+
+
+    # We model our smeared out charges as gaussian functions:
+
+    sigma = 1.5   # the width of our gaussians
+
+    # Initialize the charge density rho, which is a 3D numpy array:
+    rho = gaussian(XYZ, (0, 0, 1), sigma) - gaussian(XYZ, (0, 0, -1), sigma)
+
+
+    # Prepare the charge distribution dict for the MultipoleExpansion object:
+
+    charge_dist = {
+        'discrete': False,     # we have a continuous charge distribution here
+        'rho': rho,
+        'xyz': XYZ
+    }
+
+    # The rest is the same as for the discrete case:
+
+    l_max = 2   # where to stop the infinite multipole sum; here we expand up to the quadrupole (l=2)
+
+    Phi = MultipoleExpansion(charge_dist, l_max)
+
+    x, y, z = 0.0, 0.0, 0.9
+    value = Phi(x, y, z)
+    print(value)
+
+
+def rho(XYZ,rn,thetan,phin):
+    g = np.ones_like(XYZ[0])
+    g *= np.exp(-XYZ[0]**2)#np.exp( - 1.0 * np.sqrt( XYZ[0]**2 + XYZ[1]**2 + rn[1]**2 + 2.0 * np.sqrt(XYZ[0]**2 + XYZ[1]**2 + XYZ[2]**2) * rn[1] * XYZ[1] ) ) 
+    #print(  np.sqrt( XYZ[0]**2 + XYZ[1]**2 + rn[1]**2 + 2.0 * np.sqrt(XYZ[0]**2 + XYZ[1]**2 + XYZ[2]**2) * rn[1] * XYZ[1] ) ) 
+    return g
+
+
+def plot_pot_chiral1():
+
+    phi = np.pi / 2.0 #YZ plane
+    rn = np.array([0.0, 2.5, 1.5])
+    thetan = np.array([0.0, np.pi /2, 0.0])
+    phin = np.array([0.0, np.pi /2, 0.0])
+    q = np.array([-1.5, -0.75 , -0.75])
+    Q = np.array([2.0, 1.0 , 1.0])
+
+    """plot the angular basis"""
+    theta_1d = np.linspace(0,   np.pi,  2*91) # 
+    phi_1d   = np.linspace(0, 2*np.pi, 2*181) # 
+
+    theta_2d, phi_2d = np.meshgrid(theta_1d, phi_1d)
+    xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
+
+    colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
+    colormap.set_clim(-.45, .45)
+
+
+    plt.figure()
+    ax = plt.gca(projection = "3d")
+    
+    plt.title("Effective electrostatic potential")
+
+    x = np.linspace(-10.0, 10.0 ,10, True, dtype=float)
+    y = np.linspace(-10.0, 10.0 ,10, True, dtype=float)
+    z = np.linspace(-10.0, 10.0 ,10, True, dtype=float)
+    XYZ = np.meshgrid( z, y, x, indexing='ij')
+
+    # Initialize the charge density rho, which is a 3D numpy array:
+    #rho = lambda r, theta, phi: np.exp( - 1.0 * np.sqrt(r**2 + rn[1]**2 - 2.0 * r * rn[1] * np.sin(phi) * np.sin(theta) ) ) #gaussian(XYZ, (0, 0, 1), sigma) + gaussian(XYZ, (0, 0, 0), sigma) +  gaussian(XYZ, (0, 1, 0), sigma)
+
+    #rho = lambda x, y, z: np.exp( - 1.0 * np.sqrt(x**2+y**2 + rn[1]**2 - 2.0 * np.sqrt(x**2 + y**2 + z**2) * rn[1] *y ) ) #gaussian(XYZ, (0, 0, 1), sigma) + gaussian(XYZ, (0, 0, 0), sigma) +  gaussian(XYZ, (0, 1, 0), sigma)
+
+    dens = rho(XYZ,rn,thetan,phin)
+    print(np.shape(XYZ))
+    print(np.shape(dens))
+    exit()
+    # Prepare the charge distribution dict for the MultipoleExpansion object:
+
+    charge_dist = {
+        'discrete': False,     # we have a continuous charge distribution here
+        'rho': dens,
+        'xyz': XYZ
+    }
+
+
+    # The rest is the same as for the discrete case:
+
+    l_max = 2   # where to stop the infinite multipole sum; here we expand up to the quadrupole (l=2)
+
+    Vne = MultipoleExpansion(charge_dist, l_max)
+    #print(Vne(5.0, 2.0, 1.0))
+    #print(Vne.multipole_moments)
+    print(type(Vne))
+    exit()
+    ax.plot_surface(XYZ[0], XYZ[1], Vne(XYZ[0],XYZ[1],XYZ[2]))
+
+    #ax.set_aspect("equal")
+    #ax.set_axis_off()
+    
+            
+    plt.show()
+
+
+#test_multipoles()
+#plot_pot_chiral1()

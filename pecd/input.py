@@ -8,9 +8,9 @@ def gen_input():
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
-    params['nlobatto'] = 10
-    params['nbins'] = 8 
-    params['binwidth'] = 4.0
+    params['nlobatto'] = 5
+    params['nbins'] = 3 
+    params['binwidth'] = 5.0
     params['rshift'] = 1e-5#rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 1
@@ -22,7 +22,7 @@ def gen_input():
     params['scheme'] = "lebedev_019" #angular integration rule
     params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
-    params['tmax'] = 3.0 
+    params['tmax'] = 6.0 
     params['dt'] = 3.0 
     time_units = "as"
 
@@ -57,15 +57,19 @@ def gen_input():
     params['FT_method'] = "quadrature" #method of calculating the FT of the wavefunction: quadrature or fftn
     params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
-
+    params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
     params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
+    params['momentum_range'] = [0.0, 10.0] #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
+    params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
+    params['time_pecd'] = 3.0 #at what time (in a.u.) do we want to calculate PECD?
+
 
     """====initial state====""" 
     params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 8 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
@@ -122,7 +126,8 @@ def gen_input():
     time_to_au = time_to_au[time_units]
 
     params['tmax'] *= time_to_au 
-    params['dt'] *= time_to_au 
+    params['dt'] *= time_to_au
+    params['time_pecd'] *=time_to_au
 
     #freq_to_au = freq_to_au[frequency_units]
     #params['omega'] *= freq_to_au 
