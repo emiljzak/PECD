@@ -336,8 +336,9 @@ class propagate(radbas,mapping):
                 thetak = np.pi /4.0
                 phik = 0.0
                 k = 1.0
-                self.momentum_pad_expansion(psi,k,thetak,phik)
-
+                W_array = self.momentum_pad_expansion(psi,k,thetak,phik)
+                print("PECD = " +str( self.pecd(W_array)))
+                print("Finished!")
     def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
         en = 0.0+ 1j * 0.0
         for ibas in range(len(psi)):
@@ -1207,10 +1208,10 @@ class propagate(radbas,mapping):
                 print(np.shape(wlm))
                 val+= wlm * sph_harm(M, L,  phik, thetak)
                 W_array.append([L,M,wlm]) 
-        print("done")
+
         print("array of legendre expansion coefficients")
         print(W_array)
-        exit()
+
         return W_array
 
     def wLM(self,k,L,M,psi,myscheme):
@@ -1231,8 +1232,8 @@ class propagate(radbas,mapping):
 
         return val
         
-    def pecd(self,w10):
-        return  2*w10          
+    def pecd(self,wlm_array):
+        return  2*wlm_array[2,1].real          
 
 if __name__ == "__main__":      
     time_to_au =  np.float64(1.0/24.188)
