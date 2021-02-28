@@ -252,6 +252,24 @@ class hmat():
         rin: radial coordinate
         """
         
+        if params['test_multipoles'] == True:
+            print("calculating potential matrix elements using multipole expansion")
+            #call multipoles
+
+        if params['test_lebedev'] == True:
+            print("calculating potential matrix elements using Lebedev quadratures")
+            #call lebedev
+
+
+        #do decision tree and  optionally compare two results
+
+
+        """ Choose the potential function to be used """
+        potential_function = getattr(self, self.params['potential'] )
+        if not potential_function:
+            raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
+        print("potential function chosen: " + str(potential_function))
+
         #create list of basis set indices
         anglist = []
         for l in range(lmin,lmax+1):
@@ -278,7 +296,7 @@ class hmat():
             for l1,m1 in anglist:
                 for l2,m2 in anglist:
                 
-                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme)
+                    val[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme,potential_function)
                     #print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i])
                     i+=1
             
@@ -408,7 +426,7 @@ class hmat():
         #    print(potmat)
 
         return potmat
-        
+
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme,potential_function):
         """calculate single element of potential matrix"""
         myscheme = quadpy.u3.schemes[scheme]()
@@ -579,14 +597,14 @@ def test_multipoles():
     edge = 10
     x, y, z = [np.linspace(-edge/2., edge/2., npoints)]*3
     XYZ = np.meshgrid(x, y, z, indexing='ij')
-
+    d = 1.0
 
     # We model our smeared out charges as gaussian functions:
 
     sigma = 1.5   # the width of our gaussians
 
     # Initialize the charge density rho, which is a 3D numpy array:
-    rho = gaussian(XYZ, (0, 0, 1), sigma) - gaussian(XYZ, (0, 0, -1), sigma)
+    rho = gaussian(XYZ, (0, 0, d), sigma) 
 
 
     # Prepare the charge distribution dict for the MultipoleExpansion object:
@@ -606,6 +624,50 @@ def test_multipoles():
     x, y, z = 0.0, 0.0, 0.9
     value = Phi(x, y, z)
     print(value)
+
+    # The multipole moments are stored in a dict, where the keys are (l, m) and the values q_lm:
+    for l in range(0,l_max +1):
+        for m in range(-l,l+1):
+            print(l,m, Phi.multipole_moments[(l,m)])
+
+
+
+
+
+
+def test_multipoles_discr():
+    # First we set up our grid, a cube of length 10 centered at the origin:
+
+    npoints = 11
+    edge = 10
+    x, y, z = [np.linspace(-edge/2., edge/2., npoints)] * 3
+    print(x,y,z)
+
+    XYZ = np.meshgrid(x, y, z, indexing='ij')
+
+
+    # Prepare the charge distribution dict for the MultipoleExpansion object:
+    d = 1.0
+    q = [0.1, 0.2, 0.25, 0.3, 0.15] 
+    charge_dist = {
+    'discrete': True,     # we have a continuous charge distribution here
+    'charges': [{'q': q[0], 'xyz': (0, 0, 0)}, {'q': q[1], 'xyz': (0, 0, 0.9 * d)}, {'q': q[2], 'xyz': (1.2 * d, 0, 0)}, {'q': q[3], 'xyz': (0, d, 0)}, {'q': q[4], 'xyz': (-d/2., -d/2., -d/2.)}]}
+    # The rest is the same as for the discrete case:
+
+    l_max = 10   # where to stop the infinite multipole sum; here we expand up to the quadrupole (l=2)
+
+    Phi = MultipoleExpansion(charge_dist, l_max)
+
+    x, y, z = 4.0, 0.0, 3.0
+    value = Phi(x, y, z)
+    print(value)
+
+    # The multipole moments are stored in a dict, where the keys are (l, m) and the values q_lm:
+    for l in range(0,l_max +1):
+        for m in range(-l,l+1):
+            print(l,m, Phi.multipole_moments[(l,m)])
+
+
 
 
 def rho(XYZ,rn,thetan,phin):
@@ -681,5 +743,11 @@ def plot_pot_chiral1():
     plt.show()
 
 
+
+
+
+
+
+#test_multipoles_discr()
 #test_multipoles()
 #plot_pot_chiral1()
