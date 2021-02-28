@@ -8,12 +8,12 @@ def gen_input():
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
-    params['nlobatto'] = 5
-    params['nbins'] = 3 
-    params['binwidth'] = 5.0
-    params['rshift'] = 1e-5#rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
+    params['nlobatto'] = 8
+    params['nbins'] = 1 
+    params['binwidth'] = 3.0
+    params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 2
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
@@ -22,7 +22,7 @@ def gen_input():
     params['scheme'] = "lebedev_019" #angular integration rule
     params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
-    params['tmax'] = 6.0 
+    params['tmax'] = 10.0 
     params['dt'] = 3.0 
     time_units = "as"
 
@@ -69,7 +69,7 @@ def gen_input():
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 1 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 

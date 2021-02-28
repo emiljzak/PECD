@@ -223,6 +223,19 @@ class propagate(radbas,mapping):
                 plt.show()
 
 
+
+            """ Test angular convergence of the potential matrix elements """
+
+            quad_tol = 1e-6
+            lmin_test = 0
+            lmax_test = 4
+            rin = np.linspace(0.01,20.0,5,endpoint=True)
+            print(rin)
+            for r in rin:
+                print("radial coordinate = "+str(r))
+                hamiltonian.test_angular_convergence(lmin_test,lmax_test,quad_tol,r)
+            exit()
+
             print("==========================")
             print("==wavepacket propagation==")
             print("==========================")
@@ -337,6 +350,7 @@ class propagate(radbas,mapping):
                 phik = 0.0
                 k = 1.0
                 W_array = self.momentum_pad_expansion(psi,k,thetak,phik)
+                W_array = np.asarray(W_array)
                 print("PECD = " +str( self.pecd(W_array)))
                 print("Finished!")
     def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
