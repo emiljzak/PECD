@@ -8,7 +8,7 @@ def gen_input():
 
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     """====basis set parameters===="""
-    params['nlobatto'] = 8
+    params['nlobatto'] = 4
     params['nbins'] = 1 
     params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
@@ -18,7 +18,7 @@ def gen_input():
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
-    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null
+    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
     params['scheme'] = "lebedev_019" #angular integration rule
     params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
@@ -26,6 +26,10 @@ def gen_input():
     params['dt'] = 3.0 
     time_units = "as"
 
+
+    """===== TESTING ====="""
+    params['test_multipoles'] = False #test accuracy of potential energy matrix elements with multipole expansion of the potential and anlytic matrix elements
+    params['test_lebedev'] = True #test accuracy of potential energy matrix elements with lebedev quadrature and exact potential
 
     """===== post-processing and analysis ====="""
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved

@@ -184,6 +184,40 @@ class propagate(radbas,mapping):
 
             start_time = time.time()    
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
+
+
+            """ potential matrix elements with lebedev quadrature and psi4 electrostatic potential """
+
+            esp_interpolant = hamiltonian.pot_grid_psi4_d2s_interp()
+
+            print(hamiltonian.pot_grid_psi4_d2s(esp_interpolant,1.0,np.pi/2.0,np.pi))
+            """ Test angular convergence of the potential matrix elements with lebedev """
+            quad_tol = 1e-4
+            lmin_test = 0
+            lmax_test = 2
+            rin = np.linspace(2.0,20.0,1,endpoint=True)
+            print(rin)
+            for r in rin:
+                print("radial coordinate = "+str(r))
+                hamiltonian.test_angular_convergence_esp_interp(lmin_test,lmax_test,quad_tol,r,esp_interpolant)
+            exit()
+            
+
+
+            exit()
+            """ Test accuracy of the potential energy matrix """
+            print("Testing accuracy of the potential energy matrix")
+            quad_tol = 1e-6
+            lmax_multipole = 4
+            rin = np.linspace(10.0,20.0,1,endpoint=True)
+            print(rin)
+            for r in rin:
+                print("radial coordinate = "+str(r))
+                hamiltonian.test_potmat_accuracy(lmax_multipole,quad_tol,r)
+            exit()
+
+
+
             evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
             end_time = time.time()
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
@@ -224,17 +258,7 @@ class propagate(radbas,mapping):
 
 
 
-            """ Test angular convergence of the potential matrix elements """
 
-            quad_tol = 1e-6
-            lmin_test = 0
-            lmax_test = 4
-            rin = np.linspace(0.01,20.0,5,endpoint=True)
-            print(rin)
-            for r in rin:
-                print("radial coordinate = "+str(r))
-                hamiltonian.test_angular_convergence(lmin_test,lmax_test,quad_tol,r)
-            exit()
 
             print("==========================")
             print("==wavepacket propagation==")
