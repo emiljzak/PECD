@@ -9,6 +9,7 @@ from sympy.physics.wigner import gaunt
 from sympy import *
 from scipy.sparse import linalg
 from scipy.special import sph_harm
+from scipy import interpolate
 from basis import angbas,radbas
 from field import Field
 import matplotlib.pyplot as plt
@@ -248,18 +249,6 @@ class hmat():
         return fpfpint#sum(w[:])
         
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
-        """
-        rin: radial coordinate
-        """
-        
-        if params['test_multipoles'] == True:
-            print("calculating potential matrix elements using multipole expansion")
-            #call multipoles
-
-        if params['test_lebedev'] == True:
-            print("calculating potential matrix elements using Lebedev quadratures")
-            #call lebedev
-
 
         #do decision tree and  optionally compare two results
 
@@ -316,6 +305,105 @@ class hmat():
             if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
                 print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
+    def test_angular_convergence_esp_interp(self,lmin,lmax,quad_tol,rin,esp):
+
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+
+        #convergence test over matrix elements:
+        val =  np.zeros(shape=(len(anglist)**2))
+        val_prev = np.zeros(shape=(len(anglist)**2))
+
+
+        #pull out Lebedev schemes into a list
+        spherical_schemes = []
+        for elem in list(quadpy.u3.schemes.keys()):
+            if 'lebedev' in elem:
+                spherical_schemes.append(elem)
+        #print("Available schemes: " + str(spherical_schemes))
+
+        #iterate over the schemes
+        for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+
+            i=0
+            for l1,m1 in anglist:
+                for l2,m2 in anglist:
+                
+                    val[i] = self.calc_potmatelem_esp(l1,m1,l2,m2,rin,scheme,esp)
+                    print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i]+ " %20.12f"%(np.abs(val[i] - val_prev[i])))
+                    i+=1
+            
+            #check for convergence
+            diff = np.abs(val - val_prev)
+
+            if (np.any(diff>quad_tol)):
+                print(str(scheme)+" convergence not reached") 
+                for i in range(len(val_prev)):
+                    val_prev[i] = val[i]
+
+            elif (np.all(diff<quad_tol)):     
+                print(str(scheme)+" convergence reached!!!")
+                break
+
+            #if no convergence reached raise warning
+            if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+
+
+
+    """ ======================= POTENTIALS ======================"""
+
+    def pot_grid_psi4_d2s_interp(self):
+
+        fl = open("grid_esp.out",'r')
+
+        esp = []
+
+        for line in fl:
+            words = line.split()
+            # columns: l, m, i, n, coef
+
+            x = float(words[0])
+            y = float(words[1])
+            z = float(words[2])
+            v = float(words[3])
+            esp.append([x,y,z,v])
+            
+        esp = np.asarray(esp)
+
+        #plot preparation
+        X = np.linspace(min(esp[:,0]), max(esp[:,0]),100)
+        Y = np.linspace(min(esp[:,1]), max(esp[:,1]),100)
+        X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
+        
+        fig = plt.figure()
+       
+        #ax = plt.axes(projection="3d")
+        #ax.scatter(x, z, v, c='r', marker='o')
+        #plt.show()
+
+
+        esp_interp = interpolate.LinearNDInterpolator(esp[:,0:3],esp[:,3])
+        Z = esp_interp(X, Y,0)
+        plt.pcolormesh(X, Y, Z, shading='auto')
+        #plt.plot(esp[:,0], esp[:,1], "o", label="input point")
+        plt.legend()
+        plt.colorbar()
+        plt.axis("equal")
+        plt.show()
+        return esp_interp
+
+
+    def pot_grid_psi4_d2s(self,interpolant,r,theta,phi):
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
+        return interpolant(x,y,z)
+
     def pot_ocs_pc(self,r,theta):
         #point charges from rigid OCS
         #partial charges in OCS
@@ -338,6 +426,27 @@ class hmat():
         #Veff=-(deltaC/r+deltaO/np.sqrt((x+rOC)**2+y**2+x**2)+deltaS/np.sqrt((x-rCS)**2+y**2+x**2)) #cartesian projection method
         pot = - (deltaC/r + deltaO/rO + deltaS/rS)
         return pot
+
+    def pot_model_d2s(self,r,theta,phi):
+
+        rn = np.array([0.0, 2.5, 1.5])
+        thetan = np.array([0.0, np.pi /2, 0.0])
+        phin = np.array([0.0, np.pi /2, 0.0])
+        q = np.array([-1.5, -0.75 , -0.75])
+        Q = np.array([2.0, 1.0 , 1.0])
+
+        Vne = 0.0
+        for i in range(3):
+            Vne += Q[i] / self.vecdist(r,theta,phi,rn[i],thetan[i],phin[i])
+
+
+        Vee = 0.0
+        for i in range(3):
+            Vee += q[i] * self.vecdist(r,theta,phi,rn[i],thetan[i],phin[i])
+
+
+        return Vne + Vee
+
 
 
     def vecdist(self,r,theta,phi,r0,theta0,phi0):
@@ -384,6 +493,10 @@ class hmat():
 
     def pot_null(self,r,theta,phi):
         return 0.0 #zero-potential
+
+    """ ======================= POTENTIALS ======================"""
+
+
 
     def calc_potmat(self):  
         """calculate full potential matrix"""
@@ -441,6 +554,94 @@ class hmat():
 
         return val
    
+
+    def calc_potmatelem_esp(self,l1,m1,l2,m2,rin,scheme,interpolant):
+        """calculate single element of potential matrix"""
+        myscheme = quadpy.u3.schemes[scheme]()
+        #print(myscheme)
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_grid_psi4_d2s(interpolant,rin,theta_phi[0],theta_phi[1]+np.pi)) 
+
+        return val
+   
+
+    def test_potmat_accuracy(self,lmax_multipole,quad_tol,rin):
+
+        """
+        This method tests the convergence of potential energy matrix elements with options to use two methods:
+        a) multipole expansion, with multipole moments calculated from library and analytic matrix elements
+        b) Lebedev quadrature over the exact potential
+        rin: radial coordinate
+        """
+        
+        """ Choose the potential function to be used """
+        potential_function = getattr(self, self.params['potential'] )
+        if not potential_function:
+            raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
+        print("potential function chosen: " + str(potential_function))
+
+        #create list of basis set indices
+        anglist = []
+        for l in range(self.params['lmin'],self.params['lmax']+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+
+        if self.params['test_multipoles'] == True:
+            print("calculating potential matrix elements using multipole expansion")
+            #call multipoles
+
+            pot_multipoles =  np.zeros(shape=(len(anglist)**2))
+            pot_multipoles_temp = np.zeros(shape=(len(anglist)**2))
+
+
+
+        if self.params['test_lebedev'] == True:
+            print("calculating potential matrix elements using Lebedev quadratures")
+            #call lebedev
+            pot_lebedev =  np.zeros(shape=(len(anglist)**2))
+            pot_lebedev_temp = np.zeros(shape=(len(anglist)**2))
+            #pull out Lebedev schemes into a list
+            spherical_schemes = []
+            for elem in list(quadpy.u3.schemes.keys()):
+                if 'lebedev' in elem:
+                    spherical_schemes.append(elem)
+            #print("Selected Lebedev schemes: " + str(spherical_schemes))
+
+            #iterate over the schemes
+            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+
+                i=0
+                for l1,m1 in anglist:
+                    for l2,m2 in anglist:
+                    
+                        pot_lebedev[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme,potential_function)
+                        print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%pot_lebedev[i]+ " %20.12f"%pot_lebedev_temp[i]+ " %20.12f"%(pot_lebedev[i]-pot_lebedev_temp[i]))
+                        i+=1
+                
+                #check for convergence
+                diff = np.abs(pot_lebedev - pot_lebedev_temp)
+
+                if (np.any(diff>quad_tol)):
+                    print(str(scheme)+" convergence not reached") 
+                    for i in range(len(pot_lebedev_temp)):
+                        pot_lebedev_temp[i] = pot_lebedev[i]
+
+                elif (np.all(diff<quad_tol)):     
+                    print(str(scheme)+" convergence reached!!!")
+                    break
+
+                #if no convergence reached raise warning
+                if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+
+
+
     def gauss_lobatto(self,n, n_digits):
             """
             Computes the Gauss-Lobatto quadrature [1]_ points and weights.
@@ -741,7 +942,6 @@ def plot_pot_chiral1():
     
             
     plt.show()
-
 
 
 
