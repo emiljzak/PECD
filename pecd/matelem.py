@@ -315,43 +315,77 @@ class hmat():
 
 
         #convergence test over matrix elements:
-        val =  np.zeros(shape=(len(anglist)**2))
-        val_prev = np.zeros(shape=(len(anglist)**2))
+        val =  np.zeros(shape=(len(anglist)**2),dtype=complex)
+        val_prev = np.zeros(shape=(len(anglist)**2),dtype=complex)
+        val_conv = np.zeros(shape=(len(anglist)**2),dtype=complex)
+        if self.params['test_lebedev'] == True:
+            print("Testing potential energy matrix elements using Lebedev quadratures")
+            #pull out Lebedev schemes into a list
+            spherical_schemes = []
+            for elem in list(quadpy.u3.schemes.keys()):
+                if 'lebedev' in elem:
+                    spherical_schemes.append(elem)
+            #print("Available schemes: " + str(spherical_schemes))
 
+            #iterate over the schemes
+            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
 
-        #pull out Lebedev schemes into a list
-        spherical_schemes = []
-        for elem in list(quadpy.u3.schemes.keys()):
-            if 'lebedev' in elem:
-                spherical_schemes.append(elem)
-        #print("Available schemes: " + str(spherical_schemes))
+                i=0
+                for l1,m1 in anglist:
+                    for l2,m2 in anglist:
+                    
+                        val[i] = self.calc_potmatelem_esp(l1,m1,l2,m2,rin,scheme,esp)
+                        print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i]+ " %20.12f"%(np.abs(val[i] - val_prev[i])))
+                        i+=1
+                
+                #check for convergence
+                diff = np.abs(val - val_prev)
 
-        #iterate over the schemes
-        for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+                if (np.any(diff>quad_tol)):
+                    print(str(scheme)+" convergence not reached") 
+                    for i in range(len(val_prev)):
+                        val_prev[i] = val[i]
+
+                elif (np.all(diff<quad_tol)):     
+                    print(str(scheme)+" convergence reached!!!")
+                    val_conv = val_prev
+                    break
+
+                #if no convergence reached raise warning
+                if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+
+        if self.params['test_multipoles'] == True:
+            print("Testing potential energy matrix elements using spherical harmonics expansion of the electrostatic potential")
+
+            #convergence test over matrix elements:
+            sphval =  np.zeros(shape=(len(anglist)**2),dtype=complex)
+            sphval_prev = np.zeros(shape=(len(anglist)**2))
+            sphval_conv = np.zeros(shape=(len(anglist)**2))
+            VLM = np.zeros(shape=(self.params['multipoles_lmax']* (2*self.params['multipoles_lmax']+1)),dtype=complex)
+
+            #build the matrix of spherical expansion coefficients
+            i=0         
+            myscheme = quadpy.u3.schemes["lebedev_019"]()                       
+            for L in range(self.params['multipoles_lmax']+1):
+                for M in range (-L,L+1):             
+                    print("(L,M): " +str((L,M)))   
+                    VLM[i] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(M, L,  theta_phi[1]+np.pi, theta_phi[0])) * self.pot_grid_psi4_d2s(esp,rin,theta_phi[0],theta_phi[1]+np.pi)) 
+                    i+=1
 
             i=0
             for l1,m1 in anglist:
                 for l2,m2 in anglist:
-                
-                    val[i] = self.calc_potmatelem_esp(l1,m1,l2,m2,rin,scheme,esp)
-                    print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i]+ " %20.12f"%(np.abs(val[i] - val_prev[i])))
-                    i+=1
+                    print(l1,m1,l2,m2)
+                    j=0
+                    for L in range(self.params['multipoles_lmax']+1):
+                        for M in range (-L,L+1):
+                            sphval[i] += VLM[j] * N(gaunt(l1,L,l2,m1,M,m2)) 
+                            j+=1
+                    print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%sphval[i])       
+                    i+=1       
             
-            #check for convergence
-            diff = np.abs(val - val_prev)
-
-            if (np.any(diff>quad_tol)):
-                print(str(scheme)+" convergence not reached") 
-                for i in range(len(val_prev)):
-                    val_prev[i] = val[i]
-
-            elif (np.all(diff<quad_tol)):     
-                print(str(scheme)+" convergence reached!!!")
-                break
-
-            #if no convergence reached raise warning
-            if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
-                print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+        print(sphval - val_conv)
 
 
 
