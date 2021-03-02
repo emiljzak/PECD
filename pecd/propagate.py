@@ -186,28 +186,31 @@ class propagate(radbas,mapping):
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
 
 
-            """ potential matrix elements with lebedev quadrature and psi4 electrostatic potential """
+            if params['test_potmat_accur'] == True:
+                """ potential matrix elements with lebedev quadrature and psi4 electrostatic potential """
 
-            esp_interpolant = hamiltonian.pot_grid_psi4_d2s_interp()
+                print("Interpolating electrostatic potential")
+                esp_interpolant = hamiltonian.pot_grid_psi4_d2s_interp()
 
-            print(hamiltonian.pot_grid_psi4_d2s(esp_interpolant,1.0,np.pi/2.0,np.pi))
-            """ Test angular convergence of the potential matrix elements with lebedev """
-            quad_tol = 1e-4
-            lmin_test = 0
-            lmax_test = 2
-            rin = np.linspace(2.0,20.0,1,endpoint=True)
-            print(rin)
-            for r in rin:
-                print("radial coordinate = "+str(r))
-                hamiltonian.test_angular_convergence_esp_interp(lmin_test,lmax_test,quad_tol,r,esp_interpolant)
-            exit()
+           
+                """ Test angular convergence of the potential matrix elements with lebedev """
+                quad_tol = 1e-2
+                lmin_test = 0
+                lmax_test = 2
+                Rstar = 2.0 #radius at which we cut-off the molecular ion potential
+                rin = np.linspace(2.0,Rstar,1,endpoint=True)
+                print(rin)
+                for r in rin:
+                    print("radial coordinate = "+str(r))
+                    hamiltonian.test_angular_convergence_esp_interp(params['lmin'],params['lmax'],quad_tol,r,esp_interpolant)
+                exit()
             
 
 
-            exit()
+
             """ Test accuracy of the potential energy matrix """
             print("Testing accuracy of the potential energy matrix")
-            quad_tol = 1e-6
+            quad_tol = 1e-3
             lmax_multipole = 4
             rin = np.linspace(10.0,20.0,1,endpoint=True)
             print(rin)

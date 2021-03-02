@@ -19,7 +19,7 @@ def gen_input():
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
     params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
-    params['scheme'] = "lebedev_019" #angular integration rule
+    params['scheme'] = "lebedev_031" #angular integration rule
     params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
     params['tmax'] = 10.0 
@@ -28,8 +28,10 @@ def gen_input():
 
 
     """===== TESTING ====="""
-    params['test_multipoles'] = False #test accuracy of potential energy matrix elements with multipole expansion of the potential and anlytic matrix elements
+    params['test_potmat_accur'] = True #Test the accuracy of potential energy matrix elements 
+    params['test_multipoles'] = True #test accuracy of potential energy matrix elements with multipole expansion of the potential and anlytic matrix elements
     params['test_lebedev'] = True #test accuracy of potential energy matrix elements with lebedev quadrature and exact potential
+    params['multipoles_lmax'] = 14 #maximum L in the multipole expansion of the electrostatic potential
 
     """===== post-processing and analysis ====="""
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
