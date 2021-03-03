@@ -2,35 +2,47 @@ import numpy as np
 def gen_input():
 
     params = {}
+    #move all constants to constants.py module!
     time_to_au =  np.float64(1.0/24.188)
-
     freq_to_au = np.float64(0.057/800.0)
-
     field_to_au =  np.float64(1.0/(5.14220652e+9))
+
     """====basis set parameters===="""
-    params['nlobatto'] = 4
-    params['nbins'] = 1 
+    params['basis'] = "prim" # or adiab
+    params['nlobatto'] = 3
+    params['nbins'] = 1
     params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 4
+    params['lmax'] = 1
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
-    params['basis'] = "prim" # or adiab
-
-    params['scheme'] = "lebedev_011" #angular integration rule
-    params['adaptive_quad'] = True #True: use adaptive angular quadrature for each radial grid point. Read the 
-    params['int_rep_type'] = 'spherical' #representation of the molecule-field interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
     params['tmax'] = 10.0 
     params['dt'] = 3.0 
     time_units = "as"
+    params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
 
+    """====initial state====""" 
+    params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
+    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
+    params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
+    params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
+    params['nbins_iniwf'] = 2 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
+    params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
+
+    """==== spherical quadratures ===="""
+    params['scheme'] = "lebedev_011" #angular integration rule
+    params['adaptive_quad'] = True #True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
+    params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
+    params['quad_tol'] = 1e-1 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
+
+    """==== electrostatic potential ===="""
     params['pot_type'] = "grid" #type of potential: analytic or grid
     params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
     params['potential_grid'] ="water_psi4_esp_uhf_631G**.out" #filename for grid representation of ESP. Only if pot_type = grid
-    params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
 
 
     """===== TESTING ====="""
@@ -41,7 +53,12 @@ def gen_input():
     params['plot_esp'] = True #plot ESP?
 
 
-    """===== post-processing and analysis ====="""
+    """====molecule-field interaction hamiltonian===="""
+    params['int_rep_type'] = 'spherical' #representation of the molecule-field interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
+   
+
+    """===== post-processing ====="""
+
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
     params['plot_modes'] = {"single_shot": False, "animation": False}
 
@@ -68,9 +85,13 @@ def gen_input():
         static_filename: name of the file into which the snapshots will be saved
         animation_filename: name of the file into which animations will be saved
     """
+
+    """=== Fourier transform ==="""
     params['FT_method'] = "quadrature" #method of calculating the FT of the wavefunction: quadrature or fftn
     params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
+
+
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
     params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
     params['momentum_range'] = [0.0, 10.0] #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
@@ -78,22 +99,12 @@ def gen_input():
     params['time_pecd'] = 3.0 #at what time (in a.u.) do we want to calculate PECD?
 
 
-    """====initial state====""" 
-    params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
-    params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
-    params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
-    params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 1 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
-    params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
-    params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
 
     """====field controls===="""
-   
     params['plot_elfield'] = False #plot z-component of the electric field
     """ put most of what's below into a converion function """
     params['omega'] =  23.128 #nm or eV
-
 
     #convert nm to THz:
     vellgt     =  2.99792458E+8 # m/s
@@ -105,11 +116,9 @@ def gen_input():
     print("Electric field oscillation period (optical cycle) = "+str(1.0e15/params['omega'])+" fs")
     print("suggested time-step for field linear frequency = "+str("%12.3f"%(params['omega']/1e12))+" THz is: " + str(opt_cycle/suggested_no_pts_per_cycle ) +" as")
 
-
     params['omega'] *= 2.0 * np.pi # linear to angular frequency
     params['omega'] /= 4.13e16 #Hz to a.u.
     frequency_units = "nm" #we later convert all units to atomic unit
-
 
     #params['E0'] = 1.0e9 #V/cm
     field_units = "V/cm"
@@ -121,7 +130,6 @@ def gen_input():
     print("field strength")
     print("  %8.2e"%field_strength)
     params['E0'] = field_strength
-
 
     # convert time units to atomic units
     time_to_au = {"as" : np.float64(1.0/24.188)}
@@ -157,7 +165,6 @@ def gen_input():
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
-
     env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 2000.0/np.sqrt(2.0) * time_to_au , "t0": 5000.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical

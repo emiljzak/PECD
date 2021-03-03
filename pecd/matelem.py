@@ -95,6 +95,12 @@ class hmat():
         end_time = time.time()
         print("Time for construction of the KEO: " +  str("%10.3f"%(end_time-start_time)) + "s")
         #exit()
+
+        if self.params['gen_adaptive_quads'] == True:
+            print("Generating list of spherical quadrature levels needed to reach convergence of potential energy matrix elements at r_in")
+            self.gen_adaptive_quads()
+
+
         start_time = time.time()
         potmat = self.calc_potmat()
         end_time = time.time()
@@ -254,10 +260,83 @@ class hmat():
         
 
     """ ======================= CONVERGENCE TESTS ======================"""    
+    def gen_adaptive_quads(self):
+
+        if self.params['pot_type'] == "analytic":
+            esp_potential = self.params['potential']
+        elif self.params['pot_type'] == "grid":
+            #interpolate the ESP:
+            print("Interpolating electrostatic potential")
+            esp_interpolant = self.pot_grid_interp()
+        
+        levels = [] #list of quadrature levels needed to achieve convergence quad_tol of potential energy matrix elements (global)
+
+        lmax = self.params['lmax']
+        lmin = self.params['lmin']
+        quad_tol = self.params['quad_tol']
+
+        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+
+        print("Testing potential energy matrix elements using Lebedev quadratures")
+        #create list of basis set indices
+        anglist = []
+        for l in range(lmin,lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+        val =  np.zeros(shape=(len(anglist)**2),dtype=complex)
+        val_prev = np.zeros(shape=(len(anglist)**2),dtype=complex)
+
+        #pull out Lebedev schemes into a list
+        spherical_schemes = []
+        for elem in list(quadpy.u3.schemes.keys()):
+            if 'lebedev' in elem:
+                spherical_schemes.append(elem)
+        #print("Available schemes: " + str(spherical_schemes))
+
+        for i in range(np.size(self.rgrid,axis=0)): #iterate over radial indices in the basis: only l=0, m=0
+            for n in range(np.size(self.rgrid,axis=1)): 
+                rin = self.rgrid[i,n]
+                print(i,n,rin)
+
+                #iterate over the schemes
+                for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+
+                    k=0
+                    for l1,m1 in anglist:
+                        for l2,m2 in anglist:
+                        
+                            val[k] = self.calc_potmatelem_interp(l1,m1,l2,m2,rin,scheme,esp_interpolant )
+                            print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag)+ '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
+                                '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + '%12.6f '%np.abs(val[k]-val_prev[k])  )
+                            k+=1
+
+                    #check for convergence
+                    diff = np.abs(val - val_prev)
+
+                    if (np.any(diff>quad_tol)):
+                        print(str(scheme)+" convergence not reached") 
+                        for k in range(len(val_prev)):
+                            val_prev[k] = val[k]
+
+                    elif (np.all(diff<quad_tol)):     
+                        print(str(scheme)+" convergence reached!!!")
+                        val_conv = val_prev
+                        levels.append([i,n,str(scheme)])
+                        break
+
+                    #if no convergence reached raise warning
+                    if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                        print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+
+        print("Converged quadrature levels:")
+        print(levels)
+        fname=open('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str(self.params['potential_grid']),'w')
+        print("saving quadrature levels to file: " + str('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str(self.params['potential_grid'])) )
+        for item in levels:
+            fname.write(str('%4d '%item[0]) +str('%4d '%item[1])+str(item[2]) +"\n")
+
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
-
-        #do decision tree and  optionally compare two results
-
 
         """ Choose the potential function to be used """
         potential_function = getattr(self, self.params['potential'] )
@@ -319,7 +398,6 @@ class hmat():
             for m in range(0,l+1):
                 anglist.append([l,m])
 
-
         #convergence test over matrix elements:
         val =  np.zeros(shape=(len(anglist)**2),dtype=complex)
         val_prev = np.zeros(shape=(len(anglist)**2),dtype=complex)
@@ -340,7 +418,7 @@ class hmat():
                 for l1,m1 in anglist:
                     for l2,m2 in anglist:
                     
-                        val[i] = self.calc_potmatelem_esp(l1,m1,l2,m2,rin,scheme,esp)
+                        val[i] = self.calc_potmatelem_interp(l1,m1,l2,m2,rin,scheme,esp)
                         print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%val[i]+ " %20.12f"%val_prev[i]+ " %20.12f"%(np.abs(val[i] - val_prev[i])))
                         i+=1
                 
@@ -428,13 +506,14 @@ class hmat():
         esp_interp = interpolate.LinearNDInterpolator(esp[:,0:3],esp[:,3])
         end_time = time.time()
         print("Interpolation of " + self.params['potential_grid'] + " potential took " +  str("%10.3f"%(end_time-start_time)) + "s")
-
+        """
         Z = esp_interp(X, Y, 0)
         plt.pcolormesh(X, Y, Z, shading='auto')
         #plt.plot(esp[:,0], esp[:,1], "o", label="input point")
         plt.colorbar()
         plt.axis("equal")
         plt.show()
+        """
         return esp_interp
 
     def pot_grid_interp_sph(self,interpolant,r,theta,phi):
