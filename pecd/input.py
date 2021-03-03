@@ -13,25 +13,33 @@ def gen_input():
     params['binwidth'] = 3.0
     params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 2
+    params['lmax'] = 4
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
     params['basis'] = "prim" # or adiab
-    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
-    params['scheme'] = "lebedev_031" #angular integration rule
-    params['int_rep_type'] = 'spherical' #representation of the interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
+
+    params['scheme'] = "lebedev_011" #angular integration rule
+    params['adaptive_quad'] = True #True: use adaptive angular quadrature for each radial grid point. Read the 
+    params['int_rep_type'] = 'spherical' #representation of the molecule-field interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
     params['t0'] = 0.0 
     params['tmax'] = 10.0 
     params['dt'] = 3.0 
     time_units = "as"
 
+    params['pot_type'] = "grid" #type of potential: analytic or grid
+    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
+    params['potential_grid'] ="water_psi4_esp_uhf_631G**.out" #filename for grid representation of ESP. Only if pot_type = grid
+    params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
+
 
     """===== TESTING ====="""
-    params['test_potmat_accur'] = True #Test the accuracy of potential energy matrix elements 
-    params['test_multipoles'] = True #test accuracy of potential energy matrix elements with multipole expansion of the potential and anlytic matrix elements
+    params['test_potmat_accur'] = False #Test the accuracy of potential energy matrix elements 
+    params['test_multipoles'] = False#test accuracy of potential energy matrix elements with multipole expansion of the potential and anlytic matrix elements
     params['test_lebedev'] = True #test accuracy of potential energy matrix elements with lebedev quadrature and exact potential
-    params['multipoles_lmax'] = 14 #maximum L in the multipole expansion of the electrostatic potential
+    params['multipoles_lmax'] = 6 #maximum L in the multipole expansion of the electrostatic potential
+    params['plot_esp'] = True #plot ESP?
+
 
     """===== post-processing and analysis ====="""
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
