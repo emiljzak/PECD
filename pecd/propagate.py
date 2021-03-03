@@ -82,9 +82,11 @@ class propagate(radbas,mapping):
 
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
+
+            self.plot_mat(potmat)
             #print(type(coeffs))
             #print(np.shape(coeffs))
-            rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+            #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
             return hmat
 
 
@@ -192,6 +194,8 @@ class propagate(radbas,mapping):
             evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
             end_time = time.time()
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
+
+            self.plot_mat(potmat)
 
             exit()
             vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
@@ -717,7 +721,7 @@ class propagate(radbas,mapping):
             ax = plt.gca()
 
         # Plot the heatmap
-        im = ax.imshow(data, **kwargs)
+        im = ax.imshow(np.abs(data), **kwargs)
 
         # Create colorbar
         im.set_clim(0, 0.5)
@@ -1301,9 +1305,9 @@ if __name__ == "__main__":
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     params = input.gen_input()
 
-    hydrogen = propagate() #!!!name of the potential should be one of the attributes of the propagate class!!!
+    hydrogen = propagate() 
 
-    psi0 = hydrogen.gen_psi0(params) #Test = true means: Testing the generation of the initial wavefunction on a grid on the example of analytic hydrogen atoms wavefunctions
+    psi0 = hydrogen.gen_psi0(params) 
 
     hmat = hydrogen.prop_wf(params,psi0)
 
