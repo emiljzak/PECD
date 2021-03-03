@@ -7,43 +7,48 @@ def gen_input():
     freq_to_au = np.float64(0.057/800.0)
     field_to_au =  np.float64(1.0/(5.14220652e+9))
 
+    """ === molecule directory ==== """ 
+    """ in this directory we read/write files associated with a given molecule """
+    params['working_dir'] = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/h2o/"
+    params['molec_name'] = "h2o"
+
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 4
-    params['nbins'] = 4
+    params['nlobatto'] = 8
+    params['nbins'] = 5
     params['binwidth'] = 3.0
-    params['rshift'] = 1e-5 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
+    params['rshift'] = 1e-4 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 0
+    params['lmax'] = 2
     
     """====runtime controls===="""
-    params['method'] = "dynamic_direct" #static: solve time-independent SE for a given potential; dynamic_direct, dynamic_lanczos
+    params['method'] = "static" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
     params['t0'] = 0.0 
-    params['tmax'] = 10.0 
+    params['tmax'] = 6.0 
     params['dt'] = 3.0 
     time_units = "as"
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
     params['save_hamiltonian'] = True #save the calculated field-free Hamiltonian in a file?
 
     """====initial state====""" 
-    params['ini_state'] = "eigenvec" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
+    params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 4 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
     """==== spherical quadratures ===="""
     params['scheme'] = "lebedev_011" #angular integration rule
-    params['adaptive_quad'] = False #True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
-    params['gen_adaptive_quads'] = True #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
-    params['quad_tol'] = 1e-1 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
+    params['adaptive_quad'] = True#True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
+    params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
+    params['quad_tol'] = 1e-2 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
 
     """==== electrostatic potential ===="""
     params['pot_type'] = "grid" #type of potential: analytic or grid
     params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
-    params['potential_grid'] ="water_psi4_esp_uhf_631G**.out" #filename for grid representation of ESP. Only if pot_type = grid
+    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_10_0.5.dat" #filename for grid representation of ESP. Only if pot_type = grid
     params['r_cutoff'] = 9.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
 
     """===== TESTING ====="""

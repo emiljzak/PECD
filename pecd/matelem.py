@@ -107,13 +107,19 @@ class hmat():
         end_time = time.time()
         print("Time for construction of the potential energy matrix: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
         hmat =   keomat + potmat
 
         neval = 10 #params["n"]
         print("Hamiltonian Matrix")
         with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
+        if self.params['save_hamiltonian'] == True:
+            print("saving the hamiltonian matrix in a file")
+            hmatfilename =self.params['working_dir'] + "hmat_"+self.params['molec_name']+"_"+str(self.params['nbins'])+\
+                    "_"+str(self.params['nlobatto'])+"_"+str(self.params['lmax'])+"_"+str(self.params['binwidth'])+"_"+self.params['potential_grid']+".dat"
+            with open(hmatfilename, "w") as hmatfile:   
+                np.savetxt(hmatfile,hmat,fmt='%10.3f')
+
         start_time = time.time()
         #eval, eigvec = linalg.eigs(-1.0 * hmat,k=neval,which='LM')
         eval, eigvec = np.linalg.eigh(hmat, UPLO='U')
@@ -124,6 +130,7 @@ class hmat():
         print("ZPE = " + str(eval[0]))
         eval /=1.0
         print("Eigenvalues:"+'\n')
+        
         """ Exact energies of hydrogen atom """
         evalhydrogen = np.zeros(neval,dtype=float)
         for i in range(1,neval+1):
@@ -335,8 +342,9 @@ class hmat():
 
         print("Converged quadrature levels:")
         print(levels)
-        fname=open('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str('%5.2e'%quad_tol) + "_" + str(self.params['potential_grid']),'w')
-        print("saving quadrature levels to file: " + str('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str('%5.2e'%quad_tol) + "_"  + str(self.params['potential_grid'])) )
+        filename = 'quad_levels_' + str(self.params['nbins_iniwf']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str('%5.2e'%quad_tol) + "_" + str(self.params['potential_grid'])
+        fname=open(self.params['working_dir'] + filename,'w')
+        print("saving quadrature levels to file: " +filename )
         for item in levels:
             fname.write(str('%4d '%item[0]) +str('%4d '%item[1])+str(item[2]) +"\n")
 
@@ -550,7 +558,7 @@ class hmat():
 
     def pot_grid_interp(self):
         #interpolate potential on the grid
-        fl = open(self.params['potential_grid'],'r')
+        fl = open(self.params['working_dir']+self.params['potential_grid'],'r')
 
         esp = []
 
@@ -747,7 +755,8 @@ class hmat():
                 #read the adaptive quadrature levels from file:
                 # !!!!!!!!!!! Basis set and potential function must exactly match the one for which quadrature levels have been generated !!!!!!!!!!!!
                 quad_schemes = []
-                fl = open('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_"+ str('%5.2e'%self.params['quad_tol']) + "_"  + str(self.params['potential_grid']),'r')
+                quadfilename = self.params['working_dir']+'quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_"+ str('%5.2e'%self.params['quad_tol']) + "_"  + str(self.params['potential_grid'])
+                fl = open(quadfilename,'r')
 
                 for line in fl:
                     words = line.split()
@@ -765,6 +774,8 @@ class hmat():
                         for elem in quad_schemes:
                             if elem[0] == self.maparray[i][2] and elem[1] == self.maparray[i][3]:
                                 scheme = elem[2]
+                                print(str(self.maparray[i][2]) + " " + str(self.maparray[i][2]) + " " + str(scheme))
+                                break
 
                         for j in range(i,Nbas):
                             #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
@@ -787,12 +798,15 @@ class hmat():
 
             if self.params['save_hamiltonian'] == True:
                 print("saving the potential matrix in a file")
-                with open("potmat.dat", "w") as potmatfile:   
+                potmatfilename =self.params['working_dir'] + "potmat_"+self.params['molec_name']+"_"+str(self.params['nbins_iniwf'])+\
+                    "_"+str(self.params['nlobatto'])+"_"+str(self.params['lmax'])+"_"+str(self.params['binwidth'])+"_"+self.params['potential_grid']+".dat"
+                with open(potmatfilename, "w") as potmatfile:   
                     np.savetxt(potmatfile,potmat,fmt='%10.3f')
 
             print("Potential matrix")
             with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
                 print(potmat)
+            
         return potmat
 
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme,potential_function):
