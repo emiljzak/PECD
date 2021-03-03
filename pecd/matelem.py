@@ -99,6 +99,7 @@ class hmat():
         if self.params['gen_adaptive_quads'] == True:
             print("Generating list of spherical quadrature levels needed to reach convergence of potential energy matrix elements at r_in")
             self.gen_adaptive_quads()
+            exit()
 
 
         start_time = time.time()
@@ -298,41 +299,44 @@ class hmat():
             for n in range(np.size(self.rgrid,axis=1)): 
                 rin = self.rgrid[i,n]
                 print(i,n,rin)
+                if rin <= self.params['r_cutoff']:
+                    #iterate over the schemes
+                    for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
 
-                #iterate over the schemes
-                for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+                        k=0
+                        for l1,m1 in anglist:
+                            for l2,m2 in anglist:
+                            
+                                val[k] = self.calc_potmatelem_interp(l1,m1,l2,m2,rin,scheme,esp_interpolant )
+                                print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag)+ '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
+                                    '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + '%12.6f '%np.abs(val[k]-val_prev[k])  )
+                                k+=1
 
-                    k=0
-                    for l1,m1 in anglist:
-                        for l2,m2 in anglist:
-                        
-                            val[k] = self.calc_potmatelem_interp(l1,m1,l2,m2,rin,scheme,esp_interpolant )
-                            print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag)+ '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
-                                '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + '%12.6f '%np.abs(val[k]-val_prev[k])  )
-                            k+=1
+                        #check for convergence
+                        diff = np.abs(val - val_prev)
 
-                    #check for convergence
-                    diff = np.abs(val - val_prev)
+                        if (np.any(diff>quad_tol)):
+                            print(str(scheme)+" convergence not reached") 
+                            for k in range(len(val_prev)):
+                                val_prev[k] = val[k]
 
-                    if (np.any(diff>quad_tol)):
-                        print(str(scheme)+" convergence not reached") 
-                        for k in range(len(val_prev)):
-                            val_prev[k] = val[k]
+                        elif (np.all(diff<quad_tol)):     
+                            print(str(scheme)+" convergence reached!!!")
+                            val_conv = val_prev
+                            levels.append([i,n,str(scheme)])
+                            break
 
-                    elif (np.all(diff<quad_tol)):     
-                        print(str(scheme)+" convergence reached!!!")
-                        val_conv = val_prev
-                        levels.append([i,n,str(scheme)])
-                        break
-
-                    #if no convergence reached raise warning
-                    if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
-                        print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+                        #if no convergence reached raise warning
+                        if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                            print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+                else:
+                    scheme == spherical_schemes[0]
+                    levels.append([i,n,str(scheme)])
 
         print("Converged quadrature levels:")
         print(levels)
-        fname=open('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str(self.params['potential_grid']),'w')
-        print("saving quadrature levels to file: " + str('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str(self.params['potential_grid'])) )
+        fname=open('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str('%5.2e'%quad_tol) + "_" + str(self.params['potential_grid']),'w')
+        print("saving quadrature levels to file: " + str('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_" + str('%5.2e'%quad_tol) + "_"  + str(self.params['potential_grid'])) )
         for item in levels:
             fname.write(str('%4d '%item[0]) +str('%4d '%item[1])+str(item[2]) +"\n")
 
@@ -471,6 +475,75 @@ class hmat():
             
         print(sphval - val_conv)
 
+    def test_potmat_accuracy(self,lmax_multipole,quad_tol,rin):
+
+        """
+        This method tests the convergence of potential energy matrix elements with options to use two methods:
+        a) multipole expansion, with multipole moments calculated from library and analytic matrix elements
+        b) Lebedev quadrature over the exact potential
+        rin: radial coordinate
+        """
+        
+        """ Choose the potential function to be used """
+        potential_function = getattr(self, self.params['potential'] )
+        if not potential_function:
+            raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
+        print("potential function chosen: " + str(potential_function))
+
+        #create list of basis set indices
+        anglist = []
+        for l in range(self.params['lmin'],self.params['lmax']+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+
+        if self.params['test_multipoles'] == True:
+            print("calculating potential matrix elements using multipole expansion")
+            #call multipoles
+
+            pot_multipoles =  np.zeros(shape=(len(anglist)**2))
+            pot_multipoles_temp = np.zeros(shape=(len(anglist)**2))
+
+
+
+        if self.params['test_lebedev'] == True:
+            print("calculating potential matrix elements using Lebedev quadratures")
+            #call lebedev
+            pot_lebedev =  np.zeros(shape=(len(anglist)**2))
+            pot_lebedev_temp = np.zeros(shape=(len(anglist)**2))
+            #pull out Lebedev schemes into a list
+            spherical_schemes = []
+            for elem in list(quadpy.u3.schemes.keys()):
+                if 'lebedev' in elem:
+                    spherical_schemes.append(elem)
+            #print("Selected Lebedev schemes: " + str(spherical_schemes))
+
+            #iterate over the schemes
+            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+
+                i=0
+                for l1,m1 in anglist:
+                    for l2,m2 in anglist:
+                    
+                        pot_lebedev[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme,potential_function)
+                        print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%pot_lebedev[i]+ " %20.12f"%pot_lebedev_temp[i]+ " %20.12f"%(pot_lebedev[i]-pot_lebedev_temp[i]))
+                        i+=1
+                
+                #check for convergence
+                diff = np.abs(pot_lebedev - pot_lebedev_temp)
+
+                if (np.any(diff>quad_tol)):
+                    print(str(scheme)+" convergence not reached") 
+                    for i in range(len(pot_lebedev_temp)):
+                        pot_lebedev_temp[i] = pot_lebedev[i]
+
+                elif (np.all(diff<quad_tol)):     
+                    print(str(scheme)+" convergence reached!!!")
+                    break
+
+                #if no convergence reached raise warning
+                if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
 
     """ ======================= POTENTIALS ======================"""
@@ -491,7 +564,7 @@ class hmat():
             v = float(words[3])
             esp.append([x,y,z,v])
             
-        esp = np.asarray(esp)
+        esp = -1.0 * np.asarray(esp) #NOTE: Psi4 returns ESP for a positive unit charge, so that the potential of a cation is positive. We want it for negaitve unit charge, so we must change sign: attractive interaction
 
         #plot preparation
         X = np.linspace(min(esp[:,0]), max(esp[:,0]),100)
@@ -669,15 +742,53 @@ class hmat():
             print("Interpolating electrostatic potential")
             esp_interpolant = self.pot_grid_interp()
 
-            for i in range(Nbas):
-                #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
-                #print(ivec)
-                rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+            if self.params['adaptive_quad'] == True:
 
-                for j in range(i,Nbas):
-                    #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
-                    if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                        potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
+                #read the adaptive quadrature levels from file:
+                # !!!!!!!!!!! Basis set and potential function must exactly match the one for which quadrature levels have been generated !!!!!!!!!!!!
+                quad_schemes = []
+                fl = open('quad_levels_' + str(self.params['nbins']) + "_" + str(self.params['nlobatto']) + "_" + str(self.params['binwidth']) + "_"+ str('%5.2e'%self.params['quad_tol']) + "_"  + str(self.params['potential_grid']),'r')
+
+                for line in fl:
+                    words = line.split()
+                    i = int(words[0])
+                    n = int(words[1])
+                    scheme = str(words[2])
+                    quad_schemes.append([i,n,scheme])
+
+
+                for i in range(Nbas):
+                    #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+                    #print(ivec)
+                    rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+                    if rin <= self.params['r_cutoff']:
+                        for elem in quad_schemes:
+                            if elem[0] == self.maparray[i][2] and elem[1] == self.maparray[i][3]:
+                                scheme = elem[2]
+
+                        for j in range(i,Nbas):
+                            #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                            if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                                potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
+                    else:
+                        for j in range(i,Nbas):
+                                potmat[i,j] = 0.0  #radial cut-off
+            else:
+
+                for i in range(Nbas):
+                    #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+                    #print(ivec)
+                    rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+
+                    for j in range(i,Nbas):
+                        #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                        if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                            potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
+
+            if self.params['save_hamiltonian'] == True:
+                print("saving the potential matrix in a file")
+                with open("potmat.dat", "w") as potmatfile:   
+                    np.savetxt(potmatfile,potmat,fmt='%10.3f')
 
             print("Potential matrix")
             with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
@@ -714,75 +825,6 @@ class hmat():
         return val
    
 
-    def test_potmat_accuracy(self,lmax_multipole,quad_tol,rin):
-
-        """
-        This method tests the convergence of potential energy matrix elements with options to use two methods:
-        a) multipole expansion, with multipole moments calculated from library and analytic matrix elements
-        b) Lebedev quadrature over the exact potential
-        rin: radial coordinate
-        """
-        
-        """ Choose the potential function to be used """
-        potential_function = getattr(self, self.params['potential'] )
-        if not potential_function:
-            raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
-        print("potential function chosen: " + str(potential_function))
-
-        #create list of basis set indices
-        anglist = []
-        for l in range(self.params['lmin'],self.params['lmax']+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])
-
-
-        if self.params['test_multipoles'] == True:
-            print("calculating potential matrix elements using multipole expansion")
-            #call multipoles
-
-            pot_multipoles =  np.zeros(shape=(len(anglist)**2))
-            pot_multipoles_temp = np.zeros(shape=(len(anglist)**2))
-
-
-
-        if self.params['test_lebedev'] == True:
-            print("calculating potential matrix elements using Lebedev quadratures")
-            #call lebedev
-            pot_lebedev =  np.zeros(shape=(len(anglist)**2))
-            pot_lebedev_temp = np.zeros(shape=(len(anglist)**2))
-            #pull out Lebedev schemes into a list
-            spherical_schemes = []
-            for elem in list(quadpy.u3.schemes.keys()):
-                if 'lebedev' in elem:
-                    spherical_schemes.append(elem)
-            #print("Selected Lebedev schemes: " + str(spherical_schemes))
-
-            #iterate over the schemes
-            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-
-                i=0
-                for l1,m1 in anglist:
-                    for l2,m2 in anglist:
-                    
-                        pot_lebedev[i] = self.calc_potmatelem(l1,m1,l2,m2,rin,scheme,potential_function)
-                        print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + " %20.12f"%pot_lebedev[i]+ " %20.12f"%pot_lebedev_temp[i]+ " %20.12f"%(pot_lebedev[i]-pot_lebedev_temp[i]))
-                        i+=1
-                
-                #check for convergence
-                diff = np.abs(pot_lebedev - pot_lebedev_temp)
-
-                if (np.any(diff>quad_tol)):
-                    print(str(scheme)+" convergence not reached") 
-                    for i in range(len(pot_lebedev_temp)):
-                        pot_lebedev_temp[i] = pot_lebedev[i]
-
-                elif (np.all(diff<quad_tol)):     
-                    print(str(scheme)+" convergence reached!!!")
-                    break
-
-                #if no convergence reached raise warning
-                if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
-                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
     def gauss_lobatto(self,n, n_digits):
             """
