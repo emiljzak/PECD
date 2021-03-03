@@ -95,7 +95,11 @@ class hmat():
         end_time = time.time()
         print("Time for construction of the KEO: " +  str("%10.3f"%(end_time-start_time)) + "s")
         #exit()
+        start_time = time.time()
         potmat = self.calc_potmat()
+        end_time = time.time()
+        print("Time for construction of the potential energy matrix: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
 
         hmat =   keomat + potmat
 
@@ -248,6 +252,8 @@ class hmat():
     
         return fpfpint#sum(w[:])
         
+
+    """ ======================= CONVERGENCE TESTS ======================"""    
     def test_angular_convergence(self,lmin,lmax,quad_tol,rin):
 
         #do decision tree and  optionally compare two results
@@ -391,9 +397,9 @@ class hmat():
 
     """ ======================= POTENTIALS ======================"""
 
-    def pot_grid_psi4_d2s_interp(self):
-
-        fl = open("grid_esp.out",'r')
+    def pot_grid_interp(self):
+        #interpolate potential on the grid
+        fl = open(self.params['potential_grid'],'r')
 
         esp = []
 
@@ -414,25 +420,24 @@ class hmat():
         Y = np.linspace(min(esp[:,1]), max(esp[:,1]),100)
         X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
         
-        fig = plt.figure()
-       
+        #fig = plt.figure() 
         #ax = plt.axes(projection="3d")
         #ax.scatter(x, z, v, c='r', marker='o')
-        #plt.show()
 
-
+        start_time = time.time()
         esp_interp = interpolate.LinearNDInterpolator(esp[:,0:3],esp[:,3])
-        Z = esp_interp(X, Y,0)
+        end_time = time.time()
+        print("Interpolation of " + self.params['potential_grid'] + " potential took " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+        Z = esp_interp(X, Y, 0)
         plt.pcolormesh(X, Y, Z, shading='auto')
         #plt.plot(esp[:,0], esp[:,1], "o", label="input point")
-        plt.legend()
         plt.colorbar()
         plt.axis("equal")
         plt.show()
         return esp_interp
 
-
-    def pot_grid_psi4_d2s(self,interpolant,r,theta,phi):
+    def pot_grid_interp_sph(self,interpolant,r,theta,phi):
         x = r * np.sin(theta) * np.cos(phi)
         y = r * np.sin(theta) * np.sin(phi)
         z = r * np.cos(theta)
@@ -480,8 +485,6 @@ class hmat():
 
 
         return Vne + Vee
-
-
 
     def vecdist(self,r,theta,phi,r0,theta0,phi0):
         return np.sqrt( r**2 + r0**2 - 2 * r * r0 * (np.sin(theta) * np.sin(theta0) * np.cos(phi - phi0) + np.cos(theta) * np.cos(theta0)) )
@@ -532,6 +535,8 @@ class hmat():
 
 
 
+
+    """ ======================= POTMAT ======================"""
     def calc_potmat(self):  
         """calculate full potential matrix"""
         lmax = self.params['lmax']
@@ -547,31 +552,57 @@ class hmat():
         potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
 
 
-        """ Choose the potential function to be used """
-        potential_function = getattr(self, self.params['potential'] )
-        if not potential_function:
-            raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
-        print("potential function chosen: " + str(potential_function))
-        
+        if self.params['pot_type'] == "analytic":
 
-        """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+            """ Choose the potential function to be used """
+            potential_function = getattr(self, self.params['potential'] )
+            if not potential_function:
+                raise NotImplementedError("Method %s not implemented" %  self.params['potential'])
+            print("potential function chosen: " + str(potential_function))
+            
 
-        """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+            """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
 
-        for i in range(Nbas):
-            #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
-            #print(ivec)
-            rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+            """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
 
-            for j in range(i,Nbas):
-                #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
-                if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                    potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
+            for i in range(Nbas):
+                #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+                #print(ivec)
+                rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
-        #print("Potential matrix")
-        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
-        #    print(potmat)
+                for j in range(i,Nbas):
+                    #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                    if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                        potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
 
+            #print("Potential matrix")
+            #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+            #    print(potmat)
+
+
+        elif self.params['pot_type'] == "grid":  
+            print("potential function chosen: " + str(self.params['potential_grid']))
+            
+            """ V(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+            """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
+
+            #interpolate the ESP:
+            print("Interpolating electrostatic potential")
+            esp_interpolant = self.pot_grid_interp()
+
+            for i in range(Nbas):
+                #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
+                #print(ivec)
+                rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+
+                for j in range(i,Nbas):
+                    #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                    if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                        potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
+
+            print("Potential matrix")
+            with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+                print(potmat)
         return potmat
 
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme,potential_function):
@@ -589,7 +620,7 @@ class hmat():
         return val
    
 
-    def calc_potmatelem_esp(self,l1,m1,l2,m2,rin,scheme,interpolant):
+    def calc_potmatelem_interp(self,l1,m1,l2,m2,rin,scheme,interpolant):
         """calculate single element of potential matrix"""
         myscheme = quadpy.u3.schemes[scheme]()
         #print(myscheme)
@@ -599,7 +630,7 @@ class hmat():
                 theta_phi[1] = phi  in [-pi,pi]
                 sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
         """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_grid_psi4_d2s(interpolant,rin,theta_phi[0],theta_phi[1]+np.pi)) 
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * self.pot_grid_interp_sph(interpolant,rin,theta_phi[0],theta_phi[1]+np.pi)) 
 
         return val
    
@@ -673,8 +704,6 @@ class hmat():
                 #if no convergence reached raise warning
                 if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
                     print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
-
-
 
     def gauss_lobatto(self,n, n_digits):
             """
@@ -815,8 +844,6 @@ class hmat():
             return val/2.0 #?
 
 
-
-
 def gaussian(XYZ, xyz0, sigma):
     g = np.ones_like(XYZ[0])
     for k in range(3):
@@ -866,10 +893,6 @@ def test_multipoles():
             print(l,m, Phi.multipole_moments[(l,m)])
 
 
-
-
-
-
 def test_multipoles_discr():
     # First we set up our grid, a cube of length 10 centered at the origin:
 
@@ -901,8 +924,6 @@ def test_multipoles_discr():
     for l in range(0,l_max +1):
         for m in range(-l,l+1):
             print(l,m, Phi.multipole_moments[(l,m)])
-
-
 
 
 def rho(XYZ,rn,thetan,phin):

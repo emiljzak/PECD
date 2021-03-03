@@ -90,8 +90,6 @@ class propagate(radbas,mapping):
 
         elif params['method'] == 'dynamic_direct':
 
-
-
             print("Solving TDSE with a direct exponentiation method")
             print("Setting up mixed DVR-Spectral basis set")
             print("\n")
@@ -119,7 +117,7 @@ class propagate(radbas,mapping):
             timegrid = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
             dt = params['dt']
 
-            print("    2) initial wavefunction")
+            print("    2) initial wavefunction:")
             print("\n")
             psi = np.zeros(Nbas,dtype=complex) #spectral representation of the wavefunciton
             #HERE convert psi0 to an instance of the wavefunction class
@@ -136,6 +134,7 @@ class propagate(radbas,mapping):
             fname=open(params['wavepacket_file'],'w')
             wavepacket = np.zeros((len(timegrid),Nbas),dtype=complex) #array storing the wavepacket coefficients in order given by the mapping function
 
+            #setting up plotting params
 
             if params['plot_modes']["single_shot"] == True:     
                 """ Initialize single_shot plots """   
@@ -175,7 +174,7 @@ class propagate(radbas,mapping):
 
             """ initialize Hamiltonian """
 
-            """ plot radial basis """
+            #plot radial basis 
             #rbas.plot_chi( params['rshift'], params['binwidth'] * params['nbins'] + params['rshift'], npoints = 1000)
 
             if params['calc_inst_energy'] == True:
@@ -187,44 +186,14 @@ class propagate(radbas,mapping):
 
 
             if params['test_potmat_accur'] == True:
-                """ potential matrix elements with lebedev quadrature and psi4 electrostatic potential """
-
-                print("Interpolating electrostatic potential")
-                esp_interpolant = hamiltonian.pot_grid_psi4_d2s_interp()
-
-           
-                """ Test angular convergence of the potential matrix elements with lebedev """
-                quad_tol = 1e-2
-                lmin_test = 0
-                lmax_test = 2
-                Rstar = 2.0 #radius at which we cut-off the molecular ion potential
-                rin = np.linspace(2.0,Rstar,1,endpoint=True)
-                print(rin)
-                for r in rin:
-                    print("radial coordinate = "+str(r))
-                    hamiltonian.test_angular_convergence_esp_interp(params['lmin'],params['lmax'],quad_tol,r,esp_interpolant)
-                exit()
+                self.test_potmat_accur(hamiltonian)
             
-
-
-
-            """ Test accuracy of the potential energy matrix """
-            print("Testing accuracy of the potential energy matrix")
-            quad_tol = 1e-3
-            lmax_multipole = 4
-            rin = np.linspace(10.0,20.0,1,endpoint=True)
-            print(rin)
-            for r in rin:
-                print("radial coordinate = "+str(r))
-                hamiltonian.test_potmat_accuracy(lmax_multipole,quad_tol,r)
-            exit()
-
-
 
             evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
             end_time = time.time()
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
+            exit()
             vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
             #vint1 = Elfield.gen_field(0)[2] * vint0 
             #self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint1[1:,1:])) #
@@ -380,6 +349,8 @@ class propagate(radbas,mapping):
                 W_array = np.asarray(W_array)
                 print("PECD = " +str( self.pecd(W_array)))
                 print("Finished!")
+
+
     def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
         en = 0.0+ 1j * 0.0
         for ibas in range(len(psi)):
@@ -522,6 +493,52 @@ class propagate(radbas,mapping):
             if plot_controls["save_static"] == True:
                 fig.savefig(params['plot_controls']["static_filename"]+"_t="+str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf", bbox_inches='tight')
     
+    def test_potmat_accur(self,hamiltonian):
+        """ potential matrix elements with lebedev quadrature and psi4 electrostatic potential """
+
+        print("Interpolating electrostatic potential")
+        esp_interpolant = hamiltonian.pot_grid_interp()
+
+        if params['plot_esp'] == True:
+            rin = 1.5
+            theta_1d = np.linspace(0,   np.pi,  2*91) # 
+            phi_1d   = np.linspace(0, 2*np.pi, 2*181) # 
+
+            theta_2d, phi_2d = np.meshgrid(theta_1d, phi_1d)
+            xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
+
+            colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
+            #colormap.set_clim(-.45, .45)
+            limit = 0.5
+
+            
+            plt.figure()
+            ax = plt.gca(projection = "3d")
+
+            Y_lm =   hamiltonian.pot_grid_interp_sph(esp_interpolant, rin,theta_2d, phi_2d)       
+            #Y_lm = self.solidharm(l,m,1,theta_2d,phi_2d)
+            print(np.shape(Y_lm))
+            r = np.abs(Y_lm.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
+            
+            ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
+            ax.set_xlim(-limit,limit)
+            ax.set_ylim(-limit,limit)
+            ax.set_zlim(-limit,limit)
+            #ax.set_aspect("equal")
+            #ax.set_axis_off()
+            plt.show()
+            exit()
+
+        """ Test angular convergence of the potential matrix elements with lebedev """
+        quad_tol = 1e-3
+        lmin_test = 0
+        lmax_test = 2
+        Rstar = 6.0 #radius at which we cut-off the molecular ion potential
+        rin = np.linspace(Rstar,Rstar,1,endpoint=True)
+        print(rin)
+        for r in rin:
+            print("radial coordinate = "+str(r))
+            hamiltonian.test_angular_convergence_esp_interp(params['lmin'],params['lmax'],quad_tol,r,esp_interpolant)
 
 
     def FTpsi(self,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas):
