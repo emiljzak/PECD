@@ -79,11 +79,28 @@ class propagate(radbas,mapping):
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
 
+            if params['read_ham_from_file'] ==True:
+                hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
+                hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
+                    "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+                with open(hmatfilename, "r") as hmatfile:   
+                    hmat = np.loadtxt(hmatfile,dtype=float)
 
-            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
 
-            self.plot_mat(potmat)
+                start_time = time.time()
+                #eval, eigvec = linalg.eigs(-1.0 * hmat,k=neval,which='LM')
+                eval, eigvec = np.linalg.eigh(hmat, UPLO='U')
+                end_time = time.time()
+
+                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+                print("Eigenvalues of the Hamiltonian:")
+                with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
+                    print(eval[:10])
+            else:
+                hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
+                evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
+
+            self.plot_mat(hmat)
             #print(type(coeffs))
             #print(np.shape(coeffs))
             #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
@@ -103,8 +120,7 @@ class propagate(radbas,mapping):
             nlobatto = params['nlobatto']
             #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
 
-
-            print("    2) Generating mapping of basis set indices")
+            print("    2) Generating a map of basis set indices")
             print("\n")
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             print("Number of bins = " + str(params['nbins']))
@@ -175,7 +191,6 @@ class propagate(radbas,mapping):
             intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
 
             """ initialize Hamiltonian """
-
             #plot radial basis 
             #rbas.plot_chi( params['rshift'], params['binwidth'] * params['nbins'] + params['rshift'], npoints = 1000)
 
@@ -183,21 +198,25 @@ class propagate(radbas,mapping):
                 print("setting up a binding-potential-free hamiltonian for tests of pondermotive energy of a free-electron wavepacket")
                 params['potential'] = "pot_hydrogen" # 1) diagonal (for tests); 2) pot_hydrogen; 3) pot_null
 
-            start_time = time.time()    
+
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
 
 
             if params['test_potmat_accur'] == True:
                 self.test_potmat_accur(hamiltonian)
             
+            if params['read_ham_from_file'] ==True:
+                    hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
+                    hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+                    with open(hmatfilename, "r") as hmatfile:   
+                        hmat = np.loadtxt(hmatfile,dtype=float)
+            else:
+                start_time = time.time()    
+                evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
+                end_time = time.time()
+                print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
-            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
-            end_time = time.time()
-            print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
-
-            self.plot_mat(potmat)
-
-            exit()
             vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
             #vint1 = Elfield.gen_field(0)[2] * vint0 
             #self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint1[1:,1:])) #

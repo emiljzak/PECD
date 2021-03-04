@@ -14,7 +14,7 @@ def gen_input():
 
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 8
+    params['nlobatto'] = 6
     params['nbins'] = 5
     params['binwidth'] = 3.0
     params['rshift'] = 1e-4 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
@@ -22,13 +22,14 @@ def gen_input():
     params['lmax'] = 2
     
     """====runtime controls===="""
-    params['method'] = "static" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
+    params['method'] = "dynamic_direct" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
+    params['read_ham_from_file'] = True #do we read stored H0 matrix from file or generate it during run?
     params['t0'] = 0.0 
-    params['tmax'] = 6.0 
+    params['tmax'] = 15.0 
     params['dt'] = 3.0 
     time_units = "as"
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
-    params['save_hamiltonian'] = True #save the calculated field-free Hamiltonian in a file?
+    params['save_hamiltonian'] = False #save the calculated field-free Hamiltonian in a file?
 
     """====initial state====""" 
     params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
@@ -66,7 +67,7 @@ def gen_input():
     """===== post-processing ====="""
 
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": False, "animation": False}
+    params['plot_modes'] = {"single_shot": False, "animation": True}
 
     params['plot_types'] = { "radial": True,
                              "angular": False,
