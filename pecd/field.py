@@ -51,7 +51,7 @@ class Field():
                 raise NotImplementedError("Method %s not implemented" % self.params['field_env']['env_type'])
 
 
-            fieldx, fieldy , fieldz = field_type_function(t, **self.params['field_type'])
+            field_m1 , field_0 , field_p1  = field_type_function(t, **self.params['field_type']) #spherical tensor form
             fieldenv = field_env_function(t, **self.params['field_env'])
 
             #print(np.shape(output))
@@ -64,5 +64,5 @@ class Field():
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
 
-        return fieldx * fieldenv , fieldy * fieldenv, fieldz * fieldenv
+        return field_m1 * fieldenv , field_0 * fieldenv, field_p1 * fieldenv #note that we return spherical tensor components -1, 0, 1
 
