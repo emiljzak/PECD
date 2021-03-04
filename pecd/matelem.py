@@ -85,9 +85,9 @@ class hmat():
         """ calculate static field-free Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
-        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
-        keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
-        potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=complex)
+        hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
+        keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
+        potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
 
         start_time = time.time()
@@ -108,17 +108,18 @@ class hmat():
         print("Time for construction of the potential energy matrix: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
         hmat =   keomat + potmat
-
+ 
         neval = 10 #params["n"]
         print("Hamiltonian Matrix")
-        with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
             print(hmat)
+            
         if self.params['save_hamiltonian'] == True:
             print("saving the hamiltonian matrix in a file")
             hmatfilename =self.params['working_dir'] + "hmat_"+self.params['molec_name']+"_"+str(self.params['nbins'])+\
                     "_"+str(self.params['nlobatto'])+"_"+str(self.params['lmax'])+"_"+str(self.params['binwidth'])+"_"+self.params['potential_grid']+".dat"
             with open(hmatfilename, "w") as hmatfile:   
-                np.savetxt(hmatfile,hmat,fmt='%10.3f')
+                np.savetxt(hmatfile,hmat,fmt='%8.3e')
 
         start_time = time.time()
         #eval, eigvec = linalg.eigs(-1.0 * hmat,k=neval,which='LM')
@@ -129,30 +130,32 @@ class hmat():
 
         print("ZPE = " + str(eval[0]))
         eval /=1.0
-        print("Eigenvalues:"+'\n')
-        
-        """ Exact energies of hydrogen atom """
-        evalhydrogen = np.zeros(neval,dtype=float)
-        for i in range(1,neval+1):
-            evalhydrogen[i-1] = - 1./(2.0 * float(i ** 2))
 
-        evals = np.column_stack((eval[:neval],evalhydrogen))
+        if self.params['pot_type'] == "analytic" and self.params['potential'] == "pot_hydrogen":
+            """ Exact energies of hydrogen atom """
+            evalhydrogen = np.zeros(neval,dtype=float)
+            for i in range(1,neval+1):
+                evalhydrogen[i-1] = - 1./(2.0 * float(i ** 2))
 
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
-            #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
-            print(evals)
+            evals = np.column_stack((eval[:neval],evalhydrogen))
+            print("Eigenvalues vs hydrogen atom levels:"+'\n')
+            with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
+                #print(eval-eval[0],evalhydrogen - evalhydrogen[0])
+                print(evals)
+            """figenr = plt.figure()
+            plt.xlabel('levels')
+            plt.ylabel('energy / a.u.')
+            plt.legend()   
+    
+            plt.plot(np.linspace(0,1,np.size(eval[:10])), eval[:10]-eval[0],'bo-') 
+            plt.plot(np.linspace(0,1,np.size(evalhydrogen[:10])), evalhydrogen[:10]-evalhydrogen[0],'ro-') 
+            plt.show()     
+            """
+        else:
+            print("Eigenvalues of the Hamiltonian:")
+            with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
+                print(eval-eval[0])
 
-        """figenr = plt.figure()
-        plt.xlabel('levels')
-        plt.ylabel('energy / a.u.')
-        plt.legend()   
- 
-        plt.plot(np.linspace(0,1,np.size(eval[:10])), eval[:10]-eval[0],'bo-') 
-        plt.plot(np.linspace(0,1,np.size(evalhydrogen[:10])), evalhydrogen[:10]-evalhydrogen[0],'ro-') 
-        plt.show()     
-        """
-        #exit()
-        #print('\n'.join([' '.join(["  %15.8f"%item for item in row]) for row in hmat]))
         return evals, eigvec, hmat, keomat, potmat
 
     def calc_keomat(self):
@@ -709,7 +712,7 @@ class hmat():
             for m in range(0,l+1):
                 anglist.append([l,m])"""
 
-        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = complex)
+        potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
 
 
         if self.params['pot_type'] == "analytic":
@@ -804,7 +807,7 @@ class hmat():
                     np.savetxt(potmatfile,potmat,fmt='%10.3f')
 
             print("Potential matrix")
-            with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+            with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
                 print(potmat)
             
         return potmat
