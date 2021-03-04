@@ -100,6 +100,8 @@ class propagate(radbas,mapping):
                 hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
                 evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
 
+            self.plot_mat(keomat)
+            self.plot_mat(potmat)
             self.plot_mat(hmat)
             #print(type(coeffs))
             #print(np.shape(coeffs))
@@ -145,7 +147,9 @@ class propagate(radbas,mapping):
                     if elem_map[0] == elem_wf0[0] and elem_map[1] == elem_wf0[1] and elem_map[2] == elem_wf0[2] and elem_map[3] == elem_wf0[3]:
                         psi[ielem_map] = elem_wf0[4]
             #normalize the wavefunction: we can move this method to the wavefunction class
+            #print("wavefunction normalization constant: " + str(np.sqrt( np.sum( np.conj(psi) * psi ) )) )
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
+            #print(np.sqrt( np.sum( np.conj(psi) * psi ) ))
 
             print("    3) wavepacket parameters")
             print("\n")
@@ -206,21 +210,35 @@ class propagate(radbas,mapping):
                 self.test_potmat_accur(hamiltonian)
             
             if params['read_ham_from_file'] ==True:
-                    hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
-                    hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
-                    with open(hmatfilename, "r") as hmatfile:   
-                        hmat = np.loadtxt(hmatfile,dtype=float)
+                hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
+                hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
+                    "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+                with open(hmatfilename, "r") as hmatfile:   
+                    hmat = np.loadtxt(hmatfile,dtype=float)
+
+                print("Hamiltonian Matrix Read from File")
+                with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
+                    print(hmat)      
+
             else:
                 start_time = time.time()    
                 evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
                 end_time = time.time()
                 print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
-            vint0 = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
-            #vint1 = Elfield.gen_field(0)[2] * vint0 
-            #self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint1[1:,1:])) #
-            #exit()
+            vint0 = np.zeros((params['Nbas'],params['Nbas'],3 ),dtype=complex)
+            vint = np.zeros((params['Nbas'],params['Nbas']),dtype=complex)
+
+            vint0[:,:,0] = hamiltonian.calc_intmat(0.0,intmat,[1.0, 0.0, 0.0])  
+            vint0[:,:,1] = hamiltonian.calc_intmat(0.0,intmat,[0.0, 1.0, 0.0])  
+            vint0[:,:,2] = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
+            #print("time-independent part of vint")
+            with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+                print(vint0)      
+
+            #self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint0[1:,1:])) #
+            
+            
             if params['calc_inst_energy'] == True:
                 print("saving KEO and POT matrix for later use in instantaneous energy calculations")
         
@@ -229,18 +247,13 @@ class propagate(radbas,mapping):
 
                 #pre-calculate time-independent part of the dipole interaction matrix element: only linearly polarized pulse
             
-
-     
             """Diagonal H0 matrix for testing TDSE solver"""
             #hmat= np.zeros((Nbas, Nbas), float)
             #np.fill_diagonal(hmat, 0.0)
 
             """ create field object """
-
             Elfield = Field(params)
             
-
-
             """ ********* PLOT ELECTRIC FIELD ***********"""
 
             if params['plot_elfield'] == True:
@@ -248,13 +261,16 @@ class propagate(radbas,mapping):
                 Fvec = Elfield.gen_field(timegrid)
                 fig = plt.figure()
                 ax = plt.axes()
+                ax.scatter(timegrid/time_to_au,Fvec[0].real)
+                ax.scatter(timegrid/time_to_au,Fvec[0].imag)
                 ax.scatter(timegrid/time_to_au,Fvec[2])
                 plt.show()
 
-
-
-
-
+            print("Is the hamiltonian matrix symmetric? " + str(hamiltonian.check_symmetric(hmat,hamiltonian.params['atol'],hamiltonian.params['rtol'])))
+            if hamiltonian.check_symmetric(hmat) == False:
+                print("Error: hamiltonian matrix not symmetric!")
+                #exit()
+                
             print("==========================")
             print("==wavepacket propagation==")
             print("==========================")
@@ -266,10 +282,23 @@ class propagate(radbas,mapping):
                 """ choose which function type: cartesian or spherical is used to evaluate matrix elements of dipole, before the loop begins"""
 
                 start_time = time.time()    
-                #vint = hamiltonian.calc_intmat(t,intmat,Elfield.gen_field(t)) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function. 
-                vint = Elfield.gen_field(t)[2] * vint0 #only for linear polarisation
-                """matrix exponentiation"""
-                umat = linalg.expm( -1.0j * (hmat +  vint) * dt ) #later: call iterative eigensolver function
+                #vint = hamiltonian.calc_intmat(t,intmat,Elfield.gen_field(t)) #we want to avoid initializing intmat every time-step. So we do it only once and pass it to the function.
+                # 
+                #print(np.size(vint0,axis=2)) 
+                vint =  np.tensordot(Elfield.gen_field(t),vint0,axes=([0],[2]))
+
+                """
+                vint_manual = Elfield.gen_field(t)[0] * vint0[:,:,0] +\
+                    Elfield.gen_field(t)[1] * vint0[:,:,1] +Elfield.gen_field(t)[2] * vint0[:,:,2] 
+
+                print(np.allclose(vint, vint_manual, 1e-9, 1e-9))
+                """
+
+                #if itime%10 ==0 and itime <50:
+                #    self.plot_mat(vint)
+                print("Is the interaction matrix symmetric? " + str(hamiltonian.check_symmetric(vint)))
+                """matrix exponentialstion"""
+                umat = linalg.expm( -1.0j * (hmat + vint ) * dt ) #later: call iterative eigensolver function
                 """action of the evolution operator"""
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
@@ -743,7 +772,7 @@ class propagate(radbas,mapping):
         im = ax.imshow(np.abs(data), **kwargs)
 
         # Create colorbar
-        im.set_clim(0, 0.5)
+        im.set_clim(0, np.max(np.abs(data)))
         cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
         cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
@@ -782,8 +811,8 @@ class propagate(radbas,mapping):
         if params['ini_state'] == "spectral_manual":
             print("defining initial wavefunction manually \n")
             psi0_mat.append([0,0,0,0,1.0+0.0j])
-            #psi0_mat.append([0,0,0,1,1.0+0.0j])
-            #psi0_mat.append([0,0,0,2,1.0+0.0j])
+            psi0_mat.append([0,0,0,1,1.0+0.0j])
+            psi0_mat.append([0,0,0,2,1.0+0.0j])
 
 
             print("initial wavefunction:")

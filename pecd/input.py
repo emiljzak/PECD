@@ -14,10 +14,10 @@ def gen_input():
 
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 6
-    params['nbins'] = 5
+    params['nlobatto'] = 5
+    params['nbins'] = 4
     params['binwidth'] = 3.0
-    params['rshift'] = 1e-4 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
+    params['rshift'] = 0.1 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
     params['lmax'] = 2
     
@@ -25,8 +25,8 @@ def gen_input():
     params['method'] = "dynamic_direct" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
     params['read_ham_from_file'] = True #do we read stored H0 matrix from file or generate it during run?
     params['t0'] = 0.0 
-    params['tmax'] = 15.0 
-    params['dt'] = 3.0 
+    params['tmax'] = 100.0 
+    params['dt'] = 1.0 
     time_units = "as"
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
     params['save_hamiltonian'] = False #save the calculated field-free Hamiltonian in a file?
@@ -36,15 +36,18 @@ def gen_input():
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
-    params['nbins_iniwf'] = 5 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
+    params['nbins_iniwf'] = 4 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
     params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
     params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
 
     """==== spherical quadratures ===="""
     params['scheme'] = "lebedev_011" #angular integration rule
-    params['adaptive_quad'] = True#True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
+    params['adaptive_quad'] = True #True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
     params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
     params['quad_tol'] = 1e-2 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
+    params['atol'] = 1e-2 #absolute tolerance for the hamiltonian matrix to be non-symmetric
+    params['rtol'] = 1e-2 #relative tolerance for the hamiltonian matrix to be non-symmetric
+
 
     """==== electrostatic potential ===="""
     params['pot_type'] = "grid" #type of potential: analytic or grid
@@ -75,7 +78,7 @@ def gen_input():
                              "k-radial_angular": False} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [0.0,20.0,40.0,60.0,80.0,100.0,200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "plottimes": [0.0,10.0,40.0,60.0,80.0,100.0,200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_static": False,
                                 "save_anim": False,
                                 "show_static": True,
@@ -132,7 +135,7 @@ def gen_input():
 
     #convert from W/cm^2 to V/cm
     epsilon0=8.85e-12
-    intensity = 7e16 #7e16 #W/cm^2 #peak intensity
+    intensity = 7e14 #7e16 #W/cm^2 #peak intensity
     field_strength = np.sqrt(intensity/(vellgt * epsilon0))
     print("field strength")
     print("  %8.2e"%field_strength)
@@ -167,12 +170,12 @@ def gen_input():
    
 
     """==== field dictionaries ===="""
-    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": False, "typef": "LCPL"}
+    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": True, "typef": "LCPL"}
     field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 2000.0/np.sqrt(2.0) * time_to_au , "t0": 5000.0 * time_to_au }
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 200.0/np.sqrt(2.0) * time_to_au , "t0": 50.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_LP 

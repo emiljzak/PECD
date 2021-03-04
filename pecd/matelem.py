@@ -89,7 +89,6 @@ class hmat():
         keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
         potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
 
-
         start_time = time.time()
         keomat = self.calc_keomat() 
         end_time = time.time()
@@ -156,7 +155,7 @@ class hmat():
             with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
                 print(eval-eval[0])
 
-        return evals, eigvec, hmat, keomat, potmat
+        return eval, eigvec, hmat, keomat, potmat
 
     def calc_keomat(self):
 
@@ -177,12 +176,18 @@ class hmat():
 
         for i in range(Nbas):
             rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-            for j in range(i,Nbas):
-                keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][2],self.maparray[i][3],self.maparray[j][2],self.maparray[j][3],x,w,rin)
+            for j in range(Nbas):
+                if self.maparray[i][0]==self.maparray[j][0] and self.maparray[i][1] == self.maparray[j][1]:
+                    keomat[i,j] = self.calc_keomatel(self.maparray[i][0],self.maparray[i][2],self.maparray[i][3],self.maparray[j][2],self.maparray[j][3],x,w,rin)
 
         print("KEO matrix")
         with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
             print(0.5*keomat)
+
+        print("Is the KEO matrix symmetric? " + str(self.check_symmetric(keomat,self.params['atol'],self.params['rtol'])))
+        if self.check_symmetric(keomat) == False:
+            print("Error: KEO matrix not symmetric!")
+            #exit()
         return  0.5*keomat
 
     def calc_keomatel(self,l1,i1,n1,i2,n2,x,w,rin):
@@ -733,7 +738,7 @@ class hmat():
                 #print(ivec)
                 rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
-                for j in range(i,Nbas):
+                for j in range(Nbas):
                     #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                     if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                         potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
@@ -780,12 +785,12 @@ class hmat():
                                 print(str(self.maparray[i][2]) + " " + str(self.maparray[i][2]) + " " + str(scheme))
                                 break
 
-                        for j in range(i,Nbas):
+                        for j in range(Nbas):
                             #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                             if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                                 potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
                     else:
-                        for j in range(i,Nbas):
+                        for j in range(Nbas):
                                 potmat[i,j] = 0.0  #radial cut-off
             else:
 
@@ -794,7 +799,7 @@ class hmat():
                     #print(ivec)
                     rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
-                    for j in range(i,Nbas):
+                    for j in range(Nbas):
                         #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                         if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                             potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
@@ -809,7 +814,12 @@ class hmat():
             print("Potential matrix")
             with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
                 print(potmat)
-            
+        
+
+        print("Is the potential matrix symmetric? " + str(self.check_symmetric(potmat,self.params['atol'],self.params['rtol'])))
+        if self.check_symmetric(potmat) == False:
+            print("Error: potential matrix not symmetric!")
+            #exit()
         return potmat
 
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme,potential_function):
@@ -924,7 +934,7 @@ class hmat():
 
         #print("Electric field vector")
         #print(Fvec)
-        #field: (E_1, E_-1, E_0) in spherical tensor form
+        #field: (E_-1, E_0, E_1) in spherical tensor form
 
         """ keep separate methods for cartesian and spherical tensor: to speed up by avoiding ifs"""
 
@@ -938,19 +948,18 @@ class hmat():
 
             for j in range(Nbas):
                 if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                    T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
-                    T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
-                    T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
-
+                    T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
+                    T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
+                    T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
 
                     intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin 
 
-        intmat += np.conjugate(intmat.T)
+        #intmat += np.conjugate(intmat.T)
 
         #print("Interaction matrix")
         #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
         #    print(intmat)
-
+        print("Is the interaction matrix symmetric? " + str(self.check_symmetric(intmat)))
         return intmat
 
     def calc_intmatelem(self,l1,m1,i1,n1,l2,m2,i2,n2,scheme,field,rep_type,rin):
@@ -981,6 +990,8 @@ class hmat():
                 val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0)  * np.dot(field,T) * rin )
             return val/2.0 #?
 
+    def check_symmetric(self,a, rtol=1e-05, atol=1e-08):
+        return np.allclose(a, np.conjugate(a).T, rtol=rtol, atol=atol)
 
 def gaussian(XYZ, xyz0, sigma):
     g = np.ones_like(XYZ[0])
