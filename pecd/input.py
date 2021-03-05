@@ -70,15 +70,15 @@ def gen_input():
     """===== post-processing ====="""
 
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": False, "animation": True}
+    params['plot_modes'] = {"single_shot": True, "animation": False}
 
     params['plot_types'] = { "radial": True,
-                             "angular": False,
-                             "r-radial_angular": False, 
-                             "k-radial_angular": False} #decide which of the available observables you wish to plot
+                             "angular": True,
+                             "r-radial_angular": True, 
+                             "k-radial_angular": True} #decide which of the available observables you wish to plot
 
     params['plot_controls'] = { "plotrate": 1, 
-                                "plottimes": [0.0,10.0,40.0,60.0,80.0,100.0,200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "plottimes": [100.0],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_static": False,
                                 "save_anim": False,
                                 "show_static": True,
@@ -98,15 +98,16 @@ def gen_input():
 
     """=== Fourier transform ==="""
     params['FT_method'] = "quadrature" #method of calculating the FT of the wavefunction: quadrature or fftn
-    params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
+    params['schemeFT_ang'] = "lebedev_011" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
-
+    params['schemeWLM'] = "lebedev_025" # 
 
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
     params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
-    params['momentum_range'] = [0.0, 10.0] #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
+    params['momentum_range'] = [0.01, 10.0] #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
+    params['nkpts'] = 10 #number of radial points at which the FT of the wavefunction is calculated
     params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
-    params['time_pecd'] = 3.0 #at what time (in a.u.) do we want to calculate PECD?
+    params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
 
 
 
@@ -178,7 +179,7 @@ def gen_input():
     env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 200.0/np.sqrt(2.0) * time_to_au , "t0": 50.0 * time_to_au }
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_LP 
+    params['field_type'] = field_CPL 
     """ Available field types :
         1) field_CPL
         2) field_LP
