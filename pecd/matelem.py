@@ -954,7 +954,7 @@ class hmat():
 
                     intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin 
 
-        #intmat += np.conjugate(intmat.T)
+        intmat += np.conjugate(intmat.T)
 
         #print("Interaction matrix")
         #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
