@@ -1207,7 +1207,7 @@ class propagate(radbas,mapping):
         #create list of basis set indices
         anglist = []
         for l in range(Lmin,Lmax+1):
-            for m in range(0,l+1):
+            for m in range(-l,l+1):
                 anglist.append([l,m])
 
         WLM =  np.zeros(shape=(len(anglist)),dtype=complex)
@@ -1219,7 +1219,7 @@ class propagate(radbas,mapping):
             start_time = time.time()   
 
             print("checking convergence of WLM(k) vs. Lebedev quadrature level")
-            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+            for scheme in spherical_schemes[3:5]: #skip 003a,003b,003c rules
                 print("generating Lebedev grid at level: " +str(scheme))
                 G = self.gen_gft(scheme)
 
@@ -1233,7 +1233,10 @@ class propagate(radbas,mapping):
                     WLM[il] = 4.0 * np.pi * y
                     il +=1
        
-           
+                print("WLM:")
+                print(WLM)
+                print("WLM_prev:")
+                print(WLM_prev)
                 print("differences:")
                 print(WLM - WLM_prev)
 
@@ -1250,12 +1253,10 @@ class propagate(radbas,mapping):
 
                 #if no convergence reached raise warning
                 if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>WLM_quad_tol)):
-                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+                    print("WARNING: convergence at tolerance level = " + str(WLM_quad_tol) + " not reached for all considered quadrature schemes")
             end_time = time.time()
             print("Execution time for calculation of WLMs at single k: " + str(end_time-start_time))
-
-
-        exit()
+            exit()
         #print("array of spherical expansion coefficients")
         #print(WLM_array)
 
@@ -1296,7 +1297,7 @@ class propagate(radbas,mapping):
             sphgrid = np.asarray(sphgrid)
             sphgrid[:,0:2] = np.pi * sphgrid[:,0:2] / 180.0 #to radians
 
-           """
+            """
             xx = np.sin(sphgrid[:,1])*np.cos(sphgrid[:,0])
             yy = np.sin(sphgrid[:,1])*np.sin(sphgrid[:,0])
             zz = np.cos(sphgrid[:,1])
@@ -1334,8 +1335,23 @@ class propagate(radbas,mapping):
         X,Y,Z = np.meshgrid(x,y,z,indexing='ij')
 
         psi_grid = np.zeros([np.size(x) * np.size(y) * np.size(z)], dtype = complex)              
-        print("Shape of psi_grid:" + str(psi_grid.shape))
-        print(np.shape(self.cart2sph(X,Y,Z)))
+        #print("Shape of psi_grid:" + str(psi_grid.shape))
+        #print(np.shape(self.cart2sph(X,Y,Z)))
+
+
+        """ set up radial quadratures """
+        if params['schemeFT_rad'][0] == "Gauss-Laguerre":
+            Nquad = params['schemeFT_rad'][1] 
+            x,w = roots_genlaguerre(Nquad ,1)
+            alpha = 1 #parameter of the G-Lag quadrature
+            inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+        elif params['schemeFT_rad'][0] == "Gauss-Hermite":
+            Nquad = params['schemeFT_rad'][1] 
+            x,w = roots_hermite(Nquad)
+            inv_weight_func = lambda r: np.exp(r**2)
+
+
+
 
         """     #the meshes must be flattened
                 r1d = self.cart2sph(X,Y,Z)[0].flatten()
@@ -1348,189 +1364,153 @@ class propagate(radbas,mapping):
             #coeffs[ielem] #*
             psift = np.fft.fftn(psi_grid)
 
-        elif  params['FT_method'] == "quadrature":       
+        elif  params['FT_method'] == "quadrature":   
+
             print("calculating FT using quadratures")
+
             if params['FT_output'] == "lebedev_grid":
+
                 print("calculating  FT on Lebedev grid")
 
-                radscheme = quadpy.c1.gauss_kronrod(100)
-                radscheme.show()
-                val = radscheme.integrate(lambda x: np.sin(x), [10.0, 1000.0])
-                print(val)
-                exit()
+                kmesh = k
+                theta_k = G[xi,0]
+                phi_k = G[xi,1]
 
-            #squential FT
-            if np.any( x > params['binwidth'] * params['nbins']):
-                print("WARNING: radial quadrature points exceed the domain of real-space wavefunction")
+                print(str((kmesh,theta_k,phi_k)))
 
-        
+                Nrad = (params['nlobatto']-1) * params['nbins'] -1
 
-            kmesh = 1.0
-            phi_k_0 = np.pi /7
-            theta_k_mesh = np.pi / 9
-            r = 100.0
+                ftpsi = 0.0 + 1j * 0.0
+                for s in range(len(x)):
+                
+                    """ generate converged I_lm(r_s,k,theta_k,phi_k) matrix """
+                    Imat = self.Ilm(x[s],kmesh,theta_k,phi_k)
 
-            if params['test_quadpy_direct'] == True:
-                quad_tol = 1e-6
-                FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+                    #for ielem,elem in enumerate(maparray):
+                    vs = 0.0 + 1j * 0.0
+                    for beta in range(len(Imat)):
+                        g = 0.0 + 1j * 0.0
+                        for alpha in range(beta*Nrad,(beta+1)*Nrad ):
+                            g+= coeffs[alpha] * rbas.chi(maparray[alpha][2],maparray[alpha][3],x[s],rgrid,wlobatto) 
+
+                        vs += Imat[beta] *  g
 
 
-                quadpy_arr = [] #array of integrals calculated with quadpy
-                direct_arr = [] #array of integrals calculated with direct Lebedev
-                for l in range(0,params['lmax']+1):
-                    for m in range(-l,l+1):
-                        """
-                        Symbols: 
-                                theta_phi[0] = theta in [0,pi]
-                                theta_phi[1] = phi  in [-pi,pi]
-                                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-                        """
-                        val_quadpy =  FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(m, l,theta_phi[1]+np.pi, theta_phi[0]) \
-                            * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
-                                np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * \
-                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) \
-                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
-                        quadpy_arr.append([l,m,val_quadpy])
+                    ftpsi += w[s] * x[s] * vs
 
-                        val_direct = 0.0 + 1j * 0.0
-                        for xi in range(len(G[1][:,0])):
-                            print(G[1][xi,0]+np.pi , G[1][xi,1] )
-                            val_direct += G[1][xi,2] * sph_harm(m, l,G[1][xi,0]+np.pi , G[1][xi,1] ) \
-                            * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
-                                np.cos(phi_k_0) * r * np.sin(G[1][xi,1]) * np.cos(G[1][xi,0]+np.pi ) + kmesh * \
-                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(G[1][xi,1]) * np.sin(G[1][xi,0]+np.pi ) \
-                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(G[1][xi,1]))) 
-                        direct_arr.append([l,m,val_direct * 4.0 * np.pi])
 
-                print(direct_arr)
-                print(quadpy_arr)
-                print("differences:")
 
-                direct_arr = np.asarray(direct_arr)
-                quadpy_arr = np.asarray(quadpy_arr)
-                print(direct_arr - quadpy_arr)
+                print(ftpsi)
+
+        return ftpsi
+
+    def Ilm(self,r,kmesh,theta_k,phi_k):
+        if params['test_conv_FT_ang'] == True:
+            print("checking for convergence the angular spectral part of FT vs. quadrature level")
+            spherical_schemes = []
+            for elem in list(quadpy.u3.schemes.keys()):
+                if 'lebedev' in elem:
+                    spherical_schemes.append(elem)
+            #print("Available schemes: " + str(spherical_schemes))
+
+            lmax = params['lmax']
+            lmin = params['lmin']
+            quad_tol = params['quad_tol']
+
+            """calculate the  I(r;k,theta_k,phi_k)  = Y_lm(theta,phi) e**(i * k * r) d Omega integral """
+
+            #create list of basis set indices
+            anglist = []
+            for l in range(lmin,lmax+1):
+                for m in range(-l,l+1):
+                    anglist.append([l,m])
+            val =  np.zeros(shape=(len(anglist)),dtype=complex)
+            val_prev = np.zeros(shape=(len(anglist)),dtype=complex)
+            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+                G = self.gen_gft(scheme)
+
+                il = 0
+                for l,m in anglist:
+                    y = 0.0 + 1j * 0.0
+                    for xi in range(len(G[:,0])):
+
+                        y += G[xi,2] * sph_harm(m, l,G[xi,1]+np.pi , G[xi,0] ) \
+                        * np.exp( -1j * ( kmesh * np.sin(theta_k) *\
+                            np.cos(phi_k) * r * np.sin(G[xi,0]) * np.cos(G[xi,1]+np.pi ) + kmesh * \
+                                np.sin(theta_k) * np.sin(phi_k) * r * np.sin(G[xi,0]) * np.sin(G[xi,1]+np.pi ) \
+                                    + kmesh * np.cos(theta_k) * r * np.cos(G[xi,0]))) 
+                    val[il] = 4.0 * np.pi * y
+                    il +=1
+                #print("differences:")
+                #print(val - val_prev)
 
                 #check for convergence
-                diff = np.abs(direct_arr - quadpy_arr)
+                diff = np.abs(val - val_prev)
 
                 if (np.any(diff>quad_tol)):
-                    print(str(params['schemeFT_ang'])+" direct and quadpy methods non-consistent!!!!") 
-
+                    #print(str(scheme)+" convergence not reached") 
+                    val_prev = np.copy(val)
 
                 elif (np.all(diff<quad_tol)):     
-                    print(str(params['schemeFT_ang'])+" consistency OK!!!")
+                    print(str(scheme)+" convergence reached!!!")
+                    return val
 
 
-            if params['test_conv_FT_ang'] == True:
-                print("checking for convergence the angular spectral part of FT vs. quadrature level")
-                spherical_schemes = []
-                for elem in list(quadpy.u3.schemes.keys()):
-                    if 'lebedev' in elem:
-                        spherical_schemes.append(elem)
-                print("Available schemes: " + str(spherical_schemes))
-
-                lmax = params['lmax']
-                lmin = params['lmin']
-                quad_tol = params['quad_tol']
-
-                """calculate the  I(r;k,theta_k,phi_k)  = Y_lm(theta,phi) e**(i * k * r) d Omega integral """
-
-                #create list of basis set indices
-                anglist = []
-                for l in range(lmin,lmax+1):
-                    for m in range(0,l+1):
-                        anglist.append([l,m])
-                val =  np.zeros(shape=(len(anglist)),dtype=complex)
-                val_prev = np.zeros(shape=(len(anglist)),dtype=complex)
-                for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-                    G = self.gen_gft(scheme)
-
-                    il = 0
-                    for l,m in anglist:
-                        y = 0.0 + 1j * 0.0
-                        for xi in range(len(G[1][:,0])):
-
-                            y += G[1][xi,2] * sph_harm(m, l,G[1][xi,0]+np.pi , G[1][xi,1] ) \
-                            * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
-                                np.cos(phi_k_0) * r * np.sin(G[1][xi,1]) * np.cos(G[1][xi,0]+np.pi ) + kmesh * \
-                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(G[1][xi,1]) * np.sin(G[1][xi,0]+np.pi ) \
-                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(G[1][xi,1]))) 
-                        val[il] = 4.0 * np.pi * y
-                        il +=1
+                #if no convergence reached raise warning
+                if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
 
-                    #print("differences:")
-                    #print(val - val_prev)
-
-                    #check for convergence
-                    diff = np.abs(val - val_prev)
-
-                    if (np.any(diff>quad_tol)):
-                        print(str(scheme)+" convergence not reached") 
-                        val_prev = np.copy(val)
-
-                    elif (np.all(diff<quad_tol)):     
-                        print(str(scheme)+" convergence reached!!!")
-                        break
-
-                    #if no convergence reached raise warning
-                    if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
-                        print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+    def test_consistency_quadpy(self,kmesh,theta_k,phi_k,r):
+        if params['test_quadpy_direct'] == True:
+            quad_tol = 1e-6
+            FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
 
 
-                exit()
+            quadpy_arr = [] #array of integrals calculated with quadpy
+            direct_arr = [] #array of integrals calculated with direct Lebedev
+            for l in range(0,params['lmax']+1):
+                for m in range(-l,l+1):
+                    """
+                    Symbols: 
+                            theta_phi[0] = theta in [0,pi]
+                            theta_phi[1] = phi  in [-pi,pi]
+                            sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+                    """
+                    val_quadpy =  FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(m, l,theta_phi[1]+np.pi, theta_phi[0]) \
+                        * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
+                            np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * \
+                                np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) \
+                                    + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
+                    quadpy_arr.append([l,m,val_quadpy])
+
+                    val_direct = 0.0 + 1j * 0.0
+                    for xi in range(len(G[1][:,0])):
+                        print(G[1][xi,0]+np.pi , G[1][xi,1] )
+                        val_direct += G[1][xi,2] * sph_harm(m, l,G[1][xi,0]+np.pi , G[1][xi,1] ) \
+                        * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
+                            np.cos(phi_k_0) * r * np.sin(G[1][xi,1]) * np.cos(G[1][xi,0]+np.pi ) + kmesh * \
+                                np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(G[1][xi,1]) * np.sin(G[1][xi,0]+np.pi ) \
+                                    + kmesh * np.cos(theta_k_mesh) * r * np.cos(G[1][xi,1]))) 
+                    direct_arr.append([l,m,val_direct * 4.0 * np.pi])
+
+            print(direct_arr)
+            print(quadpy_arr)
+            print("differences:")
+
+            direct_arr = np.asarray(direct_arr)
+            quadpy_arr = np.asarray(quadpy_arr)
+            print(direct_arr - quadpy_arr)
+
+            #check for convergence
+            diff = np.abs(direct_arr - quadpy_arr)
+
+            if (np.any(diff>quad_tol)):
+                print(str(params['schemeFT_ang'])+" direct and quadpy methods non-consistent!!!!") 
 
 
-
-
-
-            if params['schemeFT_rad'][0] == "Gauss-Laguerre":
-                Nquad = params['schemeFT_rad'][1] 
-                x,w = roots_genlaguerre(Nquad ,1)
-                alpha = 1 #parameter of the G-Lag quadrature
-                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
-            elif params['schemeFT_rad'][0] == "Gauss-Hermite":
-                Nquad = params['schemeFT_rad'][1] 
-                x,w = roots_hermite(Nquad)
-                inv_weight_func = lambda r: np.exp(r**2)
-
-
-            #prepare grid for FT:
-
-            psi_grid_sph = np.zeros((len(r1d),len(theta1d)), dtype = complex)
-
-            k_1d = np.linspace( params['momentum_range'][0], params['momentum_range'][1], params['nkpts'])
-            thetak_1d = np.linspace(0,   np.pi,  2*20) # 
-
-            for k in range(len(k_1d)):
-                kmesh = k_1d[k]
-                print(k)
-                for j in range(len(thetak_1d)):
-                    theta_k_mesh = thetak_1d[j]
-
-                    for ielem,elem in enumerate(maparray):
-                        """
-                        Symbols: 
-                                theta_phi[0] = theta in [0,pi]
-                                theta_phi[1] = phi  in [-pi,pi]
-                                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-                        """
-                        val_rad = lambda r: FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0], \
-                            theta_phi[1]+np.pi, theta_phi[0]) * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
-                                np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * \
-                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) \
-                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
-
-                        val_elem = 0.0 + 1j * 0.0
-            
-                        for k in range(len(x)):
-                            val_elem += w[k] * x[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * val_rad(x[k])
-                        
-                        
-                        psi_grid_sph[k,j] += coeffs[ielem] * val_elem
-            print(psi_grid_sph)
-            exit()
-        return psift, X,Y,Z
+            elif (np.all(diff<quad_tol)):     
+                print(str(params['schemeFT_ang'])+" consistency OK!!!")
 
 
     def FTpsicart_interpolate(self,psift,x,y,z):
