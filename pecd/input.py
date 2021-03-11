@@ -61,7 +61,7 @@ def gen_input():
     params['test_lebedev'] = True #test accuracy of potential energy matrix elements with lebedev quadrature and exact potential
     params['multipoles_lmax'] = 6 #maximum L in the multipole expansion of the electrostatic potential
     params['plot_esp'] = True #plot ESP?
-
+    params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
 
     """====molecule-field interaction hamiltonian===="""
     params['int_rep_type'] = 'spherical' #representation of the molecule-field interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
@@ -97,15 +97,22 @@ def gen_input():
     """
 
     """=== Fourier transform ==="""
-    params['FT_method'] = "quadrature" #method of calculating the FT of the wavefunction: quadrature or fftn
+    params['FT_method'] = "quadrature" #method for calculating the FT of the wavefunction: quadrature or fftn
     params['schemeFT_ang'] = "lebedev_011" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['schemeWLM'] = "lebedev_025" # 
 
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
-    params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
+
     params['momentum_range'] = [0.01, 10.0] #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
-    params['nkpts'] = 10 #number of radial points at which the FT of the wavefunction is calculated
+    params['kmax'] = 10.0 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
+    #based on kmax and pulse duration we can estimate the spatial grid range:
+    Rmax_est = 6.0 *  params['tmax'] * time_to_au *  params['kmax'] 
+    print("An estimated range for spatial grid needed to cover " + str(params['kmax']) + " a.u. momentum wavepackets is: " + str("%10.0f"%(Rmax_est)) + " a.u.")
+   
+    params['nkpts'] = int( params['kmax'] *  params['nbins'] *  params['binwidth'] / (2.0 * np.pi) ) + 1
+    print("Number of points per dimension in grid representation of the 3D-FT of the wavepacket = " + str("%5d"%params['nkpts'])) 
+
     params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
     params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
 
@@ -123,9 +130,9 @@ def gen_input():
     opt_cycle = 1.0e18/params['omega']
     suggested_no_pts_per_cycle = 25     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
     # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
-    print("Electric field carrier frequency = "+str(params['omega']*1.0e-12)+" THz")
-    print("Electric field oscillation period (optical cycle) = "+str(1.0e15/params['omega'])+" fs")
-    print("suggested time-step for field linear frequency = "+str("%12.3f"%(params['omega']/1e12))+" THz is: " + str(opt_cycle/suggested_no_pts_per_cycle ) +" as")
+    print("Electric field carrier frequency = "+str("%10.3f"%(params['omega']*1.0e-12))+" THz")
+    print("Electric field oscillation period (optical cycle) = "+str("%10.3f"%(1.0e15/params['omega']))+" fs")
+    print("suggested time-step for field linear frequency = "+str("%12.3f"%(params['omega']/1e12))+" THz is: " + str("%10.2f"%(opt_cycle/suggested_no_pts_per_cycle )) +" as")
 
     params['omega'] *= 2.0 * np.pi # linear to angular frequency
     params['omega'] /= 4.13e16 #Hz to a.u.
@@ -169,6 +176,7 @@ def gen_input():
     # 1a.u. (time) = 2.418 e-17s = 24.18 as
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
    
+    params['tau'] = 2000.0 #as: pulse duration
 
     """==== field dictionaries ===="""
     field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": True, "typef": "LCPL"}
@@ -176,7 +184,7 @@ def gen_input():
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * 200.0/np.sqrt(2.0) * time_to_au , "t0": 50.0 * time_to_au }
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * params['tau']/np.sqrt(2.0) * time_to_au , "t0": 500.0 }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 

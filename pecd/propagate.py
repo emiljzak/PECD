@@ -111,13 +111,6 @@ class propagate(radbas,mapping):
 
         elif params['method'] == 'dynamic_direct':
 
-            k = 1.0
-            thetak = np.pi/8
-            phik = np.pi/12
-            psi =0
-            self.momentum_pad_expansion(psi,k,thetak,phik)
-        
-            exit()
 
             print("Solving TDSE with a direct exponentiation method")
             print("Setting up mixed DVR-Spectral basis set")
@@ -137,6 +130,7 @@ class propagate(radbas,mapping):
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
+
 
             print("Setting up propagation parameters")
             print("\n")
@@ -158,6 +152,14 @@ class propagate(radbas,mapping):
             #print("wavefunction normalization constant: " + str(np.sqrt( np.sum( np.conj(psi) * psi ) )) )
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
             #print(np.sqrt( np.sum( np.conj(psi) * psi ) ))
+
+
+            k = 1.0
+            thetak = np.pi/8
+            phik = np.pi/12
+            self.momentum_pad_expansion(psi,k,thetak,phik)
+            exit()
+
 
             print("    3) wavepacket parameters")
             print("\n")
@@ -1195,76 +1197,92 @@ class propagate(radbas,mapping):
         maparray, Nbas = mymap.gen_map()
 
         # 1) Evaluate psi on a cartesian grid
-        x = np.linspace( params['momentum_range'][0], params['momentum_range'][1], params['nkpts'],dtype=float)
-        y = np.linspace( params['momentum_range'][0], params['momentum_range'][1], params['nkpts'],dtype=float)
-        z = np.linspace( params['momentum_range'][0], params['momentum_range'][1], params['nkpts'],dtype=float)
-        X,Y,Z = np.meshgrid(x,y,z)
+        x = np.linspace( params['rshift'], params['binwidth'] * params['nbins'] ,   params['nkpts'],dtype=float)
+        y = np.linspace( params['rshift'], params['binwidth'] * params['nbins'] ,   params['nkpts'],dtype=float)
+        z = np.linspace( params['rshift'], params['binwidth'] * params['nbins'] ,   params['nkpts'],dtype=float)
+        X,Y,Z = np.meshgrid(x,y,z,indexing='ij')
 
-        psi_grid = np.zeros([np.size(x), np.size(y), np.size(z)])              
+        psi_grid = np.zeros([np.size(x) * np.size(y) * np.size(z)], dtype = complex)              
         print("Shape of psi_grid:" + str(psi_grid.shape))
+        print(np.shape(self.cart2sph(X,Y,Z)))
+
+        #the meshes must be flattened
+        r1d = self.cart2sph(X,Y,Z)[0].flatten()
+        theta1d = self.cart2sph(X,Y,Z)[1].flatten()
+        phi1d = self.cart2sph(X,Y,Z)[2].flatten()
+        print(r1d)
+
+
+        phi_k_0 = np.pi /34
+
+        if  params['FT_method'] == "fftn":
+            for ielem,elem in enumerate(maparray):
+                psi_grid += coeffs[ielem] *  rbas.chi(elem[2],elem[3],r1d,rgrid,wlobatto) *   sph_harm(elem[1], elem[0],  phi1d, theta1d) 
+            #coeffs[ielem] #*
+            psift = np.fft.fftn(psi_grid)
+
+        elif  params['FT_method']  == "quadrature":       
+
+            #squential FT
+            if np.any( x > params['binwidth'] * params['nbins']):
+                print("WARNING: quadrature points exceed the domain of real-space wavefunction")
+
         
-        for ielem,elem in enumerate(maparray):
-            psi_grid = sph_harm(1, 1,  self.cart2sph(X,Y,Z)[2],self.cart2sph(X,Y,Z)[1] ) #* rbas.chi(elem[2],elem[3],self.cart2sph(X,Y,Z)[0],rgrid,wlobatto) 
+            FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
 
-        psift = np.fft.fftn(psi_grid)
-        
-        psift_flat = psift[:,0,0]
-
-        print(psift_flat)
-        return psift_flat, x,y,z
-
-
-    def FTpsicart_interpolate(self,psift,k_mesh,theta_mesh,phi_mesh):
-        print(np.shape(theta_mesh))
-        print(np.shape(psift.real))
-        print(np.shape(psift.real.flatten()))
-        return interpolate.NearestNDInterpolator((k_mesh, theta_mesh, phi_mesh), psift.real.flatten()), interpolate.NearestNDInterpolator((k_mesh, theta_mesh,phi_mesh), psift.real.flatten())
-
-    def sph2cart(self,r,theta,phi):
-        x=r*np.sin(theta)*np.cos(phi)
-        y=r*np.sin(theta)*np.sin(phi)
-        z=r*np.cos(theta)
-        return x,y,z
-
-    def cart2sph(self,x,y,z):
-        r=np.sqrt(x**2+y**2+z**2)
-        theta=np.arctan(np.sqrt(x**2+y**2)/z)
-        phi=np.arctan(y/x)
-        return r,theta,phi
+            if params['schemeFT_rad'][0] == "Gauss-Laguerre":
+                Nquad = params['schemeFT_rad'][1] 
+                x,w = roots_genlaguerre(Nquad ,1)
+                alpha = 1 #parameter of the G-Lag quadrature
+                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+            elif params['schemeFT_rad'][0] == "Gauss-Hermite":
+                Nquad = params['schemeFT_rad'][1] 
+                x,w = roots_hermite(Nquad)
+                inv_weight_func = lambda r: np.exp(r**2)
 
 
-    def FTpsi(self,kmesh,theta_k_mesh,phi_k_0,wlobatto,rgrid,maparray,psi,FTscheme_ang,x,w,inv_weight_func,rbas):
+            #prepare grid for FT:
 
-        if np.any(x>self.params['binwidth']*self.params['nbins']):
-            print("WARNING: quadrature points exceed the domain of real-space wavefunction")
+            psi_grid_sph = np.zeros((len(r1d),len(theta1d)), dtype = complex)
 
-        val = 0.0 + 1j * 0.0
-        for ielem,elem in enumerate(maparray):
-            """
-            Symbols: 
-                    theta_phi[0] = theta in [0,pi]
-                    theta_phi[1] = phi  in [-pi,pi]
-                    sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-            """
-            val_rad = lambda r: FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0]) * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) * np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
-  
-            val_elem = 0.0 + 1j * 0.0
- 
-            for k in range(len(x)):
-                val_elem += w[k] * x[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * val_rad(x[k])
-                
-                
-            """ FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0],  theta_phi[1]+np.pi, theta_phi[0]) *   
-            np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) * np.cos(phi_k_0) * x[k] * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * np.sin(theta_k_mesh) * 
-            np.sin(phi_k_0) * x[k] * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) + kmesh * np.cos(theta_k_mesh) * x[k] * np.cos(theta_phi[0]))) ) * inv_weight_func(x[k])
-            """          
+            k_1d = np.linspace( params['momentum_range'][0], params['momentum_range'][1], params['nkpts'])
+            thetak_1d = np.linspace(0,   np.pi,  2*20) # 
 
-            #val += psi[ielem] * theta_k_mesh #np.random.rand(1)# val_elem
+            for k in range(len(k_1d)):
+                kmesh = k_1d[k]
+                print(k)
+                for j in range(len(thetak_1d)):
+                    theta_k_mesh = thetak_1d[j]
 
-        #val = np.sin(theta_k_mesh)
-        print("Fourier transform: " + str(val_elem))
-        return val
+                    for ielem,elem in enumerate(maparray):
+                        """
+                        Symbols: 
+                                theta_phi[0] = theta in [0,pi]
+                                theta_phi[1] = phi  in [-pi,pi]
+                                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+                        """
+                        val_rad = lambda r: FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(elem[1], elem[0], \
+                            theta_phi[1]+np.pi, theta_phi[0]) * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
+                                np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * \
+                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) \
+                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
 
+                        val_elem = 0.0 + 1j * 0.0
+            
+                        for k in range(len(x)):
+                            val_elem += w[k] * x[k] * rbas.chi(elem[2],elem[3],x[k],rgrid,wlobatto)  * val_rad(x[k])
+                        
+                        
+                        psi_grid_sph[k,j] += coeffs[ielem] * val_elem
+            print(psi_grid_sph)
+            exit()
+        return psift, X,Y,Z
+
+
+    def FTpsicart_interpolate(self,psift,x,y,z):
+        print(np.shape(psift))
+        print(np.shape(x))
+        return interpolate.RegularGridInterpolator((x,y,z), psift.real), interpolate.RegularGridInterpolator((x,y,z), psift.real)
 
     def interpolate_FT(self, psi):
         """this function returns the interpolant of the fourier transform of the total wavefunction, for later use in spherical harmonics decomposition and plotting"""
@@ -1318,6 +1336,19 @@ class propagate(radbas,mapping):
         return FTinterp
 
 
+    def sph2cart(self,r,theta,phi):
+        x=r*np.sin(theta)*np.cos(phi)
+        y=r*np.sin(theta)*np.sin(phi)
+        z=r*np.cos(theta)
+        return x,y,z
+
+    def cart2sph(self,x,y,z):
+        r=np.sqrt(x**2+y**2+z**2)
+        theta=np.arctan(np.sqrt(x**2+y**2)/z)
+        phi=np.arctan(y/x)
+        return r,theta,phi
+
+
     def sph_exp(self,k,theta_k,phi_k,r,theta,phi):
         #Numba can go in here2
         val=np.exp(-1j*(k*np.sin(theta_k)*np.cos(phi_k)*r*np.sin(theta)*np.cos(phi)+k*np.sin(theta_k)*np.sin(phi_k)*r*np.sin(theta)*np.sin(phi)+
@@ -1326,33 +1357,34 @@ class propagate(radbas,mapping):
         return val
 
 
-
-
     def momentum_pad_expansion(self,psi,k,thetak,phik):
-        """This method expands the square modulus of the momentum-representation wavefunction into spherical harmonics
-            and returns its value at a point"""
-        val = 0.0 + 1j*0.0
-        W_array = [] #array of legendre expansion coefficients
+        """
+        Main function for the calculation of photo-electron 3D distributions in real space and momentum space. 
+        Spherical expansion of momentum PAD. 
 
-        #interpolate the wavefunction
+        Returns: array wLM(k): spherical expansion coeffs for momentum space probability on a grid of k-vector lengths.
+        """
+        WLM_array = [] #array of spherical expansion coefficients: L,M,WLM(k0), WLM(k1), WLM(k2), ..., WLM(kmax)
+
+        #Fourier transform in cartesian coordinates
         ft_psi, X, Y, Z = self.FTpsicart(psi)
-
+        #interpolate the wavefunction
         ft_interp_real = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[0]
         ft_interp_imag = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[1]
 
-
+        exit()
         myscheme = quadpy.u3.schemes[params['schemeFT_ang']]()
         for L in range(0,params['pecd_lmax']+1):
             for M in range(-L,L + 1):
                 wlm = self.wLM(k,L,M,myscheme,ft_interp_real,ft_interp_imag)[10] #array on theta,k grid
                 print(np.shape(wlm))
                 val+= wlm * sph_harm(M, L,  phik, thetak)
-                W_array.append([L,M,wlm]) 
+                WLM_array.append([L,M,wlm]) 
 
-        print("array of legendre expansion coefficients")
-        print(W_array)
+        print("array of spherical expansion coefficients")
+        print(WLM_array)
 
-        return W_array
+        return WLM_array
 
     def wLM(self,k,L,M,myscheme,ft_interp_real,ft_interp_imag):
         #calculate wLM(k) expansion coefficients in spherical harmonics for given value of k
