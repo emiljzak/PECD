@@ -19,7 +19,7 @@ def gen_input():
     params['binwidth'] = 3.0
     params['rshift'] = 0.1 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 2
+    params['lmax'] = 10
     
     """====runtime controls===="""
     params['method'] = "dynamic_direct" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
@@ -44,7 +44,7 @@ def gen_input():
     params['scheme'] = "lebedev_011" #angular integration rule
     params['adaptive_quad'] = True #True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
     params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
-    params['quad_tol'] = 1e-2 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
+    params['quad_tol'] = 1e-6 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
     params['atol'] = 1e-2 #absolute tolerance for the hamiltonian matrix to be non-symmetric
     params['rtol'] = 1e-2 #relative tolerance for the hamiltonian matrix to be non-symmetric
 
@@ -104,14 +104,15 @@ def gen_input():
     params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['schemeWLM'] = "lebedev_025" # 
-    params['test_quadpy_manual'] = True #compare quadpy integration with manual lebedev
-
+    params['test_quadpy_direct'] = False #compare quadpy integration with manual lebedev. Test convergence of angular part of the FT
+    params['test_conv_FT_ang'] = True #test spherical integration convergence in FT using quadratures
 
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
     params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
     params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
+    params['WLM_quad_tol'] = 1e-3 #spherical quadrature convergence threshold for WLM(k_i)
 
-    params['kmax'] = 5.0 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
+    params['kmax'] = 2.0 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
     #based on kmax and pulse duration we can estimate the spatial grid range:
     Rmax_est = 6.0 *  params['tmax'] * time_to_au *  params['kmax'] 
     print("An estimated range for spatial grid needed to cover " + str(params['kmax']) + " a.u. momentum wavepackets is: " + str("%10.0f"%(Rmax_est)) + " a.u.")
@@ -119,7 +120,9 @@ def gen_input():
     params['nkpts'] = int( params['kmax'] *  params['nbins'] *  params['binwidth'] / (2.0 * np.pi) ) + 1
     print("Number of points per dimension in grid representation of the 3D-FT of the wavepacket = " + str("%5d"%params['nkpts'])) 
 
-    params['k-grid'] = np.linspace(0.01, params['kmax'],params['nkpts']) #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
+    #for prelimiary tests params['nkpts'] = 2
+    params['nkpts'] = 2
+    params['k-grid'] = np.linspace(0.1, params['kmax'],params['nkpts']) #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
     
 
     """====field controls===="""
