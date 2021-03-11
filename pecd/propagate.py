@@ -9,7 +9,7 @@ import matelem
 import time
 import quadpy
 import timeit
-import lebedev_grid
+
 
 from field import Field
 from basis import radbas
@@ -1245,22 +1245,25 @@ class propagate(radbas,mapping):
     def gen_gft(self):
         "generate grid for evaluation of FT"
         G = []
-        thr =1e-6
         if params['FT_output'] == "lebedev_grid":
             sphgrid = []
-            print("calculating Lebedev grid")
-            lf = lebedev_grid.LebFunc[194]()
-            for ielem,xyzw in enumerate(lf):
-                #print(str(ielem)+ "(%16.12f,%16.12f,%16.12f,%16.12f)" % xyzw)
-                if xyzw[0] > thr:
-                    sphgrid.append([np.arctan(np.sqrt(xyzw[0]**2 + xyzw[1]**2)/xyzw[2]),np.arctan(xyzw[1]/xyzw[0])])
-                else:
-                    sphgrid.append([np.arctan(np.sqrt(xyzw[0]**2 + xyzw[1]**2)/xyzw[2]),0.0])
+            print("reading Lebedev grid from file:" + "/lebedev_grids/"+params['schemeWLM']+".txt")
+            fl = open("./lebedev_grids/"+params['schemeWLM']+".txt",'r')
+            for line in fl:
+                words = line.split()
+                # columns: theta,phi,w
+                phi = float(words[0])
+                theta = float(words[1])
+                w = float(words[2])
+                sphgrid.append([phi,theta,w])
 
             sphgrid = np.asarray(sphgrid)
-            xx = np.sin(sphgrid[:,0])*np.cos(sphgrid[:,1])
-            yy = np.sin(sphgrid[:,0])*np.sin(sphgrid[:,1])
-            zz = np.cos(sphgrid[:,0])
+
+            sphgrid[:,0:2] = np.pi * sphgrid[:,0:2] / 180.0 #to radians
+
+            xx = np.sin(sphgrid[:,1])*np.cos(sphgrid[:,0])
+            yy = np.sin(sphgrid[:,1])*np.sin(sphgrid[:,0])
+            zz = np.cos(sphgrid[:,1])
             #Set colours and render
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -1270,7 +1273,7 @@ class propagate(radbas,mapping):
             ax.set_zlim([-1,1])
             plt.tight_layout()
             #plt.show()
-        
+
             #add radial grid
             G = [params['k-grid'],sphgrid]
         return G
@@ -1323,8 +1326,64 @@ class propagate(radbas,mapping):
         
 
             if params['test_quadpy_manual'] == True:
-
+                quad_tol = 1e-6
                 FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+
+                kmesh = 1.0
+                phi_k_0 = np.pi /7
+                theta_k_mesh = np.pi / 9
+                r = 1.0
+
+                quadpy_arr = [] #array of integrals calculated with quadpy
+                direct_arr = [] #array of integrals calculated with direct Lebedev
+                for l in range(0,params['lmax']+1):
+                    for m in range(-l,l+1):
+                        """
+                        Symbols: 
+                                theta_phi[0] = theta in [0,pi]
+                                theta_phi[1] = phi  in [-pi,pi]
+                                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+                        """
+                        val_quadpy =  FTscheme_ang.integrate_spherical(lambda theta_phi: sph_harm(m, l,theta_phi[1]+np.pi, theta_phi[0]) \
+                            * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
+                                np.cos(phi_k_0) * r * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) + kmesh * \
+                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) \
+                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(theta_phi[0]))) )
+                        quadpy_arr.append([l,m,val_quadpy])
+
+                        val_direct = 0.0 + 1j * 0.0
+                        for xi in range(len(G[1][:,0])):
+                            print(G[1][xi,0]+np.pi , G[1][xi,1] )
+                            val_direct += G[1][xi,2] * sph_harm(m, l,G[1][xi,0]+np.pi , G[1][xi,1] ) \
+                            * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
+                                np.cos(phi_k_0) * r * np.sin(G[1][xi,1]) * np.cos(G[1][xi,0]+np.pi ) + kmesh * \
+                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(G[1][xi,1]) * np.sin(G[1][xi,0]+np.pi ) \
+                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(G[1][xi,1]))) 
+                        direct_arr.append([l,m,val_direct * 4.0 * np.pi])
+
+                print(direct_arr)
+                print(quadpy_arr)
+                print("differences:")
+
+                direct_arr = np.asarray(direct_arr)
+                quadpy_arr = np.asarray(quadpy_arr)
+                print(direct_arr - quadpy_arr)
+
+                #check for convergence
+                diff = np.abs(direct_arr - quadpy_arr)
+
+                if (np.any(diff>quad_tol)):
+                    print(str(params['schemeFT_ang'])+" convergence not reached") 
+
+
+                elif (np.all(diff<quad_tol)):     
+                    print(str(params['schemeFT_ang'])+" convergence reached!!!")
+
+                exit()
+
+
+
+
 
             if params['schemeFT_rad'][0] == "Gauss-Laguerre":
                 Nquad = params['schemeFT_rad'][1] 

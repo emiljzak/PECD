@@ -101,9 +101,9 @@ def gen_input():
     """=== Fourier transform ==="""
     params['FT_method'] = "quadrature" #method for calculating the FT of the wavefunction: quadrature or fftn
     params['FT_output'] = "lebedev_grid" #interpolate_cart, interpolate_sph, lebedev_grid: how do you want your output FT?
-    params['schemeFT_ang'] = "lebedev_013" #angular integration rule for calculating FT using the quadratures method
+    params['schemeFT_ang'] = "lebedev_025" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
-    params['schemeWLM'] = "lebedev_013" # 
+    params['schemeWLM'] = "lebedev_025" # 
     params['test_quadpy_manual'] = True #compare quadpy integration with manual lebedev
 
 
