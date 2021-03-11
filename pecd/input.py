@@ -62,6 +62,8 @@ def gen_input():
     params['multipoles_lmax'] = 6 #maximum L in the multipole expansion of the electrostatic potential
     params['plot_esp'] = True #plot ESP?
     params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
+    params['test_pads'] = True #test convergence etc. for momentum-space distributions and PECD
+
 
     """====molecule-field interaction hamiltonian===="""
     params['int_rep_type'] = 'spherical' #representation of the molecule-field interaction potential (spherical or cartesian ): for now only used in calculations of instantaneous electron wavepacket energy.
@@ -70,7 +72,7 @@ def gen_input():
     """===== post-processing ====="""
 
     params['wavepacket_file'] = "wavepacket.dat" #filename into which the time-dependent wavepacket is saved
-    params['plot_modes'] = {"single_shot": True, "animation": False}
+    params['plot_modes'] = {"single_shot": False, "animation": False}
 
     params['plot_types'] = { "radial": True,
                              "angular": True,
@@ -98,14 +100,18 @@ def gen_input():
 
     """=== Fourier transform ==="""
     params['FT_method'] = "quadrature" #method for calculating the FT of the wavefunction: quadrature or fftn
-    params['schemeFT_ang'] = "lebedev_011" #angular integration rule for calculating FT using the quadratures method
+    params['FT_output'] = "lebedev_grid" #interpolate_cart, interpolate_sph, lebedev_grid: how do you want your output FT?
+    params['schemeFT_ang'] = "lebedev_013" #angular integration rule for calculating FT using the quadratures method
     params['schemeFT_rad'] = ("Gauss-Hermite",20) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
-    params['schemeWLM'] = "lebedev_025" # 
+    params['schemeWLM'] = "lebedev_013" # 
+    params['test_quadpy_manual'] = True #compare quadpy integration with manual lebedev
+
 
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
+    params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
+    params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
 
-    params['momentum_range'] = [0.01, 10.0] #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
-    params['kmax'] = 10.0 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
+    params['kmax'] = 5.0 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
     #based on kmax and pulse duration we can estimate the spatial grid range:
     Rmax_est = 6.0 *  params['tmax'] * time_to_au *  params['kmax'] 
     print("An estimated range for spatial grid needed to cover " + str(params['kmax']) + " a.u. momentum wavepackets is: " + str("%10.0f"%(Rmax_est)) + " a.u.")
@@ -113,11 +119,8 @@ def gen_input():
     params['nkpts'] = int( params['kmax'] *  params['nbins'] *  params['binwidth'] / (2.0 * np.pi) ) + 1
     print("Number of points per dimension in grid representation of the 3D-FT of the wavepacket = " + str("%5d"%params['nkpts'])) 
 
-    params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
-    params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
-
-
-
+    params['k-grid'] = np.linspace(0.01, params['kmax'],params['nkpts']) #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
+    
 
     """====field controls===="""
     params['plot_elfield'] = False #plot z-component of the electric field

@@ -9,6 +9,7 @@ import matelem
 import time
 import quadpy
 import timeit
+import lebedev_grid
 
 from field import Field
 from basis import radbas
@@ -154,12 +155,16 @@ class propagate(radbas,mapping):
             #print(np.sqrt( np.sum( np.conj(psi) * psi ) ))
 
 
-            k = 1.0
-            thetak = np.pi/8
-            phik = np.pi/12
-            self.momentum_pad_expansion(psi,k,thetak,phik)
-            exit()
+            """ &&&&&&&&&&&&&&&&&&&&&& TESTING PADS ON Psi0 &&&&&&&&&&&&&&&&&& """
 
+            if params['test_pads'] == True :
+                print("TESTING!!!!! Calculating Photo-electron momentum distributions at time t= 0 ")
+                WLM_array = self.momentum_pad_expansion(psi)
+                #WLM_array = np.asarray(WLM_array)
+                #print("PECD = " +str( self.pecd(WLM_array)))
+                print("Finished!")
+                exit()
+            """ &&&&&&&&&&&&&&&&&&&&&& TESTING PADS ON Psi0 &&&&&&&&&&&&&&&&&& """
 
             print("    3) wavepacket parameters")
             print("\n")
@@ -402,16 +407,13 @@ class propagate(radbas,mapping):
 
                 # preparing the wavefunction coefficients
                 print(int(params['time_pecd']/params['dt']))
+                psi[:] = wavepacket[int(params['time_pecd']/params['dt']-1),:]   
 
-                psi[:] = wavepacket[int(params['time_pecd']/params['dt']-1),:]    
-                thetak = np.pi /4.0
-                phik = 0.0
-                k = 1.0
-                W_array = self.momentum_pad_expansion(psi,k,thetak,phik)
-                W_array = np.asarray(W_array)
-                print("PECD = " +str( self.pecd(W_array)))
+                WLM_array = self.momentum_pad_expansion(psi)
+                #WLM_array = np.asarray(WLM_array)
+                #print("PECD = " +str( self.pecd(WLM_array)))
                 print("Finished!")
-
+                exit()
 
 
     def get_inst_energy(self,t,psi,field,keomat,potmat,vint0):
@@ -686,8 +688,12 @@ class propagate(radbas,mapping):
             psi0_mat.append([0,0,0,0,1.0+0.0j])
             psi0_mat.append([0,0,0,1,1.0+0.0j])
             psi0_mat.append([0,0,0,2,1.0+0.0j])
-
-
+            psi0_mat.append([1,1,0,2,1.0+0.0j])
+            psi0_mat.append([2,0,0,2,1.0+0.0j])
+            psi0_mat.append([2,-1,0,2,1.0+0.0j])
+            psi0_mat.append([1,1,1,2,0.5+0.0j])
+            psi0_mat.append([2,0,1,2,0.5+0.0j])
+            psi0_mat.append([2,-1,1,2,0.5+0.0j])
             print("initial wavefunction:")
             print(psi0_mat)
             return psi0_mat
@@ -1179,12 +1185,100 @@ class propagate(radbas,mapping):
 
 
     """=== Fourier transform and momentum distributions ==="""
+    def momentum_pad_expansion(self,psi):
+        """
+        Main function for the calculation of photo-electron 3D distributions in real space and momentum space. 
+        Spherical expansion of momentum PAD. 
 
-    def FTpsicart(self,coeffs):
+        Returns: array wLM(k): spherical expansion coeffs for momentum space probability on a grid of k-vector lengths.
+        """
+        WLM_array = [] #array of spherical expansion coefficients: L,M,WLM(k0), WLM(k1), WLM(k2), ..., WLM(kmax)
+
+
+        G = self.gen_gft()
+        print(G)
+
+        """ 1) Fourier transform of psi """
+        ft_psi, X, Y, Z = self.FTpsi(psi,G)
+            
+        exit()
+
+        """ 2) Interpolate FT[psi] """     
+        #interpolate the wavefunction
+        ft_interp_real = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[0]
+        ft_interp_imag = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[1]
+
+  
+        """ 2) Spherical expansion of |FT[psi]|^2 """     
+        myscheme = quadpy.u3.schemes[params['schemeFT_ang']]()
+        for L in range(0,params['pecd_lmax']+1):
+            for M in range(-L,L + 1):
+                wlm = self.wLM(k,L,M,myscheme,ft_interp_real,ft_interp_imag)[10] #array on theta,k grid
+                print(np.shape(wlm))
+                val+= wlm * sph_harm(M, L,  phik, thetak)
+                WLM_array.append([L,M,wlm]) 
+
+        print("array of spherical expansion coefficients")
+        print(WLM_array)
+
+        return WLM_array
+
+    def wLM(self,k,L,M,myscheme,ft_interp_real,ft_interp_imag):
+        #calculate wLM(k) expansion coefficients in spherical harmonics for given value of k
+        start_time = time.time()    
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(M, L,  theta_phi[1]+np.pi, theta_phi[0])) * np.abs(ft_interp_real([k,theta_phi[0],theta_phi[1]+np.pi])+1j*ft_interp_imag([k,theta_phi[0],theta_phi[1]+np.pi]))**2 )
+
+        end_time = time.time()
+        print("Execution time for calculation of single WLM: " + str(end_time-start_time))
+
+        return val * np.sqrt((2 * L +1)/(4 * np.pi) )
+        
+    def pecd(self,wlm_array):
+        return  2*wlm_array[2,2].real     
+
+    def gen_gft(self):
+        "generate grid for evaluation of FT"
+        G = []
+        thr =1e-6
+        if params['FT_output'] == "lebedev_grid":
+            sphgrid = []
+            print("calculating Lebedev grid")
+            lf = lebedev_grid.LebFunc[194]()
+            for ielem,xyzw in enumerate(lf):
+                #print(str(ielem)+ "(%16.12f,%16.12f,%16.12f,%16.12f)" % xyzw)
+                if xyzw[0] > thr:
+                    sphgrid.append([np.arctan(np.sqrt(xyzw[0]**2 + xyzw[1]**2)/xyzw[2]),np.arctan(xyzw[1]/xyzw[0])])
+                else:
+                    sphgrid.append([np.arctan(np.sqrt(xyzw[0]**2 + xyzw[1]**2)/xyzw[2]),0.0])
+
+            sphgrid = np.asarray(sphgrid)
+            xx = np.sin(sphgrid[:,0])*np.cos(sphgrid[:,1])
+            yy = np.sin(sphgrid[:,0])*np.sin(sphgrid[:,1])
+            zz = np.cos(sphgrid[:,0])
+            #Set colours and render
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(xx,yy,zz,color="k",s=20)
+            ax.set_xlim([-1,1])
+            ax.set_ylim([-1,1])
+            ax.set_zlim([-1,1])
+            plt.tight_layout()
+            #plt.show()
+        
+            #add radial grid
+            G = [params['k-grid'],sphgrid]
+        return G
+
+    def FTpsi(self,coeffs,G):
         #generate gauss-Lobatto global grid
         rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
         nlobatto = params['nlobatto']
-        nbins = params['nbins']
         rgrid  = rbas.r_grid()
         #generate Gauss-Lobatto quadrature
         xlobatto=np.zeros(nlobatto)
@@ -1196,7 +1290,7 @@ class propagate(radbas,mapping):
         mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
         maparray, Nbas = mymap.gen_map()
 
-        # 1) Evaluate psi on a cartesian grid
+        # 1) Evaluate psi(r,theta,phi) on a cartesian grid
         x = np.linspace( params['rshift'], params['binwidth'] * params['nbins'] ,   params['nkpts'],dtype=float)
         y = np.linspace( params['rshift'], params['binwidth'] * params['nbins'] ,   params['nkpts'],dtype=float)
         z = np.linspace( params['rshift'], params['binwidth'] * params['nbins'] ,   params['nkpts'],dtype=float)
@@ -1206,29 +1300,31 @@ class propagate(radbas,mapping):
         print("Shape of psi_grid:" + str(psi_grid.shape))
         print(np.shape(self.cart2sph(X,Y,Z)))
 
-        #the meshes must be flattened
-        r1d = self.cart2sph(X,Y,Z)[0].flatten()
-        theta1d = self.cart2sph(X,Y,Z)[1].flatten()
-        phi1d = self.cart2sph(X,Y,Z)[2].flatten()
-        print(r1d)
-
-
-        phi_k_0 = np.pi /34
-
+        """     #the meshes must be flattened
+                r1d = self.cart2sph(X,Y,Z)[0].flatten()
+                theta1d = self.cart2sph(X,Y,Z)[1].flatten()
+                phi1d = self.cart2sph(X,Y,Z)[2].flatten()
+                print(r1d)"""
         if  params['FT_method'] == "fftn":
             for ielem,elem in enumerate(maparray):
                 psi_grid += coeffs[ielem] *  rbas.chi(elem[2],elem[3],r1d,rgrid,wlobatto) *   sph_harm(elem[1], elem[0],  phi1d, theta1d) 
             #coeffs[ielem] #*
             psift = np.fft.fftn(psi_grid)
 
-        elif  params['FT_method']  == "quadrature":       
+        elif  params['FT_method'] == "quadrature":       
+            print("calculating FT using quadratures")
+            if params['FT_output'] == "lebedev_grid":
+                print("calculating  FT on Lebedev grid")
 
             #squential FT
             if np.any( x > params['binwidth'] * params['nbins']):
-                print("WARNING: quadrature points exceed the domain of real-space wavefunction")
+                print("WARNING: radial quadrature points exceed the domain of real-space wavefunction")
 
         
-            FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+
+            if params['test_quadpy_manual'] == True:
+
+                FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
 
             if params['schemeFT_rad'][0] == "Gauss-Laguerre":
                 Nquad = params['schemeFT_rad'][1] 
@@ -1356,54 +1452,7 @@ class propagate(radbas,mapping):
         
         return val
 
-
-    def momentum_pad_expansion(self,psi,k,thetak,phik):
-        """
-        Main function for the calculation of photo-electron 3D distributions in real space and momentum space. 
-        Spherical expansion of momentum PAD. 
-
-        Returns: array wLM(k): spherical expansion coeffs for momentum space probability on a grid of k-vector lengths.
-        """
-        WLM_array = [] #array of spherical expansion coefficients: L,M,WLM(k0), WLM(k1), WLM(k2), ..., WLM(kmax)
-
-        #Fourier transform in cartesian coordinates
-        ft_psi, X, Y, Z = self.FTpsicart(psi)
-        #interpolate the wavefunction
-        ft_interp_real = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[0]
-        ft_interp_imag = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[1]
-
-        exit()
-        myscheme = quadpy.u3.schemes[params['schemeFT_ang']]()
-        for L in range(0,params['pecd_lmax']+1):
-            for M in range(-L,L + 1):
-                wlm = self.wLM(k,L,M,myscheme,ft_interp_real,ft_interp_imag)[10] #array on theta,k grid
-                print(np.shape(wlm))
-                val+= wlm * sph_harm(M, L,  phik, thetak)
-                WLM_array.append([L,M,wlm]) 
-
-        print("array of spherical expansion coefficients")
-        print(WLM_array)
-
-        return WLM_array
-
-    def wLM(self,k,L,M,myscheme,ft_interp_real,ft_interp_imag):
-        #calculate wLM(k) expansion coefficients in spherical harmonics for given value of k
-        start_time = time.time()    
-        """
-        Symbols: 
-                theta_phi[0] = theta in [0,pi]
-                theta_phi[1] = phi  in [-pi,pi]
-                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
-        """
-        val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(M, L,  theta_phi[1]+np.pi, theta_phi[0])) * np.abs(ft_interp_real([k,theta_phi[0],theta_phi[1]+np.pi])+1j*ft_interp_imag([k,theta_phi[0],theta_phi[1]+np.pi]))**2 )
-
-        end_time = time.time()
-        print("Execution time for calculation of single WLM: " + str(end_time-start_time))
-
-        return val * np.sqrt((2 * L +1)/(4 * np.pi) )
-        
-    def pecd(self,wlm_array):
-        return  2*wlm_array[2,2].real          
+     
 
 if __name__ == "__main__":      
     time_to_au =  np.float64(1.0/24.188)
