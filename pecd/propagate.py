@@ -1192,34 +1192,72 @@ class propagate(radbas,mapping):
 
         Returns: array wLM(k): spherical expansion coeffs for momentum space probability on a grid of k-vector lengths.
         """
-        WLM_array = [] #array of spherical expansion coefficients: L,M,WLM(k0), WLM(k1), WLM(k2), ..., WLM(kmax)
+        WLM_array = [] #array of converged spherical expansion coefficients: L,M,WLM(k0), WLM(k1), WLM(k2), ..., WLM(kmax)
+
+        """ read in spherical quadrature schemes """
+        spherical_schemes = []
+        for elem in list(quadpy.u3.schemes.keys()):
+            if 'lebedev' in elem:
+                spherical_schemes.append(elem)
+
+        """ set up indices for WLM """
+        Lmax = params['pecd_lmax']
+        Lmin = 0
+        WLM_quad_tol = params['WLM_quad_tol'] 
+        #create list of basis set indices
+        anglist = []
+        for l in range(Lmin,Lmax+1):
+            for m in range(0,l+1):
+                anglist.append([l,m])
+
+        WLM =  np.zeros(shape=(len(anglist)),dtype=complex)
+        WLM_prev = np.zeros(shape=(len(anglist)),dtype=complex)
+
+        """ loop over the k-vector grid """
+        for k in params['k-grid']:
+            print("k = " +str(k))
+            start_time = time.time()   
+
+            print("checking convergence of WLM(k) vs. Lebedev quadrature level")
+            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+                print("generating Lebedev grid at level: " +str(scheme))
+                G = self.gen_gft(scheme)
+
+                """ 2) Spherical expansion of |FT[psi]|^2 into WLM(k) """     
+                il = 0
+                for L,M in anglist:
+                    y = 0.0 + 1j * 0.0
+                    """ calculate WLM """
+                    for xi in range(len(G[:,0])): #make this vectorized. Means make
+                        y += G[xi,2] * sph_harm(M, L, G[xi,1]+np.pi , G[xi,0] ) * np.abs(self.FTpsi(psi,k,G,xi))**2
+                    WLM[il] = 4.0 * np.pi * y
+                    il +=1
+       
+           
+                print("differences:")
+                print(WLM - WLM_prev)
+
+                #check for convergence
+                diff = np.abs(WLM - WLM_prev)
+
+                if (np.any(diff>WLM_quad_tol)):
+                    print(str(scheme)+" WLM convergence not reached") 
+                    WLM_prev = np.copy(WLM)
+
+                elif (np.all(diff<WLM_quad_tol)):     
+                    print(str(scheme)+" " +"k = " +str(k) + ", WLM convergence reached!!!")
+                    break
+
+                #if no convergence reached raise warning
+                if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>WLM_quad_tol)):
+                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+            end_time = time.time()
+            print("Execution time for calculation of WLMs at single k: " + str(end_time-start_time))
 
 
-        G = self.gen_gft()
-        print(G)
-
-        """ 1) Fourier transform of psi """
-        ft_psi, X, Y, Z = self.FTpsi(psi,G)
-            
         exit()
-
-        """ 2) Interpolate FT[psi] """     
-        #interpolate the wavefunction
-        ft_interp_real = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[0]
-        ft_interp_imag = self.FTpsicart_interpolate(ft_psi,X,Y,Z)[1]
-
-  
-        """ 2) Spherical expansion of |FT[psi]|^2 """     
-        myscheme = quadpy.u3.schemes[params['schemeFT_ang']]()
-        for L in range(0,params['pecd_lmax']+1):
-            for M in range(-L,L + 1):
-                wlm = self.wLM(k,L,M,myscheme,ft_interp_real,ft_interp_imag)[10] #array on theta,k grid
-                print(np.shape(wlm))
-                val+= wlm * sph_harm(M, L,  phik, thetak)
-                WLM_array.append([L,M,wlm]) 
-
-        print("array of spherical expansion coefficients")
-        print(WLM_array)
+        #print("array of spherical expansion coefficients")
+        #print(WLM_array)
 
         return WLM_array
 
@@ -1242,25 +1280,23 @@ class propagate(radbas,mapping):
     def pecd(self,wlm_array):
         return  2*wlm_array[2,2].real     
 
-    def gen_gft(self):
-        "generate grid for evaluation of FT"
-        G = []
+    def gen_gft(self,scheme):
+        "generate spherical grid for evaluation of FT"
         if params['FT_output'] == "lebedev_grid":
             sphgrid = []
-            print("reading Lebedev grid from file:" + "/lebedev_grids/"+params['schemeWLM']+".txt")
-            fl = open("./lebedev_grids/"+params['schemeWLM']+".txt",'r')
+            print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
+            fl = open("./lebedev_grids/"+str(scheme)+".txt",'r')
             for line in fl:
                 words = line.split()
-                # columns: theta,phi,w
                 phi = float(words[0])
                 theta = float(words[1])
                 w = float(words[2])
-                sphgrid.append([phi,theta,w])
+                sphgrid.append([theta,phi,w])
 
             sphgrid = np.asarray(sphgrid)
-
             sphgrid[:,0:2] = np.pi * sphgrid[:,0:2] / 180.0 #to radians
 
+           """
             xx = np.sin(sphgrid[:,1])*np.cos(sphgrid[:,0])
             yy = np.sin(sphgrid[:,1])*np.sin(sphgrid[:,0])
             zz = np.cos(sphgrid[:,1])
@@ -1273,12 +1309,10 @@ class propagate(radbas,mapping):
             ax.set_zlim([-1,1])
             plt.tight_layout()
             #plt.show()
+            """
+        return sphgrid
 
-            #add radial grid
-            G = [params['k-grid'],sphgrid]
-        return G
-
-    def FTpsi(self,coeffs,G):
+    def FTpsi(self,coeffs,k,G,xi):
         #generate gauss-Lobatto global grid
         rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
         nlobatto = params['nlobatto']
@@ -1319,20 +1353,27 @@ class propagate(radbas,mapping):
             if params['FT_output'] == "lebedev_grid":
                 print("calculating  FT on Lebedev grid")
 
+                radscheme = quadpy.c1.gauss_kronrod(100)
+                radscheme.show()
+                val = radscheme.integrate(lambda x: np.sin(x), [10.0, 1000.0])
+                print(val)
+                exit()
+
             #squential FT
             if np.any( x > params['binwidth'] * params['nbins']):
                 print("WARNING: radial quadrature points exceed the domain of real-space wavefunction")
 
         
 
-            if params['test_quadpy_manual'] == True:
+            kmesh = 1.0
+            phi_k_0 = np.pi /7
+            theta_k_mesh = np.pi / 9
+            r = 100.0
+
+            if params['test_quadpy_direct'] == True:
                 quad_tol = 1e-6
                 FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
 
-                kmesh = 1.0
-                phi_k_0 = np.pi /7
-                theta_k_mesh = np.pi / 9
-                r = 1.0
 
                 quadpy_arr = [] #array of integrals calculated with quadpy
                 direct_arr = [] #array of integrals calculated with direct Lebedev
@@ -1373,11 +1414,69 @@ class propagate(radbas,mapping):
                 diff = np.abs(direct_arr - quadpy_arr)
 
                 if (np.any(diff>quad_tol)):
-                    print(str(params['schemeFT_ang'])+" convergence not reached") 
+                    print(str(params['schemeFT_ang'])+" direct and quadpy methods non-consistent!!!!") 
 
 
                 elif (np.all(diff<quad_tol)):     
-                    print(str(params['schemeFT_ang'])+" convergence reached!!!")
+                    print(str(params['schemeFT_ang'])+" consistency OK!!!")
+
+
+            if params['test_conv_FT_ang'] == True:
+                print("checking for convergence the angular spectral part of FT vs. quadrature level")
+                spherical_schemes = []
+                for elem in list(quadpy.u3.schemes.keys()):
+                    if 'lebedev' in elem:
+                        spherical_schemes.append(elem)
+                print("Available schemes: " + str(spherical_schemes))
+
+                lmax = params['lmax']
+                lmin = params['lmin']
+                quad_tol = params['quad_tol']
+
+                """calculate the  I(r;k,theta_k,phi_k)  = Y_lm(theta,phi) e**(i * k * r) d Omega integral """
+
+                #create list of basis set indices
+                anglist = []
+                for l in range(lmin,lmax+1):
+                    for m in range(0,l+1):
+                        anglist.append([l,m])
+                val =  np.zeros(shape=(len(anglist)),dtype=complex)
+                val_prev = np.zeros(shape=(len(anglist)),dtype=complex)
+                for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+                    G = self.gen_gft(scheme)
+
+                    il = 0
+                    for l,m in anglist:
+                        y = 0.0 + 1j * 0.0
+                        for xi in range(len(G[1][:,0])):
+
+                            y += G[1][xi,2] * sph_harm(m, l,G[1][xi,0]+np.pi , G[1][xi,1] ) \
+                            * np.exp( -1j * ( kmesh * np.sin(theta_k_mesh) *\
+                                np.cos(phi_k_0) * r * np.sin(G[1][xi,1]) * np.cos(G[1][xi,0]+np.pi ) + kmesh * \
+                                    np.sin(theta_k_mesh) * np.sin(phi_k_0) * r * np.sin(G[1][xi,1]) * np.sin(G[1][xi,0]+np.pi ) \
+                                        + kmesh * np.cos(theta_k_mesh) * r * np.cos(G[1][xi,1]))) 
+                        val[il] = 4.0 * np.pi * y
+                        il +=1
+
+
+                    #print("differences:")
+                    #print(val - val_prev)
+
+                    #check for convergence
+                    diff = np.abs(val - val_prev)
+
+                    if (np.any(diff>quad_tol)):
+                        print(str(scheme)+" convergence not reached") 
+                        val_prev = np.copy(val)
+
+                    elif (np.all(diff<quad_tol)):     
+                        print(str(scheme)+" convergence reached!!!")
+                        break
+
+                    #if no convergence reached raise warning
+                    if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                        print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+
 
                 exit()
 
