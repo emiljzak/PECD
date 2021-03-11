@@ -202,10 +202,10 @@ def Lebedev(n):
     return None
 
 if __name__ == '__main__':
-    for i in [26]:#[6,14,26,38,50,74,86,110,146,170,194]:
+    for i in [194]:#[6,14,26,38,50,74,86,110,146,170,194]:
         lf = LebFunc[i]()
-        for xyzw in lf:
-            print("(%16.12f,%16.12f,%16.12f,%16.12f)" % xyzw)
+        for ielem,xyzw in enumerate(lf):
+            print(str(ielem)+ "(%16.12f,%16.12f,%16.12f,%16.12f)" % xyzw)
 
 
 
