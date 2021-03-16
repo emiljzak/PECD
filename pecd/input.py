@@ -14,55 +14,82 @@ def gen_input():
 
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 4
+    params['nlobatto'] = 5
     params['nbins'] = 3
     params['binwidth'] = 3.0
-    params['rshift'] = 0.1 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
+    params['rshift'] = 0.05 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 2
+    params['lmax'] = 1
     
+    """==== electrostatic potential ===="""
+    params['pot_type'] = "grid" #type of potential: analytic or grid
+    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
+    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_10_0.5" #filename for grid representation of ESP. Only if pot_type = grid
+    params['r_cutoff'] = 5.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
+    """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
+
     """====runtime controls===="""
-    params['method'] = "dynamic_direct" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
-    params['read_ham_from_file'] = True #do we read stored H0 matrix from file or generate it during run?
+    params['method'] = "static" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
+    params['save_psi0_hamiltonian'] = True #save the calculated Hamiltonian used to get psi0 in a file?
+    params['save_init_hamiltonian'] = True #save the calculated field-free Hamiltonian in a file?
+    params['save_ini_wf'] = True #save initial wavefunction generated with eigenvec option to a file (spectral representation)
+    params['read_ham_from_file'] = False #do we read stored initial hamiltonian matrix from file or generate it during run?
+    
+    params['psi0_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+    params['ini_ham_file'] = "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+    params['ini_state_file'] = "psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+    params['ini_energies_file'] = "energies0_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+
+
     params['t0'] = 0.0 
     params['tmax'] = 100.0 
     params['dt'] = 1.0 
     time_units = "as"
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
-    params['save_hamiltonian'] = False #save the calculated field-free Hamiltonian in a file?
 
     """====initial state====""" 
-    params['ini_state'] = "spectral_manual" #spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
+    params['ini_state'] = "from_file" #from_file,spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
-    params['ini_state_file_coeffs'] = "wf0coeffs.txt" # if requested: name of file with coefficients of the initial wavefunction in our basis
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
     params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
-    params['eigenvec_id'] = 2 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
-    params['save_ini_wf'] = False #save initial wavefunction generated with eigenvec option to a file (spectral representation)
+    params['eigenvec_id'] = 3 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
+ 
+    params['n_ini_vec'] = 10 #number of initial wavefunctions (orbitals) stored
 
     """==== spherical quadratures ===="""
     params['scheme'] = "lebedev_011" #angular integration rule
-    params['adaptive_quad'] = True #True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
+    params['adaptive_quad'] =  True#True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
     params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
-    params['quad_tol'] = 1e-6 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
+    params['quad_tol'] = 1e-3 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
     params['atol'] = 1e-2 #absolute tolerance for the hamiltonian matrix to be non-symmetric
     params['rtol'] = 1e-2 #relative tolerance for the hamiltonian matrix to be non-symmetric
+    params['quad_levels_file'] = "quad_levels_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+ str('%5.2e'%params['quad_tol'])+\
+                                "_"+params['potential_grid']+".dat"
 
 
-    """==== electrostatic potential ===="""
-    params['pot_type'] = "grid" #type of potential: analytic or grid
-    params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
-    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_10_0.5.dat" #filename for grid representation of ESP. Only if pot_type = grid
-    params['r_cutoff'] = 9.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
+
 
     """===== TESTING ====="""
     params['test_potmat_accur'] = False #Test the accuracy of potential energy matrix elements 
     params['test_multipoles'] = False#test accuracy of potential energy matrix elements with multipole expansion of the potential and anlytic matrix elements
-    params['test_lebedev'] = True #test accuracy of potential energy matrix elements with lebedev quadrature and exact potential
+    params['test_lebedev'] = False #test accuracy of potential energy matrix elements with lebedev quadrature and exact potential
     params['multipoles_lmax'] = 6 #maximum L in the multipole expansion of the electrostatic potential
     params['plot_esp'] = True #plot ESP?
     params['calc_inst_energy'] = False #calculate instantaneous energy of a free-electron wavepacket?
-    params['test_pads'] = True #test convergence etc. for momentum-space distributions and PECD
+    params['test_pads'] = False #test convergence etc. for momentum-space distributions and PECD
 
 
     """====molecule-field interaction hamiltonian===="""
@@ -110,9 +137,9 @@ def gen_input():
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
     params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
     params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
-    params['WLM_quad_tol'] = 1e-3 #spherical quadrature convergence threshold for WLM(k_i)
+    params['WLM_quad_tol'] = 1e-4 #spherical quadrature convergence threshold for WLM(k_i)
 
-    params['kmax'] = 2.0 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
+    params['kmax'] = 0.5 #maximum value of wavevector in FT (a.u.). This value is set as primary and other quantities should be estimated based on it.
     #based on kmax and pulse duration we can estimate the spatial grid range:
     Rmax_est = 6.0 *  params['tmax'] * time_to_au *  params['kmax'] 
     print("An estimated range for spatial grid needed to cover " + str(params['kmax']) + " a.u. momentum wavepackets is: " + str("%10.0f"%(Rmax_est)) + " a.u.")
@@ -121,8 +148,8 @@ def gen_input():
     print("Number of points per dimension in grid representation of the 3D-FT of the wavepacket = " + str("%5d"%params['nkpts'])) 
 
     #for prelimiary tests params['nkpts'] = 2
-    params['nkpts'] = 2
-    params['k-grid'] = np.linspace(0.1, params['kmax'],params['nkpts']) #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
+    params['nkpts'] = 1
+    params['k-grid'] = np.linspace(0.5, params['kmax'],params['nkpts']) #range of momenta for the electron (effective radial range for the Fourier transform of the total wavefunction). Note that E = 1/2 * k^2, so it is easily convertible to photo-electron energy range
     
 
     """====field controls===="""
