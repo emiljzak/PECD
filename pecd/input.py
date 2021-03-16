@@ -55,7 +55,7 @@ def gen_input():
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
 
     """====initial state====""" 
-    params['ini_state'] = "from_file" #from_file,spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
+    params['ini_state'] = "spectral_manual" #from_file,spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
     params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
@@ -76,7 +76,7 @@ def gen_input():
     """==== spherical quadratures ===="""
     params['scheme'] = "lebedev_011" #angular integration rule
     params['adaptive_quad'] =  True#True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
-    params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
+    params['gen_adaptive_quads'] = True #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
     params['quad_tol'] = 1e-3 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
     params['atol'] = 1e-2 #absolute tolerance for the hamiltonian matrix to be non-symmetric
     params['rtol'] = 1e-2 #relative tolerance for the hamiltonian matrix to be non-symmetric
