@@ -15,7 +15,7 @@ def gen_input():
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
     params['nlobatto'] = 5
-    params['nbins'] = 3
+    params['nbins'] = 4
     params['binwidth'] = 3.0
     params['rshift'] = 0.05 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
@@ -34,18 +34,14 @@ def gen_input():
     params['save_init_hamiltonian'] = True #save the calculated field-free Hamiltonian in a file?
     params['save_ini_wf'] = True #save initial wavefunction generated with eigenvec option to a file (spectral representation)
     params['read_ham_from_file'] = False #do we read stored initial hamiltonian matrix from file or generate it during run?
-    
-    params['psi0_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+    params['gen_adiabatic_basis'] = True #generate eigenbasis of the initial Hamiltonian?
+
 
     params['ini_ham_file'] = "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
                         "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
                             str(params['binwidth'])+"_"+params['potential_grid']+".dat"
 
-    params['ini_state_file'] = "psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+   
     params['ini_energies_file'] = "energies0_"+params['molec_name']+"_"+str(params['nbins'])+\
                         "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
                             str(params['binwidth'])+"_"+params['potential_grid']+".dat"
@@ -63,9 +59,19 @@ def gen_input():
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
     params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
-    params['eigenvec_id'] = 3 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
+    params['eigenvec_id'] = 0 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
  
     params['n_ini_vec'] = 10 #number of initial wavefunctions (orbitals) stored
+
+
+    params['ini_state_file'] = "psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+    params['psi0_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
 
     """==== spherical quadratures ===="""
     params['scheme'] = "lebedev_011" #angular integration rule
