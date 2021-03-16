@@ -14,27 +14,27 @@ def gen_input():
 
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 5
-    params['nbins'] = 4
-    params['binwidth'] = 3.0
+    params['nlobatto'] = 8
+    params['nbins'] = 10
+    params['binwidth'] = 2.5
     params['rshift'] = 0.05 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 1
+    params['lmax'] = 4
     
     """==== electrostatic potential ===="""
     params['pot_type'] = "grid" #type of potential: analytic or grid
     params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
-    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_10_0.5" #filename for grid representation of ESP. Only if pot_type = grid
-    params['r_cutoff'] = 5.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
+    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_8_0.2_com" #filename for grid representation of ESP. Only if pot_type = grid
+    params['r_cutoff'] = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
     """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
 
     """====runtime controls===="""
-    params['method'] = "static" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
+    params['method'] = "dynamic_direct" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
     params['save_psi0_hamiltonian'] = True #save the calculated Hamiltonian used to get psi0 in a file?
     params['save_init_hamiltonian'] = True #save the calculated field-free Hamiltonian in a file?
     params['save_ini_wf'] = True #save initial wavefunction generated with eigenvec option to a file (spectral representation)
     params['read_ham_from_file'] = False #do we read stored initial hamiltonian matrix from file or generate it during run?
-    params['gen_adiabatic_basis'] = True #generate eigenbasis of the initial Hamiltonian?
+    params['gen_adiabatic_basis'] = False #generate eigenbasis of the initial Hamiltonian?
 
 
     params['ini_ham_file'] = "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
@@ -49,7 +49,7 @@ def gen_input():
 
 
     params['t0'] = 0.0 
-    params['tmax'] = 100.0 
+    params['tmax'] = 0.0 
     params['dt'] = 1.0 
     time_units = "as"
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
@@ -138,10 +138,10 @@ def gen_input():
     params['schemeFT_rad'] = ("Gauss-Hermite",10) #quadrature type for projection of psi(t) onto the lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['schemeWLM'] = "lebedev_025" # 
     params['test_quadpy_direct'] = False #compare quadpy integration with manual lebedev. Test convergence of angular part of the FT
-    params['test_conv_FT_ang'] = True #test spherical integration convergence in FT using quadratures
+    params['test_conv_FT_ang'] = False #test spherical integration convergence in FT using quadratures
 
     params['pecd_lmax'] = 2 #maximum angular momentum of the expansion into spherical harmonics of the momentum probability function
-    params['calculate_pecd'] = True #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
+    params['calculate_pecd'] = False #calculate FT of the wavefunction and expand it into spherical harmonics and calculate PECD?
     params['time_pecd'] = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
     params['WLM_quad_tol'] = 1e-4 #spherical quadrature convergence threshold for WLM(k_i)
 

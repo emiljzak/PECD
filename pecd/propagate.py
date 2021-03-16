@@ -418,6 +418,11 @@ class propagate(radbas,mapping):
             end_time = time.time()
             print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
 
+            if params['save_init_hamiltonian'] == True:
+                print("saving the initial hamiltonian matrix in a file")
+                with open(params['working_dir']+params['ini_ham_file'], "w") as hmatfile:   
+                    np.savetxt(hmatfile,hmat,fmt='%8.3e')
+
             print("Is the hamiltonian matrix symmetric? " + str(hamiltonian.check_symmetric(hmat,hamiltonian.params['atol'],hamiltonian.params['rtol'])))
             if hamiltonian.check_symmetric(hmat) == False:
                 print("Error: hamiltonian matrix not symmetric!")
@@ -606,7 +611,7 @@ class propagate(radbas,mapping):
         quad_tol = 1e-3
         lmin_test = 0
         lmax_test = 2
-        Rstar = 6.0 #radius at which we cut-off the molecular ion potential
+        Rstar = params['r_cutoff'] #radius at which we cut-off the molecular ion potential
         rin = np.linspace(Rstar,Rstar,1,endpoint=True)
         print(rin)
         for r in rin:
@@ -998,17 +1003,9 @@ class propagate(radbas,mapping):
 
         elif params['ini_state'] == "eigenvec":
             print("defining initial wavefunction by diagonalization of static Hamiltonian \n")
-            temp = params['nbins'] 
-            params['nbins'] = params['nbins_iniwf']
-
-            map_iniwf = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
-            maparray_iniwf, Nbas0 = map_iniwf.gen_map()
-            params['Nbas'] = Nbas0
-            print("Number of basis functions used to diagonalize the static Hamiltonian = " + str(Nbas0))
-            #l,m,i,n
 
             #generate gauss-Lobatto global grid
-            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            rbas = radbas(params['nlobatto'], params['nbins_iniwf'], params['binwidth'], params['rshift'])
             nlobatto = params['nlobatto']
             nbins = params['nbins']
             rgrid  = rbas.r_grid()
@@ -1022,41 +1019,45 @@ class propagate(radbas,mapping):
             theta0 = 0.0 #
             r0 = 1.0
 
-            """ initialize Hamiltonian """
-            #read hamiltonian from file
-            if params['read_ham_from_file'] ==True:
+            #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
 
-                hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
-                hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
-                    "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
-                with open(hmatfilename, "r") as hmatfile:   
-                    hmat = np.loadtxt(hmatfile,dtype=float)
+            print("2) Generating a map of basis set indices")
+            print("\n")
+            mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins_iniwf']), int(params['nlobatto']))
+            maparray, Nbas = mymap.gen_map()
+            params['Nbas'] = Nbas
+            print("Nbas = "+str(Nbas))
 
-                start_time = time.time()
-                evals, coeffs = np.linalg.eigh(hmat, UPLO='U')
-                end_time = time.time()
+            print("3) Building Hamiltonian matrix")
+            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
+            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
+            """
+            self.plot_mat(keomat)
+            self.plot_mat(potmat)
+            self.plot_mat(hmat)
+            """
+            #print(type(coeffs))
+            #print(np.shape(coeffs))
 
-                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+            rbas.plot_wf_rad(0.0,params['nbins_iniwf'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+      
+            if params['save_psi0_hamiltonian']  == True:
+                print("saving the hamiltonian matrix in a file")
+                with open(params['working_dir']+params['psi0_ham_file'], "w") as hmatfile:   
+                    np.savetxt(hmatfile,hmat,fmt='%8.3e')
 
-                print("10 Lowest eigenvalues of the Hamiltonian:")
-                with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
-                    print(evals[:10])
-            else:
-                #build hamiltonian
-                hamiltonian0 = matelem.hmat(params,0.0,rgrid,maparray_iniwf)
-                evals, coeffs, hmat, keomat, potmat = hamiltonian0.calc_hmat()
+            if params['save_ini_wf'] == True:
+                print("saving the initial wavefunction into file")
+                psi0fname=open(params['working_dir'] + params['ini_state_file'],'w')
 
-            for ielem, elem in enumerate(maparray_iniwf):
-                psi0_mat.append([ elem[0], elem[1], elem[2], elem[3], coeffs[ielem,int(params['eigenvec_id'])]])
+                for ielem,elem in enumerate(maparray):
+                    psi0fname.write(" %5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+  " %5d"%elem[3]+" "+ " ".join('{:10.5e}'.format(coeffs[ielem,v].real)+" "+'{:10.5e}'.format(coeffs[ielem,v].imag) for v in range(0,params['n_ini_vec']))+"\n")
 
-
-            #print("eivenvectors of static Hamiltonian")
-            #print(coeffs)
 
             #radial part
             r = np.linspace(params['rshift'],float(params['binwidth'] * params['nbins_iniwf']),1000,True,dtype=float)
             y = np.zeros(len(r),dtype=complex)
-            for ielem,elem in enumerate(maparray_iniwf):
+            for ielem,elem in enumerate(maparray):
                 y[:] +=   coeffs[ielem,int(params['eigenvec_id'])] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm( elem[1], elem[0],  theta0, phi0)
             y /= np.sqrt(np.sum(coeffs[:,int(params['eigenvec_id'])] * coeffs[:,int(params['eigenvec_id'])]))
             
@@ -1066,13 +1067,7 @@ class propagate(radbas,mapping):
             plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(r * self.psi03d(r,phi0, phi0))) ) 
             plt.legend()     
             plt.show()  
-            
-            if params['save_ini_wf'] == True:
-                fname=open(params['ini_state_file_coeffs'],'w')
-                print("saving the initial wavefunction into file")
-                fname.write(' '.join(["  %15.8f"%item for item in psi0_mat])+"\n")
-            params['nbins'] = temp #coming back to full number of bins
-            psi0_mat = np.asarray(psi0_mat)
+
             return psi0_mat
 
         elif params['ini_state'] == "from_file":
@@ -1691,7 +1686,6 @@ if __name__ == "__main__":
 
     psi0 = hydrogen.gen_psi0(params) 
 
-    exit()
     hmat = hydrogen.prop_wf(params,psi0)
 
     exit()
