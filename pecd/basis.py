@@ -377,7 +377,7 @@ class radbas():
         plt.ylabel('Radial eigenfunction')
         plt.legend()   
         for n in range(1,nprint):
-            plt.plot(r, y[:,n]**2)
+            plt.plot(r, np.abs(y[:,n])**2)
             
            # plt.plot(r, h_radial(r,1,0))
         plt.show()     

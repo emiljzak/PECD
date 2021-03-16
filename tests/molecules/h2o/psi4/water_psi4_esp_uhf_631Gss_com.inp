@@ -1,0 +1,48 @@
+
+#! Electrostatic potential and electric field evaluated on a grid around water.
+
+properties_origin=["COM"]
+
+molecule h2o {
+1 2
+ noreorient
+nocom
+    O            0.0     0.0    0.000000000000
+    H            0.757    0.586     0.000000000000
+    H            -0.757    0.586     0.000000000000
+}
+
+
+
+# Make a regular grid to evaluate properties on
+xmax = 5.0
+xmin = -xmax
+
+ymax = 5.0
+ymin = -ymax
+
+zmax = 5.0
+zmin = -zmax
+
+dz = 0.5
+dx = 0.5
+dy = 0.5
+
+nx = int((xmax-xmin)/dx)
+ny = int((ymax-ymin)/dy)
+nz = int((zmax-zmin)/dz)
+
+with open('grid.dat', 'w') as fp:
+    for i in range(nx+1):
+        xpoint = xmin + i * dx
+        for j in range(ny+1):
+          ypoint = ymin + j * dy
+          for k in range(nz+1):
+            zpoint = zmin + k * dz
+            fp.write("%16.10f%16.10f%16.10f\n" % (xpoint, ypoint, zpoint))
+
+set basis 6-31G**
+set reference uhf
+
+E, wfn = prop('scf', properties=["GRID_ESP"], return_wfn=True)
+Vvals = wfn.oeprop.Vvals()

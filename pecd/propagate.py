@@ -61,10 +61,9 @@ class propagate(radbas,mapping):
 
         if params['method'] == 'static':
 
-            print("Setting up mixed DVR-Spectral basis set")
+            print("method = static: building static Hamiltonian")
             print("\n")
-
-            print("    1) Generating radial grid")
+            print("1) Generating radial grid")
             print("\n")
             #we need to create rgrid only once, i.e. we use a static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
@@ -72,51 +71,46 @@ class propagate(radbas,mapping):
             nlobatto = params['nlobatto']
             #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
 
-
-            print("    2) Generating mapping of basis set indices")
+            print("2) Generating a map of basis set indices")
             print("\n")
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             maparray, Nbas = mymap.gen_map()
             params['Nbas'] = Nbas
             print("Nbas = "+str(Nbas))
 
-            if params['read_ham_from_file'] ==True:
-                hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
-                hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
-                    "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
-                with open(hmatfilename, "r") as hmatfile:   
-                    hmat = np.loadtxt(hmatfile,dtype=float)
-
-
-                start_time = time.time()
-                #eval, eigvec = linalg.eigs(-1.0 * hmat,k=neval,which='LM')
-                eval, eigvec = np.linalg.eigh(hmat, UPLO='U')
-                end_time = time.time()
-
-                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-                print("Eigenvalues of the Hamiltonian:")
-                with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
-                    print(eval[:10])
-            else:
-                hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-                evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
-
+            print("3) Building Hamiltonian matrix")
+            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
+            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
+            """
             self.plot_mat(keomat)
             self.plot_mat(potmat)
             self.plot_mat(hmat)
+            """
             #print(type(coeffs))
             #print(np.shape(coeffs))
-            #rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+
+            rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
+      
+            if params['save_psi0_hamiltonian']  == True:
+                print("saving the hamiltonian matrix in a file")
+                with open(params['working_dir']+params['psi0_ham_file'], "w") as hmatfile:   
+                    np.savetxt(hmatfile,hmat,fmt='%8.3e')
+
+            if params['save_ini_wf'] == True:
+                print("saving the initial wavefunction into file")
+                psi0fname=open(params['working_dir'] + params['ini_state_file'],'w')
+
+                for ielem,elem in enumerate(maparray):
+                    psi0fname.write(" %5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+  " %5d"%elem[3]+" "+ " ".join('{:10.5e}'.format(coeffs[ielem,v].real)+" "+'{:10.5e}'.format(coeffs[ielem,v].imag) for v in range(0,params['n_ini_vec']))+"\n")
+
             return hmat
 
 
         elif params['method'] == 'dynamic_direct':
+            print("Solving TDSE by direct exponentiation")
 
-
-            print("Solving TDSE with a direct exponentiation method")
-            print("Setting up mixed DVR-Spectral basis set")
             print("\n")
-            print("    1) Generating radial grid")
+            print(" 1) Generating radial grid")
             print("\n")
             #we need to create rgrid only once, i.e. we use a static grid
             rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
@@ -124,7 +118,7 @@ class propagate(radbas,mapping):
             nlobatto = params['nlobatto']
             #rbas.plot_chi(0.0,params['nbins'] * params['binwidth'],1000)
 
-            print("    2) Generating a map of basis set indices")
+            print("2) Generating a map of basis set indices")
             print("\n")
             mymap = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
             print("Number of bins = " + str(params['nbins']))
@@ -133,14 +127,7 @@ class propagate(radbas,mapping):
             print("Nbas = "+str(Nbas))
 
 
-            print("Setting up propagation parameters")
-            print("\n")
-            print("    1) time-grid")
-            print("\n")
-            timegrid = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
-            dt = params['dt']
-
-            print("    2) initial wavefunction:")
+            print("4) Setting up initial wavefunction")
             print("\n")
             psi = np.zeros(Nbas,dtype=complex) #spectral representation of the wavefunciton
             #HERE convert psi0 to an instance of the wavefunction class
@@ -154,7 +141,6 @@ class propagate(radbas,mapping):
             psi[:] /= np.sqrt( np.sum( np.conj(psi) * psi ) )
             #print(np.sqrt( np.sum( np.conj(psi) * psi ) ))
 
-
             """ &&&&&&&&&&&&&&&&&&&&&& TESTING PADS ON Psi0 &&&&&&&&&&&&&&&&&& """
 
             if params['test_pads'] == True :
@@ -166,6 +152,15 @@ class propagate(radbas,mapping):
                 exit()
             """ &&&&&&&&&&&&&&&&&&&&&& TESTING PADS ON Psi0 &&&&&&&&&&&&&&&&&& """
 
+
+            print("3) Setting up propagation parameters")
+            print("\n")
+            print("- time-grid")
+            print("\n")
+            timegrid = np.linspace(params['t0'],params['tmax'],int((params['tmax']-params['t0'])/params['dt']+1), endpoint = True)
+            dt = params['dt']
+
+
             print("    3) wavepacket parameters")
             print("\n")
             fname=open(params['wavepacket_file'],'w')
@@ -173,57 +168,15 @@ class propagate(radbas,mapping):
 
             #setting up plotting params
 
-            if params['plot_modes']["single_shot"] == True:     
-                """ Initialize single_shot plots """   
-                # radial plot grid    
-                r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
-
-                # polar plot grid
-                phi0 = 0.0 #np.pi/4 #at a fixed phi value
-                theta0 = 0.0#np.pi/4 #at a fixed phi value
-                r0 = 1.0
-                #generate Gauss-Lobatto quadrature
-                xlobatto=np.zeros(nlobatto)
-                wlobatto=np.zeros(nlobatto)
-                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
-                wlobatto=np.array(wlobatto)
-                xlobatto=np.array(xlobatto) # convert back to np arrays
-
-
-            if params['plot_modes']["animation"] == True:     
-                """ Initialize animation plots """   
-                # radial plot grid    
-                r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
-
-                # polar plot grid
-                phi0 = 0.0 #np.pi/4 #at a fixed phi value
-                theta0 = 0.0#np.pi/4 #at a fixed phi value
-                r0 = 1.0
-                #generate Gauss-Lobatto quadrature
-                xlobatto=np.zeros(nlobatto)
-                wlobatto=np.zeros(nlobatto)
-                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
-                wlobatto=np.array(wlobatto)
-                xlobatto=np.array(xlobatto) # convert back to np arrays
 
             """ Initialize the interaction matrix """
             intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
 
             """ initialize Hamiltonian """
+            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
             #plot radial basis 
             #rbas.plot_chi( params['rshift'], params['binwidth'] * params['nbins'] + params['rshift'], npoints = 1000)
 
-            if params['calc_inst_energy'] == True:
-                print("setting up a binding-potential-free hamiltonian for tests of pondermotive energy of a free-electron wavepacket")
-                params['potential'] = "pot_hydrogen" # 1) diagonal (for tests); 2) pot_hydrogen; 3) pot_null
-
-
-            hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-
-
-            if params['test_potmat_accur'] == True:
-                self.test_potmat_accur(hamiltonian)
-            
             if params['read_ham_from_file'] ==True:
                 hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
                 hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
@@ -231,15 +184,31 @@ class propagate(radbas,mapping):
                 with open(hmatfilename, "r") as hmatfile:   
                     hmat = np.loadtxt(hmatfile,dtype=float)
 
-                print("Hamiltonian Matrix Read from File")
+                print("Hamiltonian Matrix:")
                 with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
                     print(hmat)      
 
+                start_time = time.time()
+                evals, coeffs = np.linalg.eigh(hmat, UPLO='U')
+                end_time = time.time()
+
+                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+                print("10 Lowest eigenvalues of the Hamiltonian:")
+                with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
+                    print(evals[:10])
+
             else:
+                
                 start_time = time.time()    
                 evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
                 end_time = time.time()
                 print("Time for construction of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")        
+
+                print("Is the hamiltonian matrix symmetric? " + str(hamiltonian.check_symmetric(hmat,hamiltonian.params['atol'],hamiltonian.params['rtol'])))
+                if hamiltonian.check_symmetric(hmat) == False:
+                    print("Error: hamiltonian matrix not symmetric!")
+                    #exit()
 
             vint0 = np.zeros((params['Nbas'],params['Nbas'],3 ),dtype=complex)
             vint = np.zeros((params['Nbas'],params['Nbas']),dtype=complex)
@@ -252,11 +221,15 @@ class propagate(radbas,mapping):
                 print(vint0)      
 
             #self.plot_mat(np.abs(hmat[1:,1:]+np.transpose(hmat[1:,1:])) + np.abs(vint0[1:,1:])) #
-            
+
+            if params['test_potmat_accur'] == True:
+                self.test_potmat_accur(hamiltonian)
             
             if params['calc_inst_energy'] == True:
                 print("saving KEO and POT matrix for later use in instantaneous energy calculations")
-        
+                print("setting up a binding-potential-free hamiltonian for tests of pondermotive energy of a free-electron wavepacket")
+                params['potential'] = "pot_hydrogen" # 1) diagonal (for tests); 2) pot_hydrogen; 3) pot_null
+
                 #keomat = hamiltonian.calc_keomat()
                 #potmat = hamiltonian.calc_potmat()
 
@@ -281,10 +254,7 @@ class propagate(radbas,mapping):
                 ax.scatter(timegrid/time_to_au,Fvec[2])
                 plt.show()
 
-            print("Is the hamiltonian matrix symmetric? " + str(hamiltonian.check_symmetric(hmat,hamiltonian.params['atol'],hamiltonian.params['rtol'])))
-            if hamiltonian.check_symmetric(hmat) == False:
-                print("Error: hamiltonian matrix not symmetric!")
-                #exit()
+
                 
             print("==========================")
             print("==wavepacket propagation==")
@@ -374,7 +344,23 @@ class propagate(radbas,mapping):
                 print("=========")
                 print("==Plots==")
                 print("=========")
-           
+        
+                """ Initialize single_shot plots """   
+                # radial plot grid    
+                r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
+
+                # polar plot grid
+                phi0 = 0.0 #np.pi/4 #at a fixed phi value
+                theta0 = 0.0#np.pi/4 #at a fixed phi value
+                r0 = 1.0
+                #generate Gauss-Lobatto quadrature
+                xlobatto=np.zeros(nlobatto)
+                wlobatto=np.zeros(nlobatto)
+                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+                wlobatto=np.array(wlobatto)
+                xlobatto=np.array(xlobatto) # convert back to np arrays
+
+
                 iplot = []
                 for index,item in enumerate(params['plot_controls']["plottimes"]):
 
@@ -400,6 +386,26 @@ class propagate(radbas,mapping):
                             """ Calculate FFT (numpy) of the wavefunction """
 
                             self.plot_snapshot(psi,params['plot_controls'],plot_format,t,rgrid,wlobatto,r,maparray,phi0,theta0,r0,rbas)
+
+
+
+
+            if params['plot_modes']["animation"] == True:     
+                """ Initialize animation plots """   
+                # radial plot grid    
+                r = np.linspace(params['rshift'],params['nbins']*params['binwidth'],1000,True,dtype=float)
+
+                # polar plot grid
+                phi0 = 0.0 #np.pi/4 #at a fixed phi value
+                theta0 = 0.0#np.pi/4 #at a fixed phi value
+                r0 = 1.0
+                #generate Gauss-Lobatto quadrature
+                xlobatto=np.zeros(nlobatto)
+                wlobatto=np.zeros(nlobatto)
+                xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+                wlobatto=np.array(wlobatto)
+                xlobatto=np.array(xlobatto) # convert back to np arrays
+
 
 
             if params['calculate_pecd'] == True:
@@ -988,8 +994,87 @@ class propagate(radbas,mapping):
             plt.legend()     
             plt.show()   
 
-        if params['ini_state'] == "eigenvec":
+        elif params['ini_state'] == "eigenvec":
             print("defining initial wavefunction by diagonalization of static Hamiltonian \n")
+            temp = params['nbins'] 
+            params['nbins'] = params['nbins_iniwf']
+
+            map_iniwf = mapping(int(params['lmin']), int(params['lmax']), int(params['nbins']), int(params['nlobatto']))
+            maparray_iniwf, Nbas0 = map_iniwf.gen_map()
+            params['Nbas'] = Nbas0
+            print("Number of basis functions used to diagonalize the static Hamiltonian = " + str(Nbas0))
+            #l,m,i,n
+
+            #generate gauss-Lobatto global grid
+            rbas = radbas(params['nlobatto'], params['nbins'], params['binwidth'], params['rshift'])
+            nlobatto = params['nlobatto']
+            nbins = params['nbins']
+            rgrid  = rbas.r_grid()
+            #generate Gauss-Lobatto quadrature
+            xlobatto=np.zeros(nlobatto)
+            wlobatto=np.zeros(nlobatto)
+            xlobatto,wlobatto=rbas.gauss_lobatto(nlobatto,14)
+            wlobatto=np.array(wlobatto)
+            xlobatto=np.array(xlobatto) # convert back to np arrays
+            phi0 = 0.0 #
+            theta0 = 0.0 #
+            r0 = 1.0
+
+            """ initialize Hamiltonian """
+            #read hamiltonian from file
+            if params['read_ham_from_file'] ==True:
+
+                hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
+                hmatfilename =params['working_dir'] + "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
+                    "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+                with open(hmatfilename, "r") as hmatfile:   
+                    hmat = np.loadtxt(hmatfile,dtype=float)
+
+                start_time = time.time()
+                evals, coeffs = np.linalg.eigh(hmat, UPLO='U')
+                end_time = time.time()
+
+                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+                print("10 Lowest eigenvalues of the Hamiltonian:")
+                with np.printoptions(precision=4, suppress=True, formatter={'float': '{:12.5f}'.format}, linewidth=40):
+                    print(evals[:10])
+            else:
+                #build hamiltonian
+                hamiltonian0 = matelem.hmat(params,0.0,rgrid,maparray_iniwf)
+                evals, coeffs, hmat, keomat, potmat = hamiltonian0.calc_hmat()
+
+            for ielem, elem in enumerate(maparray_iniwf):
+                psi0_mat.append([ elem[0], elem[1], elem[2], elem[3], coeffs[ielem,int(params['eigenvec_id'])]])
+
+
+            #print("eivenvectors of static Hamiltonian")
+            #print(coeffs)
+
+            #radial part
+            r = np.linspace(params['rshift'],float(params['binwidth'] * params['nbins_iniwf']),1000,True,dtype=float)
+            y = np.zeros(len(r),dtype=complex)
+            for ielem,elem in enumerate(maparray_iniwf):
+                y[:] +=   coeffs[ielem,int(params['eigenvec_id'])] * rbas.chi(elem[2],elem[3],r,rgrid,wlobatto) * sph_harm( elem[1], elem[0],  theta0, phi0)
+            y /= np.sqrt(np.sum(coeffs[:,int(params['eigenvec_id'])] * coeffs[:,int(params['eigenvec_id'])]))
+            
+            plt.xlabel('r/a.u.')
+            plt.ylabel('orbitals')    
+            plt.plot(r, r * (1/r) * np.abs(y)/max(np.abs(y)), 'r+',label="calculated eigenfunction" ) 
+            plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(r * self.psi03d(r,phi0, phi0))) ) 
+            plt.legend()     
+            plt.show()  
+            
+            if params['save_ini_wf'] == True:
+                fname=open(params['ini_state_file_coeffs'],'w')
+                print("saving the initial wavefunction into file")
+                fname.write(' '.join(["  %15.8f"%item for item in psi0_mat])+"\n")
+            params['nbins'] = temp #coming back to full number of bins
+            psi0_mat = np.asarray(psi0_mat)
+            return psi0_mat
+
+        elif params['ini_state'] == "from_file":
+            print("reading initial wavefunction from file \n")
             temp = params['nbins'] 
             params['nbins'] = params['nbins_iniwf']
 
@@ -1038,13 +1123,11 @@ class propagate(radbas,mapping):
             plt.plot(r, r * np.abs(self.psi03d(r,phi0, phi0))/max(np.abs(r * self.psi03d(r,phi0, phi0))) ) 
             plt.legend()     
             #plt.show()  
-            
-            if params['save_ini_wf'] == True:
-                fname=open(params['wavepacket_file'],'w')
-                print("saving the initial wavefunction into file")
-                fname.write(' '.join(["  %15.8f"%np.abs(item) for item in psi0_mat])+"\n")
+
             params['nbins'] = temp #coming back to full number of bins
-        return psi0_mat
+            return psi0_mat
+
+
 
     def gen_hydrogen_wf(self,n,l,m,r,theta,phi):
         Rnl = (2*r/n)**l * np.exp(-r/n) * genlaguerre(n-l-1,2*l+1)(2*r/n)
@@ -1219,7 +1302,7 @@ class propagate(radbas,mapping):
             start_time = time.time()   
 
             print("checking convergence of WLM(k) vs. Lebedev quadrature level")
-            for scheme in spherical_schemes[3:5]: #skip 003a,003b,003c rules
+            for scheme in spherical_schemes[3:6]: #skip 003a,003b,003c rules
                 print("generating Lebedev grid at level: " +str(scheme))
                 G = self.gen_gft(scheme)
 
@@ -1280,6 +1363,23 @@ class propagate(radbas,mapping):
         
     def pecd(self,wlm_array):
         return  2*wlm_array[2,2].real     
+
+    def gen_all_gfts(self):
+        """ read in spherical quadrature schemes """
+        spherical_schemes = []
+        for elem in list(quadpy.u3.schemes.keys()):
+            if 'lebedev' in elem:
+                spherical_schemes.append(elem)
+
+        grids = []
+
+        for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
+            print("generating Lebedev grid at level: " +str(scheme))
+            grids.append(self.gen_gft(scheme))
+        
+        return grids
+
+
 
     def gen_gft(self,scheme):
         "generate spherical grid for evaluation of FT"
