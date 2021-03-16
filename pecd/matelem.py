@@ -85,6 +85,12 @@ class hmat():
         """ calculate static field-free Hamiltonian matrix """
         """ only called when using method = 'static','direct'"""
 
+
+        if self.params['gen_adaptive_quads'] == True:
+            print("Generating list of spherical quadrature levels needed to reach convergence of potential energy matrix elements at r_in")
+            self.gen_adaptive_quads()
+            exit()
+
         hmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
         keomat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
         potmat = np.zeros((self.params['Nbas'],self.params['Nbas'] ),dtype=float)
@@ -93,12 +99,6 @@ class hmat():
         keomat = self.calc_keomat() 
         end_time = time.time()
         print("Time for construction of the KEO: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-        if self.params['gen_adaptive_quads'] == True:
-            print("Generating list of spherical quadrature levels needed to reach convergence of potential energy matrix elements at r_in")
-            self.gen_adaptive_quads()
-            exit()
-
 
         start_time = time.time()
         potmat = self.calc_potmat()
@@ -288,8 +288,8 @@ class hmat():
         print("Testing potential energy matrix elements using Lebedev quadratures")
         #create list of basis set indices
         anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
+        for l in range(lmax-1,lmax+1):
+            for m in range(l-1,l+1):
                 anglist.append([l,m])
 
         val =  np.zeros(shape=(len(anglist)**2),dtype=complex)

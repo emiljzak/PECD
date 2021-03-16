@@ -1682,11 +1682,11 @@ if __name__ == "__main__":
     field_to_au =  np.float64(1.0/(5.14220652e+9))
     params = input.gen_input()
 
-    hydrogen = propagate() 
+    water = propagate() 
 
-    psi0 = hydrogen.gen_psi0(params) 
+    psi0 = water.gen_psi0(params) 
 
-    hmat = hydrogen.prop_wf(params,psi0)
+    hmat = water.prop_wf(params,psi0)
 
     exit()
 
