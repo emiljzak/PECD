@@ -1,22 +1,54 @@
 import numpy as np
+import constants
+
 def gen_input():
 
     params = {}
 
     """ === molecule directory ==== """ 
     """ in this directory we read/write files associated with a given molecule """
+
     params['working_dir'] = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/h2o/"
     params['molec_name'] = "h2o"
 
-    """====basis set parameters===="""
-    params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 3
-    params['nbins'] = 3
-    params['binwidth'] = 4.0
-    params['rshift'] = 0.05 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
-    params['lmin'] = 0
-    params['lmax'] = 2
+
+    """==== BOUND ===="""
+
+
+    """==== basis set parameters for BOUND ===="""
+
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 1
+    params['bound_binw']    = 20.0
+    params['bound_rshift']  = 0.001 
+    params['bound_lmin']    = 0
+    params['bound_lmax']    = 2
     
+    params['ini_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+   
+    params['ini_energies_file'] = "energies0_"+params['molec_name']+"_"+str(params['nbins'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+    params['save_psi0_hamiltonian'] = True #save the calculated Hamiltonian used to get psi0 in a file?
+    params['save_psi0_energies'] = True #save eigenenergies for psi0
+
+    params['ini_state_file'] = "psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+    params['psi0_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+    params['psi0_pot_file'] = "potmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+
+
+
     """==== electrostatic potential ===="""
     params['pot_type'] = "grid" #type of potential: analytic or grid
     params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
@@ -36,14 +68,6 @@ def gen_input():
     params['gen_adiabatic_basis'] = False #generate eigenbasis of the initial Hamiltonian?
 
 
-    params['ini_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
-
-   
-    params['ini_energies_file'] = "energies0_"+params['molec_name']+"_"+str(params['nbins'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
 
 
 
@@ -63,16 +87,6 @@ def gen_input():
     params['n_ini_vec'] = 10 #number of initial wavefunctions (orbitals) stored
 
 
-    params['ini_state_file'] = "psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
-
-    params['psi0_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
-    params['psi0_pot_file'] = "potmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
-                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
-                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
 
 
     """==== spherical quadratures ===="""
