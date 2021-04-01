@@ -2,10 +2,6 @@ import numpy as np
 def gen_input():
 
     params = {}
-    #move all constants to constants.py module!
-    time_to_au =  np.float64(1.0/24.188)
-    freq_to_au = np.float64(0.057/800.0)
-    field_to_au =  np.float64(1.0/(5.14220652e+9))
 
     """ === molecule directory ==== """ 
     """ in this directory we read/write files associated with a given molecule """
@@ -194,17 +190,6 @@ def gen_input():
     print("  %8.2e"%field_strength)
     params['E0'] = field_strength
 
-    # convert time units to atomic units
-    time_to_au = {"as" : np.float64(1.0/24.188)}
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-
-    # convert frequency units to atomic units
-    freq_to_au = {"nm" : np.float64(0.057/800.0)}
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-
-    # convert electric field from different units to atomic units
-    field_to_au = {"debye" : np.float64(0.393456),
-                    "V/cm" :  np.float64(1.0/(5.14220652e+9))}
 
     #unit conversion
     #params = const.convert_units(params)
