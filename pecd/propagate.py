@@ -9,7 +9,7 @@ import matelem
 import time
 import quadpy
 import timeit
-
+from scipy import sparse
 
 from field import Field
 from basis import radbas
@@ -79,8 +79,12 @@ class propagate(radbas,mapping):
             print("Nbas = "+str(Nbas))
 
             print("3) Building Hamiltonian matrix")
+
             hamiltonian = matelem.hmat(params,0.0,rgrid,maparray)
-            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()
+            evals, coeffs, hmat,  keomat, potmat = hamiltonian.calc_hmat()     
+
+
+  
             """
             self.plot_mat(keomat)
             self.plot_mat(potmat)
@@ -91,10 +95,21 @@ class propagate(radbas,mapping):
 
             rbas.plot_wf_rad(0.0,params['nbins'] * params['binwidth'],1000,coeffs,maparray,rgrid)
       
+            if params['save_psi0_energies']  == True:
+                print("saving the energies in a file")
+                with open(params['working_dir']+params['ini_energies_file'], "w") as energyfile:   
+                    np.savetxt(energyfile,evals,fmt='%10.5f')
+
             if params['save_psi0_hamiltonian']  == True:
                 print("saving the hamiltonian matrix in a file")
-                with open(params['working_dir']+params['psi0_ham_file'], "w") as hmatfile:   
-                    np.savetxt(hmatfile,hmat,fmt='%8.3e')
+                if params['ham_format'] == "regular": 
+                    with open(params['working_dir']+params['psi0_ham_file'], "w") as hmatfile:   
+                        np.savetxt(hmatfile,hmat,fmt='%8.3e')
+                elif params['ham_format'] == "csr":
+                    sham = sparse.csr_matrix(hmat) 
+                    sparse.save_npz(params['working_dir']+params['psi0_ham_file'],sham,compressed =True)
+                    #print(sham)
+
 
             if params['save_ini_wf'] == True:
                 print("saving the initial wavefunction into file")
@@ -181,6 +196,8 @@ class propagate(radbas,mapping):
             vint0[:,:,0] = hamiltonian.calc_intmat(0.0,intmat,[1.0, 0.0, 0.0])  
             vint0[:,:,1] = hamiltonian.calc_intmat(0.0,intmat,[0.0, 1.0, 0.0])  
             vint0[:,:,2] = hamiltonian.calc_intmat(0.0,intmat,[0.0, 0.0, 1.0])  
+
+
             #print("time-independent part of vint")
             #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
             #    print(vint0)      
@@ -232,7 +249,8 @@ class propagate(radbas,mapping):
                 # 
                 #print(np.size(vint0,axis=2)) 
                 vint =  np.tensordot(Elfield.gen_field(t),vint0,axes=([0],[2]))
-
+                #if params['ham_format'] == "csr":
+                #    vint = sparse.csr_matrix(vint) 
                 """
                 vint_manual = Elfield.gen_field(t)[0] * vint0[:,:,0] +\
                     Elfield.gen_field(t)[1] * vint0[:,:,1] +Elfield.gen_field(t)[2] * vint0[:,:,2] 
@@ -244,7 +262,7 @@ class propagate(radbas,mapping):
                 #    self.plot_mat(vint)
                 print("Is the interaction matrix symmetric? " + str(hamiltonian.check_symmetric(vint)))
                 """matrix exponentialstion"""
-                umat = linalg.expm( -1.0j * (hmat + vint ) * dt ) #later: call iterative eigensolver function
+                umat = linalg.expm( -1.0j * ( hmat + vint ) * dt ) #later: call iterative eigensolver function
                 """action of the evolution operator"""
                 wavepacket[itime,:] = np.dot( umat , psi )
                 """update the wavefunction"""
@@ -386,19 +404,27 @@ class propagate(radbas,mapping):
 
     def get_ham(self,hamiltonian):
         if params['read_ham_from_file'] ==True:
-            hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
-            hmatfilename =params['working_dir'] + params['ini_ham_file']
-            with open(hmatfilename, "r") as hmatfile:   
-                hmat = np.loadtxt(hmatfile,dtype=float)
+
+            if params['ham_format'] == "csr":
+                hmatfilename = params['working_dir'] + params['ini_ham_file']+".npz"
+                A = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
+                hmat = sparse.csr_matrix(A)
+                with open(hmatfilename, "r") as hmatfile:   
+                    hmat = sparse.load_npz(hmatfilename)
+            else:
+                hmatfilename = params['working_dir'] + params['ini_ham_file']
+                hmat = np.zeros((params['Nbas'],params['Nbas'] ),dtype=float)
+                with open(hmatfilename, "r") as hmatfile:   
+                    hmat = np.loadtxt(hmatfile,dtype=float)
 
             print("Hamiltonian Matrix:")
             with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
                 print(hmat) 
 
-            print("Is the hamiltonian matrix symmetric? " + str(hamiltonian.check_symmetric(hmat,hamiltonian.params['atol'],hamiltonian.params['rtol'])))
-            if hamiltonian.check_symmetric(hmat) == False:
-                print("Error: hamiltonian matrix not symmetric!")
-                exit()
+            #print("Is the hamiltonian matrix symmetric? " + str(hamiltonian.check_symmetric(hmat,hamiltonian.params['atol'],hamiltonian.params['rtol'])))
+            #if hamiltonian.check_symmetric(hmat) == False:
+            #    print("Error: hamiltonian matrix not symmetric!")
+            #    exit()
 
             if params['gen_adiabatic_basis'] == True:
                 start_time = time.time()
@@ -1045,6 +1071,8 @@ class propagate(radbas,mapping):
                 print("saving the hamiltonian matrix in a file")
                 with open(params['working_dir']+params['psi0_ham_file'], "w") as hmatfile:   
                     np.savetxt(hmatfile,hmat,fmt='%8.3e')
+                with open(params['working_dir']+params['psi0_potmat_file'], "w") as potmatfile:   
+                    np.savetxt(potmatfile,potmat,fmt='%8.3e')
 
             if params['save_ini_wf'] == True:
                 print("saving the initial wavefunction into file")
