@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2020 Emil Zak <emil.zak@cfel.de>
 #
+from numba import njit, prange
 import numpy as np
 import quadpy
 from sympy.physics.wigner import gaunt
@@ -314,7 +315,7 @@ class hmat():
                         for l1,m1 in anglist:
                             for l2,m2 in anglist:
                             
-                                val[k] = self.calc_potmatelem_interp(l1,m1,l2,m2,rin,scheme,esp_interpolant )
+                                val[k] = self.calc_potmatelem_interp_vec(l1,m1,l2,m2,rin,scheme,esp_interpolant )
                                 print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag)+ '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
                                     '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + '%12.6f '%np.abs(val[k]-val_prev[k])  )
                                 k+=1
@@ -553,6 +554,37 @@ class hmat():
                 if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
                     print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
+    def gen_leb_quad(self,scheme):
+        "generate lebedev quadrature rules"
+    
+        sphgrid = []
+        #print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
+        fl = open("./lebedev_grids/"+str(scheme)+".txt",'r')
+        for line in fl:
+            words = line.split()
+            phi = float(words[0])
+            theta = float(words[1])
+            w = float(words[2])
+            sphgrid.append([theta,phi,w])
+
+        sphgrid = np.asarray(sphgrid)
+        sphgrid[:,0:2] = np.pi * sphgrid[:,0:2] / 180.0 #to radians
+
+        """
+        xx = np.sin(sphgrid[:,1])*np.cos(sphgrid[:,0])
+        yy = np.sin(sphgrid[:,1])*np.sin(sphgrid[:,0])
+        zz = np.cos(sphgrid[:,1])
+        #Set colours and render
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(xx,yy,zz,color="k",s=20)
+        ax.set_xlim([-1,1])
+        ax.set_ylim([-1,1])
+        ax.set_zlim([-1,1])
+        plt.tight_layout()
+        #plt.show()
+        """
+        return sphgrid
 
     """ ======================= POTENTIALS ======================"""
 
@@ -572,19 +604,20 @@ class hmat():
             v = float(words[3])
             esp.append([x,y,z,v])
             
-        esp = -1.0 * np.asarray(esp) #NOTE: Psi4 returns ESP for a positive unit charge, so that the potential of a cation is positive. We want it for negaitve unit charge, so we must change sign: attractive interaction
-
+        esp =  np.asarray(esp) #NOTE: Psi4 returns ESP for a positive unit charge, so that the potential of a cation is positive. We want it for negaitve unit charge, so we must change sign: attractive interaction
+        esp[:,3] = -1.0 * esp[:,3]
         #plot preparation
-        X = np.linspace(min(esp[:,0]), max(esp[:,0]),100)
-        Y = np.linspace(min(esp[:,1]), max(esp[:,1]),100)
-        X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
+        #X = np.linspace(min(esp[:,0]), max(esp[:,0]),100)
+        #Y = np.linspace(min(esp[:,1]), max(esp[:,1]),100)
+        #X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
         
         #fig = plt.figure() 
         #ax = plt.axes(projection="3d")
         #ax.scatter(x, z, v, c='r', marker='o')
 
+    
         start_time = time.time()
-        esp_interp = interpolate.LinearNDInterpolator(esp[:,0:3],esp[:,3])
+        esp_interp = interpolate.LinearNDInterpolator((esp[:,0],esp[:,1],esp[:,2]),esp[:,3])
         end_time = time.time()
         print("Interpolation of " + self.params['potential_grid'] + " potential took " +  str("%10.3f"%(end_time-start_time)) + "s")
         """
@@ -697,17 +730,13 @@ class hmat():
 
 
     """ ======================= POTMAT ======================"""
+
     def calc_potmat(self):  
         """calculate full potential matrix"""
         lmax = self.params['lmax']
         lmin = self.params['lmin']
         Nbas = self.params['Nbas']
         scheme = self.params['scheme']
-        #create list of basis set indices
-        """anglist = []
-        for l in range(lmin,lmax+1):
-            for m in range(0,l+1):
-                anglist.append([l,m])"""
 
         potmat = np.zeros((self.params['Nbas'] ,self.params['Nbas'] ), dtype = float)
 
@@ -726,18 +755,17 @@ class hmat():
             """calculate the <Y_l'm'(theta,phi)| V(r_in,theta,phi) | Y_lm(theta,phi)> integral """
 
             for i in range(Nbas):
-                #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
                 #print(ivec)
                 rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
                 for j in range(Nbas):
-                    #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+
                     if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                         potmat[i,j] = self.calc_potmatelem(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,potential_function)
 
-            #print("Potential matrix")
-            #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
-            #    print(potmat)
+            print("Potential matrix")
+            with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+                print(potmat)
 
 
         elif self.params['pot_type'] == "grid":  
@@ -765,37 +793,39 @@ class hmat():
                     scheme = str(words[2])
                     quad_schemes.append([i,n,scheme])
 
-
+                start_time = time.time()
                 for i in range(Nbas):
-                    #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
-                    #print(ivec)
+                    print(i)
                     rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
                     if rin <= self.params['r_cutoff']:
                         for elem in quad_schemes:
                             if elem[0] == self.maparray[i][2] and elem[1] == self.maparray[i][3]:
                                 scheme = elem[2]
-                                print(str(self.maparray[i][2]) + " " + str(self.maparray[i][2]) + " " + str(scheme))
+                                #print(str(self.maparray[i][2]) + " " + str(self.maparray[i][3]) + " " + str(scheme))
                                 break
 
-                        for j in range(Nbas):
-                            #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
+                        for j in range(i,Nbas):
                             if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                                 potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
+                                potmat[j,i] = potmat[i,j]
                     else:
-                        for j in range(Nbas):
+                        for j in range(i,Nbas):
                                 potmat[i,j] = 0.0  #radial cut-off
-            else:
+                                potmat[j,i] = potmat[i,j]
+            
 
+                end_time = time.time()
+
+                print("Global execution time for construction of potential matrix: " +  str("%10.3f"%(end_time-start_time)) + "s")
+                
+            else:
+                # do not use adaptive spherical quadratures, but a universal scheme for all matrix elements
                 for i in range(Nbas):
-                    #ivec = [self.maparray[i][0],self.maparray[i][1],self.maparray[i][2],self.maparray[i][3]]
-                    #print(ivec)
                     rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
 
                     for j in range(Nbas):
-                        #jvec = [self.maparray[j][0],self.maparray[j][1],self.maparray[j][2],self.maparray[j][3]]
                         if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
                             potmat[i,j] = self.calc_potmatelem_interp(self.maparray[i][0],self.maparray[i][1],self.maparray[j][0],self.maparray[j][1],rin,scheme,esp_interpolant)
-
 
             print("Potential matrix")
             with np.printoptions(precision=4, suppress=True, formatter={'float': '{:15.8f}'.format}, linewidth=400):
@@ -809,7 +839,7 @@ class hmat():
         return potmat
 
     def calc_potmatelem(self,l1,m1,l2,m2,rin,scheme,potential_function):
-        """calculate single element of potential matrix"""
+        """calculate single element of potential matrix on analytic potential"""
         myscheme = quadpy.u3.schemes[scheme]()
         #print(myscheme)
         """
@@ -824,7 +854,7 @@ class hmat():
    
 
     def calc_potmatelem_interp(self,l1,m1,l2,m2,rin,scheme,interpolant):
-        """calculate single element of potential matrix"""
+        """calculate single element of potential matrix on an interpolated potential"""
         myscheme = quadpy.u3.schemes[scheme]()
         #print(myscheme)
         """
@@ -837,7 +867,17 @@ class hmat():
 
         return val
    
+    def calc_potmatelem_interp_vec(self,l1,m1,l2,m2,rin,scheme,interpolant):
+        """ vectorized version: calculate single element of potential matrix on an interpolated potential"""
 
+        G = self.gen_leb_quad(scheme)
+
+        w = G[:,2]
+        f = np.conjugate(sph_harm( m1, l1, G[:,1] + np.pi , G[:,0] )) * \
+            self.pot_grid_interp_sph(interpolant,rin,G[:,0],G[:,1] + np.pi) * \
+            sph_harm( m2, l2, G[:,1] + np.pi , G[:,0] )
+
+        return np.dot(w,f) * 4.0 * np.pi
 
     def gauss_lobatto(self,n, n_digits):
             """
@@ -1132,7 +1172,6 @@ def plot_pot_chiral1():
     
             
     plt.show()
-
 
 
 

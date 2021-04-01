@@ -14,30 +14,33 @@ def gen_input():
 
     """====basis set parameters===="""
     params['basis'] = "prim" # or adiab
-    params['nlobatto'] = 8
-    params['nbins'] = 10
-    params['binwidth'] = 2.5
+    params['nlobatto'] = 3
+    params['nbins'] = 3
+    params['binwidth'] = 4.0
     params['rshift'] = 0.05 #rshift must be chosen such that it is non-zero and does not cover significant probability density region of any eigenfunction.
     params['lmin'] = 0
-    params['lmax'] = 4
+    params['lmax'] = 2
     
     """==== electrostatic potential ===="""
     params['pot_type'] = "grid" #type of potential: analytic or grid
     params['potential'] = "pot_hydrogen" # 1) pot_diagonal (for tests); 2) pot_hydrogen; 3) pot_null; 4) pot_grid_psi4_d2s
-    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_8_0.2_com" #filename for grid representation of ESP. Only if pot_type = grid
+    params['potential_grid'] ="esp_grid_h2o_uhf_631Gss_10_0.5_com" #filename for grid representation of ESP. Only if pot_type = grid
     params['r_cutoff'] = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
     """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
 
     """====runtime controls===="""
-    params['method'] = "dynamic_direct" #static: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
+    params['method'] = "dynamic_direct" #static or static_jit: solve field-free time-independent SE for a given potential, store matrix elements; dynamic_direct, dynamic_lanczos
+    params['matelemjit'] = True #use numba jit for evaluation of matrix elements
     params['save_psi0_hamiltonian'] = True #save the calculated Hamiltonian used to get psi0 in a file?
+    params['save_psi0_energies'] = True #save eigenenergies for psi0
+    params['ham_format'] = "csr" #regular, coo,csr
     params['save_init_hamiltonian'] = True #save the calculated field-free Hamiltonian in a file?
     params['save_ini_wf'] = True #save initial wavefunction generated with eigenvec option to a file (spectral representation)
-    params['read_ham_from_file'] = False #do we read stored initial hamiltonian matrix from file or generate it during run?
+    params['read_ham_from_file'] = True #do we read stored initial hamiltonian matrix from file or generate it during run?
     params['gen_adiabatic_basis'] = False #generate eigenbasis of the initial Hamiltonian?
 
 
-    params['ini_ham_file'] = "hmat_"+params['molec_name']+"_"+str(params['nbins'])+\
+    params['ini_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins'])+\
                         "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
                             str(params['binwidth'])+"_"+params['potential_grid']+".dat"
 
@@ -49,17 +52,17 @@ def gen_input():
 
 
     params['t0'] = 0.0 
-    params['tmax'] = 0.0 
-    params['dt'] = 1.0 
+    params['tmax'] = 1.0 
+    params['dt'] = 0.1 
     time_units = "as"
     params['sparse_format'] = False # True: store field-free matrices in csr format; False: store in full numpy array.
 
     """====initial state====""" 
-    params['ini_state'] = "spectral_manual" #from_file,spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
+    params['ini_state'] = "from_file" #from_file,spectral_manual, spectral_file, grid_1d_rad, grid_2d_sph,grid_3d,solve (solve static problem in Lobatto basis), eigenvec (eigenfunciton of static hamiltonian)
     params['ini_state_quad'] = ("Gauss-Laguerre",60) #quadrature type for projection of the initial wavefunction onto lobatto basis: Gauss-Laguerre, Gauss-Hermite
     params['ini_state_file_grid'] = "wf0grid.txt" #if requested: initial wavefunction on a 3D grid of (r,theta,phi)
     params['nbins_iniwf'] = 3 #number of bins in a reduced-size grid for generating the initial wavefunction by diagonalizing the static hamiltonian
-    params['eigenvec_id'] = 0 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
+    params['eigenvec_id'] = 1 #id (in ascending energy order) of the eigenvector of the static Hamiltonian to be used as the initial wavefunction for time-propagation. Beginning 0.
  
     params['n_ini_vec'] = 10 #number of initial wavefunctions (orbitals) stored
 
@@ -71,12 +74,15 @@ def gen_input():
     params['psi0_ham_file'] = "hmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
                         "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
                             str(params['binwidth'])+"_"+params['potential_grid']+".dat"
+    params['psi0_pot_file'] = "potmat_psi0_"+params['molec_name']+"_"+str(params['nbins_iniwf'])+\
+                        "_"+str(params['nlobatto'])+"_"+str(params['lmax'])+"_"+\
+                            str(params['binwidth'])+"_"+params['potential_grid']+".dat"
 
 
     """==== spherical quadratures ===="""
     params['scheme'] = "lebedev_011" #angular integration rule
     params['adaptive_quad'] =  True#True: read degrees of adaptive angular quadrature for each radial grid point. Use them in calculations of matrix elements.
-    params['gen_adaptive_quads'] = True #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
+    params['gen_adaptive_quads'] = False #generate and save in file a list of degrees for adaptive angular quadratures (Lebedev for now). This list is potential and basis dependent. To be read upon construction of the hamiltonian.
     params['quad_tol'] = 1e-3 #tolerance threshold for the convergence of potential energy matrix elements (global) using spherical quadratures
     params['atol'] = 1e-2 #absolute tolerance for the hamiltonian matrix to be non-symmetric
     params['rtol'] = 1e-2 #relative tolerance for the hamiltonian matrix to be non-symmetric
