@@ -48,3 +48,20 @@ def INTERP_POT(params):
         plt.show()
 
     return esp_interp
+
+def calc_interp_sph(interpolant,r,theta,phi):
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    z = r * np.cos(theta)
+    return interpolant(x,y,z)
+
+def BUILD_ESP_MAT(Gs,rgrid,esp_interpolant,r_cutoff):
+    VG = []
+    Gr = rgrid.flatten()
+
+    for igs, gs in enumerate(Gs):
+        if Gr[igs] <= r_cutoff:
+            VG.append( np.array( [calc_interp_sph( esp_interpolant, Gr[igs], gs[:,0], gs[:,1] )] ) )
+        else:
+            VG.append( np.array( [-1.0 / Gr[igs] * np.ones(np.size(gs[:,0])) ] ) )
+    return VG

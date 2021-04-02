@@ -53,8 +53,6 @@ def GEN_GRID(sph_quad_list):
         gs = read_leb_quad(str(elem[3]))
         Gs.append( gs )
 
-    print(Gs)
-
     return Gs
 
 
