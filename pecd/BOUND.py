@@ -73,6 +73,13 @@ def BUILD_POTMAT0(params):
 
     if  params['gen_adaptive_quads'] == True:
         sph_quad_list = gen_adaptive_quads( params, esp_interpolant, rgrid )
+    else:
+        sph_quad_list = read_adaptive_quads(params)
+
+    print("sph_quad_list")
+    print(sph_quad_list )
+    GRID.GEN_GRID(sph_quad_list)
+
 
 
 def calc_interp_sph(interpolant,r,theta,phi):
@@ -99,7 +106,18 @@ def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
 
     return val
 
-
+def read_adaptive_quads(params):
+    levels = []
+    quadfilename = params['working_dir'] + params['file_quad_levels'] 
+    fl = open( quadfilename , 'r' )
+    for line in fl:
+        words   = line.split()
+        i       = int(words[0])
+        n       = int(words[1])
+        xi      = int(words[2])
+        scheme  = str(words[3])
+        levels.append([i,n,xi,scheme])
+    return levels
 
 def gen_adaptive_quads(params, esp_interpolant, rgrid):
 
@@ -154,8 +172,7 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
                         print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
                         exit()
             else:
-                ind = 2 * lmax + 1
-                scheme == spherical_schemes[ind-1]
+                scheme == spherical_schemes[lmax+2]
                 sph_quad_list.append([ i, n, xi, str(scheme)])
                 xi += 1
 

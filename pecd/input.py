@@ -33,16 +33,16 @@ def gen_input():
 
 
     """==== potential energy matrix ===="""
-    params['gen_adaptive_quads'] = True
-    params['sph_quad_tol'] = 1e-2
+    params['gen_adaptive_quads'] = False
+    params['sph_quad_tol']  = 1e-2
     
 
     """==== electrostatic potential ===="""
     params['esp_file']      = "esp_grid_h2o_uhf_631Gss_10_0.5_com" #filename for the grid representation of the ESP
-    params['r_cutoff'] = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
+    params['r_cutoff']      = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
     """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
 
-    params['plot_esp'] = False
+    params['plot_esp']      = False
 
     """==== file paths and names ===="""
 
