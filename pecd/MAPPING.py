@@ -5,14 +5,14 @@
 #
 import numpy as np
 
-def GENMAP(nlobs,nbins,lmax,params):
+def GENMAP(nlobs,nbins,lmax,maptype,working_dir):
 
-    if params['map_type'] == 'DVR':
+    if maptype == 'DVR':
         maparray, Nbas = MAP_DVR(nlobs,nbins,lmax)
-    elif params['map_type'] == 'SPECT':
+    elif maptype == 'SPECT':
         maparray, Nbas = MAP_SPECT(nlobs,nbins,lmax)
 
-    fl = open(params['working_dir'] + 'map.dat','w')
+    fl = open(working_dir + 'map.dat','w')
     for elem in maparray:   
         fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+ "  %5d"%elem[3]+  " %5d"%elem[4]+" %5d"%elem[5]+"\n")
     fl.close()
@@ -68,6 +68,18 @@ def MAP_SPECT(nlobs,nbins,lmax):
             
 
     return maparray, imap
+
+
+def GEN_SPHLIST(lmax):
+    #create list of basis set indices for adaptive quadratures
+    sphlist = []
+    if lmax == 0:
+        raise ValueError("lmax = 0 makes no sense in the generation of adaptive quadratures")
+
+    for l in range(lmax-1,lmax+1):
+        for m in range(l-1,l+1):
+            sphlist.append([l,m])
+    return sphlist
 
 """ TESTING 
 params = {}
