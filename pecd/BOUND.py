@@ -31,7 +31,7 @@ def BUILD_HMAT0(params):
 
 
     """ calculate hmat """
-    BUILD_POTMAT0(params)
+    BUILD_POTMAT0(params,maparray,Nbas)
 
     """ diagonalize hmat """
     start_time = time.time()
@@ -64,29 +64,27 @@ def BUILD_KEOMAT0(params):
     print("under construction")
 
 
-def BUILD_POTMAT0(params):
+def BUILD_POTMAT0(params,maparray,Nbas):
 
-    rgrid, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
+    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
     print("Interpolating electrostatic potential")
     esp_interpolant = POTENTIAL.INTERP_POT(params)
 
     if  params['gen_adaptive_quads'] == True:
-        sph_quad_list = gen_adaptive_quads( params, esp_interpolant, rgrid )
+        sph_quad_list = gen_adaptive_quads( params, esp_interpolant, Gr )
     else:
         sph_quad_list = read_adaptive_quads(params)
 
-    print("sph_quad_list")
-    print(sph_quad_list )
-    GRID.GEN_GRID(sph_quad_list)
 
+    Gs = GRID.GEN_GRID(sph_quad_list)
 
+    VG = POTENTIAL.BUILD_ESP_MAT(Gs,Gr,esp_interpolant, params['r_cutoff'] )
 
-def calc_interp_sph(interpolant,r,theta,phi):
-    x = r * np.sin(theta) * np.cos(phi)
-    y = r * np.sin(theta) * np.sin(phi)
-    z = r * np.cos(theta)
-    return interpolant(x,y,z)
+    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    print(vlist)
+    exit()
+
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""
@@ -102,7 +100,7 @@ def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """
     val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate( sph_harm( m1, l1,  theta_phi[1]+np.pi, theta_phi[0] ) ) \
                                                                      * sph_harm( m2, l2, theta_phi[1]+np.pi, theta_phi[0] ) \
-                                                                     * calc_interp_sph( esp_interpolant, rin, theta_phi[0], theta_phi[1]+np.pi) ) 
+                                                                     * POTENTIAL.calc_interp_sph( esp_interpolant, rin, theta_phi[0], theta_phi[1]+np.pi) ) 
 
     return val
 

@@ -81,6 +81,24 @@ def GEN_SPHLIST(lmax):
             sphlist.append([l,m])
     return sphlist
 
+def GEN_VLIST(maparray, Nbas, map_type):
+    #create list of indices for matrix elements of the potential
+    vlist = []
+
+    if map_type == 'DVR':
+        for p1 in range(Nbas):
+            for p2 in range(p1, Nbas):
+                if maparray[p1][2] == maparray[p2][2]:
+                    vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
+
+    elif map_type == 'SPECT':
+        for p1 in range(Nbas):
+            for p2 in range(p1, Nbas):
+                if maparray[p1][2] == maparray[p2][2]:
+                    vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
+    return vlist
+
+
 """ TESTING 
 params = {}
 params['map_type'] = 'SPECT'
