@@ -19,11 +19,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10
+    params['bound_nlobs']   = 20
     params['bound_nbins']   = 1
     params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.001 
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 10
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0

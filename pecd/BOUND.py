@@ -22,7 +22,7 @@ from numba import jit, prange
 import matplotlib.pyplot as plt
 
 """ start of @jit section """
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
@@ -48,7 +48,7 @@ def P(l, m, x):
 	
 	return pll
 
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def divfact(a, b):
 	# PBRT style
 	if (b == 0):
@@ -71,15 +71,15 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -88,20 +88,21 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-@jit( nopython=True, parallel=True, fastmath=False) 
+#@jit( nopython=True, parallel=False, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
-    for p1 in prange(vlist.shape[0]):
-        print(vlist[p1,:])
+    for p1 in range(vlist.shape[0]):
+        #print(vlist[p1,:])
         w = Gs[vlist[p1,0]][:,2]
         G = Gs[vlist[p1,0]] 
         V = VG[vlist[p1,0]]
 
         f = SH( vlist[p1,1] , vlist[p1,2]  , G[:,0], G[:,1] + np.pi ) * \
-            SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi )  
-            
-        pot.append( np.dot(w,f.T) * 4.0 * np.pi  )
+            SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi ) * \
+            V[:]
+
+        pot.append( [np.dot(w,f.T) * 4.0 * np.pi ] )
         potind.append( [ vlist[p1,5], vlist[p1,6] ] )
         #potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
     return pot, potind
@@ -115,6 +116,7 @@ def BUILD_HMAT0(params):
     maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
                                      params['map_type'], params['working_dir'] )
 
+    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
     if params['hmat_format'] == 'csr':
         hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
@@ -124,7 +126,7 @@ def BUILD_HMAT0(params):
 
     """ calculate hmat """
 
-    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas )
+    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
 
     for ielem, elem in enumerate(potmat0):
         #print(potind[ielem][0],potind[ielem][1])
@@ -132,7 +134,7 @@ def BUILD_HMAT0(params):
 
 
     #plot_mat(hmat)
-    plt.spy(hmat,precision=0.01, markersize=5)
+    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
     plt.show()
     
     """ diagonalize hmat """
@@ -141,6 +143,9 @@ def BUILD_HMAT0(params):
     end_time = time.time()
     print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
+    print("Normalization of the wavefunction: ")
+    for v in range(params['num_ini_vec']):
+        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs0[:,v] ) * coeffs0[:,v] ) )))
 
     if params['save_ham0'] == True:
         if params['hmat_format'] == 'csr':
@@ -154,21 +159,20 @@ def BUILD_HMAT0(params):
         for ielem,elem in enumerate(maparray):
             psi0file.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                             " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
-                            "\t ".join('{:10.5e}'.format(coeffs0[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
+                            "\t\t ".join('{:10.5e}'.format(coeffs0[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
 
     if params['save_enr0'] == True:
         with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
             np.savetxt( energyfile, enr0 , fmt='%10.5f' )
   
-    print(hmat)
+    print(enr0)
 
 def BUILD_KEOMAT0(params):
     print("under construction")
 
 
-def BUILD_POTMAT0( params, maparray, Nbas  ):
+def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
-    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
     print("Interpolating electrostatic potential")
     esp_interpolant = POTENTIAL.INTERP_POT(params)
@@ -184,11 +188,17 @@ def BUILD_POTMAT0( params, maparray, Nbas  ):
     vlist = np.asarray(vlist)
 
 
+
     if params['calc_method'] == 'jit':
+        #start_time = time.time()
+        #potmat0, potind = calc_potmat_jit( vlist[0:1,:], VG, Gs )
+        #end_time = time.time()
+        #print("First call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
         start_time = time.time()
         potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
         end_time = time.time()
-        print("Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        print("Second call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
     return potmat0, potind
 
@@ -241,6 +251,7 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
     for elem in list(quadpy.u3.schemes.keys()):
         if 'lebedev' in elem:
             spherical_schemes.append(elem)
+
     xi = 0
     for i in range(np.size( rgrid, axis=0 )): 
         for n in range(np.size( rgrid, axis=1 )): 
@@ -274,9 +285,9 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
                     #if no convergence reached raise warning
                     if ( scheme == spherical_schemes[len(spherical_schemes)-1] and np.any( diff > quad_tol )):
                         print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
-                        exit()
+
             else:
-                scheme == spherical_schemes[lmax+2]
+                scheme == spherical_schemes[2*lmax+3]
                 sph_quad_list.append([ i, n, xi, str(scheme)])
                 xi += 1
 
