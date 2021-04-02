@@ -17,6 +17,47 @@ from sympy.polys.orthopolys import (legendre_poly, laguerre_poly,
 from sympy.polys.rootoftools import RootOf
 from sympy.core.compatibility import range
 
+def read_leb_quad(scheme):
+    sphgrid = []
+    #print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
+    fl = open( "./lebedev_grids/" + str(scheme) + ".txt", 'r' )
+    for line in fl:
+        words   = line.split()
+        phi     = float(words[0])
+        theta   = float(words[1])
+        w       = float(words[2])
+        sphgrid.append([theta,phi,w])
+
+    sphgrid = np.asarray(sphgrid)
+    sphgrid[:,0:2] = np.pi * sphgrid[:,0:2] / 180.0 #to radians
+
+    """
+    xx = np.sin(sphgrid[:,1])*np.cos(sphgrid[:,0])
+    yy = np.sin(sphgrid[:,1])*np.sin(sphgrid[:,0])
+    zz = np.cos(sphgrid[:,1])
+    #Set colours and render
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(xx,yy,zz,color="k",s=20)
+    ax.set_xlim([-1,1])
+    ax.set_ylim([-1,1])
+    ax.set_zlim([-1,1])
+    plt.tight_layout()
+    #plt.show()
+    """
+    return sphgrid
+
+def GEN_GRID(sph_quad_list):
+    Gs = []
+    for elem in sph_quad_list:
+        gs = read_leb_quad(str(elem[3]))
+        Gs.append( gs )
+
+    print(Gs)
+
+    return Gs
+
+
 def gauss_lobatto(n, n_digits):
     """
     Computes the Gauss-Lobatto quadrature [1]_ points and weights.
