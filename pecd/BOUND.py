@@ -20,7 +20,7 @@ import time
 from numba import jit, prange
 
 """ start of @jit section """
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
@@ -47,7 +47,7 @@ def P(l, m, x):
 	return pll
 
 
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def divfact(a, b):
 	# PBRT style
 	if (b == 0):
@@ -70,16 +70,16 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
 
-@jit(nopython=True,parallel=False,fastmath=False) 
+#@jit(nopython=True,parallel=False,fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -89,19 +89,23 @@ def SH(l, m, theta, phi):
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
 
-@jit( nopython=True, parallel=False, fastmath=False ) 
-def calc_potmat_jit( vlist, VG ):
-    
-    for i in range(N):
-        rin = rgrid[maparray[i,2],maparray[i,3]]
-        for j in range(i,N):
-            if maparray[i,2] == maparray[j,2] and maparray[i,3] == maparray[j,3]:
+#@jit( nopython=True, parallel=False, fastmath=False ) 
+def calc_potmat_jit( vlist, VG, Gs, potmat ):
 
-                w = G[:,2]
-                f = np.conjugate(SH( maparray[i,0] , maparray[i,1] , G[:,0], G[:,1] + np.pi  )) *\
-                      SH( maparray[j,0] , maparray[j,1] , G[:,0], G[:,1] + np.pi  ) *\
-                          pot_grid_interp_sph(interpolant,rin,G[:,0], G[:,1] + np.pi ) 
-                potmat[i,j] = np.dot(w,f) * 4.0 * np.pi
+    for p1 in range(vlist.shape[0]):
+        print(vlist[p1,:])
+        w = Gs[vlist[p1,0]][:,2]
+
+        G = Gs[vlist[p1,0]] 
+
+        V = VG[vlist[p1,0]]
+
+
+        f = np.conjugate( SH( vlist[p1,1] , vlist[p1,2]  , G[:,0], G[:,1] + np.pi ) ) * \
+                          SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi )   * \
+                          V[:]
+       
+        potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
     return potmat
 
 
@@ -121,7 +125,11 @@ def BUILD_HMAT0(params):
 
 
     """ calculate hmat """
-    BUILD_POTMAT0(params,maparray,Nbas)
+    potmat =  np.zeros((Nbas, Nbas), dtype=np.float64)
+
+    potmat0 = BUILD_POTMAT0( params, maparray, Nbas, potmat )
+
+    hmat = potmat0
 
     """ diagonalize hmat """
     start_time = time.time()
@@ -154,7 +162,7 @@ def BUILD_KEOMAT0(params):
     print("under construction")
 
 
-def BUILD_POTMAT0(params,maparray,Nbas):
+def BUILD_POTMAT0( params, maparray, Nbas, potmat ):
 
     Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
@@ -172,9 +180,14 @@ def BUILD_POTMAT0(params,maparray,Nbas):
     VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
 
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = np.asarray(vlist)
+
 
     if params['calc_method'] == 'jit':
-        potmat0 = calc_potmat_jit( vlist, VG )
+        start_time = time.time()
+        potmat0 = calc_potmat_jit( vlist, VG, Gs, potmat )
+        end_time = time.time()
+        print("Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
     return potmat0
 
