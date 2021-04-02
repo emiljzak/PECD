@@ -14,6 +14,7 @@ def gen_input():
 
     """==== BOUND ===="""
 
+    params['map_type'] = 'DVR' #DVR or SPECT
 
     """==== basis set parameters for BOUND ===="""
 
@@ -21,7 +22,6 @@ def gen_input():
     params['bound_nbins']   = 1
     params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.001 
-    params['bound_lmin']    = 0
     params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
