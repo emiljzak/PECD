@@ -19,8 +19,10 @@ import time
 
 from numba import jit, prange
 
+import matplotlib.pyplot as plt
+
 """ start of @jit section """
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
@@ -46,8 +48,7 @@ def P(l, m, x):
 	
 	return pll
 
-
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,fastmath=False) 
 def divfact(a, b):
 	# PBRT style
 	if (b == 0):
@@ -70,16 +71,15 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
-
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -88,25 +88,23 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-
-#@jit( nopython=True, parallel=False, fastmath=False ) 
-def calc_potmat_jit( vlist, VG, Gs, potmat ):
-
-    for p1 in range(vlist.shape[0]):
+@jit( nopython=True, parallel=True, fastmath=False) 
+def calc_potmat_jit( vlist, VG, Gs ):
+    pot = []
+    potind = []
+    for p1 in prange(vlist.shape[0]):
         print(vlist[p1,:])
         w = Gs[vlist[p1,0]][:,2]
-
         G = Gs[vlist[p1,0]] 
-
         V = VG[vlist[p1,0]]
 
-
-        f = np.conjugate( SH( vlist[p1,1] , vlist[p1,2]  , G[:,0], G[:,1] + np.pi ) ) * \
-                          SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi )   * \
-                          V[:]
-       
-        potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
-    return potmat
+        f = SH( vlist[p1,1] , vlist[p1,2]  , G[:,0], G[:,1] + np.pi ) * \
+            SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi )  
+            
+        pot.append( np.dot(w,f.T) * 4.0 * np.pi  )
+        potind.append( [ vlist[p1,5], vlist[p1,6] ] )
+        #potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
+    return pot, potind
 
 
 """ end of @jit section """
@@ -125,12 +123,18 @@ def BUILD_HMAT0(params):
 
 
     """ calculate hmat """
-    potmat =  np.zeros((Nbas, Nbas), dtype=np.float64)
 
-    potmat0 = BUILD_POTMAT0( params, maparray, Nbas, potmat )
+    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas )
 
-    hmat = potmat0
+    for ielem, elem in enumerate(potmat0):
+        #print(potind[ielem][0],potind[ielem][1])
+        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
 
+
+    #plot_mat(hmat)
+    plt.spy(hmat,precision=0.01, markersize=5)
+    plt.show()
+    
     """ diagonalize hmat """
     start_time = time.time()
     enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
@@ -162,7 +166,7 @@ def BUILD_KEOMAT0(params):
     print("under construction")
 
 
-def BUILD_POTMAT0( params, maparray, Nbas, potmat ):
+def BUILD_POTMAT0( params, maparray, Nbas  ):
 
     Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
@@ -174,22 +178,19 @@ def BUILD_POTMAT0( params, maparray, Nbas, potmat ):
     else:
         sph_quad_list = read_adaptive_quads(params)
 
-
     Gs = GRID.GEN_GRID( sph_quad_list )
-
     VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
-
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist)
 
 
     if params['calc_method'] == 'jit':
         start_time = time.time()
-        potmat0 = calc_potmat_jit( vlist, VG, Gs, potmat )
+        potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
         end_time = time.time()
         print("Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    return potmat0
+    return potmat0, potind
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""
@@ -289,6 +290,78 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
         fl.write( str('%4d '%item[0]) + str('%4d '%item[1]) + str('%4d '%item[2]) + str(item[3]) + "\n")
 
     return sph_quad_list
+
+
+
+def plot_mat(mat):
+    """ plot 2D array with color-coded magnitude"""
+    fig, ax = plt.subplots()
+
+    im, cbar = heatmap(mat, 0, 0, ax=ax, cmap="gnuplot", cbarlabel="Hij")
+
+    fig.tight_layout()
+    plt.show()
+
+def heatmap( data, row_labels, col_labels, ax=None,
+            cbar_kw={}, cbarlabel="", **kwargs ):
+    """
+    Create a heatmap from a numpy array and two lists of labels.
+
+    Parameters
+    ----------
+    data
+        A 2D numpy array of shape (N, M).
+    row_labels
+        A list or array of length N with the labels for the rows.
+    col_labels
+        A list or array of length M with the labels for the columns.
+    ax
+        A `matplotlib.axes.Axes` instance to which the heatmap is plotted.  If
+        not provided, use current axes or create a new one.  Optional.
+    cbar_kw
+        A dictionary with arguments to `matplotlib.Figure.colorbar`.  Optional.
+    cbarlabel
+        The label for the colorbar.  Optional.
+    **kwargs
+        All other arguments are forwarded to `imshow`.
+    """
+
+    if not ax:
+        ax = plt.gca()
+
+    # Plot the heatmap
+    im = ax.imshow(np.abs(data), **kwargs)
+
+    # Create colorbar
+    im.set_clim(0, np.max(np.abs(data)))
+    cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
+    cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
+
+    # We want to show all ticks...
+    ax.set_xticks(np.arange(data.shape[1]))
+    ax.set_yticks(np.arange(data.shape[0]))
+    # ... and label them with the respective list entries.
+    """ax.set_xticklabels(col_labels)
+    ax.set_yticklabels(row_labels)"""
+
+    # Let the horizontal axes labeling appear on top.
+    ax.tick_params(top=True, bottom=False,
+                labeltop=True, labelbottom=False)
+
+    # Rotate the tick labels and set their alignment.
+    #plt.setp(ax.get_xticklabels(), rotation=-30, ha="right",rotation_mode="anchor")
+
+    # Turn spines off and create white grid.
+    for edge, spine in ax.spines.items():
+        spine.set_visible(False)
+
+    #ax.set_xticks(np.arange(data.shape[1]+1)-.5, minor=True)
+    #ax.set_yticks(np.arange(data.shape[0]+1)-.5, minor=True)
+    ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
+    #ax.tick_params(which="minor", bottom=False, left=False)
+
+    return im, cbar
+
 
 if __name__ == "__main__":      
 
