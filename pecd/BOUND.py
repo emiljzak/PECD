@@ -7,9 +7,12 @@
 import input
 import MAPPING
 import POTENTIAL
+import GRID 
 
 import numpy as np
 from scipy import sparse
+from scipy.special import sph_harm
+import quadpy
 
 import sys
 import time
@@ -17,8 +20,9 @@ import time
 
 def BUILD_HMAT0(params):
 
-    maparray, Nbas = MAPPING.GENMAP(params['bound_nlobs'],params['bound_nbins'],params['bound_lmax'],\
-        params['map_type'],params['working_dir'])
+    maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
+                                     params['map_type'], params['working_dir'] )
+
 
     if params['hmat_format'] == 'csr':
         hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
@@ -62,88 +66,109 @@ def BUILD_KEOMAT0(params):
 
 def BUILD_POTMAT0(params):
 
+    rgrid, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
+
     print("Interpolating electrostatic potential")
     esp_interpolant = POTENTIAL.INTERP_POT(params)
 
     if  params['gen_adaptive_quads'] == True:
-        sph_quad_list = gen_adaptive_quads(params,esp_interpolant)
+        sph_quad_list = gen_adaptive_quads( params, esp_interpolant, rgrid )
+
+
+def calc_interp_sph(interpolant,r,theta,phi):
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    z = r * np.cos(theta)
+    return interpolant(x,y,z)
+
+def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
+    """calculate single element of the potential matrix on an interpolated potential"""
+    myscheme = quadpy.u3.schemes[scheme]()
+    """
+    Symbols: 
+            theta_phi[0] = theta in [0,pi]
+            theta_phi[1] = phi  in [-pi,pi]
+            sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we 
+                                                                 put the phi angle in range [0,2pi] and 
+                                                                 the  theta angle in range [0,pi] as required by 
+                                                                 the scipy special funciton sph_harm
+    """
+    val = myscheme.integrate_spherical(lambda theta_phi: np.conjugate( sph_harm( m1, l1,  theta_phi[1]+np.pi, theta_phi[0] ) ) \
+                                                                     * sph_harm( m2, l2, theta_phi[1]+np.pi, theta_phi[0] ) \
+                                                                     * calc_interp_sph( esp_interpolant, rin, theta_phi[0], theta_phi[1]+np.pi) ) 
+
+    return val
 
 
 
-
-
-
-def gen_adaptive_quads(params,esp_interpolant):
+def gen_adaptive_quads(params, esp_interpolant, rgrid):
 
     sph_quad_list = [] #list of quadrature levels needed to achieve convergence quad_tol of the potential energy matrix elements (global)
 
-    lmax = params['lmax']
+    lmax = params['bound_lmax']
     quad_tol = params['sph_quad_tol']
 
     print("Testing potential energy matrix elements using Lebedev quadratures")
-    #create list of basis set indices
-    anglist = []
-    for l in range(lmax-1,lmax+1):
-        for m in range(l-1,l+1):
-            anglist.append([l,m])
 
-    val =  np.zeros(shape=(len(anglist)**2),dtype=complex)
-    val_prev = np.zeros(shape=(len(anglist)**2),dtype=complex)
+    sphlist = MAPPING.GEN_SPHLIST(lmax)
 
-    #pull out Lebedev schemes into a list
+    val =  np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
+    val_prev = np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
+
     spherical_schemes = []
     for elem in list(quadpy.u3.schemes.keys()):
         if 'lebedev' in elem:
             spherical_schemes.append(elem)
-    #print("Available schemes: " + str(spherical_schemes))
-
-    for i in range(np.size(self.rgrid,axis=0)): #iterate over radial indices in the basis: only l=0, m=0
-        for n in range(np.size(self.rgrid,axis=1)): 
-            rin = self.rgrid[i,n]
-            print(i,n,rin)
-            if rin <= self.params['r_cutoff']:
-                #iterate over the schemes
+    xi = 0
+    for i in range(np.size( rgrid, axis=0 )): 
+        for n in range(np.size( rgrid, axis=1 )): 
+            rin = rgrid[i,n]
+            print("i = " + str(i) + ", n = " + str(n) + ", xi = " + str(xi) + ", r = " + str(rin) )
+            if rin <= params['r_cutoff']:
                 for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-
                     k=0
-                    for l1,m1 in anglist:
-                        for l2,m2 in anglist:
+                    for l1,m1 in sphlist:
+                        for l2,m2 in sphlist:
                         
-                            val[k] = self.calc_potmatelem_interp_vec(l1,m1,l2,m2,rin,scheme,esp_interpolant )
-                            print(" %4d %4d %4d %4d"%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag)+ '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
-                                '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + '%12.6f '%np.abs(val[k]-val_prev[k])  )
-                            k+=1
+                            val[k] = calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant )
+                            print(  '%4d %4d %4d %4d'%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag) + \
+                                    '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
+                                    '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + \
+                                    '%12.6f '%np.abs(val[k]-val_prev[k])  )
+                            k += 1
 
-                    #check for convergence
                     diff = np.abs(val - val_prev)
 
-                    if (np.any(diff>quad_tol)):
-                        print(str(scheme)+" convergence not reached") 
+                    if (np.any( diff > quad_tol )):
+                        print( str(scheme) + " convergence not reached" ) 
                         for k in range(len(val_prev)):
                             val_prev[k] = val[k]
-
-                    elif (np.all(diff<quad_tol)):     
-                        print(str(scheme)+" convergence reached!!!")
-                        val_conv = val_prev
-                        levels.append([i,n,str(scheme)])
+                    elif ( np.all( diff < quad_tol ) ):     
+                        print( str(scheme) + " convergence reached !!!")
+                        sph_quad_list.append([ i, n, xi, str(scheme)])
+                        xi += 1
                         break
 
                     #if no convergence reached raise warning
-                    if (scheme == spherical_schemes[len(spherical_schemes)-1] and np.any(diff>quad_tol)):
+                    if ( scheme == spherical_schemes[len(spherical_schemes)-1] and np.any( diff > quad_tol )):
                         print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
+                        exit()
             else:
-                scheme == spherical_schemes[0]
-                levels.append([i,n,str(scheme)])
+                ind = 2 * lmax + 1
+                scheme == spherical_schemes[ind-1]
+                sph_quad_list.append([ i, n, xi, str(scheme)])
+                xi += 1
 
-    print("Converged quadrature levels:")
-    print(levels)
-    quadfilename = self.params['working_dir']+self.params['quad_levels_file']
-    fname=open(quadfilename,'w')
+
+    print("Converged quadrature levels: ")
+    print(sph_quad_list)
+    quadfilename = params['working_dir'] + params['file_quad_levels'] 
+    fl = open(quadfilename,'w')
     print("saving quadrature levels to file: " + quadfilename )
-    for item in levels:
-        fname.write(str('%4d '%item[0]) +str('%4d '%item[1])+str(item[2]) +"\n")
+    for item in sph_quad_list:
+        fl.write( str('%4d '%item[0]) + str('%4d '%item[1]) + str('%4d '%item[2]) + str(item[3]) + "\n")
 
-
+    return sph_quad_list
 
 if __name__ == "__main__":      
 
