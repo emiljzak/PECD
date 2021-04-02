@@ -22,15 +22,15 @@ from numba import jit, prange
 import matplotlib.pyplot as plt
 
 """ start of @jit section """
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
 		somx2 = np.sqrt((1.0-x)*(1.0+x))
 		fact = 1.0
 		for i in range(1,m+1):
-			pmm = pmm * (-fact) * somx2
-			fact = fact+ 2.0
+			pmm = pmm * (-1.0 * fact) * somx2
+			fact = fact + 2.0
 	
 	if l==m :
 		return pmm * np.ones(x.shape,)
@@ -59,10 +59,10 @@ def divfact(a, b):
 
 	x = fa-fb+1.0
 	while x <= fa+fb:
-		v *= x;
+		v *= x
 		x+=1.0
 
-	return 1.0 / v;
+	return 1.0 / v
 
 LOOKUP_TABLE = np.array([
     1, 1, 2, 6, 24, 120, 720, 5040, 40320,
@@ -71,15 +71,20 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
-#@jit(nopython=True,parallel=False,fastmath=False) 
+def factorial(x):
+	if(x == 0):
+		return 1.0
+	return x * factorial(x-1)
+
+@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
-#@jit(nopython=True,parallel=False,fastmath=False) 
+@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -88,11 +93,11 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-#@jit( nopython=True, parallel=False, fastmath=False) 
+@jit( nopython=True, parallel=False, cache = True, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
-    for p1 in range(vlist.shape[0]):
+    for p1 in prange(vlist.shape[0]):
         #print(vlist[p1,:])
         w = Gs[vlist[p1,0]][:,2]
         G = Gs[vlist[p1,0]] 
@@ -187,19 +192,22 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist)
 
-
-
     if params['calc_method'] == 'jit':
-        #start_time = time.time()
-        #potmat0, potind = calc_potmat_jit( vlist[0:1,:], VG, Gs )
-        #end_time = time.time()
-        #print("First call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-
         start_time = time.time()
         potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
         end_time = time.time()
-        print("Second call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        print("First call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
+        #start_time = time.time()
+        #potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
+        #end_time = time.time()
+        #print("Second call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+    """
+    if params['hmat_format'] == "regular":
+        potmat = convert_lists_to_regular(potmat0,potind)
+    elif params['hmat_format'] == "csr":
+        potmat = convert_lists_to_csr(potmat0,potind)
+    """
     return potmat0, potind
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
@@ -287,8 +295,9 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
                         print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
 
             else:
-                scheme == spherical_schemes[2*lmax+3]
+                scheme = spherical_schemes[lmax+1]
                 sph_quad_list.append([ i, n, xi, str(scheme)])
+                print("r>r_cutoff: "+str(scheme))
                 xi += 1
 
 
@@ -301,8 +310,6 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
         fl.write( str('%4d '%item[0]) + str('%4d '%item[1]) + str('%4d '%item[2]) + str(item[3]) + "\n")
 
     return sph_quad_list
-
-
 
 def plot_mat(mat):
     """ plot 2D array with color-coded magnitude"""
