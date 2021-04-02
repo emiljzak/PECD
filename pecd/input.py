@@ -34,8 +34,8 @@ def gen_input():
 
     """==== potential energy matrix ===="""
     params['gen_adaptive_quads'] = True
-    params['sph_quad_tol'] = 1e-3
-
+    params['sph_quad_tol'] = 1e-2
+    
 
     """==== electrostatic potential ===="""
     params['esp_file']      = "esp_grid_h2o_uhf_631Gss_10_0.5_com" #filename for the grid representation of the ESP
@@ -47,7 +47,7 @@ def gen_input():
     """==== file paths and names ===="""
 
     params['file_psi0']     =   "psi0_" + params['molec_name']   + \
-                                "_"+str(params['bound_nbins'])   + \
+                                "_" + str(params['bound_nbins'])   + \
                                 "_" + str(params['bound_nlobs']) + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
@@ -55,17 +55,25 @@ def gen_input():
 
 
     params['file_hmat0']    =   "hmat0_" + params['molec_name']   + \
-                                "_"+str(params['bound_nbins'])   + \
+                                "_" + str(params['bound_nbins'])   + \
                                 "_" + str(params['bound_nlobs']) + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
                                 "_" + params['esp_file']   + ".dat"
 
     params['file_enr0']     =   "enr0_" + params['molec_name']   + \
-                                "_"+str(params['bound_nbins'])   + \
+                                "_" + str(params['bound_nbins'])   + \
                                 "_" + str(params['bound_nlobs']) + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
                                 "_" + params['esp_file']   + ".dat"
+
+    params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
+                                "_" + str(params['bound_nbins'])   + \
+                                "_" + str(params['bound_nlobs']) + \
+                                "_" + str(params['bound_binw'])    + \
+                                "_" + str(params['bound_lmax'])  + \
+                                "_" + params['esp_file'] + \
+                                "_" + str(params['sph_quad_tol'])   + ".dat"
 
     return params
