@@ -17,6 +17,96 @@ import quadpy
 import sys
 import time
 
+from numba import jit, prange
+
+""" start of @jit section """
+@jit(nopython=True,parallel=False,fastmath=False) 
+def P(l, m, x):
+	pmm = np.ones(1,)
+	if m>0:
+		somx2 = np.sqrt((1.0-x)*(1.0+x))
+		fact = 1.0
+		for i in range(1,m+1):
+			pmm = pmm * (-fact) * somx2
+			fact = fact+ 2.0
+	
+	if l==m :
+		return pmm * np.ones(x.shape,)
+	
+	pmmp1 = x * (2.0*m+1.0) * pmm
+	
+	if l==m+1:
+		return pmmp1
+	
+	pll = np.zeros(x.shape)
+	for ll in range(m+2, l+1):
+		pll = ( (2.0*ll-1.0)*x*pmmp1-(ll+m-1.0)*pmm ) / (ll-m)
+		pmm = pmmp1
+		pmmp1 = pll
+	
+	return pll
+
+
+@jit(nopython=True,parallel=False,fastmath=False) 
+def divfact(a, b):
+	# PBRT style
+	if (b == 0):
+		return 1.0
+	fa = a
+	fb = abs(b)
+	v = 1.0
+
+	x = fa-fb+1.0
+	while x <= fa+fb:
+		v *= x;
+		x+=1.0
+
+	return 1.0 / v;
+
+LOOKUP_TABLE = np.array([
+    1, 1, 2, 6, 24, 120, 720, 5040, 40320,
+    362880, 3628800, 39916800, 479001600,
+    6227020800, 87178291200, 1307674368000,
+    20922789888000, 355687428096000, 6402373705728000,
+    121645100408832000, 2432902008176640000], dtype='int64')
+    
+@jit(nopython=True,parallel=False,fastmath=False) 
+def fast_factorial(n):
+    return LOOKUP_TABLE[n]
+
+@jit(nopython=True,parallel=False,fastmath=False) 
+def K(l, m):
+	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
+
+
+@jit(nopython=True,parallel=False,fastmath=False) 
+def SH(l, m, theta, phi):
+	if m==0 :
+		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
+	elif m>0 :
+		return np.sqrt(2.0)*K(l,m)*np.cos(m*phi)*P(l,m,np.cos(theta))
+	else:
+		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
+
+
+@jit( nopython=True, parallel=False, fastmath=False ) 
+def calc_potmat_jit( vlist, VG ):
+    
+    for i in range(N):
+        rin = rgrid[maparray[i,2],maparray[i,3]]
+        for j in range(i,N):
+            if maparray[i,2] == maparray[j,2] and maparray[i,3] == maparray[j,3]:
+
+                w = G[:,2]
+                f = np.conjugate(SH( maparray[i,0] , maparray[i,1] , G[:,0], G[:,1] + np.pi  )) *\
+                      SH( maparray[j,0] , maparray[j,1] , G[:,0], G[:,1] + np.pi  ) *\
+                          pot_grid_interp_sph(interpolant,rin,G[:,0], G[:,1] + np.pi ) 
+                potmat[i,j] = np.dot(w,f) * 4.0 * np.pi
+    return potmat
+
+
+""" end of @jit section """
+
 
 def BUILD_HMAT0(params):
 
@@ -77,14 +167,16 @@ def BUILD_POTMAT0(params,maparray,Nbas):
         sph_quad_list = read_adaptive_quads(params)
 
 
-    Gs = GRID.GEN_GRID(sph_quad_list)
+    Gs = GRID.GEN_GRID( sph_quad_list )
 
-    VG = POTENTIAL.BUILD_ESP_MAT(Gs,Gr,esp_interpolant, params['r_cutoff'] )
+    VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
 
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    print(vlist)
-    exit()
 
+    if params['calc_method'] == 'jit':
+        potmat0 = calc_potmat_jit( vlist, VG )
+
+    return potmat0
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""
