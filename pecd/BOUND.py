@@ -48,22 +48,6 @@ def P(l, m, x):
 	
 	return pll
 
-#@jit(nopython=True,parallel=False,fastmath=False) 
-def divfact(a, b):
-	# PBRT style
-	if (b == 0):
-		return 1.0
-	fa = a
-	fb = abs(b)
-	v = 1.0
-
-	x = fa-fb+1.0
-	while x <= fa+fb:
-		v *= x
-		x+=1.0
-
-	return 1.0 / v
-
 LOOKUP_TABLE = np.array([
     1, 1, 2, 6, 24, 120, 720, 5040, 40320,
     362880, 3628800, 39916800, 479001600,
@@ -80,7 +64,7 @@ def factorial(x):
 		return 1.0
 	return x * factorial(x-1)
 
-@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
+@jit(nopython=True, parallel=False, cache = True, fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
@@ -187,10 +171,22 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     else:
         sph_quad_list = read_adaptive_quads(params)
 
+    start_time = time.time()
     Gs = GRID.GEN_GRID( sph_quad_list )
+    end_time = time.time()
+    print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    start_time = time.time()
     VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
+    end_time = time.time()
+    print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist)
+    end_time = time.time()
+    print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
 
     if params['calc_method'] == 'jit':
         start_time = time.time()
