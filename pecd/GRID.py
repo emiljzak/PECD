@@ -5,6 +5,7 @@
 #
 import numpy as np
 
+import psi4
 
 from sympy import symbols
 from sympy.core import S, Dummy, pi
@@ -180,3 +181,20 @@ def GEN_XYZ_GRID(Gs,Gr,working_dir):
 
 
 
+
+def CALC_ESP_PSI4():
+    properties_origin=["COM"]
+
+
+    h2o = psi4.geometry("""
+    1 2
+    noreorient
+    O            0.0     0.0    0.000000000000
+    H            0.757    0.586     0.000000000000
+    H            -0.757    0.586     0.000000000000
+    """)
+    psi4.set_options({'basis': '6-31G**','e_convergence': 1.e-5,'reference': 'uhf'})
+    E, wfn = psi4.prop('scf', properties=["GRID_ESP"], return_wfn=True)
+    Vvals = wfn.oeprop.Vvals()
+
+CALC_ESP_PSI4()

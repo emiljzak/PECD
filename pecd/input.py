@@ -19,7 +19,7 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 40
+    params['bound_nlobs']   = 20
     params['bound_nbins']   = 1
     params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.001 
@@ -33,19 +33,19 @@ def gen_input():
 
 
     """==== potential energy matrix ===="""
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
-    params['sph_quad_tol']  = 1e-2
+    params['sph_quad_tol']  = 1e-4
     params['calc_method'] = 'jit' #jit, quadpy, vec
 
     """==== electrostatic potential ===="""
-    params['esp_file']      = "esp_grid_h2o_uhf_631Gss_10_0.5_com" #filename for the grid representation of the ESP
-    params['r_cutoff']      = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
+    params['esp_file']          = "esp_grid_h2o_uhf_631Gss_8_0.2_com"
+    
+    #"esp_grid_quad_h2o_uhf_631Gss_l10_N40_com"  #filename for the grid representation of the ESP
+    params['r_cutoff']          = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
     """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
 
-    params['esp_mode']      = "exact" #exact or interpolate
-    params['save_esp_mat']  = True #save esp matrix on a grid in a file
-    params['read_esp_mat']  = True # read esp matrix from file (on quad grid)
+    params['esp_mode']      = "interpolation" #exact or interpolate
     params['save_esp_xyzgrid'] = False #generate xyz grid (quadrature grid) for psi4.
     params['plot_esp']      = False
 

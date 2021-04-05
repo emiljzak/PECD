@@ -65,3 +65,32 @@ def BUILD_ESP_MAT(Gs,rgrid,esp_interpolant,r_cutoff):
         else:
             VG.append( np.array( [-1.0 / Gr[igs] * np.ones(np.size(gs[:,0])) ] ) )
     return VG
+
+
+def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
+
+    fl = open( params['working_dir'] +  params['esp_file']  + ".dat", 'r' )
+    esp = []
+
+    for line in fl:
+        words = line.split()
+        x = float(words[0])
+        y = float(words[1])
+        z = float(words[2])
+        v = -1.0 * float(words[3])
+        esp.append(v)
+        
+    r_array = Gr.flatten()
+
+    VG = []
+    counter = 0
+    for k in range(len(r_array)):
+        print(Gs[k].shape[0])
+        sph = np.zeros(Gs[k].shape[0],dtype=float)
+
+        for s in range(Gs[k].shape[0]):
+            sph[s] = esp[counter]
+            counter  += 1
+
+        VG.append(sph)
+    return VG
