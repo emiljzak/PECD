@@ -156,3 +156,27 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
     
     return xgrid, nlobatto * nbins
+
+def sph2cart(r,theta,phi):
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    z = r * np.cos(theta)
+    return x,y,z
+
+def GEN_XYZ_GRID(Gs,Gr,working_dir):
+    r_array = Gr.flatten()
+
+    gridfile = open(working_dir + "grid.dat", 'w')
+
+    for k in range(len(r_array)):
+        print(Gs[k].shape[0])
+        for s in range(Gs[k].shape[0]):
+
+            theta   = Gs[k][s,0]
+            phi     = Gs[k][s,1]
+            r       = r_array[k]
+            x,y,z = sph2cart(r,theta,phi)
+            gridfile.write( " %12.6f"%x +  " %12.6f"%y + "  %12.6f"%z + "\n")
+
+
+
