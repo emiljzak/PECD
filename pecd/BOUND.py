@@ -22,7 +22,7 @@ from numba import jit, prange
 import matplotlib.pyplot as plt
 
 """ start of @jit section """
-@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
+@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
@@ -55,7 +55,7 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
+@jit(nopython=True,parallel=False,cache = False, fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
@@ -64,11 +64,11 @@ def factorial(x):
 		return 1.0
 	return x * factorial(x-1)
 
-@jit(nopython=True, parallel=False, cache = True, fastmath=False) 
+@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
-@jit(nopython=True,parallel=False,cache = True, fastmath=False) 
+@jit(nopython=True,parallel=False,cache = False, fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -77,7 +77,7 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-@jit( nopython=True, parallel=False, cache = True, fastmath=False) 
+@jit( nopython=True, parallel=False, cache = False, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
@@ -163,9 +163,7 @@ def BUILD_KEOMAT0(params):
 def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
 
-    if params['esp_mode'] == "exact" and params['gen_adaptive_quads'] == False:
-        continue
-    else:
+    if params['esp_mode'] == "interpolation":
         print("Interpolating electrostatic potential")
         esp_interpolant = POTENTIAL.INTERP_POT(params)
 
@@ -183,13 +181,18 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     if params['save_esp_xyzgrid'] == True:
         GRID.GEN_XYZ_GRID(Gs,Gr,params['working_dir'])
 
+    if params['esp_mode'] == "interpolate":
+        start_time = time.time()
+        VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
+        end_time = time.time()
+        print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    start_time = time.time()
-    VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
-    end_time = time.time()
-    print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
+    elif params['esp_mode'] == "exact":
+        start_time = time.time()
+        VG = POTENTIAL.BUILD_ESP_MAT_EXACT(params, Gs, Gr)
+        end_time = time.time()
+        print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        print(VG)
 
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
