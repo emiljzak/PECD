@@ -163,8 +163,12 @@ def BUILD_KEOMAT0(params):
 def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
 
-    print("Interpolating electrostatic potential")
-    esp_interpolant = POTENTIAL.INTERP_POT(params)
+    if params['esp_mode'] == "exact" and params['gen_adaptive_quads'] == False:
+        continue
+    else:
+        print("Interpolating electrostatic potential")
+        esp_interpolant = POTENTIAL.INTERP_POT(params)
+
 
     if  params['gen_adaptive_quads'] == True:
         sph_quad_list = gen_adaptive_quads( params, esp_interpolant, Gr )
@@ -176,10 +180,16 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     end_time = time.time()
     print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
+    if params['save_esp_xyzgrid'] == True:
+        GRID.GEN_XYZ_GRID(Gs,Gr,params['working_dir'])
+
+
     start_time = time.time()
     VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
     end_time = time.time()
     print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
 
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
