@@ -21,11 +21,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 20
+    params['bound_nlobs']   = 8
     params['bound_nbins']   = 1
-    params['bound_binw']    = 30.0
+    params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.001 
-    params['bound_lmax']    = 10
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -37,18 +37,20 @@ def gen_input():
     """==== potential energy matrix ===="""
     params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
-    params['sph_quad_global'] = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
-    params['sph_quad_tol']  = 1e-5
-    params['calc_method'] = 'jit' #jit, quadpy, vec
+    params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
+    params['sph_quad_tol']       = 1e-5
+    params['calc_method']        = 'jit' #jit, quadpy, vec
 
     """==== electrostatic potential ===="""
     params['esp_method']        = "uhf_631Gss"
-    params['r_cutoff']          = 8.0 #only in interpolation esp_mode. cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
-    """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
-
     params['esp_mode']          = "exact" #exact or interpolate
-    params['save_esp_xyzgrid']  = False #generate xyz grid (quadrature grid) for psi4.
     params['plot_esp']          = False
+    params['r_cutoff']          = 8.0    
+
+    """ Note: r_cutoff can be infered from quad_levels file: 
+                                         when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0.
+                                         only in interpolation esp_mode. cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory.
+                                         Common sense says to cut-off the ESP at some range to avoid spurious operations"""
 
     """==== file paths and names ===="""
 
@@ -58,7 +60,6 @@ def gen_input():
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
                                 "_" + str(params['esp_method'])   + ".dat"
-
 
     params['file_hmat0']    =   "hmat0_" + params['molec_name']   + \
                                 "_" + str(params['bound_nbins'])   + \
