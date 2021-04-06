@@ -337,9 +337,6 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     end_time = time.time()
     print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    if params['save_esp_xyzgrid'] == True:
-        GRID.GEN_XYZ_GRID(Gs,Gr,params['working_dir'])
-
     if params['esp_mode'] == "interpolate":
         start_time = time.time()
         VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )

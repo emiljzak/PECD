@@ -166,20 +166,24 @@ def sph2cart(r,theta,phi):
     return x,y,z
 
 def GEN_XYZ_GRID(Gs,Gr,working_dir):
+    grid = []
     r_array = Gr.flatten()
 
     gridfile = open(working_dir + "grid.dat", 'w')
 
     for k in range(len(r_array)):
-        print(Gs[k].shape[0])
+        #print(Gs[k].shape[0])
         for s in range(Gs[k].shape[0]):
 
             theta   = Gs[k][s,0]
             phi     = Gs[k][s,1]
             r       = r_array[k]
-            x,y,z = sph2cart(r,theta,phi)
-            gridfile.write( " %12.6f"%x +  " %12.6f"%y + "  %12.6f"%z + "\n")
+            x,y,z   = sph2cart(r,theta,phi)
 
+            gridfile.write( " %12.6f"%x +  " %12.6f"%y + "  %12.6f"%z + "\n")
+            grid.append([x,y,z])
+
+    return grid
 
 def CALC_ESP_PSI4(dir):
     os.chdir(dir)
