@@ -141,8 +141,8 @@ def BUILD_HMAT0(params):
     hmat += keomat0 
 
     #plot_mat(hmat)
-    #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
+    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
+    plt.show()
     
     """ diagonalize hmat """
     start_time = time.time()
@@ -151,7 +151,7 @@ def BUILD_HMAT0(params):
     print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
-    plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
+    #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     print("Normalization of the wavefunction: ")
     for v in range(params['num_ini_vec']):
