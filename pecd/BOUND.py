@@ -14,7 +14,9 @@ import numpy as np
 from scipy import sparse
 from scipy.special import sph_harm
 import quadpy
+
 from sympy.functions.elementary.miscellaneous import sqrt
+
 import sys
 import os.path
 import time
@@ -22,6 +24,7 @@ import time
 from numba import jit, prange
 
 import matplotlib.pyplot as plt
+from matplotlib import cm, colors
 
 """ start of @jit section """
 #@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
@@ -123,28 +126,32 @@ def BUILD_HMAT0(params):
     elif params['hmat_format'] == 'regular':
         hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
-
     """ calculate hmat """
-
     potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
         
     for ielem, elem in enumerate(potmat0):
         #print(potind[ielem][0],potind[ielem][1])
         hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
 
+    start_time = time.time()
     keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    end_time = time.time()
+    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
     hmat += keomat0 
 
-    plot_mat(hmat)
-    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
-    plt.show()
+    #plot_mat(hmat)
+    #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
     
     """ diagonalize hmat """
     start_time = time.time()
     enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
     end_time = time.time()
     print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     print("Normalization of the wavefunction: ")
     for v in range(params['num_ini_vec']):
@@ -168,7 +175,7 @@ def BUILD_HMAT0(params):
         with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
             np.savetxt( energyfile, enr0 * constants.ev_to_au , fmt='%10.5f' )
   
-    print(enr0)
+
 
 def BUILD_KEOMAT0( params, maparray, Nbas, Gr ):
     nlobs = params['bound_nlobs']
@@ -574,7 +581,9 @@ def gen_adaptive_quads_exact(params , rgrid):
                 #if no convergence reached raise warning
                 if ( scheme == spherical_schemes[len(spherical_schemes)-1] and np.any( diff > quad_tol )):
                     print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
-
+                    print( str(scheme) + " convergence reached !!!")
+                    sph_quad_list.append([ i, n, xi, str(scheme)])
+                    xi += 1
 
     print("Converged quadrature levels: ")
     print(sph_quad_list)
@@ -657,7 +666,128 @@ def heatmap( data, row_labels, col_labels, ax=None,
     return im, cbar
 
 
+def plot_wf_rad(rmin,rmax,npoints,coeffs,maparray,rgrid,nlobs,nbins):
+    """plot the selected wavefunctions functions"""
+    """ Only radial part is plotted"""
+
+    r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+
+    x=np.zeros(nlobs)
+    w=np.zeros(nlobs)
+    x,w=GRID.gauss_lobatto(nlobs,14)
+    w=np.array(w)
+    x=np.array(x) # convert back to np arrays
+    nprint = 2 #how many functions to print
+
+    y = np.zeros((len(r),nprint))
+
+    for l in range(0,nprint): #loop over eigenfunctions
+        #counter = 0
+        for ipoint in maparray:
+            #print(ipoint)
+            #print(coeffs[ipoint[4]-1,l])
+            y[:,l] +=  coeffs[ipoint[2]-1,l] * chi(ipoint[0],ipoint[1],r,rgrid,w,nlobs,nbins) * SH(ipoint[3], ipoint[4], theta=np.zeros(1), phi=np.zeros(1))
+                #counter += 1
+
+    plt.xlabel('r/a.u.')
+    plt.ylabel('Radial eigenfunction')
+    plt.legend()   
+    for n in range(1,nprint):
+        plt.plot(r, np.abs(y[:,n])**2)
+        
+        # plt.plot(r, h_radial(r,1,0))
+    plt.show()     
+
+def chi(i,n,r,rgrid,w,nlobs,nbins):
+    # r is the argument f(r)
+    # rgrid is the radial grid rgrid[i][n]
+    # w are the unscaled lobatto weights
+
+    w /=sum(w[:]) #normalization!!!
+    val=np.zeros(np.size(r))
+    
+    if n==0 and i<nbins-1: #bridge functions
+        #print("bridge: ", n,i)
+        val = ( f(i,nlobs-1,r,rgrid,nlobs,nbins) + f(i+1,0,r,rgrid,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) + float( w[0] ) )**(-1)
+        #print(type(val),np.shape(val))
+        return val 
+    elif n>0 and n<nlobs-1:
+        val = f(i,n,r,rgrid,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
+        #print(type(val),np.shape(val))
+        return val
+    else:
+        return val
+         
+def f(i,n,r,rgrid,nlobs,nbins): 
+    """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
+    
+    #print("shape of r is", np.shape(r), "and type of r is", type(r))
+
+    if np.isscalar(r):
+        prod=1.0
+        if  r>= rgrid[i][0] and r <= rgrid[i][nlobs-1]:
+            for mu in range(0,nbins):
+                if mu !=n:
+                    prod*=(r-rgrid[i][mu])/(rgrid[i][n]-rgrid[i][mu])
+            return prod
+        else:
+            return 0.0
+
+    else:
+        prod=np.ones(np.size(r), dtype=float)
+        for j in range(0,np.size(r)):
+
+            if  r[j] >= rgrid[i,0] and r[j] <= rgrid[i,nlobs-1]:
+
+                for mu in range(0,nbins):
+                    if mu !=n:
+                        prod[j] *= (r[j]-rgrid[i,mu])/(rgrid[i,n]-rgrid[i,mu])
+                    else:
+                        prod[j] *= 1.0
+            else:
+                prod[j] = 0.0
+    return prod
+
+
+def show_Y_lm(l, m):
+    """plot the angular basis"""
+    theta_1d = np.linspace(0,   np.pi,  2*91) # 
+    phi_1d   = np.linspace(0, 2*np.pi, 2*181) # 
+
+    theta_2d, phi_2d = np.meshgrid(theta_1d, phi_1d)
+    xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
+
+    colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
+    colormap.set_clim(-.45, .45)
+    limit = .5
+
+    print("Y_%i_%i" % (l,m)) # zeigen, dass was passiert
+    plt.figure()
+    ax = plt.gca(projection = "3d")
+    
+    plt.title("$Y^{%i}_{%i}$" % (m,l))
+
+    Y_lm = spharm(l,m, theta_2d, phi_2d)
+    #Y_lm = self.solidharm(l,m,1,theta_2d,phi_2d)
+    print(np.shape(Y_lm))
+    r = np.abs(Y_lm.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
+    
+    ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
+    ax.set_xlim(-limit,limit)
+    ax.set_ylim(-limit,limit)
+    ax.set_zlim(-limit,limit)
+    #ax.set_aspect("equal")
+    #ax.set_axis_off()
+    
+            
+    plt.show()
+
+def spharm(l,m,theta,phi):
+    return sph_harm(m, l, phi, theta)
+
+
 if __name__ == "__main__":      
+
 
     params = input.gen_input()
     BUILD_HMAT0(params)

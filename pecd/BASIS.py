@@ -77,38 +77,7 @@ class angbas():
             SH=((-1.0)**m)*np.sqrt(8.0*np.pi/(2.0*float(l)+1))*(r**l)*np.imag(sph_harm(-m, l, phi, theta))
         return SH
 
-    def show_Y_lm(self,l, m):
-        """plot the angular basis"""
-        theta_1d = np.linspace(0,   np.pi,  2*91) # 
-        phi_1d   = np.linspace(0, 2*np.pi, 2*181) # 
 
-        theta_2d, phi_2d = np.meshgrid(theta_1d, phi_1d)
-        xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
-
-        colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
-        colormap.set_clim(-.45, .45)
-        limit = .5
-
-        print("Y_%i_%i" % (l,m)) # zeigen, dass was passiert
-        plt.figure()
-        ax = plt.gca(projection = "3d")
-        
-        plt.title("$Y^{%i}_{%i}$" % (m,l))
-
-        Y_lm = self.spharm(l,m, theta_2d, phi_2d)
-        #Y_lm = self.solidharm(l,m,1,theta_2d,phi_2d)
-        print(np.shape(Y_lm))
-        r = np.abs(Y_lm.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
-        
-        ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(Y_lm.real), rstride=1, cstride=1)
-        ax.set_xlim(-limit,limit)
-        ax.set_ylim(-limit,limit)
-        ax.set_zlim(-limit,limit)
-        #ax.set_aspect("equal")
-        #ax.set_axis_off()
-        
-                
-        plt.show()
 
 class radbas():
     """Class of radial basis functions"""
@@ -153,36 +122,6 @@ class radbas():
         return xgrid"""
         return xgrid
 
-    def f(self,i,n,r,rgrid): 
-        """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
-        
-        #print("shape of r is", np.shape(r), "and type of r is", type(r))
-
-        if np.isscalar(r):
-            prod=1.0
-            if  r>= rgrid[i][0] and r <= rgrid[i][self.nlobatto-1]:
-                for mu in range(0,self.nlobatto):
-                    if mu !=n:
-                        prod*=(r-rgrid[i][mu])/(rgrid[i][n]-rgrid[i][mu])
-                return prod
-            else:
-                return 0.0
-
-        else:
-            prod=np.ones(np.size(r), dtype=float)
-            for j in range(0,np.size(r)):
-
-                if  r[j] >= rgrid[i,0] and r[j] <= rgrid[i,self.nlobatto-1]:
-
-                    for mu in range(0,self.nlobatto):
-                        if mu !=n:
-                            prod[j] *= (r[j]-rgrid[i,mu])/(rgrid[i,n]-rgrid[i,mu])
-                        else:
-                            prod[j] *= 1.0
-                else:
-                    prod[j] = 0.0
-        return prod
-
     def plot_f(self,rmin,rmax,npoints):
         """plot the selected radial basis functions"""
         r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
@@ -209,22 +148,7 @@ class radbas():
         plt.plot(r, y) 
         plt.show()     
 
-    def fp(self,i,n,k,x):
-        "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
-        if n!=k:
-            fprime=(x[n]-x[k])**(-1)
-            prod=1.0e00
-            for mu in range(0,self.nlobatto):
-                if mu !=k and mu !=n:
-                    prod *= (x[k]-x[mu])/(x[n]-x[mu])
-            fprime=fprime*prod
-        elif n==k:
-            fprime=0.0
-            for mu in range(0,self.nlobatto):
-                    if mu !=n:
-                        fprime += (x[n]-x[mu])**(-1)
-        return fprime
-        
+
     def gauss_lobatto(self,n, n_digits):
         """
         Computes the Gauss-Lobatto quadrature [1]_ points and weights.
@@ -298,26 +222,7 @@ class radbas():
         w.append((S(2)/(n*(n-1))).n(n_digits))
         return xi, w
         
-    def chi(self,i,n,r,rgrid,w):
-        # r is the argument f(r)
-        # rgrid is the radial grid rgrid[i][n]
-        # w are the unscaled lobatto weights
-
-        w /=sum(w[:]) #normalization!!!
-        val=np.zeros(np.size(r))
-        
-        if n==0 and i<self.nbins-1: #bridge functions
-            #print("bridge: ", n,i)
-            val = ( self.f(i,self.nlobatto-1,r,rgrid) + self.f(i+1,0,r,rgrid) ) * np.sqrt( float( w[self.nlobatto-1] ) + float( w[0] ) )**(-1)
-            #print(type(val),np.shape(val))
-            return val 
-        elif n>0 and n<self.nlobatto-1:
-            val = self.f(i,n,r,rgrid) * np.sqrt( float( w[n] ) ) **(-1) 
-            #print(type(val),np.shape(val))
-            return val
-        else:
-            return val
-            
+   
     def plot_chi(self,rmin,rmax,npoints):
         """plot the selected radial basis functions"""
         r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
@@ -350,35 +255,4 @@ class radbas():
         plt.show()     
 
 
-    def plot_wf_rad(self,rmin,rmax,npoints,coeffs,maparray,rgrid):
-        """plot the selected wavefunctions functions"""
-        """ Only radial part is plotted"""
-
-        r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
-
-        x=np.zeros(self.nlobatto)
-        w=np.zeros(self.nlobatto)
-        x,w=self.gauss_lobatto(self.nlobatto,14)
-        w=np.array(w)
-        x=np.array(x) # convert back to np arrays
-        nprint = 10 #how many functions to print
-
-        y = np.zeros((len(r),nprint))
-
-        for l in range(0,nprint): #loop over eigenfunctions
-            #counter = 0
-            for ipoint in maparray:
-                #print(ipoint)
-                #print(coeffs[ipoint[4]-1,l])
-                y[:,l] +=  coeffs[ipoint[4]-1,l] * self.chi(ipoint[2],ipoint[3],r,rgrid,w) 
-                    #counter += 1
-
-        plt.xlabel('r/a.u.')
-        plt.ylabel('Radial eigenfunction')
-        plt.legend()   
-        for n in range(1,nprint):
-            plt.plot(r, np.abs(y[:,n])**2)
-            
-           # plt.plot(r, h_radial(r,1,0))
-        plt.show()     
 
