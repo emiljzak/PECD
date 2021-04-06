@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
 import numpy as np
+import os
 
 import psi4
 
@@ -21,7 +22,7 @@ from sympy.core.compatibility import range
 def read_leb_quad(scheme):
     sphgrid = []
     #print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
-    fl = open( "./lebedev_grids/" + str(scheme) + ".txt", 'r' )
+    fl = open( "/Users/zakemil/Nextcloud/projects/PECD/pecd/" + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
     for line in fl:
         words   = line.split()
         phi     = float(words[0])
@@ -182,10 +183,11 @@ def GEN_XYZ_GRID(Gs,Gr,working_dir):
 
 
 
-def CALC_ESP_PSI4():
+def CALC_ESP_PSI4(dir):
+    os.chdir(dir)
+    psi4.core.be_quiet()
     properties_origin=["COM"]
-
-
+    #psi4.core.set_output_file(dir, False)
     h2o = psi4.geometry("""
     1 2
     noreorient
@@ -196,5 +198,5 @@ def CALC_ESP_PSI4():
     psi4.set_options({'basis': '6-31G**','e_convergence': 1.e-5,'reference': 'uhf'})
     E, wfn = psi4.prop('scf', properties=["GRID_ESP"], return_wfn=True)
     Vvals = wfn.oeprop.Vvals()
-
-CALC_ESP_PSI4()
+    os.chdir("../")
+    return Vvals
