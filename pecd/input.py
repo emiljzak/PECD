@@ -45,12 +45,12 @@ def gen_input():
     params['esp_file']          = "esp_grid_h2o_uhf_631Gss_8_0.2_com"
     params['esp_method']        = "uhf_631Gss"
     #"esp_grid_quad_h2o_uhf_631Gss_l10_N40_com"  #filename for the grid representation of the ESP
-    params['r_cutoff']          = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
+    params['r_cutoff']          = 8.0 #only in interpolation esp_mode. cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
     """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
 
-    params['esp_mode']      = "exact" #exact or interpolate
-    params['save_esp_xyzgrid'] = False #generate xyz grid (quadrature grid) for psi4.
-    params['plot_esp']      = False
+    params['esp_mode']          = "exact" #exact or interpolate
+    params['save_esp_xyzgrid']  = False #generate xyz grid (quadrature grid) for psi4.
+    params['plot_esp']          = False
 
     """==== file paths and names ===="""
 
