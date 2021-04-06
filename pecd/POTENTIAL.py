@@ -66,7 +66,6 @@ def BUILD_ESP_MAT(Gs,rgrid,esp_interpolant,r_cutoff):
             VG.append( np.array( [-1.0 / Gr[igs] * np.ones(np.size(gs[:,0])) ] ) )
     return VG
 
-
 def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 
     fl = open( params['working_dir'] +  params['esp_file']  + ".dat", 'r' )

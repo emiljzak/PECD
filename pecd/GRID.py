@@ -181,8 +181,6 @@ def GEN_XYZ_GRID(Gs,Gr,working_dir):
             gridfile.write( " %12.6f"%x +  " %12.6f"%y + "  %12.6f"%z + "\n")
 
 
-
-
 def CALC_ESP_PSI4(dir):
     os.chdir(dir)
     psi4.core.be_quiet()

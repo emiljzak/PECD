@@ -177,6 +177,7 @@ def BUILD_HMAT0(params):
   
 
 
+""" ============ KEOMAT0 ============ """
 def BUILD_KEOMAT0( params, maparray, Nbas, Gr ):
     nlobs = params['bound_nlobs']
     """call Gauss-Lobatto rule """
@@ -214,7 +215,6 @@ def calc_keomatel(i1,n1,l1,i2,n2,x,w,rin,rshift,binwidth):
     else:
         KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth)
         return     KEO
-
 
 def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
     #w /= sqrt(sum(w[:]))
@@ -290,7 +290,6 @@ def KEO_matel_fpfp(i,n1,n2,x,w,rshift,binwidth):
 
     return fpfpint#sum(w[:])
     
-
 def fp(i,n,k,x):
     "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
     if n!=k:
@@ -309,7 +308,7 @@ def fp(i,n,k,x):
                     fprime += (x[n]-x[mu])**(-1)
     return fprime
 
-
+""" ============ POTMAT0 ============ """
 def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
     if params['esp_mode'] == "interpolation":
@@ -322,6 +321,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
             sph_quad_list = read_adaptive_quads(params)
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
             print("using global quadrature scheme")
+
     elif params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:
             sph_quad_list = gen_adaptive_quads_exact( params,  Gr )
@@ -479,7 +479,6 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
 
     return sph_quad_list
 
-
 def gen_adaptive_quads_exact(params , rgrid):
 
     sph_quad_list = [] #list of quadrature levels needed to achieve convergence quad_tol of the potential energy matrix elements (global)
@@ -596,6 +595,7 @@ def gen_adaptive_quads_exact(params , rgrid):
     return sph_quad_list
 
 
+""" ============ PLOTS ============ """
 def plot_mat(mat):
     """ plot 2D array with color-coded magnitude"""
     fig, ax = plt.subplots()
@@ -664,7 +664,6 @@ def heatmap( data, row_labels, col_labels, ax=None,
     #ax.tick_params(which="minor", bottom=False, left=False)
 
     return im, cbar
-
 
 def plot_wf_rad(rmin,rmax,npoints,coeffs,maparray,rgrid,nlobs,nbins):
     """plot the selected wavefunctions functions"""
@@ -747,7 +746,6 @@ def f(i,n,r,rgrid,nlobs,nbins):
             else:
                 prod[j] = 0.0
     return prod
-
 
 def show_Y_lm(l, m):
     """plot the angular basis"""
