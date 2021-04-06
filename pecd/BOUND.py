@@ -7,13 +7,14 @@
 import input
 import MAPPING
 import POTENTIAL
-import GRID 
+import GRID
+import constants
 
 import numpy as np
 from scipy import sparse
 from scipy.special import sph_harm
 import quadpy
-
+from sympy.functions.elementary.miscellaneous import sqrt
 import sys
 import os.path
 import time
@@ -126,13 +127,16 @@ def BUILD_HMAT0(params):
     """ calculate hmat """
 
     potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
-
+        
     for ielem, elem in enumerate(potmat0):
         #print(potind[ielem][0],potind[ielem][1])
         hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
 
+    keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
 
-    #plot_mat(hmat)
+    hmat += keomat0 
+
+    plot_mat(hmat)
     plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
     plt.show()
     
@@ -162,16 +166,144 @@ def BUILD_HMAT0(params):
 
     if params['save_enr0'] == True:
         with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
-            np.savetxt( energyfile, enr0 , fmt='%10.5f' )
+            np.savetxt( energyfile, enr0 * constants.ev_to_au , fmt='%10.5f' )
   
     print(enr0)
 
-def BUILD_KEOMAT0(params):
-    print("under construction")
+def BUILD_KEOMAT0( params, maparray, Nbas, Gr ):
+    nlobs = params['bound_nlobs']
+    """call Gauss-Lobatto rule """
+    x   =   np.zeros(nlobs)
+    w   =   np.zeros(nlobs)
+    x,w =   GRID.gauss_lobatto(nlobs,14)
+    x   =   np.array(x)
+    w   =   np.array(w)
+
+    keomat =  np.zeros((Nbas, Nbas), dtype=np.float64)
+
+    for i in range(Nbas):
+        rin = Gr[maparray[i][0],maparray[i][1]]
+        for j in range(i,Nbas):
+            if maparray[i][3] == maparray[j][3] and maparray[i][4] == maparray[j][4]:
+                keomat[i,j] = calc_keomatel(maparray[i][0], maparray[i][1],\
+                                            maparray[i][3], maparray[j][0], maparray[j][1], x, w, rin, \
+                                            params['bound_rshift'],params['bound_binw'])
+
+    print("KEO matrix")
+    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+        print(0.5*keomat)
+
+    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
+
+    return  0.5 * keomat
+
+def calc_keomatel(i1,n1,l1,i2,n2,x,w,rin,rshift,binwidth):
+    "calculate matrix element of the KEO"
+
+    if i1==i2 and n1==n2:
+        KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth) + KEO_matel_ang(i1,n1,l1,rin) 
+        return     KEO
+    else:
+        KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth)
+        return     KEO
+
+
+def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
+    #w /= sqrt(sum(w[:]))
+    w_i1     = w#/sum(w[:])
+    w_i2     = w#/sum(w[:]) 
+
+    nlobatto = x.size
+
+    if n1>0 and n2>0:
+        if i1==i2:
+            #single x single
+            KEO     =   KEO_matel_fpfp(i1,n1,n2,x,w_i1,rshift,binwidth) #checked
+            return      KEO/sqrt(w_i1[n1] * w_i2[n2])
+        else:
+            return      0.0
+
+    if n1==0 and n2>0:
+        #bridge x single
+        if i1==i2: 
+            KEO     =   KEO_matel_fpfp(i2,nlobatto-1,n2,x,w_i2,rshift,binwidth) # not nlobatto -2?
+            return      KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
+        elif i1==i2-1:
+            KEO     =   KEO_matel_fpfp(i2,0,n2,x,w_i2,rshift,binwidth) # i2 checked  Double checked Feb 12
+            return      KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
+        else:
+            return      0.0
+
+    elif n1>0 and n2==0:
+        #single x bridge
+        if i1==i2: 
+            KEO     =   KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1,rshift,binwidth) #check  Double checked Feb 12
+            return      KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
+        elif i1==i2+1:
+            KEO     =   KEO_matel_fpfp(i1,n1,0,x,w_i1,rshift,binwidth) #check  Double checked Feb 12
+            return      KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
+        else:
+            return      0.0
+            
+    elif n1==0 and n2==0:
+        #bridge x bridge
+        if i1==i2: 
+            KEO     =   ( KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1,rshift,binwidth) + KEO_matel_fpfp(i1+1,0,0,x,w_i1,rshift,binwidth) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
+            return      KEO
+        elif i1==i2-1:
+            KEO     =   KEO_matel_fpfp(i2,nlobatto-1,0,x,w_i2,rshift,binwidth) #checked 10feb 2021 Double checked Feb 12
+            return      KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
+        elif i1==i2+1:
+            KEO     =   KEO_matel_fpfp(i1,nlobatto-1,0,x,w_i1,rshift,binwidth) #checked 10feb 2021. Double checked Feb 12
+            return      KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
+        else:
+            return      0.0
+
+def KEO_matel_ang(i1,n1,l,rgrid):
+    """Calculate the anglar momentum part of the KEO"""
+    """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
+    #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
+    return float(l)*(float(l)+1)/((rgrid)**2)
+
+def KEO_matel_fpfp(i,n1,n2,x,w,rshift,binwidth):
+    "Calculate int_r_i^r_i+1 f'(r)f'(r) dr in the radial part of the KEO"
+    # f'(r) functions from different bins are orthogonal
+    #scale the Gauss-Lobatto points
+    nlobatto    = x.size
+    x_new       = 0.5 * ( binwidth * x + binwidth * (i+1) + binwidth * i + rshift)  #checked
+    #scale the G-L quadrature weights
+    #w *= 0.5 * binwidth 
+
+    fpfpint=0.0e00
+    for k in range(0, nlobatto):
+        y1      = fp(i,n1,k,x_new)#*sqrt(w[n1])
+        y2      = fp(i,n2,k,x_new)#*sqrt(w[n2])
+        fpfpint += w[k] * y1 * y2 #*0.5 * binwidth # 
+
+    return fpfpint#sum(w[:])
+    
+
+def fp(i,n,k,x):
+    "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
+    if n!=k:
+        fprime  =   (x[n]-x[k])**(-1)
+        prod    =   1.0e00
+
+        for mu in range(0,x.size):
+            if mu !=k and mu !=n:
+                prod *= (x[k]-x[mu])/(x[n]-x[mu])
+        fprime  *=  prod
+
+    elif n==k:
+        fprime  =   0.0
+        for mu in range(0,x.size):
+                if mu !=n:
+                    fprime += (x[n]-x[mu])**(-1)
+    return fprime
 
 
 def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
-
 
     if params['esp_mode'] == "interpolation":
         print("Interpolating electrostatic potential")
@@ -377,14 +509,31 @@ def gen_adaptive_quads_exact(params , rgrid):
 
                 if os.path.isfile(params['working_dir'] + "esp/" + potfilename):
                     print (potfilename + " file exist")
-                    fl = open(params['working_dir'] + "esp/" + potfilename , 'r' )
-                    V = []
-                    for line in fl:
-                        words = line.split()
-                        potval = -1.0 * float(words[0])
-                        V.append(potval)
-                    V = np.asarray(V)
-  
+
+
+                    filesize = os.path.getsize(params['working_dir'] + "esp/" + potfilename)
+
+                    if filesize == 0:
+                        print("The file is empty: " + str(filesize))
+                        os.remove(params['working_dir'] + "esp/" + potfilename)
+                        GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['working_dir']+"esp/")
+
+                        V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/")
+                        V = np.asarray(V)
+
+                        fl = open(params['working_dir'] + "esp/" + potfilename,"w")
+                        np.savetxt(fl,V,fmt='%10.6f')
+
+                    else:
+                        print("The file is not empty: " + str(filesize))
+                        fl = open(params['working_dir'] + "esp/" + potfilename , 'r' )
+                        V = []
+                        for line in fl:
+                            words = line.split()
+                            potval = -1.0 * float(words[0])
+                            V.append(potval)
+                        V = np.asarray(V)
+    
                 else:
                     print (potfilename + " file does not exist")
 
@@ -436,7 +585,6 @@ def gen_adaptive_quads_exact(params , rgrid):
         fl.write( str('%4d '%item[0]) + str('%4d '%item[1]) + str('%4d '%item[2]) + str(item[3]) + "\n")
 
     return sph_quad_list
-
 
 
 def plot_mat(mat):
