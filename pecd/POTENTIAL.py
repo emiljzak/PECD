@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import interpolate
 
+import os
 import time
 
 import matplotlib.pyplot as plt
@@ -68,17 +69,46 @@ def BUILD_ESP_MAT(Gs,rgrid,esp_interpolant,r_cutoff):
 
 def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 
-    fl = open( params['working_dir'] +  params['esp_file']  + ".dat", 'r' )
-    esp = []
+    if os.path.isfile(params['working_dir'] + "esp/" + params['file_esp']):
+        print (params['file_esp'] + " file exist")
 
-    for line in fl:
-        words = line.split()
-        x = float(words[0])
-        y = float(words[1])
-        z = float(words[2])
-        v = -1.0 * float(words[3])
-        esp.append(v)
-        
+        if os.path.getsize(params['working_dir'] + "esp/" + params['file_esp']) == 0:
+
+            print("But the file is empty. Size = " + str(filesize))
+            os.remove(params['working_dir'] + "esp/" + params['file_esp'])
+            os.remove(params['working_dir'] + "esp/grid.dat")
+
+            grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
+            grid_xyz = np.asarray(grid_xyz)
+            V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/")
+            V        = np.asarray(V)
+            esp_grid = np.hstack(grid_xyz,V)
+            fl = open(params['working_dir'] + "esp/" + params['file_esp'],"w")
+            np.savetxt(fl,esp_grid,fmt='%10.6f')
+
+        else:
+            print("The file is not empty. Size = " + str(filesize))
+            fl = open(params['working_dir'] + "esp/" + params['file_esp'],"r")
+            V = []
+            for line in fl:
+                words = line.split()
+                potval = -1.0 * float(words[3])
+                V.append(potval)
+            V = np.asarray(V)
+    
+    else:
+        print (params['file_esp'] + " file does not exist")
+
+        os.remove(params['working_dir'] + "esp/grid.dat")
+
+        grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
+        grid_xyz = np.asarray(grid_xyz)
+        V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/")
+        V        = np.asarray(V)
+        esp_grid = np.hstack(grid_xyz,V)
+        fl = open(params['working_dir'] + "esp/" + params['file_esp'],"w")
+        np.savetxt(fl,esp_grid,fmt='%10.6f')
+
     r_array = Gr.flatten()
 
     VG = []
@@ -88,7 +118,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
         sph = np.zeros(Gs[k].shape[0],dtype=float)
 
         for s in range(Gs[k].shape[0]):
-            sph[s] = esp[counter]
+            sph[s] = V[counter]
             counter  += 1
 
         VG.append(sph)
