@@ -1,9 +1,11 @@
 import numpy as np
 import constants
-
+import os
 def gen_input():
 
     params = {}
+
+    os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
     """ === molecule directory ==== """ 
     """ in this directory we read/write files associated with a given molecule """
@@ -41,7 +43,7 @@ def gen_input():
 
     """==== electrostatic potential ===="""
     params['esp_file']          = "esp_grid_h2o_uhf_631Gss_8_0.2_com"
-    
+    params['esp_method']        = "uhf_631Gss"
     #"esp_grid_quad_h2o_uhf_631Gss_l10_N40_com"  #filename for the grid representation of the ESP
     params['r_cutoff']          = 8.0 #cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory. Common sense says to cut-off the ESP at some range to avoid spurious operations
     """ Note: r_cutoff can be infered from quad_levels file: when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0"""
@@ -57,7 +59,7 @@ def gen_input():
                                 "_" + str(params['bound_nlobs']) + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
-                                "_" + params['esp_file']   + ".dat"
+                                "_" + params['esp_method']  + ".dat"
 
 
     params['file_hmat0']    =   "hmat0_" + params['molec_name']   + \
@@ -65,14 +67,14 @@ def gen_input():
                                 "_" + str(params['bound_nlobs']) + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
-                                "_" + params['esp_file']   + ".dat"
+                                "_" + params['esp_method']  + ".dat"
 
     params['file_enr0']     =   "enr0_" + params['molec_name']   + \
                                 "_" + str(params['bound_nbins'])   + \
                                 "_" + str(params['bound_nlobs']) + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])  + \
-                                "_" + params['esp_file']   + ".dat"
+                                "_" + params['esp_method']   + ".dat"
 
     params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
                                 "_" + str(params['bound_nbins'])   + \
