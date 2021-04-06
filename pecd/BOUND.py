@@ -23,7 +23,7 @@ from numba import jit, prange
 import matplotlib.pyplot as plt
 
 """ start of @jit section """
-@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
+#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
@@ -56,7 +56,7 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-@jit(nopython=True,parallel=False,cache = False, fastmath=False) 
+#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
@@ -65,11 +65,11 @@ def factorial(x):
 		return 1.0
 	return x * factorial(x-1)
 
-@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
+#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
-@jit(nopython=True,parallel=False,cache = False, fastmath=False) 
+#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -78,7 +78,7 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-@jit( nopython=True, parallel=False, cache = False, fastmath=False) 
+#@jit( nopython=True, parallel=False, cache = False, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
@@ -99,7 +99,7 @@ def calc_potmat_jit( vlist, VG, Gs ):
 
 
 
-
+#@jit( nopython=True, parallel=False, cache = False, fastmath=False) 
 def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
     #calculate matrix elements from sphlist at point xi with V and Gs calculated at a given quadrature grid.
     w = Gs[:,2]
@@ -186,7 +186,6 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     elif params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:
             sph_quad_list = gen_adaptive_quads_exact( params,  Gr )
-            exit()
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
             sph_quad_list = read_adaptive_quads(params)
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
@@ -374,7 +373,7 @@ def gen_adaptive_quads_exact(params , rgrid):
                 Gs = GRID.read_leb_quad(scheme)
 
                 #pull potential at quadrature points
-                potfilename = "esp_"+params['molec_name']+"_uhf_631Gss_"+str('%6.4f'%rin)+"_"+scheme
+                potfilename = "esp_"+params['molec_name']+"_"+params['esp_method']+"_"+str('%6.4f'%rin)+"_"+scheme
 
                 if os.path.isfile(params['working_dir'] + "esp/" + potfilename):
                     print (potfilename + " file exist")
