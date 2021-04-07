@@ -21,9 +21,9 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 8
+    params['bound_nlobs']   = 20
     params['bound_nbins']   = 1
-    params['bound_binw']    = 20.0
+    params['bound_binw']    = 10.0
     params['bound_rshift']  = 0.001 
     params['bound_lmax']    = 4
     
