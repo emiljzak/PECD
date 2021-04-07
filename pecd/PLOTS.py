@@ -230,7 +230,7 @@ def cart2sph(x,y,z):
     return r,theta,phi
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
-    coeffs = read_coeffs(wffile,nvecs=4)
+    coeffs = read_coeffs(wffile,nvecs=7)
 
     xl=np.zeros(nlobs)
     w=np.zeros(nlobs)
@@ -238,7 +238,7 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     w=np.array(w)
 
     X, Y, Z = grid[0], grid[1], grid[2]
-    val = np.zeros((X.shape[0],1,1))
+    val = np.zeros((X.shape[0],X.shape[0],X.shape[0]))
     print(X.shape)
 
     r,theta,phi = cart2sph(X,Y,Z)
@@ -260,7 +260,7 @@ def test_contour3d(nlobs,nbins,Gr,wffile):
     #atoms_x = np.array([2.9, 2.9, 3.8]) * 40 /5.5
     #atoms_y = np.array([3.0, 3.0, 3.0]) * 40 /5.5
     #atoms_z = np.array([3.8, 2.9, 2.7]) * 40 /5.5
-
+    """
     O = mlab.points3d(atoms_x[1:-1], atoms_y[1:-1], atoms_z[1:-1],
                     scale_factor=3,
                     resolution=20,
@@ -280,23 +280,25 @@ def test_contour3d(nlobs,nbins,Gr,wffile):
                     scale_mode='none')
     # The bounds between the atoms, we use the scalar information to give
     # color
-    mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
-                tube_radius=0.4, colormap='Reds')
-
+    #mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
+    #            tube_radius=0.4, colormap='Reds')
+    """
 
     npts = 100j
-    xmax = 2.0
-    x, y, z = np.ogrid[-1.0*xmax:xmax:npts, -1.0*xmax:xmax:npts, -1.0*xmax:xmax:npts]
-    ivec = 2
-    #wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
-    wf = np.sin(x**2 + y**2 + 2. * z**2) / (z**2+x**2+y**2)
-    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf), vmin=0.0, vmax=0.9)
+    xmax = 4.0
+    xmin = -4.0
+    zmin = -4.0
+    x, y, z = np.mgrid[xmin:xmax:npts, xmin:xmax:npts, zmin:xmax:npts]
+    ivec = 5
+    wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
+    #wf = np.sin(x**2 + y**2 + 2. * z**2) / (z**2+x**2+y**2)
+    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf), vmin=0.3, vmax=0.7)
 
-    show()
+
     #scalars =sin(x + y) + sin(2 * x - y) + cos(3 * x + 4 * y + z) 
     #wf.reshape(10,10,10)
-    #obj = contour3d(wf, contours=5, transparent=False)
-
+    #contour3d(wf, contours=5, transparent=True)
+    show()
 
 
 def test_contour_surf():
@@ -389,7 +391,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 params = input.gen_input()
 wffile = params['working_dir'] + "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
 
-nvecs = 6
+nvecs = 7
 
 coeffs = read_coeffs(wffile,nvecs)
 
