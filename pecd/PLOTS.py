@@ -206,7 +206,7 @@ def cart2sph(x,y,z):
     return r,theta,phi
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
-    coeffs = read_coeffs(wffile,nvecs=7)
+    coeffs = read_coeffs(wffile,nvecs=3)
 
     xl=np.zeros(nlobs)
     w=np.zeros(nlobs)
@@ -214,73 +214,93 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     w=np.array(w)
 
     X, Y, Z = grid[0], grid[1], grid[2]
-    val = np.zeros((X.shape[0],X.shape[0],X.shape[0]))
     print(X.shape)
+    val = np.zeros((X.shape[0]*X.shape[0]*X.shape[0]))
 
-    r,theta,phi = cart2sph(X,Y,Z)
-    #r= rx.flatten()
-    #theta =thetax.flatten()
-    #phi =phix.flatten()
+
+    rx,thetax,phix = cart2sph(X,Y,Z)
+    r= rx.flatten()
+    theta =thetax.flatten()
+    phi =phix.flatten()
+
     print(theta.shape)
     for ipoint in coeffs:
+        print(ipoint)
+        if np.abs(ipoint[5][ivec]) > 1e-2:
+            val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi).real / r
 
-        val +=  ipoint[5][ivec] * spharm(ipoint[3], ipoint[4], theta, phi).real / r
-    return val
+    return val/ np.max(val)
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
-    # The position of the atoms
-    atoms_O = np.array([0.0, 0.0, 0.0]) 
-    atoms_H1 = np.array([0.757,   0.586,    0.0000]) 
-    atoms_H2 = np.array([ -0.757,    0.586,     0.000]) 
+    mlab.clf()
+    fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
+    mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=10.0, figure=fig)
 
-    #atoms_x = np.array([2.9, 2.9, 3.8]) -3.0
-    #atoms_y = np.array([3.0, 3.0, 3.0]) -3.0
-    #atoms_z = np.array([3.8, 2.9, 2.7]) -3.0
+    plot_molecule = False
 
-    O = mlab.points3d(atoms_O[0], atoms_O[1], atoms_O[1],
-                    scale_factor=2,
-                    resolution=20,
-                    color=(1, 0, 0),
-                    scale_mode='none')
-
-    H1 = mlab.points3d(atoms_H1[0], atoms_H1[1], atoms_H1[2],
-                    scale_factor=1,
-                    resolution=20,
-                    color=(1, 1, 1),
-                    scale_mode='none')
-
-    H2 = mlab.points3d(atoms_H2[0], atoms_H2[1], atoms_H2[2],
-                    scale_factor=1,
-                    resolution=20,
-                    color=(1, 1, 1),
-                    scale_mode='none')
-
-    # The bounds between the atoms, we use the scalar information to give
-    # color
-    #mlab.plot3d(atoms_O, atoms_H1, atoms_H2, [1, 2, 1],
-    #            tube_radius=0.4, colormap='Reds')
+    if plot_molecule == True:
+        # The position of the atoms
+        scale = 40.0 / 5.5
+        trans = np.array([0.0, 0.0, 0.0])
+        atoms_O = np.array([0.0, 0.0, 0.0]) * scale + trans
+        atoms_H1 = np.array([0.757,   0.586,    0.0000]) * scale + trans
+        atoms_H2 = np.array([ -0.757,    0.586,     0.000]) * scale + trans
 
 
-    npts = 60j
-    xmax = 4.0
-    xmin = -4.0
-    zmin = -4.0
-    ymin = -0.0
-    ymax = 4.0
-    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:xmax:npts]
-    ivec = 3
-    #wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
-    #fmin = wf.min()
-    #fmax = wf.max()
-    #wf = np.sin(x**2 + y**2 + 2. * z**2) / (z**2+x**2+y**2)
+
+        O = mlab.points3d(atoms_O[0], atoms_O[1], atoms_O[2],
+                        scale_factor=3,
+                        resolution=20,
+                        color=(1, 0, 0),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
+
+        H1 = mlab.points3d(atoms_H1[0], atoms_H1[1], atoms_H1[2],
+                        scale_factor=2,
+                        resolution=20,
+                        color=(1, 1, 1),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
+
+        H2 = mlab.points3d(atoms_H2[0], atoms_H2[1], atoms_H2[2],
+                        scale_factor=2,
+                        resolution=20,
+                        color=(1, 1, 1),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
+
+    npts = 40j
+    grange = 5.0
+    
+    xmax = grange
+    xmin = -1.0 * grange
+    
+    zmax = grange
+    zmin = -1.0 * grange
+    
+    ymax = grange
+    ymin = -1.0 * grange
+    
+    ivec = 2
+
+    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
+    #wf = np.sin(x**2 + y**2 + 2. * z**2)
+    wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
+    fmin = wf.min()
+    fmax = wf.max()
+    print(wf)
+    wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
+    print(wf2)
+    #plot volume
     #mlab.pipeline.volume(mlab.pipeline.scalar_field(wf),  vmin=fmin + 0.65 * (fmax - fmin),
-                                    #vmax=fmin + 0.9 * (fmax - fmin))
-
-    #scalars =sin(x + y) + sin(2 * x - y) + cos(3 * x + 4 * y + z) 
-    #wf.reshape(10,10,10)
-    #mlab.contour3d(wf, contours=[0.9,0.7,0.6,0.4], transparent=False, colormap='brg',opacity=0.9)#,\
-        #vmin=fmin + 0.15 * (fmax - fmin), vmax=fmin + 0.9 * (fmax - fmin)) #'jet'
-
+    #                               vmax=fmin + 0.9 * (fmax - fmin))
+    
+    #plot isosurface
+    mywf = mlab.contour3d(wf2, contours=[0.05,0.1,0.2], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
+    mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
 def test_plot3d():
@@ -352,6 +372,9 @@ def chemistry():
     # Load the data, we need to remove the first 8 lines and the '\n'
     str = ' '.join(fl.readlines()[9:])
     data = np.fromstring(str, sep=' ')
+
+
+
     data.shape = (40, 40, 40)
 
     source = mlab.pipeline.scalar_field(data)
@@ -365,10 +388,51 @@ def chemistry():
     mlab.show()
 
 
+def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
+    #================ radial-angular in real space ===============#
+
+    """plot the selected wavefunctions functions"""
+    """ Only radial part is plotted"""
+
+    fig = plt.figure(figsize=(2, 2), dpi=200, constrained_layout=True)
+
+    spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
+    axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+
+    rang = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+    gridtheta1d = 2 * np.pi * rang
+    rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+
+    x=np.zeros(nlobs)
+    w=np.zeros(nlobs)
+    x,w=GRID.gauss_lobatto(nlobs,14)
+    w=np.array(w)
+    x=np.array(x) # convert back to np arrays
+    nprint = 1 #how many functions to print
+
+    y = np.zeros((len(rang),len(rang)),dtype=complex)
+
+    phi0 = 0.0
+
+    #counter = 0
+
+    ivec = 0
+
+    for ipoint in coeffs:
+
+        if np.abs(ipoint[5][ivec]) > 1e-2:
+            print(ipoint)
+            for i in range(len(rang)):
+                y[i,:] +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],rang[:],rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], gridtheta1d[i], phi0).real
+
+    line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
+
+    plt.legend()   
+    plt.show()     
+
+
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-
-
-
 
 params = input.gen_input()
 wffile = params['working_dir'] + "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
@@ -383,14 +447,17 @@ Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['boun
 
 #test_plot3d()
 #mlab.show()
-#exit()
-plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
 
+#plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+plot_wf_angrad(0.0, params['bound_binw']*params['bound_nbins'], 100, coeffs ,\
+            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 exit()
 r0 = 2.0
 plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
 plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
             Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
+
+
 
 exit()
