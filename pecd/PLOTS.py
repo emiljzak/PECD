@@ -206,7 +206,7 @@ def cart2sph(x,y,z):
     return r,theta,phi
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
-    coeffs = read_coeffs(wffile,nvecs=3)
+    coeffs = read_coeffs(wffile,nvecs=5)
 
     xl=np.zeros(nlobs)
     w=np.zeros(nlobs)
@@ -416,16 +416,15 @@ def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
 
     #counter = 0
 
-    ivec = 0
+    ivec = 4
 
     for ipoint in coeffs:
-
         if np.abs(ipoint[5][ivec]) > 1e-2:
             print(ipoint)
             for i in range(len(rang)):
                 y[i,:] +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],rang[:],rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], gridtheta1d[i], phi0).real
 
-    line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),cmap = 'jet',vmin=0.0, vmax=1.0) #cmap = jet, gnuplot, gnuplot2
+    line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),20,cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
 
     plt.legend()   
@@ -449,7 +448,7 @@ Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['boun
 #mlab.show()
 
 #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
-plot_wf_angrad(0.0, params['bound_binw']*params['bound_nbins'], 100, coeffs ,\
+plot_wf_angrad(0.0, params['bound_binw']*params['bound_nbins'], 200, coeffs ,\
             Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 exit()
 r0 = 2.0
