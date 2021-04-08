@@ -16,6 +16,21 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.ticker as ticker
 
+def spharm(l,m,theta,phi):
+    return sph_harm(m, l, phi, theta)
+    
+def sph2cart(r,theta,phi):
+    x=r*np.sin(theta)*np.cos(phi)
+    y=r*np.sin(theta)*np.sin(phi)
+    z=r*np.cos(theta)
+    return x,y,z
+
+def cart2sph(x,y,z):
+    r=np.sqrt(x**2+y**2+z**2)
+    theta=np.arctan(np.sqrt(x**2+y**2)/z)
+    phi=np.arctan(y/x)
+    return r,theta,phi
+
 
 def read_coeffs(filename,nvecs):
 
@@ -34,38 +49,31 @@ def read_coeffs(filename,nvecs):
         coeffs.append([i,n,xi,l,m,np.asarray(c)])
     return coeffs
 
-def plot_wf_rad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
-    """plot the selected wavefunctions functions"""
-    """ Only radial part is plotted"""
+def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
+    coeffs = read_coeffs(wffile,nvecs=5)
 
-    r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
-
-    x=np.zeros(nlobs)
+    xl=np.zeros(nlobs)
     w=np.zeros(nlobs)
-    x,w=GRID.gauss_lobatto(nlobs,14)
+    xl,w=GRID.gauss_lobatto(nlobs,14)
     w=np.array(w)
-    x=np.array(x) # convert back to np arrays
-    nprint = 1 #how many functions to print
 
-    y = np.zeros(len(r))
-    theta0 = 0.0
-    phi0 = 0.0
-
-    #counter = 0
-
-    for ivec in range(nvecs):
-        y = np.zeros(len(r))
-        for ipoint in coeffs:
-
-            y +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],r,rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta0, phi0).real
+    X, Y, Z = grid[0], grid[1], grid[2]
+    print(X.shape)
+    val = np.zeros((X.shape[0]*X.shape[0]*X.shape[0]))
 
 
-        plt.plot(r, np.abs(y)**2/max(np.abs(y)**2), '-',label=str(ivec)) 
+    rx,thetax,phix = cart2sph(X,Y,Z)
+    r= rx.flatten()
+    theta =thetax.flatten()
+    phi =phix.flatten()
 
-    plt.xlabel('r/a.u.')
-    plt.ylabel('Radial eigenfunction')
-    plt.legend()   
-    plt.show()     
+    print(theta.shape)
+    for ipoint in coeffs:
+        print(ipoint)
+        if np.abs(ipoint[5][ivec]) > 1e-2:
+            val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi).real / r
+
+    return val/ np.max(val)
 
 def chi(i,n,r,rgrid,w,nlobs,nbins):
     # r is the argument f(r)
@@ -114,7 +122,6 @@ def f(i,n,r,rgrid,nlobs,nbins):
 
     return prod
 
-
 def plot_chi(rmin,rmax,npoints,rgrid,nlobs,nbins):
     """plot the selected radial basis functions"""
     r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
@@ -145,6 +152,39 @@ def plot_chi(rmin,rmax,npoints,rgrid,nlobs,nbins):
     plt.plot(r, y) 
     plt.show()     
 
+
+def plot_wf_rad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
+    """plot the selected wavefunctions functions"""
+    """ Only radial part is plotted"""
+
+    r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+
+    x=np.zeros(nlobs)
+    w=np.zeros(nlobs)
+    x,w=GRID.gauss_lobatto(nlobs,14)
+    w=np.array(w)
+    x=np.array(x) # convert back to np arrays
+    nprint = 1 #how many functions to print
+
+    y = np.zeros(len(r))
+    theta0 = 0.0
+    phi0 = 0.0
+
+    #counter = 0
+
+    for ivec in range(nvecs):
+        y = np.zeros(len(r))
+        for ipoint in coeffs:
+
+            y +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],r,rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta0, phi0).real
+
+
+        plt.plot(r, np.abs(y)**2/max(np.abs(y)**2), '-',label=str(ivec)) 
+
+    plt.xlabel('r/a.u.')
+    plt.ylabel('Radial eigenfunction')
+    plt.legend()   
+    plt.show()     
 
 def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
     """plot the angular basis"""
@@ -187,49 +227,47 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
+def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
+    #================ radial-angular in real space ===============#
 
+    """plot the selected wavefunctions functions"""
+    """ Only radial part is plotted"""
 
-def spharm(l,m,theta,phi):
-    return sph_harm(m, l, phi, theta)
-    
+    fig = plt.figure(figsize=(2, 2), dpi=200, constrained_layout=True)
 
-def sph2cart(r,theta,phi):
-    x=r*np.sin(theta)*np.cos(phi)
-    y=r*np.sin(theta)*np.sin(phi)
-    z=r*np.cos(theta)
-    return x,y,z
+    spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
+    axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
 
-def cart2sph(x,y,z):
-    r=np.sqrt(x**2+y**2+z**2)
-    theta=np.arctan(np.sqrt(x**2+y**2)/z)
-    phi=np.arctan(y/x)
-    return r,theta,phi
+    rang = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+    gridtheta1d = 2 * np.pi * rang
+    rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
 
-def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
-    coeffs = read_coeffs(wffile,nvecs=5)
-
-    xl=np.zeros(nlobs)
+    x=np.zeros(nlobs)
     w=np.zeros(nlobs)
-    xl,w=GRID.gauss_lobatto(nlobs,14)
+    x,w=GRID.gauss_lobatto(nlobs,14)
     w=np.array(w)
+    x=np.array(x) # convert back to np arrays
+    nprint = 1 #how many functions to print
 
-    X, Y, Z = grid[0], grid[1], grid[2]
-    print(X.shape)
-    val = np.zeros((X.shape[0]*X.shape[0]*X.shape[0]))
+    y = np.zeros((len(rang),len(rang)),dtype=complex)
 
+    phi0 = 0.0
 
-    rx,thetax,phix = cart2sph(X,Y,Z)
-    r= rx.flatten()
-    theta =thetax.flatten()
-    phi =phix.flatten()
+    #counter = 0
 
-    print(theta.shape)
+    ivec = 4
+
     for ipoint in coeffs:
-        print(ipoint)
         if np.abs(ipoint[5][ivec]) > 1e-2:
-            val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi).real / r
+            print(ipoint)
+            for i in range(len(rang)):
+                y[i,:] +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],rang[:],rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], gridtheta1d[i], phi0).real
 
-    return val/ np.max(val)
+    line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),20,cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
+
+    plt.legend()   
+    plt.show()     
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     mlab.clf()
@@ -303,160 +341,115 @@ def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
-def test_plot3d():
-    """Generates a pretty set of lines."""
-    n_mer, n_long = 6, 11
-    dphi = np.pi / 1000.0
-    phi = np.arange(0.0, 2 * np.pi + 0.5 * dphi, dphi)
-    mu = phi * n_mer
-    x = np.cos(mu) * (1 + np.cos(n_long * mu / n_mer) * 0.5)
-    y = np.sin(mu) * (1 + np.cos(n_long * mu / n_mer) * 0.5)
-    z = np.sin(n_long * mu / n_mer) * 0.5
-
-    l = plot3d(x, y, z, np.sin(mu), tube_radius=0.025, colormap='Spectral')
-    return l
-
-def chemistry():
-    # Retrieve the electron localization data for H2O #############################
-    import os
-    if not os.path.exists('h2o-elf.cube'):
-        # Download the data
-        try:
-            from urllib import urlopen
-        except ImportError:
-            from urllib.request import urlopen
-        print('Downloading data, please wait')
-        opener = urlopen(
-            'http://code.enthought.com/projects/mayavi/data/h2o-elf.cube'
-            )
-        open('h2o-elf.cube', 'wb').write(opener.read())
-
-
-    # Plot the atoms and the bonds ################################################
-    import numpy as np
-    from mayavi import mlab
-    mlab.figure(1, bgcolor=(0, 0, 0), size=(350, 350))
+def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.clf()
+    fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
+    mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=10.0, figure=fig)
 
-    # The position of the atoms
-    atoms_x = np.array([2.9, 2.9, 3.8]) * 40 / 5.5
-    atoms_y = np.array([3.0, 3.0, 3.0]) * 40 / 5.5
-    atoms_z = np.array([3.8, 2.9, 2.7]) * 40 / 5.5
+    plot_molecule = False
 
-    O = mlab.points3d(atoms_x[1:-1], atoms_y[1:-1], atoms_z[1:-1],
-                    scale_factor=3,
-                    resolution=20,
-                    color=(1, 0, 0),
-                    scale_mode='none')
-
-    H1 = mlab.points3d(atoms_x[:1], atoms_y[:1], atoms_z[:1],
-                    scale_factor=2,
-                    resolution=20,
-                    color=(1, 1, 1),
-                    scale_mode='none')
-
-    H2 = mlab.points3d(atoms_x[-1:], atoms_y[-1:], atoms_z[-1:],
-                    scale_factor=2,
-                    resolution=20,
-                    color=(1, 1, 1),
-                    scale_mode='none')
-
-    # The bounds between the atoms, we use the scalar information to give
-    # color
-    mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
-                tube_radius=0.4, colormap='Reds')
-
-    # Display the electron localization function ##################################
-    fl = open('h2o-elf.cube','r')
-    print(fl.readlines()[9:])
-    # Load the data, we need to remove the first 8 lines and the '\n'
-    str = ' '.join(fl.readlines()[9:])
-    data = np.fromstring(str, sep=' ')
+    if plot_molecule == True:
+        # The position of the atoms
+        scale = 40.0 / 5.5
+        trans = np.array([0.0, 0.0, 0.0])
+        atoms_O = np.array([0.0, 0.0, 0.0]) * scale + trans
+        atoms_H1 = np.array([0.757,   0.586,    0.0000]) * scale + trans
+        atoms_H2 = np.array([ -0.757,    0.586,     0.000]) * scale + trans
 
 
 
-    data.shape = (40, 40, 40)
+        O = mlab.points3d(atoms_O[0], atoms_O[1], atoms_O[2],
+                        scale_factor=3,
+                        resolution=20,
+                        color=(1, 0, 0),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
 
-    source = mlab.pipeline.scalar_field(data)
-    min = data.min()
-    max = data.max()
-    vol = mlab.pipeline.volume(source, vmin=min + 0.65 * (max - min),
-                                    vmax=min + 0.9 * (max - min))
+        H1 = mlab.points3d(atoms_H1[0], atoms_H1[1], atoms_H1[2],
+                        scale_factor=2,
+                        resolution=20,
+                        color=(1, 1, 1),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
 
-    mlab.view(132, 54, 45, [21, 20, 21.5])
+        H2 = mlab.points3d(atoms_H2[0], atoms_H2[1], atoms_H2[2],
+                        scale_factor=2,
+                        resolution=20,
+                        color=(1, 1, 1),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
 
+    npts = 40j
+    grange = 5.0
+    
+    xmax = grange
+    xmin = -1.0 * grange
+    
+    zmax = grange
+    zmin = -1.0 * grange
+    
+    ymax = grange
+    ymin = -1.0 * grange
+    
+    ivec = 2
+
+    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
+    #wf = np.sin(x**2 + y**2 + 2. * z**2)
+    wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
+    fmin = wf.min()
+    fmax = wf.max()
+    print(wf)
+    wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
+    print(wf2)
+    #plot volume
+    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf),  vmin=fmin + 0.65 * (fmax - fmin),
+                                   vmax=fmin + 0.9 * (fmax - fmin))
+    
+
+    mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
 
-def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
-    #================ radial-angular in real space ===============#
 
-    """plot the selected wavefunctions functions"""
-    """ Only radial part is plotted"""
+if __name__ == "__main__":      
 
-    fig = plt.figure(figsize=(2, 2), dpi=200, constrained_layout=True)
+    # preparation of parameters
+    os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-    spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
-    axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+    params = input.gen_input()
+    wffile = params['working_dir'] + "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
+    nvecs = 7
 
-    rang = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
-    gridtheta1d = 2 * np.pi * rang
-    rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+    coeffs = read_coeffs(wffile,nvecs)
 
-    x=np.zeros(nlobs)
-    w=np.zeros(nlobs)
-    x,w=GRID.gauss_lobatto(nlobs,14)
-    w=np.array(w)
-    x=np.array(x) # convert back to np arrays
-    nprint = 1 #how many functions to print
-
-    y = np.zeros((len(rang),len(rang)),dtype=complex)
-
-    phi0 = 0.0
-
-    #counter = 0
-
-    ivec = 4
-
-    for ipoint in coeffs:
-        if np.abs(ipoint[5][ivec]) > 1e-2:
-            print(ipoint)
-            for i in range(len(rang)):
-                y[i,:] +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],rang[:],rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], gridtheta1d[i], phi0).real
-
-    line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),20,cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
-
-    plt.legend()   
-    plt.show()     
+    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+    """ plot radial basis """
+    #plot_chi(0.0,params['bound_binw']*params['bound_nbins'],1000,Gr,params['bound_nlobs'], params['bound_nbins'])
+    #exit()
 
-params = input.gen_input()
-wffile = params['working_dir'] + "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
+    """ plot radial wavefunction at a given ray=(theta,phi) """
 
-nvecs = 7
+    #plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
+    #            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 
-coeffs = read_coeffs(wffile,nvecs)
+    """ plot angular wavefunction at a given distance """
+    #r0 = 2.0
+    #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
-Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
-#plot_chi(0.0,params['bound_binw']*params['bound_nbins'],1000,Gr,params['bound_nlobs'], params['bound_nbins'])
-#exit()
+    """ plot angular-radial wavefunction on a polar plot"""
+    #plot_wf_angrad(0.0, params['bound_binw']*params['bound_nbins'], 200, coeffs ,\
+    #        Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 
-#test_plot3d()
-#mlab.show()
-
-#plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
-plot_wf_angrad(0.0, params['bound_binw']*params['bound_nbins'], 200, coeffs ,\
-            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
-exit()
-r0 = 2.0
-plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
-
-plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
-            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
+    """ plot 3D isosurface of the wavefunction amplitude (density)"""
+    #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
 
 
+    """ plot 4D volume of the wavefunction amplitude (density)"""
+    plot_wf_volume(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+    exit()
 
-exit()
