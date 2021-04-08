@@ -1,11 +1,13 @@
-# Create the data.
-from numpy import pi, sin, cos, mgrid
 from mayavi import mlab
+
 import numpy as np
+from scipy.special import sph_harm
+
 import os
+
 import input
 import GRID
-from scipy.special import sph_harm
+
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
@@ -13,28 +15,6 @@ from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.ticker as ticker
-
-
-def myavitest():
-    dphi, dtheta = pi/250.0, pi/250.0
-    [phi,theta] = mgrid[0:pi+dphi*1.5:dphi,0:2*pi+dtheta*1.5:dtheta]
-    m0 = 4
-    m1 = 3
-    m2 = 2
-    m3 = 3
-    m4 = 6
-    m5 = 2
-    m6 = 6
-    m7 = 4
-    r = sin(m0*phi)**m1 + cos(m2*phi)**m3 + sin(m4*theta)**m5 + cos(m6*theta)**m7
-    x = r*sin(phi)*cos(theta)
-    y = r*cos(phi)
-    z = r*sin(phi)*sin(theta)
-
-    # View it.
-
-    s = mlab.mesh(x, y, z)
-    mlab.show()
 
 
 def read_coeffs(filename,nvecs):
@@ -53,12 +33,6 @@ def read_coeffs(filename,nvecs):
             c.append(float(words[5+ivec]))
         coeffs.append([i,n,xi,l,m,np.asarray(c)])
     return coeffs
-
-def spharm(l,m,theta,phi):
-    return sph_harm(m, l, phi, theta)
-
-    
-
 
 def plot_wf_rad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
     """plot the selected wavefunctions functions"""
@@ -214,8 +188,10 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
     plt.show()
 
 
-import numpy
-from mayavi.mlab import *
+
+def spharm(l,m,theta,phi):
+    return sph_harm(m, l, phi, theta)
+    
 
 def sph2cart(r,theta,phi):
     x=r*np.sin(theta)*np.cos(phi)
@@ -251,68 +227,74 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
         val +=  ipoint[5][ivec] * spharm(ipoint[3], ipoint[4], theta, phi).real / r
     return val
 
-def test_contour3d(nlobs,nbins,Gr,wffile):
+def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     # The position of the atoms
-    atoms_x = np.array([1.0, 0.0, 0.0]) * 40 /5.5
-    atoms_y = np.array([0.0, 1.0, 0.0]) * 40 /5.5
-    atoms_z = np.array([0.0, 0.0, 0.0]) * 40 /5.5
+    atoms_O = np.array([0.0, 0.0, 0.0]) 
+    atoms_H1 = np.array([0.757,   0.586,    0.0000]) 
+    atoms_H2 = np.array([ -0.757,    0.586,     0.000]) 
 
-    #atoms_x = np.array([2.9, 2.9, 3.8]) * 40 /5.5
-    #atoms_y = np.array([3.0, 3.0, 3.0]) * 40 /5.5
-    #atoms_z = np.array([3.8, 2.9, 2.7]) * 40 /5.5
-    """
-    O = mlab.points3d(atoms_x[1:-1], atoms_y[1:-1], atoms_z[1:-1],
-                    scale_factor=3,
+    #atoms_x = np.array([2.9, 2.9, 3.8]) -3.0
+    #atoms_y = np.array([3.0, 3.0, 3.0]) -3.0
+    #atoms_z = np.array([3.8, 2.9, 2.7]) -3.0
+
+    O = mlab.points3d(atoms_O[0], atoms_O[1], atoms_O[1],
+                    scale_factor=2,
                     resolution=20,
                     color=(1, 0, 0),
                     scale_mode='none')
 
-    H1 = mlab.points3d(atoms_x[:1], atoms_y[:1], atoms_z[:1],
-                    scale_factor=2,
+    H1 = mlab.points3d(atoms_H1[0], atoms_H1[1], atoms_H1[2],
+                    scale_factor=1,
                     resolution=20,
                     color=(1, 1, 1),
                     scale_mode='none')
 
-    H2 = mlab.points3d(atoms_x[-1:], atoms_y[-1:], atoms_z[-1:],
-                    scale_factor=2,
+    H2 = mlab.points3d(atoms_H2[0], atoms_H2[1], atoms_H2[2],
+                    scale_factor=1,
                     resolution=20,
                     color=(1, 1, 1),
                     scale_mode='none')
+
     # The bounds between the atoms, we use the scalar information to give
     # color
-    #mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
+    #mlab.plot3d(atoms_O, atoms_H1, atoms_H2, [1, 2, 1],
     #            tube_radius=0.4, colormap='Reds')
-    """
 
-    npts = 100j
+
+    npts = 60j
     xmax = 4.0
     xmin = -4.0
     zmin = -4.0
-    x, y, z = np.mgrid[xmin:xmax:npts, xmin:xmax:npts, zmin:xmax:npts]
-    ivec = 5
-    wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
+    ymin = -0.0
+    ymax = 4.0
+    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:xmax:npts]
+    ivec = 3
+    #wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
+    #fmin = wf.min()
+    #fmax = wf.max()
     #wf = np.sin(x**2 + y**2 + 2. * z**2) / (z**2+x**2+y**2)
-    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf), vmin=0.3, vmax=0.7)
-
+    #mlab.pipeline.volume(mlab.pipeline.scalar_field(wf),  vmin=fmin + 0.65 * (fmax - fmin),
+                                    #vmax=fmin + 0.9 * (fmax - fmin))
 
     #scalars =sin(x + y) + sin(2 * x - y) + cos(3 * x + 4 * y + z) 
     #wf.reshape(10,10,10)
-    #contour3d(wf, contours=5, transparent=True)
-    show()
+    #mlab.contour3d(wf, contours=[0.9,0.7,0.6,0.4], transparent=False, colormap='brg',opacity=0.9)#,\
+        #vmin=fmin + 0.15 * (fmax - fmin), vmax=fmin + 0.9 * (fmax - fmin)) #'jet'
 
+    mlab.show()
 
-def test_contour_surf():
-    """Test contour_surf on regularly spaced co-ordinates like MayaVi."""
-    def f(x, y):
-        sin, cos = np.sin, np.cos
-        return sin(x + y) + sin(2 * x - y) + cos(3 * x + 4 * y)
+def test_plot3d():
+    """Generates a pretty set of lines."""
+    n_mer, n_long = 6, 11
+    dphi = np.pi / 1000.0
+    phi = np.arange(0.0, 2 * np.pi + 0.5 * dphi, dphi)
+    mu = phi * n_mer
+    x = np.cos(mu) * (1 + np.cos(n_long * mu / n_mer) * 0.5)
+    y = np.sin(mu) * (1 + np.cos(n_long * mu / n_mer) * 0.5)
+    z = np.sin(n_long * mu / n_mer) * 0.5
 
-    x, y = np.mgrid[-7.:7.05:0.1, -5.:5.05:0.05]
-    s = contour_surf(x, y, f)
-    show()
-    return s
-
-
+    l = plot3d(x, y, z, np.sin(mu), tube_radius=0.025, colormap='Spectral')
+    return l
 
 def chemistry():
     # Retrieve the electron localization data for H2O #############################
@@ -399,11 +381,16 @@ Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['boun
 #plot_chi(0.0,params['bound_binw']*params['bound_nbins'],1000,Gr,params['bound_nlobs'], params['bound_nbins'])
 #exit()
 
-test_contour3d(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
-exit()
+#test_plot3d()
+#mlab.show()
+#exit()
+plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
 
+exit()
 r0 = 2.0
 plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
-exit()
+
 plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
             Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
+
+exit()
