@@ -37,4 +37,4 @@ if __name__ == "__main__":
     params = input.gen_input()
 
 
-GENMAP(nlobs,nbins,lmax,maptype,working_dir)
+    GENMAP(nlobs,nbins,lmax,maptype,working_dir)

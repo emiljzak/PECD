@@ -85,9 +85,18 @@ def gen_input():
 
     params['file_esp']  =   "esp_" + params['molec_name']   + \
                                 "_" + str(params['bound_nbins'])   + \
-                                "_" + str(params['bound_nlobs']) + \
+                                "_" + str(params['bound_nlobs'])   + \
                                 "_" + str(params['bound_binw'])    + \
-                                "_" + str(params['bound_lmax'])  + \
-                                "_" + str(params['esp_method'])  + ".dat"
+                                "_" + str(params['bound_lmax'])    + \
+                                "_" + str(params['esp_method'])    + ".dat"
+    
+    """==== PROPAGATE ===="""
+
+    params['nlobs']   = 10
+    params['nbins']   = 1
+    params['binw']    = 10.0
+
+    params['FEMLIST'] = [   [0,params['bound_nlobs'],params['bound_binw']] ,\
+                            [1,params['bound_nlobs'],params['bound_binw']] ] 
 
     return params
