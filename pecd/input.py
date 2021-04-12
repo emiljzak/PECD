@@ -1,5 +1,5 @@
 import numpy as np
-import constants
+import CONSTANTS
 import os
 def gen_input():
 
@@ -92,11 +92,11 @@ def gen_input():
     
     """==== PROPAGATE ===="""
 
-    params['nlobs']   = 10
-    params['nbins']   = 1
+    params['nlobs']   = 6
+    params['nbins']   = 3
     params['binw']    = 10.0
 
-    params['FEMLIST'] = [   [0,params['bound_nlobs'],params['bound_binw']] ,\
-                            [1,params['bound_nlobs'],params['bound_binw']] ] 
+    params['FEMLIST'] = [   [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
+                            [params['nbins'], params['nlobs'],params['binw']] ] 
 
     return params

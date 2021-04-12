@@ -5,7 +5,8 @@
 #
 import numpy as np
 import sys
-
+import MAPPING
+import input
 
 
 def prop_wf(params,psi0):
@@ -30,11 +31,58 @@ def prop_wf(params,psi0):
         scheme (str):       quadrature scheme used in angular integration
     """
 
+def read_coeffs(filename,nvecs):
 
+    coeffs = []
+    fl = open( filename , 'r' )
+    for line in fl:
+        words   = line.split()
+        i       = int(words[0])
+        n       = int(words[1])
+        xi      = int(words[2])
+        l       = int(words[3])
+        m       = int(words[4])
+        c       = []
+        for ivec in range(nvecs):
+            c.append(float(words[5+ivec]))
+        coeffs.append([i,n,xi,l,m,np.asarray(c)])
+    return coeffs
 
+def proj_wf0_wfinit_dvr(coeffs0, marray, Nbas_global):
+    psi = []
+    for ivec in range(Nbas_global):
+        if ivec < len(coeffs0):
+            psi.append([marray[ivec][0],marray[ivec][1],marray[ivec][2],\
+                        marray[ivec][3],marray[ivec][4],coeffs0[ivec][5]])
+        else:
+            psi.append([marray[ivec][0],marray[ivec][1],marray[ivec][2],\
+                        marray[ivec][3],marray[ivec][4],0.0])
+    """ for ivec in range(Nbas_global):
+        for icoeffs0 in coeffs:
+            if  marray[ivec][0] == icoeffs0[0]   and \
+                marray[ivec][1] == icoeffs0[1]   and \
+                marray[ivec][3] == icoeffs0[3]   and \
+                marray[ivec][4] == icoeffs0[4]: #i,n,l,m
+                    psi.append([marray[ivec][0],marray[ivec][1],marray[ivec][2],\
+                                marray[ivec][3],marray[ivec][4],icoeffs[5]])
+                break
+
+        psi.append([marray[ivec][0],marray[ivec][1],marray[ivec][2],\
+                    marray[ivec][3],marray[ivec][4],icoeffs[5]])
+    """
+    return psi
 if __name__ == "__main__":      
 
     params = input.gen_input()
 
 
-    GENMAP(nlobs,nbins,lmax,maptype,working_dir)
+    maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
+                                                            params['bound_lmax'],
+                                                            params['map_type'],
+                                                            params['working_dir'] )
+
+    coeffs0 = read_coeffs( params['working_dir'] + params['file_psi0'], 1 )
+
+
+    psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
+    print(psi_init)
