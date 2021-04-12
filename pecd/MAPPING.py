@@ -23,50 +23,66 @@ def GENMAP_FEMLIST(femlist,lmax,maptype,working_dir):
 
 
 def MAP_DVR_FEMLIST(femlist,lmax):
-
     imap = 0
     xi = 0
     maparray = []
+    ibincount = -1
 
-    for i in range(0,nbins):
-        for n in range (0,nlobs):
-            if n == nlobs-1:
-                continue        
-            elif n == 0 and i == nbins-1:
-                continue
-            else:
-                xi += 1
-                for l in range(0,lmax+1):
-                    for m in range(-l,l+1):
+    nbins = 0
+    for elem in femlist:
+        nbins += elem[0]
+    print("total number of bins = " + str(nbins))
 
-                        imap += 1
-                        print(i,n,xi,l,m,imap)
-                        maparray.append([i,n,xi,l,m,imap])
-            
+    for elem in femlist:
+        for i in range(elem[0]):
+            ibincount +=1
+            for n in range(elem[1]):
+                if n == elem[1]-1:
+                    continue   
+                elif n == 0 and ibincount == nbins-1:
+                    continue     
+                else:
+                    xi += 1
+                    for l in range(0,lmax+1):
+                        for m in range(-l,l+1):
+
+                            imap += 1
+                            print(ibincount,n,xi,l,m,imap)
+                            maparray.append([ibincount,n,xi,l,m,imap])
+
 
     return maparray, imap
 
 
 def MAP_SPECT_FEMLIST(femlist,lmax):
-
+    ##### NEEDS VERIFICATION #########
     imap = 0
+    xi = 0
     maparray = []
+    ibincount = -1
 
+    nbins = 0
+    for elem in femlist:
+        nbins += elem[0]
+    print("total number of bins = " + str(nbins))
+    
     for l in range(0,lmax+1):
         for m in range(-l,l+1):
             xi = 0
-            for i in range(0,nbins):
-                for n in range (0,nlobs):
-                    if n == nlobs-1:
-                        continue        
-                    elif n == 0 and i == nbins-1:
-                        continue
-                    else:
-                        xi += 1
-                        imap += 1
-                        print(l,m,i,n,xi,imap)
-                        maparray.append([l,m,i,n,xi,imap])
-            
+            ibinscound = -1
+            for elem in femlist:
+                for i in range(elem[0]):
+                    ibincount +=1
+                    for n in range(elem[1]):
+                        if n == elem[1]-1:
+                            continue   
+                        elif n == 0 and ibincount == nbins-1:
+                            continue     
+                        else:
+                            xi += 1
+                            imap += 1
+                            print(l,m,ibincount,n,xi,imap)
+                            maparray.append([l,m,ibincount,n,xi,imap])
 
     return maparray, imap
 
