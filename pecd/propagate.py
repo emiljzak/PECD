@@ -7,7 +7,13 @@ import numpy as np
 import sys
 import MAPPING
 import input
+import GRID
+import BOUND
+import time
 
+from scipy import sparse
+
+import matplotlib.pyplot as plt
 
 def prop_wf(params,psi0):
     """ main method for propagating the wavefunction"""
@@ -30,6 +36,82 @@ def prop_wf(params,psi0):
         field (str):        name of the electric field function used (it can further read from file or return analytic field)
         scheme (str):       quadrature scheme used in angular integration
     """
+
+
+def BUILD_HMAT(params,maparray,Nbas,ham0):
+fix the grid
+    Gr, Nr = GRID.r_grid( params['nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
+
+    if params['hmat_format'] == 'csr':
+        hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
+    elif params['hmat_format'] == 'regular':
+        hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
+
+    """ calculate hmat """
+    """
+    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
+        
+    for ielem, elem in enumerate(potmat0):
+        #print(potind[ielem][0],potind[ielem][1])
+        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
+    """
+    start_time = time.time()
+    keomat0 = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    end_time = time.time()
+    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+    #hmat += keomat0 
+
+    #plot_mat(hmat)
+    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
+    plt.show()
+    
+    """ diagonalize hmat """
+    start_time = time.time()
+    enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
+    end_time = time.time()
+    print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
+
+    print("Normalization of the wavefunction: ")
+    for v in range(params['num_ini_vec']):
+        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs0[:,v] ) * coeffs0[:,v] ) )))
+
+
+  
+
+""" ============ KEOMAT ============ """
+def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
+    nlobs = params['nlobs']
+    """call Gauss-Lobatto rule """
+    x   =   np.zeros(nlobs)
+    w   =   np.zeros(nlobs)
+    x,w =   GRID.gauss_lobatto(nlobs,14)
+    x   =   np.array(x)
+    w   =   np.array(w)
+
+    keomat =  np.zeros((Nbas, Nbas), dtype=np.float64)
+
+    for i in range(Nbas):
+        rin = Gr[maparray[i][0],maparray[i][1]]
+        for j in range(i,Nbas):
+            if maparray[i][3] == maparray[j][3] and maparray[i][4] == maparray[j][4]:
+                keomat[i,j] = calc_keomatel(maparray[i][0], maparray[i][1],\
+                                            maparray[i][3], maparray[j][0], maparray[j][1], x, w, rin, \
+                                            params['bound_rshift'],params['bound_binw'])
+
+    print("KEO matrix")
+    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+        print(0.5*keomat)
+
+    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
+
+    return  0.5 * keomat
+
+
 
 def read_coeffs(filename,nvecs):
 
@@ -71,6 +153,17 @@ def proj_wf0_wfinit_dvr(coeffs0, marray, Nbas_global):
                     marray[ivec][3],marray[ivec][4],icoeffs[5]])
     """
     return psi
+
+
+def read_ham(params):
+    if params['hmat_format'] == 'csr':
+        sparse.load_npz( params['working_dir'] + params['file_hmat0'] , hmat , compressed = False )
+    elif params['hmat_format'] == 'regular':
+        with open( params['working_dir'] + params['file_hmat0'] , 'r') as hmatfile:   
+            hmat0 = np.loadtxt(hmatfile)
+    return hmat0
+
+
 if __name__ == "__main__":      
 
     params = input.gen_input()
@@ -86,3 +179,10 @@ if __name__ == "__main__":
 
     psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
     print(psi_init)
+
+    ham0 = read_ham(params)
+    print(ham0)
+    plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
+    plt.show()
+
+    BUILD_HMAT(params,maparray_global, Nbas_global,ham0)

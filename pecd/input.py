@@ -92,11 +92,12 @@ def gen_input():
     
     """==== PROPAGATE ===="""
 
-    params['nlobs']   = 6
-    params['nbins']   = 3
+    params['nlobs']   = 10
+    params['nbins']   = 2
     params['binw']    = 10.0
 
     params['FEMLIST'] = [   [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
                             [params['nbins'], params['nlobs'],params['binw']] ] 
+
 
     return params

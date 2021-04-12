@@ -8,7 +8,7 @@ import input
 import MAPPING
 import POTENTIAL
 import GRID
-import constants
+import CONSTANTS
 
 import numpy as np
 from scipy import sparse
