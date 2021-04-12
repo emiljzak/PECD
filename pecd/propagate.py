@@ -8,9 +8,7 @@ import sys
 
 
 
-
-
-def prop_wf(self,params,psi0):
+def prop_wf(params,psi0):
     """ main method for propagating the wavefunction"""
 
     """params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances,etc."""
@@ -39,3 +37,4 @@ if __name__ == "__main__":
     params = input.gen_input()
 
 
+GENMAP(nlobs,nbins,lmax,maptype,working_dir)

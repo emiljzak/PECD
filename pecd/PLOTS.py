@@ -401,11 +401,11 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
     fmin = wf.min()
     fmax = wf.max()
-    print(wf)
+
     wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
-    print(wf2)
+
     #plot volume
-    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf),  vmin=fmin + 0.65 * (fmax - fmin),
+    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf2),  vmin=fmin + 0.65 * (fmax - fmin),
                                    vmax=fmin + 0.9 * (fmax - fmin))
     
 

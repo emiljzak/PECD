@@ -27,7 +27,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 
 """ start of @jit section """
-#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
+jitcache = True
+@jit(nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
 	if m>0:
@@ -60,7 +61,7 @@ LOOKUP_TABLE = np.array([
     20922789888000, 355687428096000, 6402373705728000,
     121645100408832000, 2432902008176640000], dtype='int64')
     
-#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
+@jit(nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def fast_factorial(n):
     return LOOKUP_TABLE[n]
 
@@ -69,11 +70,11 @@ def factorial(x):
 		return 1.0
 	return x * factorial(x-1)
 
-#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
+@jit(nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def K(l, m):
 	return np.sqrt( ((2 * l + 1) * fast_factorial(l-m)) / (4*np.pi*fast_factorial(l+m)) )
 
-#@jit(nopython=True, parallel=False, cache = False, fastmath=False) 
+@jit(nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def SH(l, m, theta, phi):
 	if m==0 :
 		return K(l,m)*P(l,m,np.cos(theta))*np.ones(phi.shape,)
@@ -82,7 +83,7 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-#@jit( nopython=True, parallel=False, cache = False, fastmath=False) 
+@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
@@ -103,7 +104,7 @@ def calc_potmat_jit( vlist, VG, Gs ):
 
 
 
-#@jit( nopython=True, parallel=False, cache = False, fastmath=False) 
+@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
     #calculate matrix elements from sphlist at point xi with V and Gs calculated at a given quadrature grid.
     w = Gs[:,2]
@@ -134,11 +135,11 @@ def BUILD_HMAT0(params):
         hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
 
     start_time = time.time()
-    keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    #keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
     end_time = time.time()
     print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    hmat += keomat0 
+    #hmat += keomat0 
 
     #plot_mat(hmat)
     plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)

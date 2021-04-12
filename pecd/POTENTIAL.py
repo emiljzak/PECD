@@ -121,7 +121,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
         sph = np.zeros(Gs[k].shape[0],dtype=float)
 
         for s in range(Gs[k].shape[0]):
-            sph[s] = V[counter]
+            sph[s] = V  [counter]
             counter  += 1
 
         VG.append(sph)
