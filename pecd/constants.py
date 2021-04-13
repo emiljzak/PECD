@@ -38,5 +38,6 @@ hbar = { "ps"  : np.float64(5.30883730500664),
 
 planck     =  6.62606896e-27 # Planck constant
 avogno     =  6.0221415E+23  # Avogadro constant
-vellgt     =  2.99792458E+10 # Speed of light constant
 boltz      =  1.380658E-16   # Boltzmann constant
+vellgt     =  2.99792458E+8 # m/s Speed of light constant
+epsilon0   = 8.85e-12

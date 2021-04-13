@@ -29,8 +29,6 @@ class Field():
         return 0.0, 0.0, np.cos( omega * t + CEP0 )
 
 
-
-
     """ =================================== FIELD ENVELOPES =================================== """
     def envgaussian(self,t,function_name,FWHM,t0):
         fieldenv = np.exp(-4*np.log(2)*(t-t0)**2/FWHM**2)

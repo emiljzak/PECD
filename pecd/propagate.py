@@ -53,7 +53,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
 
     print(" Initialize the interaction matrix ")
-    intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
+    intmat  = np.zeros(( Nbas , Nbas ), dtype = complex)
     intmat0 = np.zeros(( Nbas , Nbas, 3 ), dtype=complex)
 
     intmat0[:,:,0] = calc_intmat( [1.0, 0.0, 0.0], maparray, Gr, Nbas)  
@@ -69,27 +69,25 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         Fvec = Elfield.gen_field(tgrid)
         fig = plt.figure()
         ax = plt.axes()
-        ax.scatter(tgrid/CONSTANTS.time_to_au,Fvec[0].real)
-        ax.scatter(tgrid/CONSTANTS.time_to_au,Fvec[0].imag)
-        ax.scatter(tgrid/CONSTANTS.time_to_au,Fvec[2])
+        ax.scatter(tgrid,Fvec[0].real)
+        ax.scatter(tgrid,Fvec[0].imag)
+        ax.scatter(tgrid,Fvec[2])
         plt.show()
-    exit()
+
 
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
-        print("t = " + str( "%10.1f"%(t)) + " as")
+        print("t = " + str( "%10.1f"%(t)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
        
         flwavepacket.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
         
-        UMAT    = linalg.expm( -1.0j * ( ham0 + np.tensordot( FIELD.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
+        UMAT    = linalg.expm( -1.0j * ( ham0 + 0.0 * np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
         psi_out = np.dot( UMAT , psi )
         psi     = psi_out
-  
+
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
         
-
-
 
 def BUILD_HMAT(params,maparray,Nbas,ham0):
 

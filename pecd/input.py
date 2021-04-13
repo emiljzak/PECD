@@ -101,8 +101,8 @@ def gen_input():
 
 
     params['t0']    = 0.0 
-    params['tmax']  = 40.0 
-    params['dt']    = 0.1 
+    params['tmax']  = 300.0 
+    params['dt']    = 0.2 
     time_units      = "as"
 
     params['ivec']  = 0
@@ -112,7 +112,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']   = "wavepacket.dat"
 
@@ -139,14 +139,14 @@ def gen_input():
 
 
     """ ====== FIELD PARAMETERS ====== """
-    params['omega'] =  23.128 #nm or eV
+    params['omega']     =  23.128 #nm or eV
 
     #convert nm to THz:
-    vellgt     =  2.99792458E+8 # m/s
-    params['omega']= 10**9 *  vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
-    opt_cycle = 1.0e18/params['omega']
+    params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
+    opt_cycle           = 1.0e18/params['omega']
     suggested_no_pts_per_cycle = 25     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
     # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
+    
     print("Electric field carrier frequency = "+str("%10.3f"%(params['omega']*1.0e-12))+" THz")
     print("Electric field oscillation period (optical cycle) = "+str("%10.3f"%(1.0e15/params['omega']))+" fs")
     print("suggested time-step for field linear frequency = "+str("%12.3f"%(params['omega']/1e12))+" THz is: " + str("%10.2f"%(opt_cycle/suggested_no_pts_per_cycle )) +" as")
@@ -159,18 +159,20 @@ def gen_input():
     field_units = "V/cm"
 
     #convert from W/cm^2 to V/cm
-    epsilon0=8.85e-12
-    intensity = 7e14 #7e16 #W/cm^2 #peak intensity
-    field_strength = np.sqrt(intensity/(vellgt * epsilon0))
+
+    intensity           = 7e14 #7e16 #W/cm^2 #peak intensity
+    field_strength      = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
+    
     print("field strength")
     print("  %8.2e"%field_strength)
+
     params['E0']        = field_strength
     params['E0']        *= CONSTANTS.field_to_au 
 
     # 1a.u. (time) = 2.418 e-17s = 24.18 as
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
    
-    params['tau']       = 2000.0 #as: pulse duration
+    params['tau']       = 100.0 #as: pulse duration
 
     """==== field dictionaries ===="""
     field_CPL   = { "function_name": "fieldCPL", 
@@ -188,8 +190,8 @@ def gen_input():
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
     env_gaussian = {"function_name": "envgaussian", 
-                    "FWHM": 2.355 * params['tau']/np.sqrt(2.0) * CONSTANTS.time_to_au, 
-                    "t0": 500.0 }
+                    "FWHM": 2.355 * params['tau']/np.sqrt(2.0), 
+                    "t0": 200.0 }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 
