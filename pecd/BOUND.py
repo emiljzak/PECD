@@ -350,7 +350,6 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
         VG = POTENTIAL.BUILD_ESP_MAT_EXACT(params, Gs, Gr)
         end_time = time.time()
         print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
-        print(VG)
 
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )

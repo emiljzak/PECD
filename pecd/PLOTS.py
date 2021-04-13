@@ -227,7 +227,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
-def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
+def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,ivec):
     #================ radial-angular in real space ===============#
 
     """plot the selected wavefunctions functions"""
@@ -255,16 +255,14 @@ def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,nvecs):
 
     #counter = 0
 
-    ivec = 4
-
     for ipoint in coeffs:
-        if np.abs(ipoint[5][ivec]) > 1e-2:
+        if np.abs(ipoint[5][ivec]) > 1e-6:
             print(ipoint)
             for i in range(len(rang)):
                 y[i,:] +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],rang[:],rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], gridtheta1d[i], phi0).real
 
-    line_angrad_r = axradang_r.contourf(thetamesh,rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),20,cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_angrad_r,ax=axradang_r,aspect=30)
+    line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),20,cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
     plt.show()     
@@ -417,15 +415,17 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
 if __name__ == "__main__":      
 
     # preparation of parameters
-    os.environ['KMP_DUPLICATE_LIB_OK']='True'
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 
     params = input.gen_input()
-    wffile = params['working_dir'] + "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
-    nvecs = 7
-
+    wffile = params['working_dir'] + "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
+    nvecs = 7 #how many vectors to load?
+    ivec = 0 #which vector to plot?
     coeffs = read_coeffs(wffile,nvecs)
+    nbins = params['bound_nbins'] + params['nbins']
 
-    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
+    Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
 
     """ plot radial basis """
@@ -442,14 +442,14 @@ if __name__ == "__main__":
     #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
-    #plot_wf_angrad(0.0, params['bound_binw']*params['bound_nbins'], 200, coeffs ,\
-    #        Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
+    plot_wf_angrad( 0.0, params['bound_binw'] * nbins, 200, coeffs ,\
+                    Gr, params['bound_nlobs'], nbins, ivec)
 
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
     #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
 
 
     """ plot 4D volume of the wavefunction amplitude (density)"""
-    plot_wf_volume(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+    #plot_wf_volume(params['bound_nlobs'], params['bound_nbins']+params['nbins'],Gr,wffile)
     exit()
 
