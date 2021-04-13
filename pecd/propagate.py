@@ -21,6 +21,16 @@ import matplotlib.pyplot as plt
 
 def prop_wf(params,ham_init,psi_init):
 
+    ham0 = ham_init.copy()
+    ham0 += np.transpose(ham_init) 
+    ham0 /= 2.0
+
+
+    psi_init_t = psi_init.copy()
+    psi_init_t = np.transpose(psi_init_t)
+
+    print( np.dot( psi_init_t, np.dot(ham0,psi_init) ))
+
     Nbas = len(psi_init)
     print("Nbas = " + str(Nbas))
 
@@ -38,19 +48,31 @@ def prop_wf(params,ham_init,psi_init):
     psi               = psi_init
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
+
+    print(" Initialize the interaction matrix ")
+    intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
+    intmat0 = np.zeros(( Nbas , Nbas, 3 ), dtype=complex)
+
+    intmat0[:,:,0] = calc_intmat(0.0, intmat, [1.0, 0.0, 0.0])  
+    intmat0[:,:,1] = calc_intmat(0.0, intmat, [0.0, 1.0, 0.0])  
+    intmat0[:,:,2] = calc_intmat(0.0, intmat, [0.0, 0.0, 1.0])  
+
+
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
         print("t = " + str( "%10.1f"%(t)) + " as")
        
         flwavepacket.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
                 
-        UMAT    = linalg.expm( -1.0j * ( ham_init ) * dt ) 
+        UMAT    = linalg.expm( -1.0j * ( ham0 ) * dt ) 
         psi_out = np.dot( UMAT , psi )
         psi     = psi_out
   
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
         
+
+
 
 def BUILD_HMAT(params,maparray,Nbas,ham0):
 
@@ -219,6 +241,73 @@ def read_ham_init(params):
             hmat = np.loadtxt(hmatfile)
     return hmat
 
+
+def calc_intmat(self,time,intmat,field):  
+    """calculate full interaction matrix"""
+    Nbas = self.params['Nbas']
+
+    #we keep the time variable if we wish to add analytic functions here
+
+    #print("Electric field vector")
+    #print(Fvec)
+    #field: (E_-1, E_0, E_1) in spherical tensor form
+
+    """ keep separate methods for cartesian and spherical tensor: to speed up by avoiding ifs"""
+
+    """ Hint(l1 m1 i1 n1,l1 m1 i1 n1) """ 
+
+    """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
+
+    T = np.zeros(3)
+    for i in range(Nbas):
+        rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
+
+        for j in range(Nbas):
+            if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
+                T[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
+                T[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
+                T[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
+
+                intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin 
+
+    intmat += np.conjugate(intmat.T)
+
+    #print("Interaction matrix")
+    #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+    #    print(intmat)
+    print("Is the interaction matrix symmetric? " + str(self.check_symmetric(intmat)))
+    return intmat
+
+def calc_intmatelem(self,l1,m1,i1,n1,l2,m2,i2,n2,scheme,field,rep_type,rin):
+        """calculate single element of the interaction matrix"""
+        myscheme = quadpy.u3.schemes[scheme]()
+        #print(myscheme)
+        """
+        Symbols: 
+                theta_phi[0] = theta in [0,pi]
+                theta_phi[1] = phi  in [-pi,pi]
+                sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we put the phi angle in range [0,2pi] and the  theta angle in range [0,pi] as required by the scipy special funciton sph_harm
+        """
+
+        """ int_rep_type: cartesian or spherical"""
+        T = np.zeros(3)
+        if rep_type == 'cartesian':
+            T[0] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * np.sin(theta_phi[0]) * np.cos(theta_phi[1]+np.pi) )
+            T[1] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * np.sin(theta_phi[0]) * np.sin(theta_phi[1]+np.pi) )
+            T[2] = myscheme.integrate_spherical(lambda theta_phi: np.conjugate(sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) * sph_harm(m2, l2, theta_phi[1]+np.pi, theta_phi[0]) * np.cos(theta_phi[0])  )
+            val = np.dot(field,T)  
+
+        elif rep_type == 'spherical':
+
+            T[0] = N(gaunt(l1,1,l2,m1,1,m2))
+            T[1] = N(gaunt(l1,1,l2,m1,-1,m2))
+            T[2] = N(gaunt(l1,1,l2,m1,0,m2)) * np.sqrt(2.0) #spherical tensor rank-1 coefficient
+            val =  np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,T) * rin
+            val += np.conjugate( np.sqrt(2.0 * np.pi / 3.0)  * np.dot(field,T) * rin )
+        return val/2.0 #?
+
+def check_symmetric(self,a, rtol=1e-05, atol=1e-08):
+    return np.allclose(a, np.conjugate(a).T, rtol=rtol, atol=atol)
 
 if __name__ == "__main__":      
 
