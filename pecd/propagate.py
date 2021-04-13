@@ -44,64 +44,70 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
 
     if params['read_ham_init_file'] == True and os.path.isfile(params['working_dir'] + params['file_hmat'] ):
         print (params['file_hmat'] + " file exist")
-        return read_ham_init(params)
-        
-    #r_grid is for now only implemented for single bin width. We need to improve that
-    Gr, Nr = GRID.r_grid(params['bound_nlobs'] , 
-                         params['bound_nbins'] + params['nbins'], 
-                         params['bound_binw'],  
-                         params['bound_rshift'] )
+        hmat = read_ham_init(params)
+        BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
+        plt.show()
+        return hmat
+    else:
+        #r_grid is for now only implemented for single bin width. We need to improve that
+        Gr, Nr = GRID.r_grid(params['bound_nlobs'] , 
+                            params['bound_nbins'] + params['nbins'], 
+                            params['bound_binw'],  
+                            params['bound_rshift'] )
 
-    if params['hmat_format'] == 'csr':
-        hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
-    elif params['hmat_format'] == 'regular':
-        hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
-
-    """ calculate hmat """
-
-    start_time = time.time()
-    keomat = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
-    end_time = time.time()
-    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
-
-
-    potmat, potind = BOUND.BUILD_POTMAT0( params, maparray, Nbas , Gr )
-        
-    for ielem, elem in enumerate(potmat):
-        #print(potind[ielem][0],potind[ielem][1])
-        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
-
-
-    hmat += keomat 
-
-    plot_mat(hmat)
-    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
-    plt.show()
-    
-    """ diagonalize hmat """
-    start_time = time.time()
-    enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
-    end_time = time.time()
-    print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
-    #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
-
-    print("Normalization of the wavefunction: ")
-    for v in range(params['num_ini_vec']):
-        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
-
-
-    #save hamiltonian for reuse
-    if params['save_ham_init'] == True:
         if params['hmat_format'] == 'csr':
-            sparse.save_npz( params['working_dir'] + params['file_hmat'] , hmat , compressed = False )
+            hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
         elif params['hmat_format'] == 'regular':
-            with open( params['working_dir'] + params['file_hmat'] , 'w') as hmatfile:   
-                np.savetxt(hmatfile, hmat, fmt = '%10.4e')
+            hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
-    return hmat
+        """ calculate hmat """
+        potmat, potind = BOUND.BUILD_POTMAT0( params, maparray, Nbas , Gr )      
+        for ielem, elem in enumerate(potmat):
+            #print(potind[ielem][0],potind[ielem][1])
+            hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
+        
+        print("Plot of POTMAT")
+        BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
+        plt.show()
+
+        start_time = time.time()
+        keomat = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+        end_time = time.time()
+        print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+
+        hmat += keomat 
+
+        print("plot of hmat")
+        BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
+        plt.show()
+        
+        """ diagonalize hmat """
+        start_time = time.time()
+        enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
+        end_time = time.time()
+        print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
+
+        print("Normalization of the wavefunction: ")
+        for v in range(params['num_ini_vec']):
+            print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
+
+
+        #save hamiltonian for reuse
+        if params['save_ham_init'] == True:
+            if params['hmat_format'] == 'csr':
+                sparse.save_npz( params['working_dir'] + params['file_hmat'] , hmat , compressed = False )
+            elif params['hmat_format'] == 'regular':
+                with open( params['working_dir'] + params['file_hmat'] , 'w') as hmatfile:   
+                    np.savetxt(hmatfile, hmat, fmt = '%10.4e')
+
+        return hmat
 
 """ ============ KEOMAT ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
@@ -123,9 +129,9 @@ def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
                                             maparray[i][3], maparray[j][0], maparray[j][1], x, w, rin, \
                                             params['bound_rshift'],params['bound_binw'])
 
-    print("KEO matrix")
-    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-        print(0.5*keomat)
+    #print("KEO matrix")
+    #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+    #    print(0.5*keomat)
 
     #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5)
     #plt.show()
@@ -204,11 +210,11 @@ if __name__ == "__main__":
 
 
     psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
-    print(psi_init)
+    #print(psi_init)
 
     ham0 = read_ham0(params)
-    print(ham0)
-    plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
-    plt.show()
+    #print(ham0)
+    #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
 
-    BUILD_HMAT(params,maparray_global, Nbas_global,ham0)
+    ham = BUILD_HMAT(params,maparray_global, Nbas_global,ham0)

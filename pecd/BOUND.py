@@ -135,14 +135,14 @@ def BUILD_HMAT0(params):
         hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
 
     start_time = time.time()
-    #keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
     end_time = time.time()
     print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    #hmat += keomat0 
+    hmat += keomat0 
 
-    #plot_mat(hmat)
-    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
+    plot_mat(hmat)
+    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
     plt.show()
     
     """ diagonalize hmat """
@@ -174,7 +174,7 @@ def BUILD_HMAT0(params):
 
     if params['save_enr0'] == True:
         with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
-            np.savetxt( energyfile, enr0 * constants.ev_to_au , fmt='%10.5f' )
+            np.savetxt( energyfile, enr0 * CONSTANTS.ev_to_au , fmt='%10.5f' )
   
 
 
@@ -192,6 +192,7 @@ def BUILD_KEOMAT0( params, maparray, Nbas, Gr ):
 
     for i in range(Nbas):
         rin = Gr[maparray[i][0],maparray[i][1]]
+
         for j in range(i,Nbas):
             if maparray[i][3] == maparray[j][3] and maparray[i][4] == maparray[j][4]:
                 keomat[i,j] = calc_keomatel(maparray[i][0], maparray[i][1],\

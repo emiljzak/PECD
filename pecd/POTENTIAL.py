@@ -97,6 +97,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
                 potval = -1.0 * float(words[3])
                 V.append(potval)
             V = np.asarray(V)
+
     
     else:
         print (params['file_esp'] + " file does not exist")
@@ -121,7 +122,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
         sph = np.zeros(Gs[k].shape[0],dtype=float)
 
         for s in range(Gs[k].shape[0]):
-            sph[s] = V  [counter]
+            sph[s] = V[counter]
             counter  += 1
 
         VG.append(sph)

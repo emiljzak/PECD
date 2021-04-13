@@ -35,7 +35,7 @@ def gen_input():
 
 
     """==== potential energy matrix ===="""
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -92,16 +92,16 @@ def gen_input():
     
     """==== PROPAGATE ===="""
 
-    params['nlobs']   = 20
+    params['nlobs']   = 8
     params['nbins']   = 1
-    params['binw']    = 10.0
+    params['binw']    = 20.0
 
     params['FEMLIST'] = [   [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
                             [params['nbins'], params['nlobs'],params['binw']] ] 
 
 
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['file_hmat']    =   "hmat_init_" + params['molec_name']   + \
                             "_" + str(params['bound_nbins'] + params['nbins'])   + \

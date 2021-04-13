@@ -136,6 +136,8 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     """radial grid of Gauss-Lobatto quadrature points"""        
     #return radial coordinate r_in for given i and n
 
+    """Note: this function must be generalized to account for FEMLIST"""
+
     x = np.zeros(nlobatto)
     w = np.zeros(nlobatto)
     x, w = gauss_lobatto(nlobatto,14)
