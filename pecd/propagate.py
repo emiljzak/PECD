@@ -4,14 +4,16 @@
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
 import numpy as np
-import sys
+from scipy import sparse
+
 import MAPPING
 import input
 import GRID
 import BOUND
-import time
 
-from scipy import sparse
+import time
+import os
+import sys
 
 import matplotlib.pyplot as plt
 
@@ -39,8 +41,16 @@ def prop_wf(params,psi0):
 
 
 def BUILD_HMAT(params,maparray,Nbas,ham0):
-fix the grid
-    Gr, Nr = GRID.r_grid( params['nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
+
+    if params['read_ham_init_file'] == True and os.path.isfile(params['working_dir'] + params['file_hmat'] ):
+        print (params['file_hmat'] + " file exist")
+        return read_ham_init(params)
+        
+    #r_grid is for now only implemented for single bin width. We need to improve that
+    Gr, Nr = GRID.r_grid(params['bound_nlobs'] , 
+                         params['bound_nbins'] + params['nbins'], 
+                         params['bound_binw'],  
+                         params['bound_rshift'] )
 
     if params['hmat_format'] == 'csr':
         hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
@@ -48,27 +58,30 @@ fix the grid
         hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
     """ calculate hmat """
-    """
-    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
-        
-    for ielem, elem in enumerate(potmat0):
-        #print(potind[ielem][0],potind[ielem][1])
-        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
-    """
+
     start_time = time.time()
-    keomat0 = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    keomat = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
     end_time = time.time()
     print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
     
-    #hmat += keomat0 
 
-    #plot_mat(hmat)
+
+    potmat, potind = BOUND.BUILD_POTMAT0( params, maparray, Nbas , Gr )
+        
+    for ielem, elem in enumerate(potmat):
+        #print(potind[ielem][0],potind[ielem][1])
+        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
+
+
+    hmat += keomat 
+
+    plot_mat(hmat)
     plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
     plt.show()
     
     """ diagonalize hmat """
     start_time = time.time()
-    enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
+    enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
     end_time = time.time()
     print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -77,10 +90,18 @@ fix the grid
 
     print("Normalization of the wavefunction: ")
     for v in range(params['num_ini_vec']):
-        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs0[:,v] ) * coeffs0[:,v] ) )))
+        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
 
 
-  
+    #save hamiltonian for reuse
+    if params['save_ham_init'] == True:
+        if params['hmat_format'] == 'csr':
+            sparse.save_npz( params['working_dir'] + params['file_hmat'] , hmat , compressed = False )
+        elif params['hmat_format'] == 'regular':
+            with open( params['working_dir'] + params['file_hmat'] , 'w') as hmatfile:   
+                np.savetxt(hmatfile, hmat, fmt = '%10.4e')
+
+    return hmat
 
 """ ============ KEOMAT ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
@@ -110,8 +131,6 @@ def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
     #plt.show()
 
     return  0.5 * keomat
-
-
 
 def read_coeffs(filename,nvecs):
 
@@ -154,14 +173,21 @@ def proj_wf0_wfinit_dvr(coeffs0, marray, Nbas_global):
     """
     return psi
 
-
-def read_ham(params):
+def read_ham0(params):
     if params['hmat_format'] == 'csr':
-        sparse.load_npz( params['working_dir'] + params['file_hmat0'] , hmat , compressed = False )
+        sparse.load_npz( params['working_dir'] + params['file_hmat0'] , hmat0 , compressed = False )
     elif params['hmat_format'] == 'regular':
         with open( params['working_dir'] + params['file_hmat0'] , 'r') as hmatfile:   
             hmat0 = np.loadtxt(hmatfile)
     return hmat0
+
+def read_ham_init(params):
+    if params['hmat_format'] == 'csr':
+        sparse.load_npz( params['working_dir'] + params['file_hmat'] , hmat , compressed = False )
+    elif params['hmat_format'] == 'regular':
+        with open( params['working_dir'] + params['file_hmat'] , 'r') as hmatfile:   
+            hmat = np.loadtxt(hmatfile)
+    return hmat
 
 
 if __name__ == "__main__":      
@@ -180,7 +206,7 @@ if __name__ == "__main__":
     psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
     print(psi_init)
 
-    ham0 = read_ham(params)
+    ham0 = read_ham0(params)
     print(ham0)
     plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
     plt.show()

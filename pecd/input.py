@@ -21,11 +21,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 20
+    params['bound_nlobs']   = 8
     params['bound_nbins']   = 1
-    params['bound_binw']    = 10.0
+    params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.001 
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -92,12 +92,23 @@ def gen_input():
     
     """==== PROPAGATE ===="""
 
-    params['nlobs']   = 10
-    params['nbins']   = 2
+    params['nlobs']   = 20
+    params['nbins']   = 1
     params['binw']    = 10.0
 
     params['FEMLIST'] = [   [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
                             [params['nbins'], params['nlobs'],params['binw']] ] 
 
 
+    params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    
+    params['file_hmat']    =   "hmat_init_" + params['molec_name']   + \
+                            "_" + str(params['bound_nbins'] + params['nbins'])   + \
+                            "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
+                            "_" + str(params['bound_binw'])    + \
+                            "_" + str(params['bound_lmax'])  + \
+                            "_" + str(params['esp_method'])   + ".dat"
+
+    
     return params
