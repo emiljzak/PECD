@@ -7,7 +7,7 @@ freq_to_au = np.float64(0.057/800.0)
 field_to_au =  np.float64(1.0/(5.14220652e+9))
 ev_to_au = 27.211 
 # convert time units to atomic units
-time_to_au = {"as" : np.float64(1.0/24.188)}
+#time_to_au = {"as" : np.float64(1.0/24.188)}
  # 1a.u. (time) = 2.418 e-17s = 24.18 as
 
 # convert frequency units to atomic units
@@ -25,7 +25,7 @@ hbar = { "ps"  : np.float64(5.30883730500664),
 
 
 # convert time units to atomic units
-time_to_au = {"as" : np.float64(1.0/24.188)}
+#time_to_au = {"as" : np.float64(1.0/24.188)}
 # 1a.u. (time) = 2.418 e-17s = 24.18 as
 
 # convert frequency units to atomic units
