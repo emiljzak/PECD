@@ -5,6 +5,7 @@
 #
 import numpy as np
 from scipy import sparse
+from scipy.sparse import linalg
 
 import MAPPING
 import input
@@ -18,38 +19,56 @@ import sys
 
 import matplotlib.pyplot as plt
 
-def prop_wf(params,psi0):
-    """ main method for propagating the wavefunction"""
+def prop_wf(params,ham_init,psi_init):
 
-    """params (dict):      dictionary with all relevant numerical parameters of the calculation: t0,tend,dt,lmin,lmax,nbins,nlobatto,binwidth,tolerances,etc."""
-    """ psi0 (list): spectral representation of the initial wavefunction """
-    """ method (str):       'static' - solve time-independent Schrodinger equation at time t=t0
-                            'dynamic_direct' - propagate the wavefunction with direct exponentiation of the Hamiltonian
-                            'dynamic_lanczos' - propagate the wavefunction with iterative method (Lanczos: Krylov subspace method)
-        basis (str):        'prim' - use primitive basis
-                            'adiab' - use adiabatic basis from t=t0
-        ini_state (dict):   {'method': manual,file,calc 'filename':filename}
-                                'method': manual - place the initial state manually in the primitive basis
-                                            file - read the inititial state from file given in primitive basis
-                                            calc - calculate initial state from given orbitals, by projection onto the primitive basis (tbd)
-                                'filename': filename - filename containing the initial state
+    Nbas = len(psi_init)
+    print("Nbas = " + str(Nbas))
 
-        potential (str):    name of the potential energy function (for now it is in an analytic form)
-        field_type (str):   type of field: analytic or numerical
-        field (str):        name of the electric field function used (it can further read from file or return analytic field)
-        scheme (str):       quadrature scheme used in angular integration
-    """
+    print("Setting up time-grid")
+    tgrid = np.linspace(    params['t0'], 
+                            params['tmax'], 
+                            int((params['tmax']-params['t0'])/params['dt']+1), 
+                            endpoint = True )
+    dt = params['dt']
 
+    print("Allocating wavepacket")
+    flwavepacket      = open( params['wavepacket_file'],'w' )
+    #wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
+    psi               = np.zeros( Nbas, dtype=complex ) 
+    psi               = psi_init
+    psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
+
+    start_time_global = time.time()
+    for itime, t in enumerate(tgrid): 
+        print("t = " + str( "%10.1f"%(t)) + " as")
+       
+        flwavepacket.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
+                
+        UMAT    = linalg.expm( -1.0j * ( ham_init ) * dt ) 
+        psi_out = np.dot( UMAT , psi )
+        psi     = psi_out
+  
+    end_time_global = time.time()
+    print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
+        
 
 def BUILD_HMAT(params,maparray,Nbas,ham0):
 
-    if params['read_ham_init_file'] == True and os.path.isfile(params['working_dir'] + params['file_hmat'] ):
-        print (params['file_hmat'] + " file exist")
+    if params['read_ham_init_file'] == True and os.path.isfile(params['working_dir'] + params['file_hmat_init'] ):
+        
+        print (params['file_hmat_init'] + " file exist")
         hmat = read_ham_init(params)
-        BOUND.plot_mat(hmat)
-        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
-        plt.show()
-        return hmat
+
+        """ diagonalize hmat """
+        start_time = time.time()
+        enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
+        end_time = time.time()
+        print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+        #BOUND.plot_mat(hmat)
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
+        #plt.show()
+        return hmat, coeffs
     else:
         #r_grid is for now only implemented for single bin width. We need to improve that
         Gr, Nr = GRID.r_grid(params['bound_nlobs'] , 
@@ -115,7 +134,6 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
 
         return hmat, coeffs
 
-""" ============ KEOMAT ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
     nlobs = params['nlobs']
     """call Gauss-Lobatto rule """
@@ -195,9 +213,9 @@ def read_ham0(params):
 
 def read_ham_init(params):
     if params['hmat_format'] == 'csr':
-        sparse.load_npz( params['working_dir'] + params['file_hmat'] , hmat , compressed = False )
+        sparse.load_npz( params['working_dir'] + params['file_hmat_init'] , hmat , compressed = False )
     elif params['hmat_format'] == 'regular':
-        with open( params['working_dir'] + params['file_hmat'] , 'r') as hmatfile:   
+        with open( params['working_dir'] + params['file_hmat_init'] , 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)
     return hmat
 
@@ -223,4 +241,6 @@ if __name__ == "__main__":
     #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
     #plt.show()
 
-    ham = BUILD_HMAT(params,maparray_global, Nbas_global,ham0)
+    ham_init, psi_init = BUILD_HMAT(params,maparray_global, Nbas_global,ham0)
+
+    prop_wf(params,ham_init,psi_init[:,params['ivec']])

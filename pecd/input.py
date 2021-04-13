@@ -100,11 +100,21 @@ def gen_input():
                             [params['nbins'], params['nlobs'],params['binw']] ] 
 
 
+    params['t0']    = 0.0 
+    params['tmax']  = 10.0 
+    params['dt']    = 1.0 
+    time_units      = "as"
+
+    params['ivec']  = 0
+
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
+
+    params['wavepacket_file']   = "wavepacket.dat"
+
     params['file_hmat_init']    =   "hmat_init_" + params['molec_name']   + \
                             "_" + str(params['bound_nbins'] + params['nbins'])   + \
                             "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
