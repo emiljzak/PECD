@@ -24,7 +24,7 @@ def gen_input():
     params['bound_nlobs']   = 8
     params['bound_nbins']   = 1
     params['bound_binw']    = 20.0
-    params['bound_rshift']  = 0.001 
+    params['bound_rshift']  = 0.01 
     params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
@@ -35,7 +35,7 @@ def gen_input():
 
 
     """==== potential energy matrix ===="""
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -93,7 +93,7 @@ def gen_input():
     """==== PROPAGATE ===="""
 
     params['nlobs']   = 8
-    params['nbins']   = 1
+    params['nbins']   = 2
     params['binw']    = 20.0
 
     params['FEMLIST'] = [   [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
@@ -101,14 +101,29 @@ def gen_input():
 
 
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
+    params['save_psi_init']      = True
+    params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['file_hmat']    =   "hmat_init_" + params['molec_name']   + \
+    params['file_hmat_init']    =   "hmat_init_" + params['molec_name']   + \
                             "_" + str(params['bound_nbins'] + params['nbins'])   + \
                             "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                             "_" + str(params['bound_binw'])    + \
                             "_" + str(params['bound_lmax'])  + \
                             "_" + str(params['esp_method'])   + ".dat"
 
-    
+    params['file_psi_init']     =   "psi_init_" + params['molec_name']   + \
+                                "_" + str(params['bound_nbins'] + params['nbins'])   + \
+                                "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
+                                "_" + str(params['bound_binw'])    + \
+                                "_" + str(params['bound_lmax'])  + \
+                                "_" + str(params['esp_method'])   + ".dat"
+
+    params['file_enr_init']     =   "enr_init_" + params['molec_name']   + \
+                                "_" + str(params['bound_nbins'] + params['nbins'])   + \
+                                "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
+                                "_" + str(params['bound_binw'])    + \
+                                "_" + str(params['bound_lmax'])  + \
+                                "_" + str(params['esp_method'])   + ".dat"
+
     return params

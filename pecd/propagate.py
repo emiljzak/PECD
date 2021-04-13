@@ -10,6 +10,7 @@ import MAPPING
 import input
 import GRID
 import BOUND
+import CONSTANTS
 
 import time
 import os
@@ -67,21 +68,15 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
             #print(potind[ielem][0],potind[ielem][1])
             hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
         
-        print("Plot of POTMAT")
-        BOUND.plot_mat(hmat)
-        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
-        plt.show()
-
         start_time = time.time()
         keomat = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
         end_time = time.time()
         print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
         
-
         hmat += keomat 
 
         print("plot of hmat")
-        BOUND.plot_mat(hmat)
+        #BOUND.plot_mat(hmat)
         plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
         plt.show()
         
@@ -92,22 +87,33 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
         print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
-        #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
+        #BOUND.plot_wf_rad(0.0, params['bound_binw'],1000,coeffs,maparray,Gr,params['bound_nlobs'], params['bound_nbins']+params['nbins'])
 
         print("Normalization of the wavefunction: ")
         for v in range(params['num_ini_vec']):
             print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
 
 
-        #save hamiltonian for reuse
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'csr':
-                sparse.save_npz( params['working_dir'] + params['file_hmat'] , hmat , compressed = False )
+                sparse.save_npz( params['working_dir'] + params['file_hmat_init'] , hmat , compressed = False )
             elif params['hmat_format'] == 'regular':
-                with open( params['working_dir'] + params['file_hmat'] , 'w') as hmatfile:   
+                with open( params['working_dir'] + params['file_hmat_init'] , 'w') as hmatfile:   
                     np.savetxt(hmatfile, hmat, fmt = '%10.4e')
 
-        return hmat
+        if params['save_psi_init'] == True:
+            psifile = open(params['working_dir'] + params['file_psi_init'], 'w')
+            for ielem,elem in enumerate(maparray):
+                psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
+                                " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
+                                "\t\t ".join('{:10.5e}'.format(coeffs[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
+
+        if params['save_enr_init'] == True:
+            with open(params['working_dir'] + params['file_enr_init'], "w") as energyfile:   
+                np.savetxt( energyfile, enr * CONSTANTS.ev_to_au , fmt='%10.5f' )
+    
+
+        return hmat, coeffs
 
 """ ============ KEOMAT ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
