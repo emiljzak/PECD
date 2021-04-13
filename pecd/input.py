@@ -101,8 +101,8 @@ def gen_input():
 
 
     params['t0']    = 0.0 
-    params['tmax']  = 10.0 
-    params['dt']    = 1.0 
+    params['tmax']  = 40.0 
+    params['dt']    = 0.1 
     time_units      = "as"
 
     params['ivec']  = 0
