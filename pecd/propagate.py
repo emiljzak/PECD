@@ -6,6 +6,8 @@
 import numpy as np
 from scipy import sparse
 from scipy.sparse import linalg
+from sympy.physics.wigner import gaunt
+from sympy import N
 
 import MAPPING
 import input
@@ -20,7 +22,7 @@ import sys
 
 import matplotlib.pyplot as plt
 
-def prop_wf(params,ham_init,psi_init):
+def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
     ham0 = ham_init.copy()
     ham0 += np.transpose(ham_init) 
@@ -54,9 +56,9 @@ def prop_wf(params,ham_init,psi_init):
     intmat = np.zeros(( Nbas , Nbas ), dtype = complex)
     intmat0 = np.zeros(( Nbas , Nbas, 3 ), dtype=complex)
 
-    intmat0[:,:,0] = calc_intmat( [1.0, 0.0, 0.0])  
-    intmat0[:,:,1] = calc_intmat( [0.0, 1.0, 0.0])  
-    intmat0[:,:,2] = calc_intmat( [0.0, 0.0, 1.0])  
+    intmat0[:,:,0] = calc_intmat( [1.0, 0.0, 0.0], maparray, Gr, Nbas)  
+    intmat0[:,:,1] = calc_intmat( [0.0, 1.0, 0.0], maparray, Gr, Nbas)  
+    intmat0[:,:,2] = calc_intmat( [0.0, 0.0, 1.0], maparray, Gr, Nbas)  
 
 
 
@@ -72,7 +74,7 @@ def prop_wf(params,ham_init,psi_init):
         ax.scatter(tgrid/CONSTANTS.time_to_au,Fvec[2])
         plt.show()
     exit()
-    
+
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
         print("t = " + str( "%10.1f"%(t)) + " as")
@@ -257,35 +259,34 @@ def read_ham_init(params):
     return hmat
 
 
-def calc_intmat(field):  
-    """calculate full interaction matrix"""
-    Nbas = self.params['Nbas']
+def calc_intmat(field,maparray,rgrid,Nbas):  
 
     #field: (E_-1, E_0, E_1) in spherical tensor form
     """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
+    intmat =   np.zeros(( Nbas , Nbas ), dtype = complex)
 
     D = np.zeros(3)
     for i in range(Nbas):
-        rin = self.rgrid[self.maparray[i][2],self.maparray[i][3]]
-
+        rin = rgrid[ maparray[i][0], maparray[i][1] ]
         for j in range(Nbas):
-            if self.maparray[i][2] == self.maparray[j][2] and self.maparray[i][3] == self.maparray[j][3]:
-                D[0] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],-1,self.maparray[j][1]))
-                D[1] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],0,self.maparray[j][1]))
-                D[2] = N(gaunt(self.maparray[i][0],1,self.maparray[j][0],self.maparray[i][1],1,self.maparray[j][1]))
+            if  maparray[i][2] == maparray[j][2]:
+                D[0] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], -1, maparray[j][4] ) )
+                D[1] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 0, maparray[j][4] ) )
+                D[2] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 1, maparray[j][4] ) )
 
-                intmat[i,j] = np.sqrt(2.0 * np.pi / 3.0) * np.dot(field,D) * rin 
+                intmat[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * np.dot(field, D) * rin 
+
 
     intmat += np.conjugate(intmat.T)
 
     #print("Interaction matrix")
     #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
     #    print(intmat)
-    print("Is the interaction matrix symmetric? " + str(self.check_symmetric(intmat)))
+    print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
     return intmat
 
 
-def check_symmetric(self,a, rtol=1e-05, atol=1e-08):
+def check_symmetric(a, rtol=1e-05, atol=1e-08):
     return np.allclose(a, np.conjugate(a).T, rtol=rtol, atol=atol)
 
 if __name__ == "__main__":      
@@ -297,6 +298,11 @@ if __name__ == "__main__":
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['working_dir'] )
+
+    Gr, Nr = GRID.r_grid(params['bound_nlobs'] , 
+                        params['bound_nbins'] + params['nbins'], 
+                        params['bound_binw'],  
+                        params['bound_rshift'] )
 
     coeffs0 = read_coeffs( params['working_dir'] + params['file_psi0'], 1 )
 
@@ -311,4 +317,4 @@ if __name__ == "__main__":
 
     ham_init, psi_init = BUILD_HMAT(params,maparray_global, Nbas_global,ham0)
 
-    prop_wf(params,ham_init,psi_init[:,params['ivec']])
+    prop_wf(params,ham_init,psi_init[:,params['ivec']],maparray_global, Gr)

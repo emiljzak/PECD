@@ -29,12 +29,12 @@ hbar = { "ps"  : np.float64(5.30883730500664),
 # 1a.u. (time) = 2.418 e-17s = 24.18 as
 
 # convert frequency units to atomic units
-freq_to_au = {"nm" : np.float64(0.057/800.0)}
+#freq_to_au = {"nm" : np.float64(0.057/800.0)}
 # 1a.u. (time) = 2.418 e-17s = 24.18 as
 
 # convert electric field from different units to atomic units
-field_to_au = {"debye" : np.float64(0.393456),
-                "V/cm" :  np.float64(1.0/(5.14220652e+9))}
+#field_to_au = {"debye" : np.float64(0.393456),
+#                "V/cm" :  np.float64(1.0/(5.14220652e+9))}
 
 planck     =  6.62606896e-27 # Planck constant
 avogno     =  6.0221415E+23  # Avogadro constant

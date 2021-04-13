@@ -164,44 +164,32 @@ def gen_input():
     field_strength = np.sqrt(intensity/(vellgt * epsilon0))
     print("field strength")
     print("  %8.2e"%field_strength)
-    params['E0'] = field_strength
+    params['E0']        = field_strength
+    params['E0']        *= CONSTANTS.field_to_au 
 
-    # convert time units to atomic units
-    time_to_au = {"as" : np.float64(1.0/24.188)}
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-
-    # convert frequency units to atomic units
-    freq_to_au = {"nm" : np.float64(0.057/800.0)}
-    # 1a.u. (time) = 2.418 e-17s = 24.18 as
-
-    # convert electric field from different units to atomic units
-    field_to_au = {"debye" : np.float64(0.393456),
-                    "V/cm" :  np.float64(1.0/(5.14220652e+9))}
-
-    #unit conversion
-    #params = const.convert_units(params)
-    time_to_au = time_to_au[time_units]
-
-    params['tmax'] *= time_to_au 
-    params['dt'] *= time_to_au
-    params['time_pecd'] *=time_to_au
-
-    #freq_to_au = freq_to_au[frequency_units]
-    #params['omega'] *= freq_to_au 
-    field_to_au = field_to_au[field_units]
-    params['E0'] *= field_to_au 
     # 1a.u. (time) = 2.418 e-17s = 24.18 as
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
    
-    params['tau'] = 2000.0 #as: pulse duration
+    params['tau']       = 2000.0 #as: pulse duration
 
     """==== field dictionaries ===="""
-    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": True, "typef": "LCPL"}
-    field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
+    field_CPL   = { "function_name": "fieldCPL", 
+                    "omega": params['omega'], 
+                    "E0": params['E0'], 
+                    "CEP0": 0.0, 
+                    "spherical": True, 
+                    "typef": "LCPL"}
+
+    field_LP    = { "function_name": "fieldLP", 
+                    "omega": params['omega'], 
+                    "E0": params['E0'], 
+                    "CEP0": 0.0}
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
-    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * params['tau']/np.sqrt(2.0) * time_to_au , "t0": 500.0 }
+    env_gaussian = {"function_name": "envgaussian", 
+                    "FWHM": 2.355 * params['tau']/np.sqrt(2.0) * CONSTANTS.time_to_au, 
+                    "t0": 500.0 }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 
