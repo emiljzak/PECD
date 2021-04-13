@@ -112,6 +112,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
+    params['plot_elfield']       = True
 
     params['wavepacket_file']   = "wavepacket.dat"
 
@@ -136,4 +137,82 @@ def gen_input():
                                 "_" + str(params['bound_lmax'])  + \
                                 "_" + str(params['esp_method'])   + ".dat"
 
+
+    """ ====== FIELD PARAMETERS ====== """
+    params['omega'] =  23.128 #nm or eV
+
+    #convert nm to THz:
+    vellgt     =  2.99792458E+8 # m/s
+    params['omega']= 10**9 *  vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
+    opt_cycle = 1.0e18/params['omega']
+    suggested_no_pts_per_cycle = 25     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
+    # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
+    print("Electric field carrier frequency = "+str("%10.3f"%(params['omega']*1.0e-12))+" THz")
+    print("Electric field oscillation period (optical cycle) = "+str("%10.3f"%(1.0e15/params['omega']))+" fs")
+    print("suggested time-step for field linear frequency = "+str("%12.3f"%(params['omega']/1e12))+" THz is: " + str("%10.2f"%(opt_cycle/suggested_no_pts_per_cycle )) +" as")
+
+    params['omega'] *= 2.0 * np.pi # linear to angular frequency
+    params['omega'] /= 4.13e16 #Hz to a.u.
+    frequency_units = "nm" #we later convert all units to atomic unit
+
+    #params['E0'] = 1.0e9 #V/cm
+    field_units = "V/cm"
+
+    #convert from W/cm^2 to V/cm
+    epsilon0=8.85e-12
+    intensity = 7e14 #7e16 #W/cm^2 #peak intensity
+    field_strength = np.sqrt(intensity/(vellgt * epsilon0))
+    print("field strength")
+    print("  %8.2e"%field_strength)
+    params['E0'] = field_strength
+
+    # convert time units to atomic units
+    time_to_au = {"as" : np.float64(1.0/24.188)}
+    # 1a.u. (time) = 2.418 e-17s = 24.18 as
+
+    # convert frequency units to atomic units
+    freq_to_au = {"nm" : np.float64(0.057/800.0)}
+    # 1a.u. (time) = 2.418 e-17s = 24.18 as
+
+    # convert electric field from different units to atomic units
+    field_to_au = {"debye" : np.float64(0.393456),
+                    "V/cm" :  np.float64(1.0/(5.14220652e+9))}
+
+    #unit conversion
+    #params = const.convert_units(params)
+    time_to_au = time_to_au[time_units]
+
+    params['tmax'] *= time_to_au 
+    params['dt'] *= time_to_au
+    params['time_pecd'] *=time_to_au
+
+    #freq_to_au = freq_to_au[frequency_units]
+    #params['omega'] *= freq_to_au 
+    field_to_au = field_to_au[field_units]
+    params['E0'] *= field_to_au 
+    # 1a.u. (time) = 2.418 e-17s = 24.18 as
+    #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
+   
+    params['tau'] = 2000.0 #as: pulse duration
+
+    """==== field dictionaries ===="""
+    field_CPL = {"function_name": "fieldCPL", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0, "spherical": True, "typef": "LCPL"}
+    field_LP = {"function_name": "fieldLP", "omega": params['omega'], "E0": params['E0'], "CEP0": 0.0}
+
+    # if gaussian width is given: e^-t^2/sigma^2
+    # FWHM = 2.355 * sigma/sqrt(2)
+    env_gaussian = {"function_name": "envgaussian", "FWHM": 2.355 * params['tau']/np.sqrt(2.0) * time_to_au , "t0": 500.0 }
+
+    params['field_form'] = "analytic" #or numerical
+    params['field_type'] = field_CPL 
+    """ Available field types :
+        1) field_CPL
+        2) field_LP
+        3) field_omega2omega
+    """
+    params['field_env'] = env_gaussian 
+    """ Available envelopes :
+        1) env_gaussian
+        2) env_flat
+    """
     return params
