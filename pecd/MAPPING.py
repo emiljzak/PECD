@@ -47,7 +47,7 @@ def MAP_DVR_FEMLIST(femlist,lmax):
                         for m in range(-l,l+1):
 
                             imap += 1
-                            print(ibincount,n,xi,l,m,imap)
+                            #print(ibincount,n,xi,l,m,imap)
                             maparray.append([ibincount,n,xi,l,m,imap])
 
 
