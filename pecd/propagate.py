@@ -79,7 +79,9 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     for itime, t in enumerate(tgrid): 
         print("t = " + str( "%10.1f"%(t)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
        
-        flwavepacket.write('{:10.3f}'.format(t)+" ".join('{:16.8e}'.format(psi[i].real)+'{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas))+'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))+"\n")
+        flwavepacket.write( '{:10.3f}'.format(t) + 
+                            " ".join('{:16.8e}'.format(psi[i].real) + '{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
+                            '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) + "\n")
         
         UMAT    = linalg.expm( -1.0j * ( ham0 + 0.0 * np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
         psi_out = np.dot( UMAT , psi )
@@ -87,7 +89,38 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
+
+    print("=====================================")
+    print("==post-processing of the wavepacket==")
+    print("====================================="+"\n")
+
+    print("=========")
+    print("==Plots==")
+    print("=========")
         
+    plot_times = []
+    for index,item in enumerate(params['plot_controls']["plottimes"]):
+
+        if int(CONSTANTS.time_to_au[ params['time_units'] ] *  item / dt) > len(tgrid):
+            print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
+        else:
+            plot_times.append(int(CONSTANTS.time_to_au[ params['time_units'] ] * item/dt))
+    print("Final list of plot times:")
+    print(plot_times)
+
+    #read wavepacket
+
+    #merge with maparray
+    exit()
+    for itime, t in enumerate(tgrid): 
+        for ielem in plot_times:
+            if itime == ielem:
+                psi[:] = wavepacket[itime,:]
+
+        PLOTS.plot_snapshot(t,params,coeffs,rgrid,ivec)
+
+
+
 
 def BUILD_HMAT(params,maparray,Nbas,ham0):
 

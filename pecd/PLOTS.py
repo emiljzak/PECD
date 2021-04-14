@@ -410,6 +410,37 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
+def plot_snapshot(params,maparray,rgrid,ivec):
+    #make it general
+    nlobs = params['nlobs']
+    nbins = params['bound_nbins'] + params['nbins']
+    npoints = 200
+    rmax    = nbins * params['bound_binw']
+    
+    figsize = (3,3)
+    dpi     = 200
+    fig = plt.figure(figsize, dpi, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+    if params['plot_types']['r-radial_angular'] == True:
+        #================ radial-angular in real space ===============#
+        ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
+        width = 0.0
+        for elem in params['FEMLIST']:
+            width += elem[0] * elem[2]
+
+
+
+    #read the wavepacket
+
+    #align with maparray
+
+    #merge into coeffs
+
+        PLOTS.plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,ivec)
+
+    if params["save_snapthots"] == True:
+        fig.savefig("angrad_t=" + str("%4.1f"%(t/np.float64(1.0/24.188))) + "_.pdf", bbox_inches='tight')
 
 
 if __name__ == "__main__":      
