@@ -11,7 +11,8 @@ ev_to_au = 27.211
  # 1a.u. (time) = 2.418 e-17s = 24.18 as
 
 # convert frequency units to atomic units
-freq_to_au = {"nm" : np.float64(0.057/800.0)}
+freq_to_au   = {"nm" : np.float64(0.057/800.0)
+              "Hz": np.float64(1.0/4.13e16)}
  # 1a.u. (time) = 2.418 e-17s = 24.18 as
 
 # convert electric field from different units to atomic units
