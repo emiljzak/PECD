@@ -182,7 +182,7 @@ def gen_input():
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
 
-       """ ---- field intensity ----- """
+    """ ---- field intensity ----- """
     
     params['tau']       = 100.0 #as: pulse duration (sigma)
     params['tc']        = 200.0 #as: pulse centre
@@ -223,5 +223,34 @@ def gen_input():
         1) env_gaussian
         2) env_flat
     """
+
+    """==== POST-PROCESSING: PLOTS ===="""
+
+    params['plot_modes']    = { "single_shot":      False, 
+                                "animation":        False}
+    params['plot_types']    = { "radial":           True,
+                                "angular":          True,
+                                "r-radial_angular": True, 
+                                "k-radial_angular": True} #decide which of the available observables you wish to plot
+
+    params['plot_controls'] = { "plotrate":         1, 
+                                "plottimes":        [100.0],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "save_static":      False,
+                                "save_anim":        False,
+                                "show_static":      True,
+                                "show_anim":        False, 
+                                "static_filename":  "obs",
+                                "animation_filename":"anim_obs"}
+
+    """ plotrate : rate of plotting observables in timestep units in animated plots
+        plottimes: times (in time_units) at which we plot selected observables in a static graph
+        save_static: save single shot plots to appropriate files (named separately for each plottime)
+        save_anim: save animation in a file
+        show_static: show single shot plots during the analysis
+        show_anim: show animation at the end of analysis
+        static_filename: name of the file into which the snapshots will be saved
+        animation_filename: name of the file into which animations will be saved
+    """
+
 
     return params
