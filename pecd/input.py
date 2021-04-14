@@ -107,11 +107,11 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 300.0 
+    params['tmax']      = 20.0 
     params['dt']        = 0.2 
     params['ivec']      = 0
 
-    time_units          = "as"
+    params['time_units']         = "as"
 
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
@@ -228,13 +228,13 @@ def gen_input():
 
     params['plot_modes']    = { "single_shot":      False, 
                                 "animation":        False}
-    params['plot_types']    = { "radial":           True,
-                                "angular":          True,
+    params['plot_types']    = { "radial":           False,
+                                "angular":          False,
                                 "r-radial_angular": True, 
-                                "k-radial_angular": True} #decide which of the available observables you wish to plot
+                                "k-radial_angular": False} 
 
     params['plot_controls'] = { "plotrate":         1, 
-                                "plottimes":        [100.0],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "plottimes":        [10.0,30.0],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_static":      False,
                                 "save_anim":        False,
                                 "show_static":      True,
@@ -252,5 +252,6 @@ def gen_input():
         animation_filename: name of the file into which animations will be saved
     """
 
+    params["save_snapthots"] = True
 
     return params
