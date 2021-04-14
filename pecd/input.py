@@ -179,7 +179,7 @@ def gen_input():
     print("field strength = " + "  %8.2e"%field_strength)
 
     params['E0']        = field_strength
-    params['E0']        *= CONSTANTS.field_to_au 
+    params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
 
        """ ---- field intensity ----- """
@@ -223,5 +223,5 @@ def gen_input():
         1) env_gaussian
         2) env_flat
     """
-    
+
     return params
