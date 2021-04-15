@@ -227,7 +227,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
-def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,ivec):
+def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid):
     #================ radial-angular in real space ===============#
 
     """plot the selected wavefunctions functions"""
@@ -252,16 +252,15 @@ def plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,ivec):
     y = np.zeros((len(rang),len(rang)),dtype=complex)
 
     phi0 = 0.0
-
-    #counter = 0
-
-    for ipoint in coeffs:
-        if np.abs(ipoint[5][ivec]) > 1e-6:
-            print(ipoint)
+    for ielem, elem in enumerate(maparray):
+        if np.abs(psi[ielem]) > 1e-6:
+            print(elem)
             for i in range(len(rang)):
-                y[i,:] +=  ipoint[5][ivec] * chi(ipoint[0],ipoint[1],rang[:],rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], gridtheta1d[i], phi0).real
+                y[i,:] +=   psi[ielem] * chi(elem[0],elem[1],rang[:],rgrid,w,nlobs,nbins) * \
+                            spharm(elem[3], elem[4], gridtheta1d[i], phi0).real
 
-    line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh*np.abs(y)/np.max(rmesh*np.abs(y)),20,cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh * np.abs(y)/np.max(rmesh*np.abs(y)), 
+                                        20, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
@@ -410,16 +409,15 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
-def plot_snapshot(params,maparray,rgrid,ivec):
+def plot_snapshots(params,psi,maparray,Gr):
     #make it general
     nlobs = params['nlobs']
     nbins = params['bound_nbins'] + params['nbins']
     npoints = 200
     rmax    = nbins * params['bound_binw']
-    
-    figsize = (3,3)
-    dpi     = 200
-    fig = plt.figure(figsize, dpi, constrained_layout=True)
+
+
+    fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
     if params['plot_types']['r-radial_angular'] == True:
@@ -429,18 +427,10 @@ def plot_snapshot(params,maparray,rgrid,ivec):
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
 
-
-
-    #read the wavepacket
-
-    #align with maparray
-
-    #merge into coeffs
-
-        PLOTS.plot_wf_angrad(rmin,rmax,npoints,coeffs,rgrid,nlobs,nbins,ivec)
+        plot_wf_angrad(0.0,rmax, npoints, nlobs, nbins, psi, maparray, Gr)
 
     if params["save_snapthots"] == True:
-        fig.savefig("angrad_t=" + str("%4.1f"%(t/np.float64(1.0/24.188))) + "_.pdf", bbox_inches='tight')
+        fig.savefig("angrad.pdf", bbox_inches='tight')
 
 
 if __name__ == "__main__":      
@@ -473,8 +463,8 @@ if __name__ == "__main__":
     #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
-    plot_wf_angrad( 0.0, params['bound_binw'] * nbins, 200, coeffs ,\
-                    Gr, params['bound_nlobs'], nbins, ivec)
+    #plot_wf_angrad( 0.0, params['bound_binw'] * nbins, 200, coeffs ,\
+    #                Gr, params['bound_nlobs'], nbins, ivec)
 
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
     #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
