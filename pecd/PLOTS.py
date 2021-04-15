@@ -227,7 +227,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
-def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid):
+def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params):
     #================ radial-angular in real space ===============#
 
     """plot the selected wavefunctions functions"""
@@ -254,17 +254,18 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid):
     phi0 = 0.0
     for ielem, elem in enumerate(maparray):
         if np.abs(psi[ielem]) > 1e-6:
-            print(elem)
+            print(str(elem) + str(psi[ielem]))
             for i in range(len(rang)):
-                y[i,:] +=   psi[ielem] * chi(elem[0],elem[1],rang[:],rgrid,w,nlobs,nbins) * \
-                            spharm(elem[3], elem[4], gridtheta1d[i], phi0).real
+                y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0)  #chi(elem[0],elem[1],rang[:],rgrid,w,nlobs,nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh * np.abs(y)/np.max(rmesh*np.abs(y)), 
-                                        20, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        10, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
-    plt.show()     
+    plt.show()  
+    if params["save_snapthots"] == True:
+        fig.savefig("angrad.pdf", bbox_inches='tight')   
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     mlab.clf()
@@ -416,21 +417,20 @@ def plot_snapshots(params,psi,maparray,Gr):
     npoints = 200
     rmax    = nbins * params['bound_binw']
 
-
-    fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
-    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
+    #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
     if params['plot_types']['r-radial_angular'] == True:
         #================ radial-angular in real space ===============#
-        ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
+        #ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
+
         width = 0.0
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
 
-        plot_wf_angrad(0.0,rmax, npoints, nlobs, nbins, psi, maparray, Gr)
+        plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params)
 
-    if params["save_snapthots"] == True:
-        fig.savefig("angrad.pdf", bbox_inches='tight')
+    
 
 
 if __name__ == "__main__":      
