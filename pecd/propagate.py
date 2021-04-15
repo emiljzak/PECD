@@ -120,7 +120,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         for ielem in plot_times:
             if itime == ielem:
                 psi[:] = wavepacket[itime,:] 
-                PLOTS.plot_snapshots(params, psi, maparray, Gr)
+                PLOTS.plot_snapshots(params, psi, maparray, Gr, t)
 
 
 
