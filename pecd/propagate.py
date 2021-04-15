@@ -83,7 +83,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     for itime, t in enumerate(tgrid): 
         print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
        
-        UMAT                = linalg.expm( -1.0j * ( ham0 + 0.0 * np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
+        UMAT                = linalg.expm( -1.0j * ( ham0 + np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
         wavepacket[itime,:] = np.dot( UMAT , psi )
         psi                 = wavepacket[itime,:]
 
@@ -106,10 +106,10 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     plot_times = []
     for index,item in enumerate(params['plot_controls']["plottimes"]):
 
-        if int( item * time_to_au / dt) > len(tgrid):
+        if int( item * time_to_au / dt ) > len(tgrid):
             print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
         else:
-            plot_times.append(item * time_to_au/dt)
+            plot_times.append( item * time_to_au / dt )
     print("Final list of plottime indices in tgrid:")
     print(plot_times)
 
@@ -119,9 +119,8 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     for itime, t in enumerate(tgrid): 
         for ielem in plot_times:
             if itime == ielem:
-                psi[:] = wavepacket[itime,:]
-                
-                PLOTS.plot_snapshots(params,psi,maparray,Gr)
+                psi[:] = wavepacket[itime,:] 
+                PLOTS.plot_snapshots(params, psi, maparray, Gr)
 
 
 
