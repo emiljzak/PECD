@@ -15,6 +15,7 @@ import GRID
 import BOUND
 import CONSTANTS
 import FIELD
+import PLOTS
 
 import time
 import os
@@ -22,7 +23,11 @@ import sys
 
 import matplotlib.pyplot as plt
 
+
 def prop_wf( params, ham_init, psi_init, maparray, Gr ):
+
+
+    time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
 
     ham0 = ham_init.copy()
     ham0 += np.transpose(ham_init) 
@@ -38,15 +43,15 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     print("Nbas = " + str(Nbas))
 
     print("Setting up time-grid")
-    tgrid = np.linspace(    params['t0'], 
-                            params['tmax'], 
+    tgrid = np.linspace(    params['t0'] * time_to_au, 
+                            params['tmax'] * time_to_au, 
                             int((params['tmax']-params['t0'])/params['dt']+1), 
                             endpoint = True )
-    dt = params['dt']
+    dt = params['dt'] * time_to_au
 
     print("Allocating wavepacket")
     flwavepacket      = open( params['wavepacket_file'],'w' )
-    #wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
+    wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     psi               = np.zeros( Nbas, dtype=complex ) 
     psi               = psi_init
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
@@ -59,7 +64,6 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     intmat0[:,:,0] = calc_intmat( [1.0, 0.0, 0.0], maparray, Gr, Nbas)  
     intmat0[:,:,1] = calc_intmat( [0.0, 1.0, 0.0], maparray, Gr, Nbas)  
     intmat0[:,:,2] = calc_intmat( [0.0, 0.0, 1.0], maparray, Gr, Nbas)  
-
 
 
     print("initialize electric field")
@@ -77,22 +81,23 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
-        print("t = " + str( "%10.1f"%(t)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
+        print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
        
+        UMAT                = linalg.expm( -1.0j * ( ham0 + 0.0 * np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
+        wavepacket[itime,:] = np.dot( UMAT , psi )
+        psi                 = wavepacket[itime,:]
+
         flwavepacket.write( '{:10.3f}'.format(t) + 
                             " ".join('{:16.8e}'.format(psi[i].real) + '{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
                             '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) + "\n")
         
-        UMAT    = linalg.expm( -1.0j * ( ham0 + 0.0 * np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) ) * dt ) 
-        psi_out = np.dot( UMAT , psi )
-        psi     = psi_out
-
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
 
     print("=====================================")
     print("==post-processing of the wavepacket==")
     print("====================================="+"\n")
+
 
     print("=========")
     print("==Plots==")
@@ -101,23 +106,22 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     plot_times = []
     for index,item in enumerate(params['plot_controls']["plottimes"]):
 
-        if int(CONSTANTS.time_to_au[ params['time_units'] ] *  item / dt) > len(tgrid):
+        if int( item * time_to_au / dt) > len(tgrid):
             print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
         else:
-            plot_times.append(int(CONSTANTS.time_to_au[ params['time_units'] ] * item/dt))
-    print("Final list of plot times:")
+            plot_times.append(item * time_to_au/dt)
+    print("Final list of plottime indices in tgrid:")
     print(plot_times)
 
-    #read wavepacket
-
     #merge with maparray
-    exit()
+    maparray = np.asarray(maparray)
+
     for itime, t in enumerate(tgrid): 
         for ielem in plot_times:
             if itime == ielem:
                 psi[:] = wavepacket[itime,:]
-
-        PLOTS.plot_snapshot(t,params,coeffs,rgrid,ivec)
+                
+                PLOTS.plot_snapshots(params,psi,maparray,Gr)
 
 
 

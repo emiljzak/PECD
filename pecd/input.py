@@ -234,7 +234,7 @@ def gen_input():
                                 "k-radial_angular": False} 
 
     params['plot_controls'] = { "plotrate":         1, 
-                                "plottimes":        [10.0,30.0],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "plottimes":        [0.0,2.0,10.0,30.0],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_static":      False,
                                 "save_anim":        False,
                                 "show_static":      True,
