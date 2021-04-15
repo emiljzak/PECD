@@ -227,7 +227,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
-def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params):
+def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t):
     #================ radial-angular in real space ===============#
 
     """plot the selected wavefunctions functions"""
@@ -265,7 +265,9 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params):
     plt.legend()   
     plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig("angrad.pdf", bbox_inches='tight')   
+        fig.savefig( params['working_dir'] + "angrad_t=" +\
+                     str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf" ,\
+                     bbox_inches='tight')
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     mlab.clf()
@@ -410,11 +412,11 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
-def plot_snapshots(params,psi,maparray,Gr):
+def plot_snapshots(params,psi,maparray,Gr,t):
     #make it general
     nlobs = params['nlobs']
     nbins = params['bound_nbins'] + params['nbins']
-    npoints = 200
+    npoints = 300
     rmax    = nbins * params['bound_binw']
 
     #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
@@ -428,7 +430,7 @@ def plot_snapshots(params,psi,maparray,Gr):
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
 
-        plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params)
+        plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t)
 
     
 
