@@ -7,6 +7,7 @@ import os
 
 import input
 import GRID
+import MAPPING
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
@@ -251,15 +252,17 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t):
 
     y = np.zeros((len(rang),len(rang)),dtype=complex)
 
-    phi0 = 0.0
+    phi0 = np.pi/3
+    #here we can do phi-averaging
+
     for ielem, elem in enumerate(maparray):
-        if np.abs(psi[ielem]) > 1e-6:
+        if np.abs(psi[ielem]) > 1e-5:
             print(str(elem) + str(psi[ielem]))
             for i in range(len(rang)):
-                y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0)  #chi(elem[0],elem[1],rang[:],rgrid,w,nlobs,nbins) 
+                y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * chi(elem[0],elem[1],rang[:],rgrid,w,nlobs,nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh * np.abs(y)/np.max(rmesh*np.abs(y)), 
-                                        10, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
@@ -442,14 +445,23 @@ if __name__ == "__main__":
 
 
     params = input.gen_input()
-    wffile = params['working_dir'] + "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
+    wffile = params['working_dir'] + "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
     nvecs = 7 #how many vectors to load?
-    ivec = 0 #which vector to plot?
+    ivec = 3 #which vector to plot?
     coeffs = read_coeffs(wffile,nvecs)
+
+    psi = np.zeros(len(coeffs),dtype = float)
+    print(psi.shape)
+    for ielem,elem in enumerate(coeffs):
+        psi[ielem] = elem[5][ivec]
+
+
     nbins = params['bound_nbins'] + params['nbins']
 
     Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
+    maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
+                                     params['map_type'], params['working_dir'] )
 
     """ plot radial basis """
     #plot_chi(0.0,params['bound_binw']*params['bound_nbins'],1000,Gr,params['bound_nlobs'], params['bound_nbins'])
@@ -465,9 +477,9 @@ if __name__ == "__main__":
     #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
-    #plot_wf_angrad( 0.0, params['bound_binw'] * nbins, 200, coeffs ,\
-    #                Gr, params['bound_nlobs'], nbins, ivec)
-
+    plot_wf_angrad( 0.0, params['bound_binw'] * params['bound_nbins'], 200,params['bound_nlobs'], nbins,\
+                    psi,maparray ,Gr, params, 0.0)
+    #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
     #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
 
