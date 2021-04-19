@@ -23,6 +23,9 @@ import sys
 
 import matplotlib.pyplot as plt
 
+from pycallgraph import PyCallGraph
+from pycallgraph.output import GraphvizOutput
+from pycallgraph import Config
 
 def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
@@ -325,6 +328,7 @@ def check_symmetric(a, rtol=1e-05, atol=1e-08):
 
 if __name__ == "__main__":      
 
+
     params = input.gen_input()
 
 
@@ -345,10 +349,16 @@ if __name__ == "__main__":
     #print(psi_init)
 
     ham0 = read_ham0(params)
+
     #print(ham0)
     #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
     #plt.show()
+    graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
+    config = Config(max_depth=4)
+    with PyCallGraph(output=graphviz, config=config):
+        ham_init, psi_init = BUILD_HMAT(params,maparray_global, Nbas_global,ham0)
+    exit()
+    #prop_wf(params,ham_init,psi_init[:,params['ivec']],maparray_global, Gr)
 
-    ham_init, psi_init = BUILD_HMAT(params,maparray_global, Nbas_global,ham0)
 
     prop_wf(params,ham_init,psi_init[:,params['ivec']],maparray_global, Gr)

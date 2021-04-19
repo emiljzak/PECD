@@ -5,7 +5,9 @@ def gen_input():
 
     params = {}
 
-    os.environ['KMP_DUPLICATE_LIB_OK']='True'
+    os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
+
+    #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
     """ === molecule directory ==== """ 
 
@@ -22,11 +24,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 8
+    params['bound_nlobs']   = 12
     params['bound_nbins']   = 1
-    params['bound_binw']    = 20.0
+    params['bound_binw']    = 30.0
     params['bound_rshift']  = 0.01 
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -98,18 +100,18 @@ def gen_input():
 
     """==== PROPAGATE ===="""
 
-    params['nlobs']     = 8
-    params['nbins']     = 2
-    params['binw']      = 20.0
+    params['nlobs']     = 12
+    params['nbins']     = 1
+    params['binw']      = 30.0
 
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
                                 [params['nbins'], params['nlobs'],params['binw']] ] 
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 20.0 
+    params['tmax']      = 30.0 
     params['dt']        = 0.2 
-    params['ivec']      = 2
+    params['ivec']      = 0
 
     params['time_units']         = "as"
 
@@ -118,7 +120,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -230,11 +232,11 @@ def gen_input():
                                 "animation":        False}
     params['plot_types']    = { "radial":           False,
                                 "angular":          False,
-                                "r-radial_angular": True, 
+                                "r-radial_angular": False, 
                                 "k-radial_angular": False} 
 
     params['plot_controls'] = { "plotrate":         1, 
-                                "plottimes":        [params['t0'], 0.2 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "plottimes":        [params['t0'], 0.05 * params['tmax'],0.1 * params['tmax'],0.5 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_static":      False,
                                 "save_anim":        False,
                                 "show_static":      True,
@@ -252,6 +254,6 @@ def gen_input():
         animation_filename: name of the file into which animations will be saved
     """
 
-    params["save_snapthots"] = True
+    params["save_snapthots"] = False
 
     return params
