@@ -33,7 +33,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
 
-    BOUND.plot_mat(ham_init)
+    #BOUND.plot_mat(ham_init)
     ham0 = np.copy(ham_init)
     ham0 += np.transpose(ham_init.conjugate()) 
     print(ham0.shape[0])
@@ -41,7 +41,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     for i in range(ham0.shape[0]):
         ham0[i,i] -= ham_init.diagonal()[i]
     print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
-    BOUND.plot_mat(ham0)
+    #BOUND.plot_mat(ham0)
     #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=5)
     #plt.show()
     #ham0 /= 2.0
@@ -85,9 +85,12 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         Fvec = Elfield.gen_field(tgrid)
         fig = plt.figure()
         ax = plt.axes()
-        ax.scatter(tgrid,-Fvec[2].real, label="Field-x")
-        ax.scatter(tgrid,-Fvec[2].imag, label="Field-y")
-        ax.scatter(tgrid,Fvec[1], label="Field-z")
+        plt.xlabel("time (as)")
+        plt.ylabel("normalized Field components")
+        ax.scatter(tgrid/time_to_au, -Fvec[2].real, label = "Field-x", marker = '-', color = 'r', linewidths = 2)
+        ax.scatter(tgrid/time_to_au, -Fvec[2].imag, label = "Field-y", marker = '-', color = 'g', linewidths = 2)
+        ax.scatter(tgrid/time_to_au, Fvec[1], label = "Field-z", marker = '-', color = 'b', linewidths = 2)
+        ax.legend()
         plt.show()
 
 
@@ -96,9 +99,9 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
     
         #dip =   np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) 
-        #dip =   0.0 * Elfield.gen_field(t)[1] * intmat0[:,:,1]
+        dip =   Elfield.gen_field(t)[1] * intmat0[:,:,1]
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
-        UMAT                = linalg.expm( -1.0j * ( ham0 ) * dt ) 
+        UMAT                = linalg.expm( -1.0j * ( ham0 + dip ) * dt ) 
         wavepacket[itime,:] = np.dot( UMAT , psi )
         psi                 = wavepacket[itime,:]
 
@@ -138,7 +141,7 @@ def calc_plot_times(params,tgrid,dt):
         if int( item * time_to_au / dt ) > len(tgrid):
             print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
         else:
-            plot_times.append( item * time_to_au / dt )
+            plot_times.append( int(item * time_to_au / dt) )
     print("Final list of plottime indices in tgrid:")
     print(plot_times)
     return plot_times

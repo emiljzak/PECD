@@ -231,13 +231,9 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
 def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
     #================ radial-angular in real space ===============#
 
-    """plot the selected wavefunctions functions"""
-    """ Only radial part is plotted"""
-
-    coeff_thr = 1e-5
+    coeff_thr = 1e-3
 
     fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
-
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
 
@@ -250,11 +246,10 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
     x,w =  GRID.gauss_lobatto(nlobs,14)
     w   =  np.array(w)
     x   =  np.array(x) # convert back to np arrays
-    nprint = 1 #how many functions to print
 
     y = np.zeros((len(rang),len(rang)),dtype=complex)
 
-    phi0 = np.pi/8
+    phi0 = np.pi/3
     #here we can do phi-averaging
 
     for ielem, elem in enumerate(maparray):
@@ -264,8 +259,8 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
                 y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
                             chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
-    line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh * np.abs(y)/np.max(rmesh*np.abs(y)), 
-                                        60, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    line_angrad_r = axradang_r.contourf(thetamesh, rmesh,   np.abs(y)/np.max(np.abs(y)), 
+                                        100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
@@ -420,7 +415,7 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
 
 def plot_snapshot(params,psi,maparray,Gr,t):
     #make it general
-    nlobs = params['nlobs']
+    nlobs = params['bound_nlobs']
     nbins = params['bound_nbins'] + params['nbins']
     npoints = 200
     rmax    = nbins * params['bound_binw']
