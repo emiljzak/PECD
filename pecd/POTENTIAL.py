@@ -74,6 +74,8 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
     if os.path.isfile(params['working_dir'] + "esp/" + params['file_esp']):
         print (params['file_esp'] + " file exist")
 
+        #os.remove(params['working_dir'] + "esp/" + params['file_esp'])
+
         if os.path.getsize(params['working_dir'] + "esp/" + params['file_esp']) == 0:
 
             print("But the file is empty.")

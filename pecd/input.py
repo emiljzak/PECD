@@ -24,11 +24,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 8
+    params['bound_nlobs']   = 16
     params['bound_nbins']   = 1
-    params['bound_binw']    = 20.0
+    params['bound_binw']    = 40.0
     params['bound_rshift']  = 0.01 
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -39,7 +39,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -100,18 +100,18 @@ def gen_input():
 
     """==== PROPAGATE ===="""
 
-    params['nlobs']     = 8
-    params['nbins']     = 1
-    params['binw']      = 20.0
+    params['nlobs']     = 16
+    params['nbins']     = 0
+    params['binw']      = 40.0
 
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
                                 [params['nbins'], params['nlobs'], params['binw']] ] 
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 4500.0 
-    params['dt']        = 0.2 
-    params['ivec']      = 10
+    params['tmax']      = 2000.0 
+    params['dt']        = 1.5 
+    params['ivec']      = 3
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -119,7 +119,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = True
 
@@ -161,7 +161,7 @@ def gen_input():
         raise ValueError("Incorrect units for frequency")
 
     opt_cycle                  = 1.0e18/params['omega']
-    suggested_no_pts_per_cycle = 25     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
+    suggested_no_pts_per_cycle = 50     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
     # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
     
     print( "Electric field carrier frequency = " + str("%10.3f"%( params['omega'] * 1.0e-12 )) + " THz" )
@@ -177,7 +177,7 @@ def gen_input():
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 7.0e+14 #W/cm^2 #peak intensity
+    intensity       = 7.0e+15 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
@@ -187,8 +187,8 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 50.0 #as: pulse duration (sigma)
-    params['tc']        = 100.0 #as: pulse centre
+    params['tau']       = 500.0 #as: pulse duration (sigma)
+    params['tc']        = 1000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -234,10 +234,10 @@ def gen_input():
 
     params['plot_types']    = { "radial":           False,
                                 "angular":          False,
-                                "r-radial_angular": False, 
+                                "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        [params['t0'], 0.05 * params['tmax'],0.1 * params['tmax'],0.5 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        [params['t0'], 0.2 * params['tmax'],0.5 * params['tmax'],0.9 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
