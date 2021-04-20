@@ -228,41 +228,44 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
-def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t):
+def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
     #================ radial-angular in real space ===============#
 
     """plot the selected wavefunctions functions"""
     """ Only radial part is plotted"""
 
-    fig = plt.figure(figsize=(2, 2), dpi=200, constrained_layout=True)
+    coeff_thr = 1e-5
 
-    spec = gridspec.GridSpec(ncols=1, nrows=1,figure=fig)
-    axradang_r = fig.add_subplot(spec[0, 0],projection='polar')
+    fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
 
-    rang = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
+
+    rang = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
     gridtheta1d = 2 * np.pi * rang
     rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
 
-    x=np.zeros(nlobs)
-    w=np.zeros(nlobs)
-    x,w=GRID.gauss_lobatto(nlobs,14)
-    w=np.array(w)
-    x=np.array(x) # convert back to np arrays
+    x   =  np.zeros(nlobs)
+    w   =  np.zeros(nlobs)
+    x,w =  GRID.gauss_lobatto(nlobs,14)
+    w   =  np.array(w)
+    x   =  np.array(x) # convert back to np arrays
     nprint = 1 #how many functions to print
 
     y = np.zeros((len(rang),len(rang)),dtype=complex)
 
-    phi0 = np.pi/3
+    phi0 = np.pi/8
     #here we can do phi-averaging
 
     for ielem, elem in enumerate(maparray):
-        if np.abs(psi[ielem]) > 1e-5:
+        if np.abs(psi[ielem]) > coeff_thr:
             print(str(elem) + str(psi[ielem]))
             for i in range(len(rang)):
-                y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * chi(elem[0],elem[1],rang[:],rgrid,w,nlobs,nbins) 
+                y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
+                            chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh,  rmesh * np.abs(y)/np.max(rmesh*np.abs(y)), 
-                                        100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        60, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
@@ -415,20 +418,18 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
-def plot_snapshots(params,psi,maparray,Gr,t):
+def plot_snapshot(params,psi,maparray,Gr,t):
     #make it general
     nlobs = params['nlobs']
     nbins = params['bound_nbins'] + params['nbins']
-    npoints = 300
+    npoints = 200
     rmax    = nbins * params['bound_binw']
 
     #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
     #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-
+    #ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
     if params['plot_types']['r-radial_angular'] == True:
-        #================ radial-angular in real space ===============#
-        #ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
-
+        """================ radial-angular in real space ==============="""
         width = 0.0
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
@@ -477,8 +478,8 @@ if __name__ == "__main__":
     #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
-    plot_wf_angrad( 0.0, params['bound_binw'] * params['bound_nbins'], 200,params['bound_nlobs'], nbins,\
-                    psi,maparray ,Gr, params, 0.0)
+    #plot_wf_angrad( 0.0, params['bound_binw'] * params['bound_nbins'], 200,params['bound_nlobs'], nbins,\
+    #                psi,maparray ,Gr, params, 0.0)
     #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
     #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
