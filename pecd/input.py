@@ -24,11 +24,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 12
+    params['bound_nlobs']   = 8
     params['bound_nbins']   = 1
-    params['bound_binw']    = 30.0
+    params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.01 
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -100,27 +100,28 @@ def gen_input():
 
     """==== PROPAGATE ===="""
 
-    params['nlobs']     = 12
+    params['nlobs']     = 8
     params['nbins']     = 1
-    params['binw']      = 30.0
+    params['binw']      = 20.0
 
-    params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'],params['bound_binw']] ,\
-                                [params['nbins'], params['nlobs'],params['binw']] ] 
+    params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
+                                [params['nbins'], params['nlobs'], params['binw']] ] 
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 30.0 
+    params['tmax']      = 4500.0 
     params['dt']        = 0.2 
-    params['ivec']      = 0
+    params['ivec']      = 10
 
     params['time_units']         = "as"
+    time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
 
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -186,32 +187,32 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 100.0 #as: pulse duration (sigma)
-    params['tc']        = 200.0 #as: pulse centre
+    params['tau']       = 50.0 #as: pulse duration (sigma)
+    params['tc']        = 100.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
 
-    field_CPL   = { "function_name": "fieldCPL", 
-                    "omega": params['omega'], 
-                    "E0": params['E0'], 
-                    "CEP0": 0.0, 
-                    "spherical": True, 
-                    "typef": "LCPL"}
+    field_CPL   = { "function_name":    "fieldCPL", 
+                    "omega":            params['omega'], 
+                    "E0":               params['E0'], 
+                    "CEP0":             0.0, 
+                    "spherical":        True, 
+                    "typef":            "LCPL"}
 
-    field_LP    = { "function_name": "fieldLP", 
-                    "omega": params['omega'], 
-                    "E0": params['E0'], 
-                    "CEP0": 0.0}
+    field_LP    = { "function_name":    "fieldLP", 
+                    "omega":            params['omega'], 
+                    "E0":               params['E0'], 
+                    "CEP0":             0.0}
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
     env_gaussian = {"function_name": "envgaussian", 
-                    "FWHM": 2.355 * params['tau']/np.sqrt(2.0), 
-                    "t0": params['tc']  }
+                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
+                    "t0": (time_to_au * params['tc'])  }
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_CPL 
+    params['field_type'] = field_LP 
 
     """ Available field types :
         1) field_CPL
@@ -228,21 +229,21 @@ def gen_input():
 
     """==== POST-PROCESSING: PLOTS ===="""
 
-    params['plot_modes']    = { "single_shot":      False, 
+    params['plot_modes']    = { "snapshot":         True, 
                                 "animation":        False}
+
     params['plot_types']    = { "radial":           False,
                                 "angular":          False,
                                 "r-radial_angular": False, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plotrate":         1, 
-                                "plottimes":        [params['t0'], 0.05 * params['tmax'],0.1 * params['tmax'],0.5 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
-                                "save_static":      False,
+    params['plot_controls'] = { "plottimes":        [params['t0'], 0.05 * params['tmax'],0.1 * params['tmax'],0.5 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+                                "save_snapshots":   True,
                                 "save_anim":        False,
-                                "show_static":      True,
+                                "show_snapshot":    True,
                                 "show_anim":        False, 
-                                "static_filename":  "obs",
-                                "animation_filename":"anim_obs"}
+                                "fname_snapshot":   "obs",
+                                "fname_animation":  "anim_obs"}
 
     """ plotrate : rate of plotting observables in timestep units in animated plots
         plottimes: times (in time_units) at which we plot selected observables in a static graph

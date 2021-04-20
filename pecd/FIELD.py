@@ -11,14 +11,14 @@ class Field():
 
     """ =================================== FIELD TYPES =================================== """
     def fieldCPL(self,t, function_name, omega, E0, CEP0, spherical, typef):
-   
+        #all vectors are returned in spherical tensor form -1, 0, 1 order
         if spherical == True:
             if typef == "LCPL":
 
-                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , - (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ), 0.0] ) 
+                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, - (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) )] ) 
         else:
             if typef == "LCPL":
-                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 )  , -np.sin( omega * t + CEP0 ), 0.0] ) 
+                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, - (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) )] ) 
         return fieldvec
 
     def fieldLP(self, t, function_name, omega, E0, CEP0):
@@ -26,7 +26,7 @@ class Field():
         #print("shapes in fieldLP")
         #print(np.shape(t))
         #print(np.shape(np.cos( omega * t + CEP0 )))
-        return 0.0, 0.0, np.cos( omega * t + CEP0 )
+        return 0.0, np.cos( omega * t + CEP0 ), 0.0
 
 
     """ =================================== FIELD ENVELOPES =================================== """
@@ -53,7 +53,7 @@ class Field():
             fieldenv = field_env_function(t, **self.params['field_env'])
 
             #print(np.shape(output))
-            print(np.shape(fieldenv))
+            
 
             #fieldvec2 = np.multiply(fieldenv,fieldz)
             #print("fieldvec2")

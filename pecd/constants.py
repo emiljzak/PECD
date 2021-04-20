@@ -2,7 +2,7 @@
 
 import numpy as np
 
-ev_to_au    = 27.211 
+au_to_ev    = 27.211 
 # convert time units to atomic units
 time_to_au = {"as" : np.float64(1.0/24.188)}
 # 1a.u. (time) = 2.418 e-17s = 24.18 as
