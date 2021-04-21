@@ -24,9 +24,9 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 20
+    params['bound_nlobs']   = 10
     params['bound_nbins']   = 1
-    params['bound_binw']    = 30.0
+    params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.01 
     params['bound_lmax']    = 4
     
@@ -109,7 +109,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 300.0 
+    params['tmax']      = 20.0 
     params['dt']        = 4.0
     params['ivec']      = 3
 
@@ -119,7 +119,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False#if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
