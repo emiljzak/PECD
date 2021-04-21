@@ -183,10 +183,28 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
             hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
         """ calculate hmat """
+
+        """ Old way: standard implementation """
+        start_time = time.time()
+        keomat = BOUND.BUILD_KEOMAT( params, maparray, Nbas , Gr )
+        end_time = time.time()
+        print("Old implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+
+        """ New way: using fast implementation """
+        start_time = time.time()
+        keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+        end_time = time.time()
+        print("New implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+        exit()
+
+        hmat += keomat 
+
         potmat, potind = BOUND.BUILD_POTMAT0( params, maparray, Nbas, Gr )      
         for ielem, elem in enumerate(potmat):
             #print(potind[ielem][0],potind[ielem][1])
-            hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
+            hmat[ potind[ielem][0], potind[ielem][1] ] += elem[0]
         
 
         BOUND.plot_mat(hmat)
@@ -195,12 +213,7 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
         
 
 
-        start_time = time.time()
-        keomat = BOUND.BUILD_KEOMAT( params, maparray, Nbas , Gr )
-        end_time = time.time()
-        print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-        
-        hmat += keomat 
+
 
         print("plot of hmat")
         #BOUND.plot_mat(hmat)
