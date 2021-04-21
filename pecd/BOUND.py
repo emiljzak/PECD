@@ -27,7 +27,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 
 """ start of @jit section """
-jitcache = True
+jitcache = False
+
 @jit(nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def P(l, m, x):
 	pmm = np.ones(1,)
@@ -85,9 +86,10 @@ def SH(l, m, theta, phi):
 
 @jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
+
     pot = []
     potind = []
-    for p1 in prange(vlist.shape[0]):
+    for p1 in range(vlist.shape[0]):
         #print(vlist[p1,:])
         w = Gs[vlist[p1,0]][:,2]
         G = Gs[vlist[p1,0]] 
@@ -176,11 +178,41 @@ def BUILD_HMAT0(params):
         with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
             np.savetxt( energyfile, enr0 * CONSTANTS.ev_to_au , fmt='%10.5f' )
   
+""" ============ KEOMAT ============ """
+def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
+    nlobs = params['bound_nlobs'] 
+    """call Gauss-Lobatto rule """
+    x   =   np.zeros(nlobs)
+    w   =   np.zeros(nlobs)
+    x,w =   GRID.gauss_lobatto(nlobs,14)
+    x   =   np.array(x)
+    w   =   np.array(w)
+
+    keomat =  np.zeros((Nbas, Nbas), dtype=np.float64)
+
+    for i in range(Nbas):
+        rin = Gr[maparray[i][0],maparray[i][1]]
+
+        for j in range(i,Nbas):
+            if maparray[i][3] == maparray[j][3] and maparray[i][4] == maparray[j][4]:
+                keomat[i,j] = calc_keomatel(maparray[i][0], maparray[i][1],\
+                                            maparray[i][3], maparray[j][0], maparray[j][1], x, w, rin, \
+                                            params['bound_rshift'], params['bound_binw'])
+
+    print("KEO matrix")
+    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+        print(0.5*keomat)
+
+    plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+    plt.legend()
+    plt.show()
+
+    return  0.5 * keomat
 
 
 """ ============ KEOMAT0 ============ """
 def BUILD_KEOMAT0( params, maparray, Nbas, Gr ):
-    nlobs = params['bound_nlobs']
+    nlobs = params['bound_nlobs']   
     """call Gauss-Lobatto rule """
     x   =   np.zeros(nlobs)
     w   =   np.zeros(nlobs)
@@ -211,10 +243,15 @@ def BUILD_KEOMAT0( params, maparray, Nbas, Gr ):
 def calc_keomatel(i1,n1,l1,i2,n2,x,w,rin,rshift,binwidth):
     "calculate matrix element of the KEO"
 
-    if i1==i2 and n1==n2:
-        KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth) + KEO_matel_ang(i1,n1,l1,rin) 
-        return     KEO
-    else:
+    if i1==i2: 
+        if n1==n2:
+            KEO     =  KEO_matel_rad_diag(i1,n1,i2,n2,x,w,rshift,binwidth) + KEO_matel_ang(i1,n1,l1,rin) 
+            return     KEO
+        else:
+            KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth)
+            return     KEO
+
+    elif i1==i2+1 or i1==i2-1:
         KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth)
         return     KEO
 
@@ -258,7 +295,7 @@ def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
     elif n1==0 and n2==0:
         #bridge x bridge
         if i1==i2: 
-            KEO     =   ( KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1,rshift,binwidth) + KEO_matel_fpfp(i1+1,0,0,x,w_i1,rshift,binwidth) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
+            KEO     =   ( KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1,rshift,binwidth) + KEO_matel_fpfp( ,0,0,x,w_i1,rshift,binwidth) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
             return      KEO
         elif i1==i2-1:
             KEO     =   KEO_matel_fpfp(i2,nlobatto-1,0,x,w_i2,rshift,binwidth) #checked 10feb 2021 Double checked Feb 12
@@ -268,6 +305,13 @@ def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
             return      KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
         else:
             return      0.0
+
+
+def KEO_matel_rad_diag(i,n,x,w,rshift,binwidth):
+    #w /= sqrt(sum(w[:]))
+    w_i1     = w#/sum(w[:])
+    w_i2     = w#/sum(w[:]) 
+
 
 def KEO_matel_ang(i1,n1,l,rgrid):
     """Calculate the anglar momentum part of the KEO"""
@@ -281,6 +325,7 @@ def KEO_matel_fpfp(i,n1,n2,x,w,rshift,binwidth):
     #scale the Gauss-Lobatto points
     nlobatto    = x.size
     x_new       = 0.5 * ( binwidth * x + binwidth * (i+1) + binwidth * i + rshift)  #checked
+    #no need for it, as we have differences everywhere
     #scale the G-L quadrature weights
     #w *= 0.5 * binwidth 
 
@@ -293,19 +338,20 @@ def KEO_matel_fpfp(i,n1,n2,x,w,rshift,binwidth):
     return fpfpint#sum(w[:])
     
 def fp(i,n,k,x):
-    "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) " 
-    if n!=k:
+    "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) "
+    npts = x.size 
+    if n!=k: #issue with vectorization here.
         fprime  =   (x[n]-x[k])**(-1)
         prod    =   1.0e00
 
-        for mu in range(0,x.size):
+        for mu in range(npts):
             if mu !=k and mu !=n:
                 prod *= (x[k]-x[mu])/(x[n]-x[mu])
         fprime  *=  prod
 
     elif n==k:
         fprime  =   0.0
-        for mu in range(0,x.size):
+        for mu in range(npts):
                 if mu !=n:
                     fprime += (x[n]-x[mu])**(-1)
     return fprime
@@ -357,6 +403,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     end_time = time.time()
     print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
+    """we can cut vlist  to set cut-off for the ESP"""
 
     if params['calc_method'] == 'jit':
         start_time = time.time()

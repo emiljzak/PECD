@@ -305,13 +305,10 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
 
     phi0 = 0.0 * np.pi/2
     #here we can do phi-averaging
-
-    print(np.shape(flist))
     
-
     for ielem, elem in enumerate(maparray):
         if np.abs(psi[ielem]) > coeff_thr:
-            print(str(elem) + str(psi[ielem]))
+            #print(str(elem) + str(psi[ielem]))
 
             chir = flist[elem[1]-1](rang)
 
@@ -322,7 +319,8 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
                                         ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
-
+    
+    #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
     plt.legend()   
     plt.show()  
     if params["save_snapthots"] == True:
@@ -528,10 +526,10 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     for i, elem in enumerate(maparray):
         chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
 
-    xnew  = np.arange(0.02, nbins * binw, 0.01)
-    ynew = chilist[13](xnew)   # use interpolation function returned by `interp1d`
-    plt.plot(x, chilist[13](x), 'o', xnew, ynew, '-')
-    plt.show()
+    #xnew  = np.arange(0.02, nbins * binw, 0.01)
+    #ynew = chilist[13](xnew)   # use interpolation function returned by `interp1d`
+    #plt.plot(x, chilist[13](x), 'o', xnew, ynew, '-')
+    #plt.show()
     
     return chilist
 
