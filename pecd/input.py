@@ -109,7 +109,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 1000.0 
+    params['tmax']      = 200.0 
     params['dt']        = 4.0
     params['ivec']      = 4
 
@@ -187,8 +187,8 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 500.0 #as: pulse duration (sigma)
-    params['tc']        = 1000.0 #as: pulse centre
+    params['tau']       = 300.0 #as: pulse duration (sigma)
+    params['tc']        = 500.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -237,7 +237,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0,params['tmax'],10)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0,params['tmax'],6)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,

@@ -280,8 +280,8 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
 def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
     #================ radial-angular in real space ===============#
 
-    coeff_thr = 1e-3
-    ncontours = 30
+    coeff_thr = 1e-5
+    ncontours = 60
 
     fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
@@ -292,7 +292,6 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
     unity_vec = np.linspace(0.0, 1.0, npoints, endpoint=True, dtype=float)
     gridtheta1d = 2 * np.pi * unity_vec
 
-    print(gridtheta1d)
 
     rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
 
@@ -494,12 +493,12 @@ def plot_snapshot(params,psi,maparray,Gr,t):
 
         plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t)
 
-
 def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
+    #plot snapshots using interpolation for the chi functions
     #make it general
     nlobs = params['bound_nlobs']
     nbins = params['bound_nbins'] + params['nbins']
-    npoints = 60
+    npoints = 200
     rmax    = nbins * params['bound_binw']
 
     #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
@@ -511,35 +510,30 @@ def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
 
-        plot_wf_angrad_int(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t,flist)
+        plot_wf_angrad_int(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist)
 
     
     
-def interpolate_chi(Gr,nlobs,nbins,maparray):
+def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
 
-    w   =  np.zeros(nlobs)
-    xx,w =  GRID.gauss_lobatto(nlobs,14)
-    w   =  np.array(w)
+    w       =  np.zeros(nlobs)
+    xx,w    =  GRID.gauss_lobatto(nlobs,14)
+    w       =  np.array(w)
 
-    x = np.arange(0.0, 30.5, 0.01)
+    interpolation_step = 0.1
+    x = np.arange(0.0, nbins * binw + 0.1, interpolation_step)
 
-    chilist = []
-    flist   = []
+    chilist  = []
 
-    for elem in maparray:
-        chilist.append(chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) )
+    for i, elem in enumerate(maparray):
+        chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
+
+    xnew  = np.arange(0.02, nbins * binw, 0.01)
+    ynew = chilist[13](xnew)   # use interpolation function returned by `interp1d`
+    plt.plot(x, chilist[13](x), 'o', xnew, ynew, '-')
+    plt.show()
     
-
-
-    for i,elems in enumerate(chilist):
-        flist.append(interpolate.interp1d(x, chilist[i]))
-
-    #xnew = np.arange(0.1, 20., 0.02)
-    #ynew = f(xnew)   # use interpolation function returned by `interp1d`
-    #plt.plot(x, chilist[1], 'o', xnew, ynew, '-')
-    #plt.show()
-    
-    return flist
+    return chilist
 
 if __name__ == "__main__":      
 
