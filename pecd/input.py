@@ -26,7 +26,7 @@ def gen_input():
 
     params['bound_nlobs']   = 16
     params['bound_nbins']   = 1
-    params['bound_binw']    = 40.0
+    params['bound_binw']    = 20.0
     params['bound_rshift']  = 0.01 
     params['bound_lmax']    = 4
     
@@ -34,12 +34,12 @@ def gen_input():
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
 
-    params['num_ini_vec']   = 10 # number of initial wavefunctions (orbitals) stored in file
+    params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -100,18 +100,18 @@ def gen_input():
 
     """==== PROPAGATE ===="""
 
-    params['nlobs']     = 16
+    params['nlobs']     = params['bound_nlobs']
     params['nbins']     = 0
-    params['binw']      = 40.0
+    params['binw']      = params['bound_binw']
 
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
                                 [params['nbins'], params['nlobs'], params['binw']] ] 
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 2000.0 
-    params['dt']        = 1.5 
-    params['ivec']      = 3
+    params['tmax']      = 1000.0 
+    params['dt']        = 4.0
+    params['ivec']      = 4
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -121,7 +121,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -150,7 +150,7 @@ def gen_input():
     """ ====== FIELD PARAMETERS ====== """
 
     """ ---- carrier frequency ----- """
-    params['omega']     = 23.128 
+    params['omega']     = 60.0 #23.128 = 54 eV, 60nm = 20 eV
     freq_units          = "nm" #nm or eV
 
     if freq_units == "nm":
@@ -237,7 +237,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        [params['t0'], 0.2 * params['tmax'],0.5 * params['tmax'],0.9 * params['tmax']],#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0,params['tmax'],10)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,

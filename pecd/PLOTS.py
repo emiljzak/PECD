@@ -2,6 +2,7 @@ from mayavi import mlab
 
 import numpy as np
 from scipy.special import sph_harm
+from scipy import interpolate
 
 import os
 
@@ -232,13 +233,19 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-3
+    ncontours = 30
 
     fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
 
     rang = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
-    gridtheta1d = 2 * np.pi * rang
+
+    unity_vec = np.linspace(0.0, 1.0, npoints, endpoint=True, dtype=float)
+    gridtheta1d = 2 * np.pi * unity_vec
+
+    print(gridtheta1d)
+
     rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
 
     x   =  np.zeros(nlobs)
@@ -249,18 +256,18 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
 
     y = np.zeros((len(rang),len(rang)),dtype=complex)
 
-    phi0 = np.pi/3
+    phi0 = 0.0 * np.pi/2
     #here we can do phi-averaging
 
     for ielem, elem in enumerate(maparray):
         if np.abs(psi[ielem]) > coeff_thr:
             print(str(elem) + str(psi[ielem]))
             for i in range(len(rang)):
-                y[i,:] +=   psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
+                y[i,:] +=    psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
                             chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
-    line_angrad_r = axradang_r.contourf(thetamesh, rmesh,   np.abs(y)/np.max(np.abs(y)), 
-                                        100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
+                                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
 
     plt.legend()   
@@ -269,6 +276,62 @@ def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
         fig.savefig( params['working_dir'] + "angrad_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf" ,\
                      bbox_inches='tight')
+
+def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
+    #================ radial-angular in real space ===============#
+
+    coeff_thr = 1e-3
+    ncontours = 30
+
+    fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
+
+    rang = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
+
+    unity_vec = np.linspace(0.0, 1.0, npoints, endpoint=True, dtype=float)
+    gridtheta1d = 2 * np.pi * unity_vec
+
+    print(gridtheta1d)
+
+    rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+
+    x   =  np.zeros(nlobs)
+    w   =  np.zeros(nlobs)
+    x,w =  GRID.gauss_lobatto(nlobs,14)
+    w   =  np.array(w)
+    x   =  np.array(x) # convert back to np arrays
+
+    y = np.zeros((len(rang),len(rang)),dtype=complex)
+
+    phi0 = 0.0 * np.pi/2
+    #here we can do phi-averaging
+
+    print(np.shape(flist))
+    
+
+    for ielem, elem in enumerate(maparray):
+        if np.abs(psi[ielem]) > coeff_thr:
+            print(str(elem) + str(psi[ielem]))
+
+            chir = flist[elem[1]-1](rang)
+
+            for i in range(len(rang)):
+                y[i,:] +=  psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
+                           chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
+
+    line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
+                                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
+
+    plt.legend()   
+    plt.show()  
+    if params["save_snapthots"] == True:
+        fig.savefig( params['working_dir'] + "angrad_t=" +\
+                     str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf" ,\
+                     bbox_inches='tight')
+
+
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     mlab.clf()
@@ -417,7 +480,7 @@ def plot_snapshot(params,psi,maparray,Gr,t):
     #make it general
     nlobs = params['bound_nlobs']
     nbins = params['bound_nbins'] + params['nbins']
-    npoints = 200
+    npoints = 60
     rmax    = nbins * params['bound_binw']
 
     #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
@@ -431,8 +494,52 @@ def plot_snapshot(params,psi,maparray,Gr,t):
 
         plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t)
 
+
+def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
+    #make it general
+    nlobs = params['bound_nlobs']
+    nbins = params['bound_nbins'] + params['nbins']
+    npoints = 60
+    rmax    = nbins * params['bound_binw']
+
+    #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
+    #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    #ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
+    if params['plot_types']['r-radial_angular'] == True:
+        """================ radial-angular in real space ==============="""
+        width = 0.0
+        for elem in params['FEMLIST']:
+            width += elem[0] * elem[2]
+
+        plot_wf_angrad_int(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t,flist)
+
+    
+    
+def interpolate_chi(Gr,nlobs,nbins,maparray):
+
+    w   =  np.zeros(nlobs)
+    xx,w =  GRID.gauss_lobatto(nlobs,14)
+    w   =  np.array(w)
+
+    x = np.arange(0.0, 30.5, 0.01)
+
+    chilist = []
+    flist   = []
+
+    for elem in maparray:
+        chilist.append(chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) )
     
 
+
+    for i,elems in enumerate(chilist):
+        flist.append(interpolate.interp1d(x, chilist[i]))
+
+    #xnew = np.arange(0.1, 20., 0.02)
+    #ynew = f(xnew)   # use interpolation function returned by `interp1d`
+    #plt.plot(x, chilist[1], 'o', xnew, ynew, '-')
+    #plt.show()
+    
+    return flist
 
 if __name__ == "__main__":      
 
@@ -441,23 +548,32 @@ if __name__ == "__main__":
 
 
     params = input.gen_input()
+    
     wffile = params['working_dir'] + "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
     nvecs = 7 #how many vectors to load?
-    ivec = 3 #which vector to plot?
+    ivec = params['ivec'] #which vector to plot?
+    """
     coeffs = read_coeffs(wffile,nvecs)
 
-    psi = np.zeros(len(coeffs),dtype = float)
+    psi = np.zeros(len(coeffs), dtype = complex)
     print(psi.shape)
     for ielem,elem in enumerate(coeffs):
         psi[ielem] = elem[5][ivec]
 
-
+    """
     nbins = params['bound_nbins'] + params['nbins']
 
     Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
     maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
                                      params['map_type'], params['working_dir'] )
+
+    maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], 0, \
+                                     params['map_type'], params['working_dir'] )
+
+
+    flist = interpolate_chi(Gr,params['bound_nlobs'],nbins,maparray_chi)
+    exit()
 
     """ plot radial basis """
     #plot_chi(0.0,params['bound_binw']*params['bound_nbins'],1000,Gr,params['bound_nlobs'], params['bound_nbins'])
@@ -473,6 +589,7 @@ if __name__ == "__main__":
     #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
+    plot_snapshot(params,psi,maparray,Gr,t)
     #plot_wf_angrad( 0.0, params['bound_binw'] * params['bound_nbins'], 200,params['bound_nlobs'], nbins,\
     #                psi,maparray ,Gr, params, 0.0)
     #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)

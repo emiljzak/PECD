@@ -36,8 +36,8 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     #BOUND.plot_mat(ham_init)
     ham0 = np.copy(ham_init)
     ham0 += np.transpose(ham_init.conjugate()) 
-    print(ham0.shape[0])
-    print(ham_init.diagonal())
+    #print(ham0.shape[0])
+    #print(ham_init.diagonal())
     for i in range(ham0.shape[0]):
         ham0[i,i] -= ham_init.diagonal()[i]
     print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
@@ -87,9 +87,9 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         ax = plt.axes()
         plt.xlabel("time (as)")
         plt.ylabel("normalized Field components")
-        ax.scatter(tgrid/time_to_au, -Fvec[2].real, label = "Field-x", marker = '-', color = 'r', linewidths = 2)
-        ax.scatter(tgrid/time_to_au, -Fvec[2].imag, label = "Field-y", marker = '-', color = 'g', linewidths = 2)
-        ax.scatter(tgrid/time_to_au, Fvec[1], label = "Field-z", marker = '-', color = 'b', linewidths = 2)
+        ax.scatter(tgrid/time_to_au, -Fvec[2].real, label = "Field-x", marker = '.', color = 'r', s = 1)
+        ax.scatter(tgrid/time_to_au, -Fvec[2].imag, label = "Field-y", marker = '.', color = 'g', s = 1)
+        ax.scatter(tgrid/time_to_au, Fvec[1], label = "Field-z", marker = '.', color = 'b', s = 1)
         ax.legend()
         plt.show()
 
@@ -125,12 +125,18 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         plot_times = calc_plot_times(params,tgrid,dt)
 
         maparray = np.asarray(maparray)
+        nbins = params['bound_nbins'] + params['nbins']
+        maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], 0, \
+                                     params['map_type'], params['working_dir'] )
+
+        flist = PLOTS.interpolate_chi(Gr, params['bound_nlobs'], nbins, maparray_chi)
 
         for itime, t in enumerate(tgrid): 
             for ielem in plot_times:
                 if itime == ielem:
                     psi[:] = wavepacket[itime,:] 
-                    PLOTS.plot_snapshot(params, psi, maparray, Gr, t)
+                    #PLOTS.plot_snapshot(params, psi, maparray, Gr, t)
+                    PLOTS.plot_snapshot_int(params, psi, maparray, Gr, t, flist)
 
 
 
@@ -206,7 +212,6 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
         print("Normalization of the wavefunction: ")
         for v in range(params['num_ini_vec']):
             print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
-
 
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'csr':
