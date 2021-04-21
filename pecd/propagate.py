@@ -171,7 +171,7 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
         #plt.show()
         return hmat, coeffs
     else:
-        #r_grid is for now only implemented for single bin width. We need to improve that
+        #r_grid is for now only implemented for single bin width. We need to improve it.
         Gr, Nr = GRID.r_grid(   params['bound_nlobs'], 
                                 params['bound_nbins'] + params['nbins'], 
                                 params['bound_binw'],  
@@ -188,8 +188,15 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
             #print(potind[ielem][0],potind[ielem][1])
             hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
         
+
+        BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
+        plt.show()
+        
+
+
         start_time = time.time()
-        keomat = BOUND.BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+        keomat = BOUND.BUILD_KEOMAT( params, maparray, Nbas , Gr )
         end_time = time.time()
         print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
         
@@ -234,33 +241,6 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
 
         return hmat, coeffs
 
-def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
-    nlobs = params['nlobs']
-    """call Gauss-Lobatto rule """
-    x   =   np.zeros(nlobs)
-    w   =   np.zeros(nlobs)
-    x,w =   GRID.gauss_lobatto(nlobs,14)
-    x   =   np.array(x)
-    w   =   np.array(w)
-
-    keomat =  np.zeros((Nbas, Nbas), dtype=np.float64)
-
-    for i in range(Nbas):
-        rin = Gr[maparray[i][0],maparray[i][1]]
-        for j in range(i,Nbas):
-            if maparray[i][3] == maparray[j][3] and maparray[i][4] == maparray[j][4]:
-                keomat[i,j] = calc_keomatel(maparray[i][0], maparray[i][1],\
-                                            maparray[i][3], maparray[j][0], maparray[j][1], x, w, rin, \
-                                            params['bound_rshift'],params['bound_binw'])
-
-    #print("KEO matrix")
-    #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-    #    print(0.5*keomat)
-
-    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
-
-    return  0.5 * keomat
 
 def read_coeffs(filename,nvecs):
 
@@ -357,7 +337,6 @@ if __name__ == "__main__":
 
 
     params = input.gen_input()
-
 
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
