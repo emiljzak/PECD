@@ -126,10 +126,10 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
         maparray = np.asarray(maparray)
         nbins = params['bound_nbins'] + params['nbins']
-        maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], 0, \
+        maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], nbins, 0, \
                                      params['map_type'], params['working_dir'] )
 
-        flist = PLOTS.interpolate_chi(Gr, params['bound_nlobs'], nbins, maparray_chi)
+        flist = PLOTS.interpolate_chi(Gr, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
         for itime, t in enumerate(tgrid): 
             for ielem in plot_times:
