@@ -192,7 +192,7 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
     w   =   np.array(w)
 
     """ Build D-matrix """
-    DMAT = BUILD_DMAT(w,Gr)
+    DMAT = BUILD_DMAT(x,w,Gr)
 
     """ Build J-matrix """
 
@@ -212,6 +212,32 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
     plt.show()
 
     return  0.5 * keomat
+
+def BUILD_DMAT(x,w,Gr):
+
+    N = x.size
+    print("Number of Gauss-Lobatto points = " + str(N))
+
+
+    DMAT = np.zeros( (N,N), dtype=float)
+    Dd = np.zeros( (N), dtype=float)
+
+    for n in range(N):
+        for mu in range(N):
+                if mu !=n:
+                    Dd[n] += (x[n]-x[mu])**(-1)
+
+    for n in range(N):
+        DMAT[n,n] += Dd[n]
+        for k in range(N):
+            if n!=k: 
+                DMAT[n,k]  =   (x[n]-x[k])**(-1)
+
+                for mu in range(npts):
+                    if mu !=k and mu !=n:
+                        DMAT[n,k] *= (x[k]-x[mu])/(x[n]-x[mu])
+        
+    return DMAT
 
 
 def BUILD_JMAT(D,w):
@@ -251,14 +277,14 @@ def BUILD_KC(JMAT,w,N):
     Ws = np.zeros(len(w), dtype = float)
     Ws = 1.0 / np.sqrt(w)
 
-    KC = np.zeros( (1,N-1), dtype=float)
+    KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[0,0] = Wb * Wb * J[0,N-1] 
+    KC[0] = Wb * Wb * J[0,N-1] 
 
     #b-s:
     for n2 in range(1,N-1):
-        KC[0,n2] = Wb * Ws[n2] * J[0,n2]
+        KC[n2] = Wb * Ws[n2] * J[0,n2]
 
 
     return KC
