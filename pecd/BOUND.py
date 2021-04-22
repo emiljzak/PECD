@@ -190,6 +190,21 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
     x   =   np.array(x)
     w   =   np.array(w)
 
+    """ Build D-matrix """
+    DMAT = BUILD_DMAT(w,Gr)
+
+    """ Build J-matrix """
+
+    JMAT  = BUILD_JMAT(DMAT,w)
+
+    """ Build KD, KC matrices """
+    KD  = BUILD_KD(JMAT,w)
+
+    KC  = BUILD_KC(JMAT,w)
+
+    """ Generate K-list """
+
+    """ Fill up global KEO """
 
     plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
     plt.legend()
@@ -197,6 +212,13 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
 
     return  0.5 * keomat
 
+
+
+def BUILD_KD(DMAT,w,nlobs):
+
+    for n1 in range(nlobs-1):
+        for n2 in range(n1,nlobs-1):
+            
 
 """ ============ KEOMAT - standard implementation ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
