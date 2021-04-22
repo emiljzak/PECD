@@ -11,6 +11,7 @@ import GRID
 import CONSTANTS
 
 import numpy as np
+from numpy.linalg import multi_dot
 from scipy import sparse
 from scipy.special import sph_harm
 import quadpy
@@ -198,9 +199,9 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
     JMAT  = BUILD_JMAT(DMAT,w)
 
     """ Build KD, KC matrices """
-    KD  = BUILD_KD(JMAT,w)
+    KD  = BUILD_KD(JMAT,w,nlobs)
 
-    KC  = BUILD_KC(JMAT,w)
+    KC  = BUILD_KC(JMAT,w,nlobs)
 
     """ Generate K-list """
 
@@ -212,6 +213,12 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
 
     return  0.5 * keomat
 
+
+def BUILD_JMAT(D,w):
+    DT = np.copy(D)
+    DT = DT.T
+    return multi_dot([D,w,DT])
+    #return np.dot( np.dot(D,w), DT )
 
 
 def BUILD_KD(JMAT,w,N):
