@@ -214,11 +214,47 @@ def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
 
 
 
-def BUILD_KD(DMAT,w,nlobs):
+def BUILD_KD(JMAT,w,N):
+    Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) )
+    
+    Ws = np.zeros(len(w), dtype = float)
+    Ws = 1.0 / np.sqrt(w)
 
-    for n1 in range(nlobs-1):
-        for n2 in range(n1,nlobs-1):
-            
+    KD = np.zeros( (N-1,N-1), dtype=float)
+
+    #b-b:
+    KD[0,0] = Wb * Wb * ( J[N-1,N-1] + J[0,0] )
+
+    #b-s:
+    for n2 in range(1,N-1):
+        KD[0,n2] = Wb * Ws[n2] * J[N-1,n2]
+
+    #s-s:
+    for n1 in range(1,N-1):
+        for n2 in range(n1,N-1):
+            KD[n1,n2] = Ws[n1] * Ws[n2] * J[n1,n2]
+
+
+    return KD
+
+
+def BUILD_KC(JMAT,w,N):
+    Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) )
+    
+    Ws = np.zeros(len(w), dtype = float)
+    Ws = 1.0 / np.sqrt(w)
+
+    KC = np.zeros( (1,N-1), dtype=float)
+
+    #b-b:
+    KC[0,0] = Wb * Wb * J[0,N-1] 
+
+    #b-s:
+    for n2 in range(1,N-1):
+        KC[0,n2] = Wb * Ws[n2] * J[0,n2]
+
+
+    return KC
 
 """ ============ KEOMAT - standard implementation ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
