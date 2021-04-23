@@ -130,6 +130,14 @@ def BUILD_HMAT0(params):
     elif params['hmat_format'] == 'regular':
         hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
+
+    start_time = time.time()
+    keomat0 = BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+    end_time = time.time()
+    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    exit()
+
     """ calculate hmat """
     potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
         
@@ -182,41 +190,85 @@ def BUILD_HMAT0(params):
 
 
 """ ============ KEOMAT - new fast implementation ============ """
-def BUILD_KEOMAT_FAST( params, maparray, Nbas, Gr ):
+def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     nlobs = params['bound_nlobs'] 
     """call Gauss-Lobatto rule """
-    x   =   np.zeros(nlobs)
-    w   =   np.zeros(nlobs)
-    x,w =   GRID.gauss_lobatto(nlobs,14)
-    x   =   np.array(x)
-    w   =   np.array(w)
+    x   =   np.zeros(nlobs, dtype = float)
+    w   =   np.zeros(nlobs, dtype = float)
+    xc,wc =   GRID.gauss_lobatto(nlobs,14)
+
+
+    x   =   np.asarray(xc, dtype=float)
+    w   =   np.asarray(wc, dtype = float)
+
+    w /= np.sum(w[:])
+    #scaling to quadrature range
+    x *= 0.5 * params['bound_binw']
 
     """ Build D-matrix """
-    DMAT = BUILD_DMAT(x,w,Gr)
+    DMAT = BUILD_DMAT(x)
 
     """ Build J-matrix """
 
     JMAT  = BUILD_JMAT(DMAT,w)
 
+    #JMAT *= 0.5 * params['bound_binw']
+
+    """
+    plot_mat(JMAT)
+    plt.spy(JMAT, precision=params['sph_quad_tol'], markersize=5, label="J-matrix")
+    plt.legend()
+    plt.show()
+    """
+
     """ Build KD, KC matrices """
     KD  = BUILD_KD(JMAT,w,nlobs)
 
+  
+
     KC  = BUILD_KC(JMAT,w,nlobs)
 
-    """ Generate K-list """
+ 
 
+
+    """ Generate K-list """
+    klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
+    print(klist)
     """ Fill up global KEO """
 
-    plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
-    plt.legend()
+    keomat =  np.zeros((Nbas, Nbas), dtype=float)
+
+    for i in range(Nbas):
+        rin = Gr[maparray[i][0],maparray[i][1]]
+
+        keomat[i,i] = float(maparray[i][3]) * (float(maparray[i][3])+1) / rin**2 
+
+
+    for elem in klist:
+
+        KD, KC
+
+    print("KEO matrix")
+    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+        print(0.5*keomat)
+  
+    plot_mat(keomat)
+    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+    #plt.legend()
     plt.show()
+
+
+    exit()
+
 
     return  0.5 * keomat
 
-def BUILD_DMAT(x,w,Gr):
+def BUILD_DMAT(x):
 
     N = x.size
     print("Number of Gauss-Lobatto points = " + str(N))
+
+    print(x)
 
 
     DMAT = np.zeros( (N,N), dtype=float)
@@ -224,27 +276,41 @@ def BUILD_DMAT(x,w,Gr):
 
     for n in range(N):
         for mu in range(N):
-                if mu !=n:
-                    Dd[n] += (x[n]-x[mu])**(-1)
+            if mu != n:
+                Dd[n] += (x[n]-x[mu])**(-1)
 
     for n in range(N):
         DMAT[n,n] += Dd[n]
-        for k in range(N):
-            if n!=k: 
-                DMAT[n,k]  =   (x[n]-x[k])**(-1)
 
-                for mu in range(npts):
-                    if mu !=k and mu !=n:
+        for k in range(N):
+            if n != k: 
+                DMAT[n,k]  =  (x[n]-x[k])**(-1)
+
+                for mu in range(N):
+                    if mu != k and mu != n:
                         DMAT[n,k] *= (x[k]-x[mu])/(x[n]-x[mu])
-        
+
+    #print(Dd)
+
+    #plot_mat(DMAT)
+    #plt.spy(DMAT, precision=params['sph_quad_tol'], markersize=5, label="D-matrix")
+    #plt.legend()
+    #plt.show()
+
     return DMAT
 
 
 def BUILD_JMAT(D,w):
+
+    wdiag = np.zeros((w.size,w.size), dtype = float)
+    for k in range(w.size):
+        wdiag[k,k] = w[k] 
+
     DT = np.copy(D)
     DT = DT.T
-    return multi_dot([D,w,DT])
-    #return np.dot( np.dot(D,w), DT )
+
+    return multi_dot([D,wdiag,DT])
+    #return np.dot( np.dot(D,wdiag), DT )
 
 
 def BUILD_KD(JMAT,w,N):
@@ -256,16 +322,16 @@ def BUILD_KD(JMAT,w,N):
     KD = np.zeros( (N-1,N-1), dtype=float)
 
     #b-b:
-    KD[0,0] = Wb * Wb * ( J[N-1,N-1] + J[0,0] )
+    KD[0,0] = Wb * Wb * ( JMAT[N-1,N-1] + JMAT[0,0] )
 
     #b-s:
     for n2 in range(1,N-1):
-        KD[0,n2] = Wb * Ws[n2] * J[N-1,n2]
+        KD[0,n2] = Wb * Ws[n2] * JMAT[N-1,n2]
 
     #s-s:
     for n1 in range(1,N-1):
         for n2 in range(n1,N-1):
-            KD[n1,n2] = Ws[n1] * Ws[n2] * J[n1,n2]
+            KD[n1,n2] = Ws[n1] * Ws[n2] * JMAT[n1,n2]
 
 
     return KD
@@ -280,11 +346,11 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[0] = Wb * Wb * J[0,N-1] 
+    KC[0] = Wb * Wb * JMAT[0,N-1] 
 
     #b-s:
     for n2 in range(1,N-1):
-        KC[n2] = Wb * Ws[n2] * J[0,n2]
+        KC[n2] = Wb * Ws[n2] * JMAT[0,n2]
 
 
     return KC
@@ -370,7 +436,7 @@ def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
     elif n1==0 and n2==0:
         #bridge x bridge
         if i1==i2: 
-            KEO     =   ( KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1,rshift,binwidth) + KEO_matel_fpfp( ,0,0,x,w_i1,rshift,binwidth) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
+            KEO     =   ( KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1,rshift,binwidth) + KEO_matel_fpfp( i1,0,0,x,w_i1,rshift,binwidth) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
             return      KEO
         elif i1==i2-1:
             KEO     =   KEO_matel_fpfp(i2,nlobatto-1,0,x,w_i2,rshift,binwidth) #checked 10feb 2021 Double checked Feb 12
@@ -919,5 +985,9 @@ if __name__ == "__main__":
 
 
     params = input.gen_input()
+
+
+
+
     BUILD_HMAT0(params)
 
