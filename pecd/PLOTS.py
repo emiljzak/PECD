@@ -318,14 +318,14 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
                                         ncontours, cmap = 'jet', vmin=0.0, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
+    #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
     plt.legend()   
-    plt.show()  
+    #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['working_dir'] + "angrad_t=" +\
-                     str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf" ,\
+        fig.savefig( params['working_dir'] +"/animation/" + "angrad_t=" +\
+                     str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
 
 
