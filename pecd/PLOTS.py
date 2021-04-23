@@ -281,9 +281,9 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-5
-    ncontours = 60
+    ncontours = 80
 
-    fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
 
@@ -317,9 +317,9 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
                            chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
-                                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
-    
+    axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
     plt.legend()   
     plt.show()  
@@ -496,7 +496,7 @@ def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
     #make it general
     nlobs = params['bound_nlobs']
     nbins = params['bound_nbins'] + params['nbins']
-    npoints = 200
+    npoints = 250
     rmax    = nbins * params['bound_binw']
 
     #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
