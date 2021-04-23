@@ -131,12 +131,32 @@ def BUILD_HMAT0(params):
         hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
 
-    start_time = time.time()
-    keomat0 = BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
-    end_time = time.time()
-    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    exit()
+    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+   # plot_mat(keomat_fast)
+   # plt.show()
+
+    #start_time = time.time()
+    #keomat_standard = BUILD_KEOMAT( params, maparray, Nbas , Gr )
+    #end_time = time.time()
+    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    #plt.spy(keomat_fast, precision=params['sph_quad_tol'], markersize=5, label="KEO_fast")
+    #plt.legend()
+
+
+    #plot_mat(keomat_standard)
+    #plt.spy(keomat_standard, precision=params['sph_quad_tol'], markersize=5, label="KEO_standard")
+    #plt.legend()
+    #plt.show()
+
+
+    #rtol=1e-03
+    #atol=1e-04
+    #print(np.allclose(keomat_fast, keomat_standard, rtol=rtol, atol=atol))
+
+    #exit()
 
     """ calculate hmat """
     potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
@@ -145,12 +165,17 @@ def BUILD_HMAT0(params):
         #print(potind[ielem][0],potind[ielem][1])
         hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
 
+
     start_time = time.time()
-    keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    keomat = BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
     end_time = time.time()
+
+    #start_time = time.time()
+    #keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    #end_time = time.time()
     print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    hmat += keomat0 
+    hmat += keomat 
 
     plot_mat(hmat)
     plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
@@ -185,7 +210,7 @@ def BUILD_HMAT0(params):
 
     if params['save_enr0'] == True:
         with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
-            np.savetxt( energyfile, enr0 * CONSTANTS.ev_to_au , fmt='%10.5f' )
+            np.savetxt( energyfile, enr0 * CONSTANTS.au_to_ev , fmt='%10.5f' )
 
 
 
@@ -220,20 +245,14 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     plt.legend()
     plt.show()
     """
-
     """ Build KD, KC matrices """
     KD  = BUILD_KD(JMAT,w,nlobs)
 
-  
-
     KC  = BUILD_KC(JMAT,w,nlobs)
-
- 
-
 
     """ Generate K-list """
     klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
-    print(klist)
+
     """ Fill up global KEO """
 
     keomat =  np.zeros((Nbas, Nbas), dtype=float)
@@ -244,22 +263,23 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
         keomat[i,i] = float(maparray[i][3]) * (float(maparray[i][3])+1) / rin**2 
 
 
-    for elem in klist:
+    klist = np.asarray(klist, dtype=int)
 
-        KD, KC
+    for i in range(klist.shape[0]):
+        if klist[i,0] == klist[i,2]:
+            keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1], klist[i,3] ]
+        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == 0:
+            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] ]
+
 
     print("KEO matrix")
     with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
         print(0.5*keomat)
   
-    plot_mat(keomat)
+    #plot_mat(keomat)
     #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
     #plt.legend()
-    plt.show()
-
-
-    exit()
-
+    #plt.show()
 
     return  0.5 * keomat
 
@@ -380,9 +400,6 @@ def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
     with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
         print(0.5*keomat)
 
-    plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
-    plt.legend()
-    plt.show()
 
     return  0.5 * keomat
 
@@ -390,7 +407,7 @@ def calc_keomatel(i1,n1,l1,i2,n2,x,w,rin,rshift,binwidth):
     "calculate matrix element of the KEO"
 
     if i1==i2 and n1==n2:
-        KEO     =  KEO_matel_rad_diag(i1,n1,i2,n2,x,w,rshift,binwidth) + KEO_matel_ang(i1,n1,l1,rin) 
+        KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth) + KEO_matel_ang(i1,n1,l1,rin) 
         return     KEO
     else:
         KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth)

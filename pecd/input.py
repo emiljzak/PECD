@@ -24,9 +24,9 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10
-    params['bound_nbins']   = 2
-    params['bound_binw']    = 20.0
+    params['bound_nlobs']   = 40
+    params['bound_nbins']   = 1
+    params['bound_binw']    = 80.0
     params['bound_rshift']  = 0.01 
     params['bound_lmax']    = 4
     
@@ -34,7 +34,7 @@ def gen_input():
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
 
-    params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
+    params['num_ini_vec']   = 10 # number of initial wavefunctions (orbitals) stored in file
 
 
     """==== potential energy matrix ===="""
@@ -109,9 +109,9 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 20.0 
+    params['tmax']      = 600.0 
     params['dt']        = 4.0
-    params['ivec']      = 3
+    params['ivec']      = 14
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -121,7 +121,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -237,7 +237,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0,params['tmax'],10)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(params['tmax']/2.,params['tmax'],3)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
