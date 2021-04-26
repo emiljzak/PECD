@@ -24,9 +24,9 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 40
+    params['bound_nlobs']   = 30
     params['bound_nbins']   = 1
-    params['bound_binw']    = 80.0
+    params['bound_binw']    = 50.0
     params['bound_rshift']  = 0.01 
     params['bound_lmax']    = 4
     
@@ -50,8 +50,9 @@ def gen_input():
 
     params['esp_method']         = "uhf_631Gss"
     params['esp_mode']           = "exact" #exact or interpolate
+    params['enable_cutoff']      = True #use cut-off for the ESP?
+    params['r_cutoff']           = 40.0    
     params['plot_esp']           = False
-    params['r_cutoff']           = 8.0    
 
     """ Note: r_cutoff can be infered from quad_levels file: 
                                          when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0.
@@ -109,7 +110,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 4.0 
+    params['tmax']      = 1500.0 
     params['dt']        = 4.0
     params['ivec']      = 14
 
@@ -121,7 +122,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -177,7 +178,7 @@ def gen_input():
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 5.0e+14 #W/cm^2 #peak intensity
+    intensity       = 8.0e+14 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
@@ -188,7 +189,7 @@ def gen_input():
     """ ---- field intensity ----- """
     
     params['tau']       = 500.0 #as: pulse duration (sigma)
-    params['tc']        = 1000.0 #as: pulse centre
+    params['tc']        = 800.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -212,7 +213,7 @@ def gen_input():
                     "t0": (time_to_au * params['tc'])  }
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_LP 
+    params['field_type'] = field_CPL 
 
     """ Available field types :
         1) field_CPL
@@ -237,7 +238,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],2)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],30)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
@@ -255,6 +256,6 @@ def gen_input():
         animation_filename: name of the file into which animations will be saved
     """
 
-    params["save_snapthots"] = False
+    params["save_snapthots"] = True
 
     return params

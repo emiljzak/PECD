@@ -99,7 +99,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
     
         #dip =   np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) 
-        dip =   Elfield.gen_field(t)[1] * intmat0[:,:,1]
+        dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0] + Elfield.gen_field(t)[1] * intmat0[:,:,1] + Elfield.gen_field(t)[2] * intmat0[:,:,2]
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
         UMAT                = linalg.expm( -1.0j * ( ham0 + dip ) * dt ) 
         wavepacket[itime,:] = np.dot( UMAT , psi )
@@ -326,7 +326,7 @@ def calc_intmat(field,maparray,rgrid,Nbas):
     #print("Interaction matrix")
     #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
     #    print(intmat)
-    print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
+    #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
 
     return intmat
 
