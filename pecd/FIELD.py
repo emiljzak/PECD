@@ -26,7 +26,7 @@ class Field():
         #print("shapes in fieldLP")
         #print(np.shape(t))
         #print(np.shape(np.cos( omega * t + CEP0 )))
-        return 0.0, np.cos( omega * t + CEP0 ), 0.0
+        return 0.0, E0 * np.cos( omega * t + CEP0 ), 0.0
 
 
     """ =================================== FIELD ENVELOPES =================================== """
