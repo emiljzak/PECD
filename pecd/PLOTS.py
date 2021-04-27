@@ -327,7 +327,7 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
         fig.savefig( params['working_dir'] +"/animation/" + "angrad_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
-
+    plt.close()
 
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):

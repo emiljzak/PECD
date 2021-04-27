@@ -172,7 +172,7 @@ def GEN_VLIST(maparray, Nbas, map_type):
     if map_type == 'DVR':
         for p1 in range(Nbas):
             for p2 in range(p1, Nbas):
-                if maparray[p1][2] == maparray[p2][2]:
+                if maparray[p1][2] == maparray[p2][2]: #and maparray[p1][2] < xi_cutoff
                     vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
                         maparray[p2][3], maparray[p2][4], p1, p2  ])
 

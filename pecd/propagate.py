@@ -5,7 +5,6 @@
 #
 import numpy as np
 from scipy import sparse
-from scipy.sparse import linalg
 from sympy.physics.wigner import gaunt
 from sympy import N
 
@@ -80,28 +79,41 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
     print("initialize electric field")
     Elfield = FIELD.Field(params)
+    Fvec = Elfield.gen_field(tgrid) 
     
     if params['plot_elfield'] == True:
-        Fvec = Elfield.gen_field(tgrid)
+
         fig = plt.figure()
         ax = plt.axes()
         plt.xlabel("time (as)")
         plt.ylabel("normalized Field components")
         ax.scatter(tgrid/time_to_au, -Fvec[2].real, label = "Field-x", marker = '.', color = 'r', s = 1)
-        ax.scatter(tgrid/time_to_au, -Fvec[2].imag, label = "Field-y", marker = '.', color = 'g', s = 1)
+        ax.scatter(tgrid/time_to_au, Fvec[0].imag, label = "Field-y", marker = '.', color = 'g', s = 1)
         ax.scatter(tgrid/time_to_au, Fvec[1], label = "Field-z", marker = '.', color = 'b', s = 1)
         ax.legend()
         plt.show()
 
 
+        Fvec = np.asarray(Fvec)
+        Fvec1 = np.stack((Fvec[0],Fvec[1],Fvec[2]),axis=1) #Fvec.reshape(-1,3)
+
+    ham1 = sparse.csr_matrix(ham0)
+    print(ham1)
+    print(type(ham1))
+    exit()
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
         print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
     
-        #dip =   np.tensordot( Elfield.gen_field(t), intmat0, axes=([0],[2]) ) 
-        dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0] + Elfield.gen_field(t)[1] * intmat0[:,:,1] + Elfield.gen_field(t)[2] * intmat0[:,:,2]
+        dip =   np.tensordot( Fvec1[itime], intmat0, axes=([0],[2]) ) 
+        #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
+        dip += np.conj(dip.T)
+        #dip += Elfield.gen_field(t)[1] * intmat0[:,:,1]
+        #BOUND.plot_mat(dip)
+        #plt.spy(dip,precision=params['sph_quad_tol'], markersize=2)
+        #plt.show()
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
-        UMAT                = linalg.expm( -1.0j * ( ham0 + dip ) * dt ) 
+        UMAT                = sparse.linalg.expm( -1.0j * ( ham0 + dip ) * dt ) 
         wavepacket[itime,:] = np.dot( UMAT , psi )
         psi                 = wavepacket[itime,:]
 
