@@ -519,7 +519,7 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     w       =  np.array(w)
 
     interpolation_step = 0.1
-    x = np.arange(0.0, nbins * binw + 0.1, interpolation_step)
+    x = np.arange(0.0, nbins * binw + 0.11, interpolation_step)
 
     chilist  = []
 

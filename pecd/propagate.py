@@ -33,6 +33,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
 
+    """ --- make the hamiltonian matrix hermitian --- """
     #BOUND.plot_mat(ham_init)
     ham0 = np.copy(ham_init)
     ham0 += np.transpose(ham_init.conjugate()) 
@@ -41,15 +42,10 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     for i in range(ham0.shape[0]):
         ham0[i,i] -= ham_init.diagonal()[i]
     print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
-    #BOUND.plot_mat(ham0)
-    #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
+    BOUND.plot_mat(ham0)
+    plt.spy(ham0, precision=params['sph_quad_tol'], markersize=5)
+    plt.show()
     #ham0 /= 2.0
-
-    #psi_init_t = psi_init.copy()
-    #psi_init_t = np.transpose(psi_init_t)
-
-    #print( np.dot( psi_init_t, np.dot(ham0,psi_init) ))
 
     Nbas = len(psi_init)
     print("Nbas = " + str(Nbas))
@@ -83,7 +79,6 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     Fvec = Elfield.gen_field(tgrid) 
     
     if params['plot_elfield'] == True:
-
         fig = plt.figure()
         ax = plt.axes()
         plt.xlabel("time (as)")
@@ -96,22 +91,24 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
 
     Fvec = np.asarray(Fvec)
-    Fvec = np.stack((Fvec[i] for i in range(len(Fvec))),axis=1) 
+    Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
 
-    plt.spy(ham0,precision=params['sph_quad_tol'], markersize=2)
-    plt.show()
+    #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=2)
+    #plt.show()
     
-    
+    #rho =  sparse.csc_matrix(ham0).getnnz() / np.prod(sparse.csc_matrix(ham0).shape)
+    #print("density of the sparse hamiltonian matrix = " + str(rho) )
+
     ham_filtered = np.where( np.abs(ham0) < params['hmat_filter'], 0.0, ham0)
-
     ham1 = sparse.csc_matrix(ham_filtered)
-    print(ham1)
-    
-    plt.spy(ham1,precision=params['sph_quad_tol'], markersize=2)
-    plt.show()
-    
-    print(type(ham1))
 
+    
+    #rho =  ham1.getnnz() / np.prod(ham1.shape)
+    #print("density of the sparse hamiltonian matrix after filter = " + str(rho) )
+    #exit()
+    #plt.spy(ham1,precision=params['sph_quad_tol'], markersize=2)
+    #plt.show()
+    
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
 
@@ -180,14 +177,14 @@ def calc_plot_times(params,tgrid,dt):
     print(plot_times)
     return plot_times
 
-def BUILD_HMAT(params,maparray,Nbas,ham0):
+def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
     # We shall reuse ham0 here later
 
     if params['read_ham_init_file'] == True and os.path.isfile(params['working_dir'] + params['file_hmat_init'] ):
         
         print (params['file_hmat_init'] + " file exist")
         hmat = read_ham_init(params)
-
+        #warning: I need to implement options of sparse format as well as checks of sizes
         """ diagonalize hmat """
         start_time = time.time()
         enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
@@ -199,11 +196,6 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
         #plt.show()
         return hmat, coeffs
     else:
-        #r_grid is for now only implemented for single bin width. We need to improve it.
-        Gr, Nr = GRID.r_grid(   params['bound_nlobs'], 
-                                params['bound_nbins'] + params['nbins'], 
-                                params['bound_binw'],  
-                                params['bound_rshift'] )
 
         if params['hmat_format'] == 'csr':
             hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
@@ -214,10 +206,8 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
 
         potmat, potind = BOUND.BUILD_POTMAT0( params, maparray, Nbas, Gr )      
         for ielem, elem in enumerate(potmat):
-            #print(potind[ielem][0],potind[ielem][1])
             hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
         
-
         """ New way: using fast implementation """
         start_time = time.time()
         keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
@@ -232,16 +222,15 @@ def BUILD_HMAT(params,maparray,Nbas,ham0):
         hmat += keomat 
 
         print("plot of hmat")
-        #BOUND.plot_mat(hmat)
-        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=5)
-        #plt.show()
+        BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3)
+        plt.show()
         
         """ diagonalize hmat """
         start_time = time.time()
         enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
         end_time = time.time()
         print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
 
         #BOUND.plot_wf_rad(0.0, params['bound_binw'],1000,coeffs,maparray,Gr,params['bound_nlobs'], params['bound_nbins']+params['nbins'])
 
@@ -392,7 +381,7 @@ if __name__ == "__main__":
     #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
     #config = Config(max_depth=4)
     #with PyCallGraph(output=graphviz, config=config):
-    ham_init, psi_init = BUILD_HMAT(params, maparray_global, Nbas_global, 0.0)
+    ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global, 0.0)
     
     #print(ham0)
     #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)

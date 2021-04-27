@@ -24,11 +24,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 40
+    params['bound_nlobs']   = 16
     params['bound_nbins']   = 1
-    params['bound_binw']    = 80.0
-    params['bound_rshift']  = 0.01 
-    params['bound_lmax']    = 6
+    params['bound_binw']    = 20.0
+    params['bound_rshift']  = 0.05
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -39,7 +39,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -102,7 +102,7 @@ def gen_input():
     """==== PROPAGATE ===="""
 
     params['nlobs']     = params['bound_nlobs']
-    params['nbins']     = 0
+    params['nbins']     = 1
     params['binw']      = params['bound_binw']
 
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
@@ -110,9 +110,9 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 1600.0 
+    params['tmax']      = 1000.0 
     params['dt']        = 4.0
-    params['ivec']      = 25
+    params['ivec']      = 5  
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -120,7 +120,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
@@ -188,8 +188,8 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 500.0 #as: pulse duration (sigma)
-    params['tc']        = 800.0 #as: pulse centre
+    params['tau']       = 200.0 #as: pulse duration (sigma)
+    params['tc']        = 500.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -238,7 +238,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],60)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
