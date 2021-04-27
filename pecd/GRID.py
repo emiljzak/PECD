@@ -152,7 +152,7 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     Translvec = np.zeros(nbins)
 
     for i in range(len(Translvec)):
-        Translvec[i] = float(i) * binwidth + rshift
+        Translvec[i] = float(i) * binwidth + rshift * float(i+1)
 
     for ibin in range(nbins):    
         xgrid[ibin,:] += Translvec[ibin]
