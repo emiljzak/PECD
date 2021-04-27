@@ -24,9 +24,9 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 30
+    params['bound_nlobs']   = 40
     params['bound_nbins']   = 1
-    params['bound_binw']    = 50.0
+    params['bound_binw']    = 80.0
     params['bound_rshift']  = 0.01 
     params['bound_lmax']    = 4
     
@@ -39,7 +39,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -110,7 +110,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 1500.0 
+    params['tmax']      = 500.0 
     params['dt']        = 4.0
     params['ivec']      = 14
 
@@ -120,9 +120,9 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -178,7 +178,7 @@ def gen_input():
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 8.0e+14 #W/cm^2 #peak intensity
+    intensity       = 2.0e+14 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 

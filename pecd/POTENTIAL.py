@@ -124,15 +124,9 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
         sph = np.zeros(Gs[k].shape[0],dtype=float)
 
         for s in range(Gs[k].shape[0]):
-            #add an `if` here to cut-off the potential
-            # we can use a criterion of potential value or length
-            # we even should not calculate these ESP points. The condition should be outside. We should put in a trimmed Gr matrix!
-            if r_array[k] > 60.0:
-                sph[s] = 0.0
-                counter  += 1
-            else:
-                sph[s] = V[counter]
-                counter  += 1
+
+            sph[s] = V[counter]
+            counter  += 1
 
         VG.append(sph)
     return VG

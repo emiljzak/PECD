@@ -566,6 +566,9 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
         end_time = time.time()
         print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
+    #if params['enable_cutoff'] == True: 
+    #print() 
+
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist)
