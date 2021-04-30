@@ -134,6 +134,15 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
+    """ @numba.jit(nopython=True)
+        def numba_csc_ndarray_dot2(a: csc_matrix, b: np.ndarray):
+            out = np.zeros((a.shape[0], b.shape[1]))
+            for j in range(b.shape[1]):
+                for i in range(b.shape[0]):
+                    for k in range(a.indptr[i], a.indptr[i + 1]):
+                        out[a.indices[k], j] += a.data[k] * b[i, j]
+    return out"""
+
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
 
@@ -178,7 +187,6 @@ def calc_plot_times(params,tgrid,dt):
     return plot_times
 
 def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
-    # We shall reuse ham0 here later
 
     if params['read_ham_init_file'] == True and os.path.isfile(params['working_dir'] + params['file_hmat_init'] ):
         
@@ -198,7 +206,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         #                1000, Gr, params['bound_nlobs'], params['bound_nbins'])
 
 
-        BOUND.plot_mat(hmat)
+        #BOUND.plot_mat(hmat)
         #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
         #plt.show()
         return hmat, coeffs
@@ -214,7 +222,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         potmat, potind = BOUND.BUILD_POTMAT0( params, maparray, Nbas, Gr )      
         for ielem, elem in enumerate(potmat):
             hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
-        
+
         """ New way: using fast implementation """
         start_time = time.time()
         keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
@@ -228,10 +236,10 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         
         hmat += keomat 
 
-        #print("plot of hmat")
-        BOUND.plot_mat(hmat)
-        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3)
-        #plt.show()
+        print("plot of hmat")
+        #BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3)
+        plt.show()
         
         """ diagonalize hmat """
         start_time = time.time()
@@ -244,8 +252,8 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         #                    params['bound_nbins'] + params['nbins'])
         #exit()
         
-        PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
-                        1000, Gr, params['bound_nlobs'], params['bound_nbins'])
+        #PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
+        #                1000, Gr, params['bound_nlobs'], params['bound_nbins'])
 
 
         
@@ -341,7 +349,7 @@ def calc_intmat(field,maparray,rgrid,Nbas):
 
     D = np.zeros(3)
     for i in range(Nbas):
-        rin = rgrid[ maparray[i][0], maparray[i][1] ]
+        rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]
         for j in range(Nbas):
             if  maparray[i][2] == maparray[j][2]:
                 D[0] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], -1, maparray[j][4] ) )
@@ -375,11 +383,22 @@ if __name__ == "__main__":
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['working_dir'] )
-    exit()
+
     Gr, Nr = GRID.r_grid(   params['bound_nlobs'] , 
                             params['bound_nbins'] + params['nbins'], 
                             params['bound_binw'],  
                             params['bound_rshift'] )
+
+    #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
+    #config = Config(max_depth=4)
+    #with PyCallGraph(output=graphviz, config=config):
+    ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global, 0.0)
+    
+    #print(ham0)
+    #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
+
+    prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)
 
     #coeffs0 = read_coeffs( params['working_dir'] + params['file_psi0'], 1 )
 
@@ -393,13 +412,3 @@ if __name__ == "__main__":
     #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
     #plt.show()
 
-    #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
-    #config = Config(max_depth=4)
-    #with PyCallGraph(output=graphviz, config=config):
-    ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global, 0.0)
-    
-    #print(ham0)
-    #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
-
-    prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)

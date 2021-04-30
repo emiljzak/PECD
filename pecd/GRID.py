@@ -54,7 +54,6 @@ def GEN_GRID(sph_quad_list):
     for elem in sph_quad_list:
         gs = read_leb_quad(str(elem[3]))
         Gs.append( gs )
-
     return Gs
 
 
@@ -134,7 +133,38 @@ def gauss_lobatto(n, n_digits):
 
 def r_grid(nlobatto,nbins,binwidth,rshift):
     """radial grid of Gauss-Lobatto quadrature points"""        
+    #return radial coordinate r_in for given i and n, natural order
+
+    """Note: this function must be generalized to account for FEMLIST
+    Only constant bin size is possible at the moment"""
+
+    x = np.zeros(nlobatto)
+    w = np.zeros(nlobatto)
+    x, w = gauss_lobatto(nlobatto,14)
+    w = np.array(w)
+    x = np.array(x) # convert back to np arrays
+    xgrid = np.zeros( (nbins, nlobatto-1), dtype=float) 
+    
+    bingrid = np.zeros(nbins)
+    bingrid = x[1:] * 0.5 * binwidth + 0.5 * binwidth
+    xgrid[:,] = bingrid
+
+    Translvec = np.zeros(nbins)
+
+    for i in range(len(Translvec)):
+        Translvec[i] = float(i) * binwidth + rshift
+
+    for ibin in range(nbins):    
+        xgrid[ibin,:] += Translvec[ibin]
+
+    print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
+
+    return xgrid, (nlobatto-1) * nbins
+
+def r_grid_old(nlobatto,nbins,binwidth,rshift):
+    """radial grid of Gauss-Lobatto quadrature points"""        
     #return radial coordinate r_in for given i and n
+    #we double count joining points
 
     """Note: this function must be generalized to account for FEMLIST"""
 
@@ -170,14 +200,14 @@ def sph2cart(r,theta,phi):
 def GEN_XYZ_GRID(Gs,Gr,working_dir):
     grid = []
     r_array = Gr.flatten()
-
+    print(r_array)
     gridfile = open(working_dir + "grid.dat", 'w')
 
-    for k in range(len(r_array)):
+    for k in range(len(r_array)-1): #we exclude last grid point
         #print(Gs[k].shape[0])
         for s in range(Gs[k].shape[0]):
 
-            theta   = Gs[k][s,0]
+            theta   = Gs[k][s,0] 
             phi     = Gs[k][s,1]
             r       = r_array[k]
             x,y,z   = sph2cart(r,theta,phi)

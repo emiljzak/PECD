@@ -87,14 +87,13 @@ def SH(l, m, theta, phi):
 
 @jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
-
     pot = []
     potind = []
     for p1 in range(vlist.shape[0]):
         #print(vlist[p1,:])
-        w = Gs[vlist[p1,0]][:,2]
-        G = Gs[vlist[p1,0]] 
-        V = VG[vlist[p1,0]]
+        w = Gs[vlist[p1,0]-1][:,2]
+        G = Gs[vlist[p1,0]-1] 
+        V = VG[vlist[p1,0]-1] #xi starts from 1,2,3 but python listst start from 0.
 
         f = SH( vlist[p1,1] , vlist[p1,2]  , G[:,0], G[:,1] + np.pi ) * \
             SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi ) * \
@@ -221,8 +220,6 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     x   =   np.zeros(nlobs, dtype = float)
     w   =   np.zeros(nlobs, dtype = float)
     xc,wc =   GRID.gauss_lobatto(nlobs,14)
-
-
     x   =   np.asarray(xc, dtype=float)
     w   =   np.asarray(wc, dtype = float)
 
@@ -262,15 +259,13 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
 
     for i in range(klist.shape[0]):
         if klist[i,0] == klist[i,2]:
-            keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1], klist[i,3] ]
+            keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1] - 1, klist[i,3] - 1 ]
+
             if klist[i,1] == klist[i,3]:
-                if klist[i,1] == 0 and klist[i,0] == 0:
-                    rin = Gr[klist[i,0],klist[i,1]+1]
-                else:
-                    rin = Gr[klist[i,0],klist[i,1]+1]
+                rin = Gr[klist[i,0],klist[i,1]-1]
                 keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4] ) * (float(klist[i,4] )+1) / rin**2 
-        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == 0:
-            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] ]
+        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs:
+            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] -1 ]
 
 
  #   for i in range(Nbas):
@@ -297,14 +292,14 @@ def BUILD_DMAT(x):
 
     print(x)
 
-    DMAT = np.zeros( (N,N), dtype=float)
-    Dd = np.zeros( (N), dtype=float)
+    DMAT = np.zeros( ( N - 1 , N - 1), dtype=float)
+    Dd = np.zeros( (N - 1), dtype=float)
 
-    for n in range(N):
-        for mu in range(N):
+    for n in range(N-1):
+        for mu in range(N-1):
             if mu != n:
                 Dd[n] += (x[n]-x[mu])**(-1)
-
+#############TAFGEFGDSDSFADSFASDF
     for n in range(N):
         DMAT[n,n] += Dd[n]
 
@@ -348,15 +343,15 @@ def BUILD_KD(JMAT,w,N):
     KD = np.zeros( (N-1,N-1), dtype=float)
 
     #b-b:
-    KD[0,0] = Wb * Wb * ( JMAT[N-1,N-1] + JMAT[0,0]  )
+    KD[N-2,N-2] = Wb * Wb * ( JMAT[N-1,N-1] + JMAT[0,0]  )
 
     #b-s:
-    for n2 in range(1,N-1):
-        KD[0,n2] = Wb * Ws[n2] * JMAT[N-1,n2] #*np.sqrt( w[N-1])*np.sqrt( w[n2])
+    for n2 in range(0,N-2):
+        KD[N-2,n2] = Wb * Ws[n2] * JMAT[N-1,n2] #*np.sqrt( w[N-1])*np.sqrt( w[n2])
 
     #s-s:
-    for n1 in range(1,N-1):
-        for n2 in range(n1,N-1):
+    for n1 in range(0,N-2):
+        for n2 in range(n1,N-2):
             KD[n1,n2] = Ws[n1] * Ws[n2] * JMAT[n1,n2]
 
 
@@ -372,10 +367,10 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[0] = Wb * Wb * JMAT[0,N-1] #* np.sqrt(w[N-1]) * np.sqrt(w[0])
+    KC[N-2] = Wb * Wb * JMAT[0,N-1] #* np.sqrt(w[N-1]) * np.sqrt(w[0])
 
     #b-s:
-    for n2 in range(1,N-1):
+    for n2 in range(0,N-2):
         KC[n2] = Wb * Ws[n2] * JMAT[0,n2] #* np.sqrt(w[0]) * np.sqrt( w[n2])
 
 
@@ -527,10 +522,6 @@ def fp(i,n,k,x):
 
 
 
-
-
-
-
 """ ============ POTMAT0 ============ """
 def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
@@ -547,7 +538,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
     elif params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:
-            sph_quad_list = gen_adaptive_quads_exact( params,  Gr )
+            sph_quad_list = gen_adaptive_quads_exact( params,  Gr ) #checked 30 Apr 2021
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
             sph_quad_list = read_adaptive_quads(params)
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
@@ -724,17 +715,19 @@ def gen_adaptive_quads_exact(params , rgrid):
     xi = 0
     for i in range(np.size( rgrid, axis=0 )): 
         for n in range(np.size( rgrid, axis=1 )): 
+            if i == np.size( rgrid, axis=0 ) - 1 and n == np.size( rgrid, axis=1 ) - 1: break
+                        
             rin = rgrid[i,n]
-            print("i = " + str(i) + ", n = " + str(n) + ", xi = " + str(xi) + ", r = " + str(rin) )
+            print("i = " + str(i) + ", n = " + str(n+1) + ", xi = " + str(xi+1) + ", r = " + str(rin) )
 
             for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-                k=0
+                ischeme = 0 #use enumerate()
 
                 #get grid
                 Gs = GRID.read_leb_quad(scheme)
 
                 #pull potential at quadrature points
-                potfilename = "esp_"+params['molec_name']+"_"+params['esp_method']+"_"+str('%6.4f'%rin)+"_"+scheme
+                potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method'] + "_" + str('%6.4f'%rin) + "_"+scheme
 
                 if os.path.isfile(params['working_dir'] + "esp/" + potfilename):
                     print (potfilename + " file exist")
@@ -766,37 +759,38 @@ def gen_adaptive_quads_exact(params , rgrid):
                 else:
                     print (potfilename + " file does not exist")
 
-                    #generate xyz grid 
-                    GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['working_dir']+"esp/")
+                    #generate xyz grid
+                    GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['working_dir']+"esp/")
 
                     V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/")
                     V = np.asarray(V)
 
                     fl = open(params['working_dir'] + "esp/" + potfilename,"w")
-                    np.savetxt(fl,V,fmt='%10.6f')
+                    np.savetxt(fl, V, fmt='%10.6f')
 
 
                 for l1,m1 in sphlist:
                     for l2,m2 in sphlist:
 
-                        val[k] = calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 )
+                        val[ischeme] = calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 )
 
                         #val[k] = calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant )
 
-                        print(  '%4d %4d %4d %4d'%(l1,m1,l2,m2) + '%12.6f' % val[k] + \
-                                '%12.6f' % (val_prev[k]) + \
-                                '%12.6f '%np.abs(val[k]-val_prev[k])  )
-                        k += 1
+                        print(  '%4d %4d %4d %4d'%(l1,m1,l2,m2) + '%12.6f' % val[ischeme] + \
+                                '%12.6f' % (val_prev[ischeme]) + \
+                                '%12.6f '%np.abs(val[ischeme]-val_prev[ischeme])  )
+                        ischeme += 1
 
                 diff = np.abs(val - val_prev)
 
                 if (np.any( diff > quad_tol )):
                     print( str(scheme) + " convergence not reached" ) 
-                    for k in range(len(val_prev)):
-                        val_prev[k] = val[k]
+                    for ischeme in range(len(val_prev)):
+                        val_prev[ischeme] = val[ischeme]
                 elif ( np.all( diff < quad_tol ) ):     
                     print( str(scheme) + " convergence reached !!!")
-                    sph_quad_list.append([ i, n, xi, str(scheme)])
+
+                    sph_quad_list.append([ i, n + 1, xi + 1, str(scheme)]) #new, natural ordering n = 1, 2, 3, ..., N-1, where N-1 is bridge
                     xi += 1
                     break
 
@@ -804,7 +798,8 @@ def gen_adaptive_quads_exact(params , rgrid):
                 if ( scheme == spherical_schemes[len(spherical_schemes)-1] and np.any( diff > quad_tol )):
                     print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
                     print( str(scheme) + " convergence reached !!!")
-                    sph_quad_list.append([ i, n, xi, str(scheme)])
+
+                    sph_quad_list.append([ i, n + 1, xi + 1, str(scheme)])
                     xi += 1
 
     print("Converged quadrature levels: ")

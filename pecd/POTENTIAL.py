@@ -89,22 +89,20 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
             esp_grid = np.hstack((grid_xyz,V[:,None])) 
             fl       = open(params['working_dir'] + "esp/" + params['file_esp'],"w")
             np.savetxt(fl,esp_grid,fmt='%10.6f')
-
         else:
             print("The file is not empty.")
-            fl = open(params['working_dir'] + "esp/" + params['file_esp'],"r")
+            fl2 = open(params['working_dir'] + "esp/" + params['file_esp'],"r")
             V = []
-            for line in fl:
-                words = line.split()
-                potval = -1.0 * float(words[3])
+            for line in fl2:
+                words   = line.split()
+                potval  = -1.0 * float(words[3])
                 V.append(potval)
             V = np.asarray(V)
 
-    
     else:
         print (params['file_esp'] + " file does not exist")
 
-        os.remove(params['working_dir'] + "esp/grid.dat")
+        #os.remove(params['working_dir'] + "esp/grid.dat")
 
         grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
         grid_xyz = np.asarray(grid_xyz)
@@ -119,9 +117,9 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 
     VG = []
     counter = 0
-    for k in range(len(r_array)):
+    for k in range(len(r_array)-1):
         sph = np.zeros(Gs[k].shape[0],dtype=float)
-        print(Gs[k].shape[0])
+        print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str(r_array[k]) )
         for s in range(Gs[k].shape[0]):
             sph[s] = V[counter]
             counter  += 1
