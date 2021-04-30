@@ -78,7 +78,7 @@ def MAP_DVR_FEMLIST_NAT(femlist,lmax):
                         for m in range(-l,l+1):
 
                             imap += 1
-                            print(ibincount,n,xi,l,m,imap)
+                            #print(ibincount,n,xi,l,m,imap)
                             maparray.append([ibincount,n,xi,l,m,imap])
 
 
@@ -226,7 +226,7 @@ def GEN_KLIST(maparray, Nbas, map_type):
                 if maparray[p1][3] == maparray[p2][3] and maparray[p1][4] == maparray[p2][4]:
                     if maparray[p1][0] == maparray[p2][0] or maparray[p1][0] == maparray[p2][0] - 1 or maparray[p1][0] == maparray[p2][0] + 1: 
                         klist.append([ maparray[p1][0], maparray[p1][1], maparray[p2][0], \
-                        maparray[p2][1], maparray[p2][3], p1, p2  ])
+                        maparray[p2][1], maparray[p2][3], p1, p2 ])
 
 
     return klist
