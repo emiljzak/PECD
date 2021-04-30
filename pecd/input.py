@@ -24,10 +24,10 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 16
-    params['bound_nbins']   = 1
-    params['bound_binw']    = 20.0
-    params['bound_rshift']  = 0.05
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 5
+    params['bound_binw']    = 10.0
+    params['bound_rshift']  = 0.01
     params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
@@ -102,7 +102,7 @@ def gen_input():
     """==== PROPAGATE ===="""
 
     params['nlobs']     = params['bound_nlobs']
-    params['nbins']     = 1
+    params['nbins']     = 0
     params['binw']      = params['bound_binw']
 
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
