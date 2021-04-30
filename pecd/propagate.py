@@ -42,9 +42,9 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     for i in range(ham0.shape[0]):
         ham0[i,i] -= ham_init.diagonal()[i]
     print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
-    BOUND.plot_mat(ham0)
-    plt.spy(ham0, precision=params['sph_quad_tol'], markersize=5)
-    plt.show()
+    #BOUND.plot_mat(ham0)
+    #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
     #ham0 /= 2.0
 
     Nbas = len(psi_init)
@@ -148,7 +148,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         
     if params['plot_modes']['snapshot'] == True:
         plot_times = calc_plot_times(params,tgrid,dt)
-
+        #re-check this!
         maparray = np.asarray(maparray)
         nbins = params['bound_nbins'] + params['nbins']
         maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], nbins, 0, \
@@ -191,7 +191,14 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         end_time = time.time()
         print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        #BOUND.plot_mat(hmat)
+        #BOUND.plot_wf_rad(  0.0, params['bound_binw']* ( params['bound_nbins'] + params['nbins']), 1000, \
+        #                    coeffs, maparray, Gr, params['bound_nlobs'], \
+        #                    params['bound_nbins'] + params['nbins'])
+        #PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
+        #                1000, Gr, params['bound_nlobs'], params['bound_nbins'])
+
+
+        BOUND.plot_mat(hmat)
         #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
         #plt.show()
         return hmat, coeffs
@@ -221,10 +228,10 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         
         hmat += keomat 
 
-        print("plot of hmat")
+        #print("plot of hmat")
         BOUND.plot_mat(hmat)
-        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3)
-        plt.show()
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3)
+        #plt.show()
         
         """ diagonalize hmat """
         start_time = time.time()
@@ -232,8 +239,16 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         end_time = time.time()
         print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        #BOUND.plot_wf_rad(0.0, params['bound_binw'],1000,coeffs,maparray,Gr,params['bound_nlobs'], params['bound_nbins']+params['nbins'])
+        #BOUND.plot_wf_rad(  0.0, params['bound_binw']* ( params['bound_nbins'] + params['nbins']), 1000, \
+        #                    coeffs, maparray, Gr, params['bound_nlobs'], \
+        #                    params['bound_nbins'] + params['nbins'])
+        #exit()
+        
+        PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
+                        1000, Gr, params['bound_nlobs'], params['bound_nbins'])
 
+
+        
         print("Normalization of the wavefunction: ")
         for v in range(params['num_ini_vec']):
             print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
@@ -360,7 +375,7 @@ if __name__ == "__main__":
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['working_dir'] )
-
+    exit()
     Gr, Nr = GRID.r_grid(   params['bound_nlobs'] , 
                             params['bound_nbins'] + params['nbins'], 
                             params['bound_binw'],  

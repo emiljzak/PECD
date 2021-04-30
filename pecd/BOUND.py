@@ -226,9 +226,10 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     x   =   np.asarray(xc, dtype=float)
     w   =   np.asarray(wc, dtype = float)
 
-    w /= np.sum(w[:])
+    #w /= np.sum(w[:])
+    #w *= 0.5 * params['bound_binw']
     #scaling to quadrature range
-    x *= 0.5 * params['bound_binw']
+    #x *= 0.5 * params['bound_binw']
 
     """ Build D-matrix """
     DMAT = BUILD_DMAT(x)
@@ -246,9 +247,9 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     plt.show()
     """
     """ Build KD, KC matrices """
-    KD  = BUILD_KD(JMAT,w,nlobs)
+    KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
 
-    KC  = BUILD_KC(JMAT,w,nlobs)
+    KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
 
     """ Generate K-list """
     klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
@@ -257,19 +258,25 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
 
     keomat =  np.zeros((Nbas, Nbas), dtype=float)
 
-    for i in range(Nbas):
-        rin = Gr[maparray[i][0],maparray[i][1]]
-
-        keomat[i,i] = float(maparray[i][3]) * (float(maparray[i][3])+1) / rin**2 
-
-
     klist = np.asarray(klist, dtype=int)
 
     for i in range(klist.shape[0]):
         if klist[i,0] == klist[i,2]:
             keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1], klist[i,3] ]
+            if klist[i,1] == klist[i,3]:
+                if klist[i,1] == 0 and klist[i,0] == 0:
+                    rin = Gr[klist[i,0],klist[i,1]+1]
+                else:
+                    rin = Gr[klist[i,0],klist[i,1]+1]
+                keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4] ) * (float(klist[i,4] )+1) / rin**2 
         elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == 0:
             keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] ]
+
+
+ #   for i in range(Nbas):
+       
+
+#        keomat[i,i] += float(maparray[i][3]) * (float(maparray[i][3])+1) / rin**2 
 
 
     print("KEO matrix")
@@ -281,7 +288,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     #plt.legend()
     #plt.show()
 
-    return  0.5 * keomat
+    return  0.5 * keomat 
 
 def BUILD_DMAT(x):
 
@@ -289,7 +296,6 @@ def BUILD_DMAT(x):
     print("Number of Gauss-Lobatto points = " + str(N))
 
     print(x)
-
 
     DMAT = np.zeros( (N,N), dtype=float)
     Dd = np.zeros( (N), dtype=float)
@@ -342,11 +348,11 @@ def BUILD_KD(JMAT,w,N):
     KD = np.zeros( (N-1,N-1), dtype=float)
 
     #b-b:
-    KD[0,0] = Wb * Wb * ( JMAT[N-1,N-1] + JMAT[0,0] )
+    KD[0,0] = Wb * Wb * ( JMAT[N-1,N-1] + JMAT[0,0]  )
 
     #b-s:
     for n2 in range(1,N-1):
-        KD[0,n2] = Wb * Ws[n2] * JMAT[N-1,n2]
+        KD[0,n2] = Wb * Ws[n2] * JMAT[N-1,n2] #*np.sqrt( w[N-1])*np.sqrt( w[n2])
 
     #s-s:
     for n1 in range(1,N-1):
@@ -366,11 +372,11 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[0] = Wb * Wb * JMAT[0,N-1] 
+    KC[0] = Wb * Wb * JMAT[0,N-1] #* np.sqrt(w[N-1]) * np.sqrt(w[0])
 
     #b-s:
     for n2 in range(1,N-1):
-        KC[n2] = Wb * Ws[n2] * JMAT[0,n2]
+        KC[n2] = Wb * Ws[n2] * JMAT[0,n2] #* np.sqrt(w[0]) * np.sqrt( w[n2])
 
 
     return KC
@@ -886,7 +892,7 @@ def plot_wf_rad(rmin,rmax,npoints,coeffs,maparray,rgrid,nlobs,nbins):
     """plot the selected wavefunctions functions"""
     """ Only radial part is plotted"""
 
-    r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
+    r = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
 
     x=np.zeros(nlobs)
     w=np.zeros(nlobs)

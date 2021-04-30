@@ -8,7 +8,7 @@ import numpy as np
 def GENMAP_FEMLIST(femlist,lmax,maptype,working_dir):
     #generate mapping for general FEMLIST
     if maptype == 'DVR':
-        maparray, Nbas = MAP_DVR_FEMLIST(femlist,lmax)
+        maparray, Nbas = MAP_DVR_FEMLIST_NAT(femlist,lmax)
     elif maptype == 'SPECT':
         maparray, Nbas = MAP_SPECT_FEMLIST(femlist,lmax)
 
@@ -52,6 +52,38 @@ def MAP_DVR_FEMLIST(femlist,lmax):
 
 
     return maparray, imap
+
+
+def MAP_DVR_FEMLIST_NAT(femlist,lmax):
+    #natural order of grid points and basis functions, including bridges
+    imap = 0
+    xi = 0
+    maparray = []
+    ibincount = -1
+
+    nbins = 0
+    for elem in femlist:
+        nbins += elem[0]
+    print("total number of bins = " + str(nbins))
+
+    for elem in femlist:
+        for i in range(elem[0]):
+            ibincount +=1
+            for n in range(1,elem[1]):
+                if ibincount == nbins-1 and n == elem[1]-1:
+                    continue     
+                else:
+                    xi += 1
+                    for l in range(0,lmax+1):
+                        for m in range(-l,l+1):
+
+                            imap += 1
+                            print(ibincount,n,xi,l,m,imap)
+                            maparray.append([ibincount,n,xi,l,m,imap])
+
+
+    return maparray, imap
+
 
 
 def MAP_SPECT_FEMLIST(femlist,lmax):

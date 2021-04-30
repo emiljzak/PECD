@@ -82,15 +82,15 @@ def chi(i,n,r,rgrid,w,nlobs,nbins):
     # rgrid is the radial grid rgrid[i][n]
     # w are the unscaled lobatto weights
 
-    w /=sum(w[:]) #normalization!!!
-    val=np.zeros(np.size(r))
+    w /= sum(w[:]) #normalization!!!
+    val = np.zeros(np.size(r))
     
-    if n==0 and i<nbins-1: #bridge functions
+    if n == 0 and i <nbins-1 : #bridge functions
         #print("bridge: ", n,i)
         val = ( f(i,nlobs-1,r,rgrid,nlobs,nbins) + f(i+1,0,r,rgrid,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) + float( w[0] ) )**(-1)
         #print(type(val),np.shape(val))
         return val 
-    elif n>0 and n<nlobs-1:
+    elif n > 0 and n < nlobs-1:
         val = f(i,n,r,rgrid,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
         #print(type(val),np.shape(val))
         return val
@@ -126,23 +126,21 @@ def f(i,n,r,rgrid,nlobs,nbins):
 
 def plot_chi(rmin,rmax,npoints,rgrid,nlobs,nbins):
     """plot the selected radial basis functions"""
-    r = np.linspace(rmin,rmax,npoints,endpoint=True,dtype=float)
-
+    r = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
 
     x=np.zeros(nlobs)
     w=np.zeros(nlobs)
     x,w=GRID.gauss_lobatto(nlobs,14)
     w=np.array(w)
     x=np.array(x) # convert back to np arrays
-    nprint = 1 #how many functions to print
 
-    y = np.zeros((len(r),nlobs * nbins))
+    y = np.zeros((len(r), nbins * nlobs))
 
     counter = 0
     wcounter = 0
     for i in range(nbins):
-        for n in range(nlobs):
-            y[:,counter] = chi(i,n,r,rgrid,w,nlobs,nbins) #* w[wcounter]**(0.5)
+        for n in range(nlobs-1):
+            y[:,counter] = chi(i, n, r, rgrid ,w, nlobs, nbins) #* w[wcounter]**(0.5)
             counter += 1
         wcounter +=1
 
@@ -519,7 +517,7 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     w       =  np.array(w)
 
     interpolation_step = 0.1
-    x = np.arange(0.0, nbins * binw + 0.11, interpolation_step)
+    x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
 
     chilist  = []
 

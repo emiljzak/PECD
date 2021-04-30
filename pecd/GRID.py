@@ -152,13 +152,13 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     Translvec = np.zeros(nbins)
 
     for i in range(len(Translvec)):
-        Translvec[i] = float(i) * binwidth + rshift * float(i+1)
+        Translvec[i] = float(i) * binwidth + rshift
 
     for ibin in range(nbins):    
         xgrid[ibin,:] += Translvec[ibin]
 
     print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
-    
+
     return xgrid, nlobatto * nbins
 
 def sph2cart(r,theta,phi):

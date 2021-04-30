@@ -120,20 +120,11 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
     VG = []
     counter = 0
     for k in range(len(r_array)):
-        if k > len(r_array) - 10:
-
-            print(Gs[k].shape[0])
-            sph = np.zeros(Gs[k].shape[0],dtype=float)
-            for s in range(Gs[k].shape[0]):
-                sph[s] = 100000.0
-                counter  += 1
-
-        else:
-            sph = np.zeros(Gs[k].shape[0],dtype=float)
-            print(Gs[k].shape[0])
-            for s in range(Gs[k].shape[0]):
-                sph[s] = V[counter]
-                counter  += 1
+        sph = np.zeros(Gs[k].shape[0],dtype=float)
+        print(Gs[k].shape[0])
+        for s in range(Gs[k].shape[0]):
+            sph[s] = V[counter]
+            counter  += 1
 
         VG.append(sph)
     return VG
