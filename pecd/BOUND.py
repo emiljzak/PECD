@@ -292,24 +292,24 @@ def BUILD_DMAT(x):
 
     print(x)
 
-    DMAT = np.zeros( ( N - 1 , N - 1), dtype=float)
-    Dd = np.zeros( (N - 1), dtype=float)
+    DMAT = np.zeros( ( N , N ), dtype=float)
+    Dd = np.zeros( N , dtype=float)
 
-    for n in range(N-1):
-        for mu in range(N-1):
+    for n in range(N):
+        for mu in range(N):
             if mu != n:
                 Dd[n] += (x[n]-x[mu])**(-1)
-#############TAFGEFGDSDSFADSFASDF
+
     for n in range(N):
         DMAT[n,n] += Dd[n]
 
         for k in range(N):
             if n != k: 
-                DMAT[n,k]  =  (x[n]-x[k])**(-1)
+                DMAT[k,n]  =  (x[n]-x[k])**(-1)
 
                 for mu in range(N):
                     if mu != k and mu != n:
-                        DMAT[n,k] *= (x[k]-x[mu])/(x[n]-x[mu])
+                        DMAT[k,n] *= (x[k]-x[mu])/(x[n]-x[mu])
 
     #print(Dd)
 
@@ -317,7 +317,7 @@ def BUILD_DMAT(x):
     #plt.spy(DMAT, precision=params['sph_quad_tol'], markersize=5, label="D-matrix")
     #plt.legend()
     #plt.show()
-
+    
     return DMAT
 
 
@@ -326,15 +326,14 @@ def BUILD_JMAT(D,w):
     wdiag = np.zeros((w.size,w.size), dtype = float)
     for k in range(w.size):
         wdiag[k,k] = w[k] 
-
     DT = np.copy(D)
     DT = DT.T
 
-    return multi_dot([D,wdiag,DT])
-    #return np.dot( np.dot(D,wdiag), DT )
+    return multi_dot([DT,wdiag,D])
+    #return np.dot( np.dot(DT,wdiag), D )
 
 
-def BUILD_KD(JMAT,w,N):
+def BUILD_KD(JMAT,w,N): #checked 1 May 2021
     Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) )
     
     Ws = np.zeros(len(w), dtype = float)
@@ -343,17 +342,20 @@ def BUILD_KD(JMAT,w,N):
     KD = np.zeros( (N-1,N-1), dtype=float)
 
     #b-b:
-    KD[N-2,N-2] = Wb * Wb * ( JMAT[N-1,N-1] + JMAT[0,0]  )
+    KD[N-2,N-2] = Wb * Wb * ( JMAT[N-1, N-1] + JMAT[0 , 0]  )
 
     #b-s:
     for n2 in range(0,N-2):
-        KD[N-2,n2] = Wb * Ws[n2] * JMAT[N-1,n2] #*np.sqrt( w[N-1])*np.sqrt( w[n2])
+        KD[N-2, n2] = Wb * Ws[n2 + 1] * JMAT[N-1, n2 + 1] #checked
+
+    #s-b:
+    for n1 in range(0,N-2):
+        KD[n1, N-2] = Wb * Ws[n1 + 1] * JMAT[n1 + 1, N-1] 
 
     #s-s:
-    for n1 in range(0,N-2):
-        for n2 in range(n1,N-2):
-            KD[n1,n2] = Ws[n1] * Ws[n2] * JMAT[n1,n2]
-
+    for n1 in range(0, N-2):
+        for n2 in range(n1, N-2):
+            KD[n1,n2] = Ws[n1 + 1] * Ws[n2 + 1] * JMAT[n1 + 1, n2 + 1] #checked. Note the shift between J-matrix and tss or Kd matrices.
 
     return KD
 
@@ -367,14 +369,14 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[N-2] = Wb * Wb * JMAT[0,N-1] #* np.sqrt(w[N-1]) * np.sqrt(w[0])
+    KC[N-2] = Wb * Wb * JMAT[0, N-1] 
 
     #b-s:
-    for n2 in range(0,N-2):
-        KC[n2] = Wb * Ws[n2] * JMAT[0,n2] #* np.sqrt(w[0]) * np.sqrt( w[n2])
+    for n2 in range(0, N-2):
+        KC[n2] = Wb * Ws[n2 + 1] * JMAT[0, n2 + 1] 
 
 
-    return KC
+    return KC #checked 1 May 2021
 
 """ ============ KEOMAT - standard implementation ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
