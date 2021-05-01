@@ -248,6 +248,12 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
 
     KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
 
+    plot_mat(KD)
+    plt.spy(KD, precision=params['sph_quad_tol'], markersize=5, label="KD")
+    plt.legend()
+    plt.show()
+
+
     """ Generate K-list """
     klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
@@ -259,29 +265,25 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
 
     for i in range(klist.shape[0]):
         if klist[i,0] == klist[i,2]:
-            keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1] - 1, klist[i,3] - 1 ]
+            #diagonal blocks
+            keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
 
             if klist[i,1] == klist[i,3]:
-                rin = Gr[klist[i,0],klist[i,1]-1]
-                keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4] ) * (float(klist[i,4] )+1) / rin**2 
-        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs:
-            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] -1 ]
+                rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0
+                keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
 
-
- #   for i in range(Nbas):
-       
-
-#        keomat[i,i] += float(maparray[i][3]) * (float(maparray[i][3])+1) / rin**2 
+        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs - 1:
+            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
 
 
     print("KEO matrix")
     with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
         print(0.5*keomat)
   
-    #plot_mat(keomat)
-    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
-    #plt.legend()
-    #plt.show()
+    plot_mat(keomat)
+    plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+    plt.legend()
+    plt.show()
 
     return  0.5 * keomat 
 
@@ -345,8 +347,8 @@ def BUILD_KD(JMAT,w,N): #checked 1 May 2021
     KD[N-2,N-2] = Wb * Wb * ( JMAT[N-1, N-1] + JMAT[0 , 0]  )
 
     #b-s:
-    for n2 in range(0,N-2):
-        KD[N-2, n2] = Wb * Ws[n2 + 1] * JMAT[N-1, n2 + 1] #checked
+    #for n2 in range(0,N-2):
+    #    KD[N-2, n2] = Wb * Ws[n2 + 1] * JMAT[N-1, n2 + 1] #checked
 
     #s-b:
     for n1 in range(0,N-2):
@@ -717,7 +719,7 @@ def gen_adaptive_quads_exact(params , rgrid):
     xi = 0
     for i in range(np.size( rgrid, axis=0 )): 
         for n in range(np.size( rgrid, axis=1 )): 
-            if i == np.size( rgrid, axis=0 ) - 1 and n == np.size( rgrid, axis=1 ) - 1: break
+            #if i == np.size( rgrid, axis=0 ) - 1 and n == np.size( rgrid, axis=1 ) - 1: break
                         
             rin = rgrid[i,n]
             print("i = " + str(i) + ", n = " + str(n+1) + ", xi = " + str(xi+1) + ", r = " + str(rin) )

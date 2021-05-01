@@ -237,8 +237,9 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         hmat += keomat 
 
         print("plot of hmat")
-        #BOUND.plot_mat(hmat)
-        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3)
+        BOUND.plot_mat(hmat)
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        plt.legend()
         plt.show()
         
         """ diagonalize hmat """
