@@ -203,7 +203,7 @@ def GEN_XYZ_GRID(Gs,Gr,working_dir):
     print(r_array)
     gridfile = open(working_dir + "grid.dat", 'w')
 
-    for k in range(len(r_array)-1): #we exclude last grid point
+    for k in range(len(r_array)):
         #print(Gs[k].shape[0])
         for s in range(Gs[k].shape[0]):
 
