@@ -268,12 +268,12 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
             #diagonal blocks
             keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
 
-            if klist[i,1] == klist[i,3]:
-                rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0
-                keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
+            #if klist[i,1] == klist[i,3]:
+            #    rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0
+            #    keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
 
-        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs - 1:
-            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
+        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs - 1: continue
+            #keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
 
 
     print("KEO matrix")
@@ -284,14 +284,14 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
     plt.legend()
     plt.show()
-
+    exit()
     return  0.5 * keomat 
 
 def BUILD_DMAT(x):
 
     N = x.size
     print("Number of Gauss-Lobatto points = " + str(N))
-
+    #include weights in definition of D
     print(x)
 
     DMAT = np.zeros( ( N , N ), dtype=float)
@@ -315,11 +315,11 @@ def BUILD_DMAT(x):
 
     #print(Dd)
 
-    #plot_mat(DMAT)
+    plot_mat(DMAT)
     #plt.spy(DMAT, precision=params['sph_quad_tol'], markersize=5, label="D-matrix")
-    #plt.legend()
-    #plt.show()
-    
+    plt.legend()
+    plt.show()
+    exit()
     return DMAT
 
 
@@ -351,13 +351,13 @@ def BUILD_KD(JMAT,w,N): #checked 1 May 2021
     #    KD[N-2, n2] = Wb * Ws[n2 + 1] * JMAT[N-1, n2 + 1] #checked
 
     #s-b:
-    for n1 in range(0,N-2):
-        KD[n1, N-2] = Wb * Ws[n1 + 1] * JMAT[n1 + 1, N-1] 
+    #for n1 in range(0,N-2):
+    #    KD[n1, N-2] = Wb * Ws[n1 + 1] * JMAT[n1 + 1, N-1] 
 
     #s-s:
-    for n1 in range(0, N-2):
-        for n2 in range(n1, N-2):
-            KD[n1,n2] = Ws[n1 + 1] * Ws[n2 + 1] * JMAT[n1 + 1, n2 + 1] #checked. Note the shift between J-matrix and tss or Kd matrices.
+    #for n1 in range(0, N-2):
+    #    for n2 in range(n1, N-2):
+    #        KD[n1,n2] = Ws[n1 + 1] * Ws[n2 + 1] * JMAT[n1 + 1, n2 + 1] #checked. Note the shift between J-matrix and tss or Kd matrices.
 
     return KD
 
@@ -371,11 +371,11 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[N-2] = Wb * Wb * JMAT[0, N-1] 
+   #KC[N-2] = Wb * Wb * JMAT[0, N-1] 
 
     #b-s:
-    for n2 in range(0, N-2):
-        KC[n2] = Wb * Ws[n2 + 1] * JMAT[0, n2 + 1] 
+    #for n2 in range(0, N-2):
+    #    KC[n2] = Wb * Ws[n2 + 1] * JMAT[0, n2 + 1] 
 
 
     return KC #checked 1 May 2021
