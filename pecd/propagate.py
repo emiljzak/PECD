@@ -160,17 +160,19 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         #re-check this!
         maparray = np.asarray(maparray)
         nbins = params['bound_nbins'] + params['nbins']
-        maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], nbins, 0, \
+        
+        Gr_all, Nr_all = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+
+        maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                      params['map_type'], params['working_dir'] )
 
-        flist = PLOTS.interpolate_chi(Gr, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
+        flist = PLOTS.interpolate_chi(Gr_all, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
         for itime, t in enumerate(tgrid): 
             for ielem in plot_times:
                 if itime == ielem:
                     psi[:] = wavepacket[itime,:] 
-                    #PLOTS.plot_snapshot(params, psi, maparray, Gr, t)
-                    PLOTS.plot_snapshot_int(params, psi, maparray, Gr, t, flist)
+                    PLOTS.plot_snapshot_int(params, psi, maparray, Gr_all, t, flist)
 
 
 

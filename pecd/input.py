@@ -25,10 +25,10 @@ def gen_input():
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 10 
-    params['bound_nbins']   = 3
+    params['bound_nbins']   = 4 0
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 1
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -39,7 +39,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -112,7 +112,7 @@ def gen_input():
     params['t0']        = 0.0 
     params['tmax']      = 1000.0 
     params['dt']        = 4.0
-    params['ivec']      = 5  
+    params['ivec']      = 0  
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]

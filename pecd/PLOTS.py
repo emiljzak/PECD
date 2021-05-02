@@ -285,17 +285,15 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-5
-    ncontours = 120
+    ncontours = 100
 
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
 
     rang = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
-
     unity_vec = np.linspace(0.0, 1.0, npoints, endpoint=True, dtype=float)
     gridtheta1d = 2 * np.pi * unity_vec
-
 
     rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
 
@@ -305,16 +303,16 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
     w   =  np.array(w)
     x   =  np.array(x) # convert back to np arrays
 
-    y = np.zeros((len(rang),len(rang)),dtype=complex)
+    y = np.zeros((len(rang),len(rang)), dtype=complex)
 
-    phi0 = 0.0 * np.pi/2
+    phi0 = 0.0 * np.pi/2 #fixed polar angle
     #here we can do phi-averaging
     
     for ielem, elem in enumerate(maparray):
         if np.abs(psi[ielem]) > coeff_thr:
             #print(str(elem) + str(psi[ielem]))
 
-            chir = flist[elem[1]-1](rang)
+            chir = flist[elem[2]-1](rang) #labelled by xi
 
             for i in range(len(rang)):
                 y[i,:] +=  psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
@@ -526,6 +524,8 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
 
     chilist  = []
+
+    print(maparray)
 
     for i, elem in enumerate(maparray):
         chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
