@@ -161,10 +161,10 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
 
     return xgrid, (nlobatto-1) * nbins
 
-def r_grid_old(nlobatto,nbins,binwidth,rshift):
+def r_grid_prim(nlobatto,nbins,binwidth,rshift):
     """radial grid of Gauss-Lobatto quadrature points"""        
     #return radial coordinate r_in for given i and n
-    #we double count joining points
+    #we double count joining points. It means we work in primitive basis/grid
 
     """Note: this function must be generalized to account for FEMLIST"""
 
