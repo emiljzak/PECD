@@ -77,51 +77,57 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
 
     return val/ np.max(val)
 
-def chi(i,n,r,rgrid,w,nlobs,nbins):
+def chi(i,n,r,Gr,w,nlobs,nbins):
     # r is the argument f(r)
     # rgrid is the radial grid rgrid[i][n]
     # w are the unscaled lobatto weights
 
-    w /= sum(w[:]) #normalization!!!
+    #w /= sum(w[:]) #normalization!!!
     val = np.zeros(np.size(r))
     
-    if n == 0 and i <nbins-1 : #bridge functions
+    if n == nlobs-1: #bridge functions
         #print("bridge: ", n,i)
-        val = ( f(i,nlobs-1,r,rgrid,nlobs,nbins) + f(i+1,0,r,rgrid,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) + float( w[0] ) )**(-1)
-        #print(type(val),np.shape(val))
-        return val 
-    elif n > 0 and n < nlobs-1:
-        val = f(i,n,r,rgrid,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
+
+
+        val = ( f(i,nlobs-1,r,Gr,nlobs,nbins) + f(i+1,0,r,Gr,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) + float( w[0] ) )**(-1)
+    #print(type(val),np.shape(val))
+        return val
+
+    elif n < nlobs-1:
+
+        val = f(i,n,r,Gr,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
         #print(type(val),np.shape(val))
         return val
+
     else:
         return val
 
-def f(i,n,r,rgrid,nlobs,nbins): 
+def f(i,n,r,Gr,nlobs,nbins): 
     """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
     
     #print("shape of r is", np.shape(r), "and type of r is", type(r))
 
     if np.isscalar(r):
         prod=1.0
-        if  r>= rgrid[i][0] and r <= rgrid[i][nlobs-1]:
+        if  r>= Gr[i][0] and r <= Gr[i][nlobs-1]:
             for mu in range(0,nlobs):
                 if mu !=n:
-                    prod*=(r-rgrid[i][mu])/(rgrid[i][n]-rgrid[i][mu])
+                    prod*=(r-Gr[i][mu])/(Gr[i][n]-Gr[i][mu])
             return prod
         else:
             return 0.0
 
     else:
-        prod=np.ones(np.size(r), dtype=float)
+        prod = np.ones(np.size(r), dtype=float)
         for j in range(0,np.size(r)):
-
-            for mu in range(0,nlobs):
-                if mu !=n:
-                    prod[j] *= (r[j]-rgrid[i,mu])/(rgrid[i,n]-rgrid[i,mu])
-                else:
-                    prod[j] *= 1.0
-
+            if r[j] >= Gr[i,0] and r[j] <= Gr[i,nlobs-1]:
+                for mu in range(0,nlobs):
+                    if mu !=n:
+                        prod[j] *= (r[j] - Gr[i,mu]) / (Gr[i,n] - Gr[i,mu])
+                    else:
+                        prod[j] *= 1.0
+            else:
+                prod[j] = 0.0
     return prod
 
 def plot_chi(rmin,rmax,npoints,rgrid,nlobs,nbins):
@@ -516,7 +522,7 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     xx,w    =  GRID.gauss_lobatto(nlobs,14)
     w       =  np.array(w)
 
-    interpolation_step = 0.1
+    interpolation_step = 0.05
     x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
 
     chilist  = []
@@ -524,10 +530,12 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     for i, elem in enumerate(maparray):
         chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
 
-    #xnew  = np.arange(0.02, nbins * binw, 0.01)
-    #ynew = chilist[13](xnew)   # use interpolation function returned by `interp1d`
-    #plt.plot(x, chilist[13](x), 'o', xnew, ynew, '-')
-    #plt.show()
+    xnew  = np.arange(0.02, nbins * binw, 0.01)
+    #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
+    for s in range((nlobs-1) * nbins - 1):
+        ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
+        plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
+    plt.show()
     
     return chilist
 
@@ -553,16 +561,16 @@ if __name__ == "__main__":
     """
     nbins = params['bound_nbins'] + params['nbins']
 
-    Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+    Gr, Nr = GRID.r_grid_old( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
-    maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
+    #maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
+    #                                 params['map_type'], params['working_dir'] )
+
+    maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                      params['map_type'], params['working_dir'] )
 
-    maparray_chi, Nbas_chi = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], 0, \
-                                     params['map_type'], params['working_dir'] )
 
-
-    flist = interpolate_chi(Gr,params['bound_nlobs'],nbins,maparray_chi)
+    flist = interpolate_chi(Gr,params['bound_nlobs'],nbins,params['bound_binw'] ,maparray_chi)
     exit()
 
     """ plot radial basis """
