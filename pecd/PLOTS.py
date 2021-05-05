@@ -233,55 +233,8 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
             
     plt.show()
 
-def plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t):
-    #================ radial-angular in real space ===============#
 
-    coeff_thr = 1e-3
-    ncontours = 30
-
-    fig = plt.figure(figsize=(5, 5), dpi=200, constrained_layout=True)
-    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-    axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
-
-    rang = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
-
-    unity_vec = np.linspace(0.0, 1.0, npoints, endpoint=True, dtype=float)
-    gridtheta1d = 2 * np.pi * unity_vec
-
-    print(gridtheta1d)
-
-    rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
-
-    x   =  np.zeros(nlobs)
-    w   =  np.zeros(nlobs)
-    x,w =  GRID.gauss_lobatto(nlobs,14)
-    w   =  np.array(w)
-    x   =  np.array(x) # convert back to np arrays
-
-    y = np.zeros((len(rang),len(rang)),dtype=complex)
-
-    phi0 = 0.0 * np.pi/2
-    #here we can do phi-averaging
-
-    for ielem, elem in enumerate(maparray):
-        if np.abs(psi[ielem]) > coeff_thr:
-            print(str(elem) + str(psi[ielem]))
-            for i in range(len(rang)):
-                y[i,:] +=    psi[ielem]  * spharm(elem[3], elem[4], gridtheta1d[i], phi0) * \
-                            chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
-
-    line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
-                                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
-
-    plt.legend()   
-    plt.show()  
-    if params["save_snapthots"] == True:
-        fig.savefig( params['working_dir'] + "angrad_t=" +\
-                     str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.pdf" ,\
-                     bbox_inches='tight')
-
-def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
+def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-5
@@ -326,7 +279,57 @@ def plot_wf_angrad_int(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,fl
     plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['working_dir'] +"/animation/" + "angrad_t=" +\
+        fig.savefig( params['working_dir'] +"/animation/" + "angrad_XZ_t=" +\
+                     str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
+                     bbox_inches='tight')
+    plt.close()
+
+def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
+    #================ radial-angular in real space ===============#
+
+    coeff_thr = 1e-5
+    ncontours = 100
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
+
+    rang = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
+    unity_vec = np.linspace(0.0, 1.0, npoints, endpoint=True, dtype=float)
+    gridphi1d = 2 * np.pi * unity_vec
+
+    rmesh, thetamesh = np.meshgrid(rang, gridphi1d)
+
+    x   =  np.zeros(nlobs)
+    w   =  np.zeros(nlobs)
+    x,w =  GRID.gauss_lobatto(nlobs,14)
+    w   =  np.array(w)
+    x   =  np.array(x) # convert back to np arrays
+
+    y = np.zeros((len(rang),len(rang)), dtype=complex)
+
+    theta0 = np.pi/2 #fixed azimuthal angle
+    #here we can do phi-averaging
+    
+    for ielem, elem in enumerate(maparray):
+        if np.abs(psi[ielem]) > coeff_thr:
+            #print(str(elem) + str(psi[ielem]))
+
+            chir = flist[elem[2]-1](rang) #labelled by xi
+
+            for i in range(len(rang)):
+                y[i,:] +=  psi[ielem]  * spharm(elem[3], elem[4], theta0, gridphi1d[i]) * \
+                           chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
+
+    line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
+                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.5) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
+    axradang_r.set_rlabel_position(100)
+    #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
+    plt.legend()   
+    #plt.show()  
+    if params["save_snapthots"] == True:
+        fig.savefig( params['working_dir'] +"/animation/" + "angrad_XY_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()
@@ -510,8 +513,8 @@ def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
 
-        plot_wf_angrad_int(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist)
-
+        plot_wf_angrad_int_XZ(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist)
+        plot_wf_angrad_int_XY(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist)
     
     
 def interpolate_chi(Gr,nlobs,nbins,binw,maparray):

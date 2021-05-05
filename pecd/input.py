@@ -25,7 +25,7 @@ def gen_input():
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 10 
-    params['bound_nbins']   = 30
+    params['bound_nbins']   = 20
     params['bound_binw']    = 4.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 4
@@ -48,11 +48,15 @@ def gen_input():
 
     """==== electrostatic potential ===="""
 
-    params['esp_method']         = "uhf_631Gss"
+    params['esp_method_name']    = "uhf_631Gss"
     params['esp_mode']           = "exact" #exact or interpolate
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
     params['plot_esp']           = False
+
+    params['scf_enr_conv']       = 1.0e-4 #convergence threshold for SCF
+    params['scf_basis']          = "cc-pVTZ" #"631G**"
+    params['scf_method']         = "uhf"
 
     """ Note: r_cutoff can be infered from quad_levels file: 
                                          when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0.
@@ -67,28 +71,28 @@ def gen_input():
                                     "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_hmat0']        =   "hmat0_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_enr0']         =   "enr0_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])  + \
+                                    "_" + str(params['esp_method_name'])  + \
                                     "_" + str(params['sph_quad_tol'])   + ".dat"
 
     params['file_esp']          =   "esp_" + params['molec_name']   + \
@@ -96,7 +100,7 @@ def gen_input():
                                     "_" + str(params['bound_nlobs'])   + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['esp_method'])    + ".dat"
+                                    "_" + str(params['esp_method_name'])    + ".dat"
     
 
     """==== PROPAGATE ===="""
@@ -110,7 +114,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 2000.0 
+    params['tmax']      = 1000.0 
     params['dt']        = 4.0
     params['ivec']      = 1  
 
@@ -120,7 +124,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
@@ -131,21 +135,21 @@ def gen_input():
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'] + params['nbins'])   + \
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'] + params['nbins'])   + \
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])   + ".dat"
 
 
     """ ====== FIELD PARAMETERS ====== """
@@ -238,7 +242,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,

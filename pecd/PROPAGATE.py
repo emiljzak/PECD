@@ -133,7 +133,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
 
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
-
+    #sparse
     """ @numba.jit(nopython=True)
         def numba_csc_ndarray_dot2(a: csc_matrix, b: np.ndarray):
             out = np.zeros((a.shape[0], b.shape[1]))
@@ -239,10 +239,10 @@ def BUILD_HMAT(params, Gr, maparray, Nbas, ham0):
         hmat += keomat 
 
         print("plot of hmat")
-        BOUND.plot_mat(hmat)
-        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        plt.legend()
-        plt.show()
+        #BOUND.plot_mat(hmat)
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
         
         """ diagonalize hmat """
         start_time = time.time()
@@ -397,6 +397,7 @@ if __name__ == "__main__":
     #with PyCallGraph(output=graphviz, config=config):
     ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global, 0.0)
     
+
     #print(ham0)
     #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
     #plt.show()

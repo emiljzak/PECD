@@ -2,6 +2,8 @@
 
 import numpy as np
 
+angstrom_to_au = 1.88973
+
 au_to_ev    = 27.211 
 # convert time units to atomic units
 time_to_au = {"as" : np.float64(1.0/24.188)}
