@@ -533,12 +533,12 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     for i, elem in enumerate(maparray):
         chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
 
-    xnew  = np.arange(0.02, nbins * binw, 0.01)
+    #xnew  = np.arange(0.02, nbins * binw, 0.01)
     #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
-    for s in range((nlobs-1) * nbins - 1):
-        ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
-        plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
-    plt.show()
+    #for s in range((nlobs-1) * nbins - 1):
+    #    ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
+    #    plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
+    #plt.show()
     
     return chilist
 
