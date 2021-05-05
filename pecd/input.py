@@ -12,8 +12,8 @@ def gen_input():
     """ === molecule directory ==== """ 
 
     params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"
-    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/h2o/"
-    params['molec_name']    = "h2o"
+    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"
+    params['molec_name']    = "d2s"
 
 
     """==== BOUND ===="""
@@ -25,8 +25,8 @@ def gen_input():
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 10 
-    params['bound_nbins']   = 4 0
-    params['bound_binw']    = 5.0
+    params['bound_nbins']   = 30
+    params['bound_binw']    = 4.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 4
     
@@ -110,9 +110,9 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 1000.0 
+    params['tmax']      = 2000.0 
     params['dt']        = 4.0
-    params['ivec']      = 0  
+    params['ivec']      = 1  
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -120,7 +120,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
@@ -178,7 +178,7 @@ def gen_input():
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 7.0e+14 #W/cm^2 #peak intensity
+    intensity       = 2.0e+14 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
@@ -188,8 +188,8 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 200.0 #as: pulse duration (sigma)
-    params['tc']        = 500.0 #as: pulse centre
+    params['tau']       = 500.0 #as: pulse duration (sigma)
+    params['tc']        = 1000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
