@@ -224,16 +224,30 @@ def CALC_ESP_PSI4(dir,params):
     psi4.core.be_quiet()
     properties_origin=["COM"]
     #psi4.core.set_output_file(dir, False)
+    ang_au = CONSTANTS.angstrom_to_au
+    xS = 0.0 * ang_au
+    yS = 0.0 * ang_au
+    zS = 0.0 * ang_au
+
+    xH1 = 0.0 * ang_au
+    yH1 = 0.1 * ang_au
+    zH1 = 1.2 * ang_au
+
+    xH2 = 0.1 * ang_au
+    yH2 = 1.4 * ang_au
+    zH2 = -0.1 * ang_au
 
     mol = psi4.geometry("""
     1 2
     noreorient
     units au
+    
+    S	{0} {1} {2}
+    H1	{3} {4} {5}
+    H2	{6} {7} {8}
 
-    S	    0.0000	0.0000	0.1031
-    H@2.014	0.0000	0.9617	-0.8246
-    H@2.014	0.0000	-0.9617	-0.8246
-    """)
+    """.format(xS, yS, zS, xH1, yH1, zH1, xH2, yH2, zH2)
+    )
 
     psi4.set_options({'basis': params['scf_basis'], 'e_convergence': params['scf_enr_conv'], 'reference': params['scf_method']})
     E, wfn = psi4.prop('scf', properties = ["GRID_ESP"], return_wfn = True)
