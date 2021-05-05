@@ -176,9 +176,9 @@ def BUILD_HMAT0(params):
 
     hmat += keomat 
 
-    plot_mat(hmat)
-    plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
-    plt.show()
+    #plot_mat(hmat)
+    #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
+    #plt.show()
     
     """ diagonalize hmat """
     start_time = time.time()
@@ -731,7 +731,7 @@ def gen_adaptive_quads_exact(params , rgrid):
                 Gs = GRID.read_leb_quad(scheme)
 
                 #pull potential at quadrature points
-                potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method'] + "_" + str('%6.4f'%rin) + "_"+scheme
+                potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme
 
                 if os.path.isfile(params['working_dir'] + "esp/" + potfilename):
                     print (potfilename + " file exist")
@@ -744,7 +744,7 @@ def gen_adaptive_quads_exact(params , rgrid):
                         os.remove(params['working_dir'] + "esp/" + potfilename)
                         GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['working_dir']+"esp/")
 
-                        V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/")
+                        V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/",params)
                         V = np.asarray(V)
 
                         fl = open(params['working_dir'] + "esp/" + potfilename,"w")
@@ -766,7 +766,7 @@ def gen_adaptive_quads_exact(params , rgrid):
                     #generate xyz grid
                     GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['working_dir']+"esp/")
 
-                    V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/")
+                    V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/",params)
                     V = np.asarray(V)
 
                     fl = open(params['working_dir'] + "esp/" + potfilename,"w")

@@ -84,7 +84,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 
             grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
             grid_xyz = np.asarray(grid_xyz)
-            V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/")
+            V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/",params)
             V        = -1.0 * np.asarray(V)
             esp_grid = np.hstack((grid_xyz,V[:,None])) 
             fl       = open(params['working_dir'] + "esp/" + params['file_esp'],"w")
@@ -106,7 +106,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 
         grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
         grid_xyz = np.asarray(grid_xyz)
-        V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/")
+        V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/",params)
         V        = -1.0 * np.asarray(V)
 
         esp_grid = np.hstack((grid_xyz,V[:,None])) 
