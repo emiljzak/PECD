@@ -151,6 +151,23 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     print("====================================="+"\n")
 
 
+    print("==================================")
+    print("== Momentum space wavefunctions ==")
+    print("==================================")
+
+    if params['calculate_pecd'] == True:
+        print("Calculating Photo-electron momentum distributions at time t= " + str(params['time_pecd']))
+
+        # preparing the wavefunction coefficients
+        print(int(params['time_pecd']/params['dt']))
+        psi[:] = wavepacket[int(params['time_pecd']/params['dt']-1),:]   
+
+        WLM_array = self.momentum_pad_expansion(psi)
+        #WLM_array = np.asarray(WLM_array)
+        #print("PECD = " +str( self.pecd(WLM_array)))
+        print("Finished!")
+        exit()
+
     print("=========")
     print("==Plots==")
     print("=========")

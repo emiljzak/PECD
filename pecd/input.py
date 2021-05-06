@@ -114,7 +114,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 2000.0 
+    params['tmax']      = 3000.0 
     params['dt']        = 4.0
     params['ivec']      = 4  
 
@@ -203,7 +203,7 @@ def gen_input():
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
                     "spherical":        True, 
-                    "typef":            "LCPL"}
+                    "typef":            "RCPL"}
 
     field_LP    = { "function_name":    "fieldLP", 
                     "omega":            params['omega'], 
@@ -242,7 +242,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],200)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],300)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
@@ -262,4 +262,10 @@ def gen_input():
 
     params["save_snapthots"] = True
 
+
+    """==== momentum-space distributions ===="""
+    params['calculate_pecd']    = True
+    params['pecd_lmax']         = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
+    params['time_pecd']         = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
+    
     return params
