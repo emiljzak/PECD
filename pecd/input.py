@@ -9,6 +9,8 @@ def gen_input():
 
     #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
+    params['mode'] == 'analyze' #'propagate'
+
     """ === molecule directory ==== """ 
 
     params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"

@@ -155,6 +155,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     print("== Momentum space wavefunctions ==")
     print("==================================")
 
+    """
     if params['calculate_pecd'] == True:
         print("Calculating Photo-electron momentum distributions at time t= " + str(params['time_pecd']))
 
@@ -167,6 +168,27 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
         #print("PECD = " +str( self.pecd(WLM_array)))
         print("Finished!")
         exit()
+
+
+        if params['FT_method'] == "quadrature": #set up quadratures
+            print("Using quadratures to calculate FT of the wavefunction")
+
+            FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
+
+            if params['schemeFT_rad'][0] == "Gauss-Laguerre":
+                Nquad = params['schemeFT_rad'][1] 
+                x,w = roots_genlaguerre(Nquad ,1)
+                alpha = 1 #parameter of the G-Lag quadrature
+                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
+            elif params['schemeFT_rad'][0] == "Gauss-Hermite":
+                Nquad = params['schemeFT_rad'][1] 
+                x,w = roots_hermite(Nquad)
+                inv_weight_func = lambda r: np.exp(r**2)
+
+        elif params['FT_method'] == "fftn":
+            print("Using numpy's fftn method to calculate FT of the wavefunction")
+
+    """
 
     print("=========")
     print("==Plots==")
@@ -409,27 +431,32 @@ if __name__ == "__main__":
                             params['bound_binw'],  
                             params['bound_rshift'] )
 
-    #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
-    #config = Config(max_depth=4)
-    #with PyCallGraph(output=graphviz, config=config):
-    ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global, 0.0)
-    
+   
+    if params['mode'] == 'analyze':
+        calc_ftpsi_2d(params, maparray_global, Gr)
 
-    #print(ham0)
-    #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
+    elif params['mode'] == 'propagate':
 
-    prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)
+        ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global, 0.0)
+        
+        #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
+        #config = Config(max_depth=4)
+        #with PyCallGraph(output=graphviz, config=config):
+        #print(ham0)
+        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
+        #plt.show()
 
-    #coeffs0 = read_coeffs( params['working_dir'] + params['file_psi0'], 1 )
+        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)
+
+        #coeffs0 = read_coeffs( params['working_dir'] + params['file_psi0'], 1 )
 
 
-    #psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
-    #print(psi_init)
+        #psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
+        #print(psi_init)
 
-    #ham0 = read_ham0(params)
+        #ham0 = read_ham0(params)
 
-    #print(ham0)
-    #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
+        #print(ham0)
+        #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
+        #plt.show()
 
