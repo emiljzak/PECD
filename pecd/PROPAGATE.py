@@ -5,9 +5,11 @@
 #
 import numpy as np
 from scipy import sparse
+from scipy.fftpack import fftn
 from scipy.sparse.linalg import expm, expm_multiply
 from sympy.physics.wigner import gaunt
 from sympy import N
+import itertools
 
 import MAPPING
 import input
@@ -22,6 +24,12 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+from matplotlib import cm, colors
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+import matplotlib.gridspec as gridspec
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import matplotlib.ticker as ticker
 
 from pycallgraph import PyCallGraph
 from pycallgraph.output import GraphvizOutput
@@ -58,7 +66,7 @@ def prop_wf( params, ham_init, psi_init, maparray, Gr ):
     dt = params['dt'] * time_to_au
 
     print("Allocating wavepacket")
-    flwavepacket      = open( params['wavepacket_file'],'w' )
+    flwavepacket      = open( params['working_dir'] + params['wavepacket_file'],'w' )
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     #psi               = np.zeros( Nbas, dtype=complex ) 
     psi               = psi_init
@@ -416,6 +424,106 @@ def calc_intmat(field,maparray,rgrid,Nbas):
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
     return np.allclose(a, a.conj(), rtol=rtol, atol=atol)
 
+
+def read_wavepacket(filename, itime, Nbas):
+
+    coeffs = []
+    #print(itime)
+    
+    with open(filename, 'r', ) as f:
+        for _ in range(itime):
+            next(f)
+        for line in f:
+            words   = line.split()
+            for ivec in range(2*Nbas):
+                coeffs.append(float(words[1+ivec]))
+
+        """
+        #print(float(record[0][1]))
+        for line in itertools.islice(f, itime-1, None):
+            print(np.shape(line))
+            print(type(line))
+            #print(line)
+        """
+    """
+    for line in fl:
+
+        i       = int(words[0])
+        n       = int(words[1])
+        xi      = int(words[2])
+        l       = int(words[3])
+        m       = int(words[4])
+        c       = []
+        for ivec in range(nvecs):
+            c.append(float(words[5+ivec]))
+        coeffs.append([i,n,xi,l,m,np.asarray(c)])
+    """
+    return coeffs
+
+def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
+   
+    coeff_thr = 1e-3
+    ncontours = 100
+
+    nlobs   = params['nlobs']
+    nbins   = params['bound_nbins'] + params['nbins'] 
+    npoints = 200
+    rmax    = nbins * params['bound_binw']
+    rmin    = 10.0
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axft = fig.add_subplot(spec[0, 0])
+
+
+    cart_grid = np.linspace(-rmax*0.95, rmax*0.95, npoints, endpoint=True, dtype=float)
+
+    y2d, z2d = np.meshgrid(cart_grid,cart_grid)
+
+    thetagrid = np.arctan2(y2d,z2d)
+    rgrid = np.sqrt(y2d**2 + z2d**2)
+
+    x   =  np.zeros(nlobs)
+    w   =  np.zeros(nlobs)
+    x,w =  GRID.gauss_lobatto(nlobs,14)
+    w   =  np.array(w)
+    x   =  np.array(x) # convert back to np arrays
+
+    y = np.zeros((len(y2d),len(z2d)), dtype=complex)
+
+    phi0 = 0.0 * np.pi/2 #fixed polar angle
+    
+    for ielem, elem in enumerate(maparray):
+        if np.abs(psi[2*ielem]+1j*psi[2*ielem + 1]) > coeff_thr:
+            print(str(elem) + str(psi[ielem]))
+
+            #chir = flist[elem[2]-1](rgrid) #labelled by xi
+
+            for i in range(len(cart_grid)):
+     
+                y[i,:] +=  ( psi[2*ielem] + 1j * psi[2*ielem + 1] ) * PLOTS.spharm(elem[3], elem[4], thetagrid[i,:], phi0) * \
+                        chilist[elem[2]-1](rgrid[i,:]) #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
+
+
+    fty = fftn(y)
+    print(fty)
+
+
+    ft_grid = np.linspace(-1.0/(2.0 * rmax), 1.0/(2.0 * rmax), npoints, endpoint=True, dtype=float)
+
+    yftgrid, zftgrid = np.meshgrid(ft_grid,ft_grid)
+
+
+    line_ft = axft.contourf(yftgrid, zftgrid , fty[:npoints].real/np.max(np.abs(fty)), 
+                                        ncontours, cmap = 'jet', vmin=-0.2, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_ft, ax=axft, aspect=30)
+    
+    #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
+    plt.legend()   
+    plt.show()  
+   
+    plt.close()
+
 if __name__ == "__main__":      
 
 
@@ -433,7 +541,28 @@ if __name__ == "__main__":
 
    
     if params['mode'] == 'analyze':
-        calc_ftpsi_2d(params, maparray_global, Gr)
+        #read wavepacket from file
+
+        itime = int( params['time_pecd'] / params['dt']) 
+
+
+        file_wavepacket      = params['working_dir'] + params['wavepacket_file']
+       
+        psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+        print(np.shape(psi))
+
+
+        nbins = params['bound_nbins'] + params['nbins']
+        
+        Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+
+        maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                     params['map_type'], params['working_dir'] )
+
+        chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins + 15, params['bound_binw'], maparray_chi)
+
+        calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
+
 
     elif params['mode'] == 'propagate':
 
