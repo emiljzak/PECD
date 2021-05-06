@@ -9,7 +9,7 @@ def gen_input():
 
     #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
-    params['mode'] == 'analyze' #'propagate'
+    params['mode'] = 'propagate' #'analyze' #
 
     """ === molecule directory ==== """ 
 
@@ -205,7 +205,7 @@ def gen_input():
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
                     "spherical":        True, 
-                    "typef":            "RCPL"}
+                    "typef":            "LCPL"}
 
     field_LP    = { "function_name":    "fieldLP", 
                     "omega":            params['omega'], 
@@ -262,12 +262,12 @@ def gen_input():
         animation_filename: name of the file into which animations will be saved
     """
 
-    params["save_snapthots"] = True
+    params["save_snapthots"] = False
 
 
     """==== momentum-space distributions ===="""
     params['calculate_pecd']    = True
     params['pecd_lmax']         = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['time_pecd']         = params['tmax'] #at what time (in a.u.) do we want to calculate PECD?
+    params['time_pecd']         = params['tmax'] #at what time (in as) do we want to calculate PECD?
     
     return params
