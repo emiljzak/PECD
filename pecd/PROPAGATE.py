@@ -475,8 +475,7 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axft = fig.add_subplot(spec[0, 0])
 
-
-    cart_grid = np.linspace(-rmax*0.95, rmax*0.95, npoints, endpoint=True, dtype=float)
+    cart_grid = np.linspace(-rmax*0.99, rmax*0.99, npoints, endpoint=True, dtype=float)
 
     y2d, z2d = np.meshgrid(cart_grid,cart_grid)
 
@@ -508,7 +507,6 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
     fty = fftn(y)
     print(fty)
 
-
     ft_grid = np.linspace(-1.0/(2.0 * rmax), 1.0/(2.0 * rmax), npoints, endpoint=True, dtype=float)
 
     yftgrid, zftgrid = np.meshgrid(ft_grid,ft_grid)
@@ -521,8 +519,43 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
     plt.legend()   
     plt.show()  
-   
-    plt.close()
+
+    return fty, yftgrid, zftgrid 
+
+def calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist):
+    
+    Nbas = len(maparray_global)
+
+    itime = int( params['time_pecd'] / params['dt']) 
+
+
+    psi_rcpl =  read_wavepacket(file_rcpl, itime, Nbas)
+    psi_lcpl =  read_wavepacket(file_rcpl, itime, Nbas)
+
+
+    ft_rcpl, yftgrid, zftgrid = calc_ftpsi_2d(params, maparray_global, Gr, psi_rcpl, chilist)
+    ft_lcpl, yftgrid, zftgrid = calc_ftpsi_2d(params, maparray_global, Gr, psi_lcpl, chilist)
+
+
+    ncontours = 100
+
+    nlobs   = params['nlobs']
+    nbins   = params['bound_nbins'] + params['nbins'] 
+    npoints = 200
+    rmax    = nbins * params['bound_binw']
+    rmin    = 10.0
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axpecd = fig.add_subplot(spec[0, 0])
+
+    line_pecd = axpecd.contourf(yftgrid, zftgrid , ( ft_rcpl[:npoints].real - ft_lcpl[:npoints].real ) / np.max(np.abs(ft_lcpl)), 
+                                        ncontours, cmap = 'jet', vmin=-0.5, vmax=0.5) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_pecd, ax=axpecd, aspect=30)
+    plt.legend()   
+    plt.show()  
+
+
 
 if __name__ == "__main__":      
 
@@ -545,13 +578,9 @@ if __name__ == "__main__":
 
         itime = int( params['time_pecd'] / params['dt']) 
 
-
         file_wavepacket      = params['working_dir'] + params['wavepacket_file']
-       
-        psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
-        print(np.shape(psi))
-
-
+        #psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+        #print(np.shape(psi))
         nbins = params['bound_nbins'] + params['nbins']
         
         Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
@@ -561,8 +590,12 @@ if __name__ == "__main__":
 
         chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins + 15, params['bound_binw'], maparray_chi)
 
-        calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
+        #calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
 
+        file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
+        file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
+
+        calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
 
     elif params['mode'] == 'propagate':
 
