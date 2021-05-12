@@ -215,11 +215,22 @@ def BUILD_HMAT0(params):
 
 """ ============ KEOMAT - new fast implementation ============ """
 def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
+
     nlobs = params['bound_nlobs'] 
+
+    if params['hmat_format'] == 'numpy_arr':    
+        keomat =  np.zeros((Nbas, Nbas), dtype=float)
+    elif params['hmat_format'] == 'sparse_csr':
+        keomat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
+    else:
+        raise ValueError("Incorrect format type for the Hamiltonian")
+        exit()
+
+
     """call Gauss-Lobatto rule """
     x   =   np.zeros(nlobs, dtype = float)
     w   =   np.zeros(nlobs, dtype = float)
-    xc,wc =   GRID.gauss_lobatto(nlobs,14)
+    xc, wc =   GRID.gauss_lobatto(nlobs,14)
     x   =   np.asarray(xc, dtype=float)
     w   =   np.asarray(wc, dtype = float)
 
@@ -232,10 +243,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     DMAT = BUILD_DMAT(x)
 
     """ Build J-matrix """
-
     JMAT  = BUILD_JMAT(DMAT,w)
-
-    #JMAT *= 0.5 * params['bound_binw']
 
     """
     plot_mat(JMAT)
@@ -245,7 +253,6 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     """
     """ Build KD, KC matrices """
     KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
-
     KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
 
     #plot_mat(KD)
@@ -253,14 +260,10 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     #plt.legend()
     #plt.show()
 
-
     """ Generate K-list """
     klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
     """ Fill up global KEO """
-
-    keomat =  np.zeros((Nbas, Nbas), dtype=float)
-
     klist = np.asarray(klist, dtype=int)
 
     for i in range(klist.shape[0]):
@@ -272,19 +275,24 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
                 rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0
                 keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
 
-        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs - 1:
+        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs - 1: #u^(bb) term missing?
             keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
 
 
-    print("KEO matrix")
-    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-        print(0.5*keomat)
+    #print("KEO matrix")
+    #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+    #    print(0.5*keomat)
   
     #plot_mat(keomat)
     #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
     #plt.legend()
     #plt.show()
     #exit()
+
+    #print size of KEO matrix
+    #keo_csr_size = keomat.data.size/(1024**2)
+    #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
+
     return  0.5 * keomat 
 
 def BUILD_DMAT(x):
@@ -469,12 +477,10 @@ def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
         else:
             return      0.0
 
-
 def KEO_matel_rad_diag(i,n,x,w,rshift,binwidth):
     #w /= sqrt(sum(w[:]))
     w_i1     = w#/sum(w[:])
     w_i2     = w#/sum(w[:]) 
-
 
 def KEO_matel_ang(i1,n1,l,rgrid):
     """Calculate the anglar momentum part of the KEO"""
@@ -518,12 +524,6 @@ def fp(i,n,k,x):
                 if mu !=n:
                     fprime += (x[n]-x[mu])**(-1)
     return fprime
-
-
-
-
-
-
 
 
 """ ============ POTMAT0 ============ """

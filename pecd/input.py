@@ -9,7 +9,7 @@ def gen_input():
 
     #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
-    params['mode'] = 'analyze' #'propagate' #'analyze' #
+    params['mode'] = 'propagate' #'propagate' #'analyze' #
 
     """ === molecule directory ==== """ 
 
@@ -21,13 +21,13 @@ def gen_input():
     """==== BOUND ===="""
 
     params['map_type']      = 'DVR' #DVR or SPECT
-    params['hmat_format']   = "regular" # regular, coo, csr
-
+    params['hmat_format']   = "sparse_csr" # numpy_arr
+    params['file_format']   = 'dat' #npz, hdf5
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10 
-    params['bound_nbins']   = 40
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 5
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 4
@@ -41,7 +41,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -116,9 +116,9 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 3000.0 
+    params['tmax']      = 100.0 
     params['dt']        = 4.0
-    params['ivec']      = 4  
+    params['ivec']      = 3  
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -126,7 +126,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
@@ -244,7 +244,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],300)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],4)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
@@ -262,7 +262,7 @@ def gen_input():
         animation_filename: name of the file into which animations will be saved
     """
 
-    params["save_snapthots"] = False
+    params["save_snapthots"] = True
 
 
     """==== momentum-space distributions ===="""
