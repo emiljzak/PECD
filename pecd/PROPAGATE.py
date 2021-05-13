@@ -105,6 +105,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr ):
     Fvec = np.asarray(Fvec)
     Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
 
+    Fvec += np.conjugate(Fvec)
 
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
@@ -115,7 +116,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr ):
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
         dip = Fvec[itime][0] * intmat0[0]  + Fvec[itime][2] * intmat0[2]
-        dip += dip.getH()
+
         #dip = sparse.csr_matrix(dip)
 
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
@@ -247,11 +248,11 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
 
             if os.path.isfile(params['working_dir'] + params['file_hmat_init']+".npz" ):
                 print (params['file_hmat_init']+ ".npz" + " file exist")
-                hmat = read_ham_init(params)
-                #warning: I need to implement options of sparse format as well as checks of sizes
+                ham0 = read_ham_init(params)
+
                 """ diagonalize hmat """
                 start_time = time.time()
-                enr, coeffs = eigsh(hmat, k = params['num_ini_vec'], which='SA')
+                enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal')
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -265,6 +266,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
             hmat =  np.zeros((Nbas, Nbas), dtype=float)
         elif params['hmat_format'] == 'sparse_csr':
             hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
+            #hmat =  np.zeros((Nbas, Nbas), dtype=float)
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
             exit()
@@ -279,7 +281,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
         keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
         end_time = time.time()
         print("New implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-        
+
         #start_time = time.time()
         #keomat = BOUND.BUILD_KEOMAT( params, maparray, Nbas , Gr )
         #end_time = time.time()
@@ -302,6 +304,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
             print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
 
         elif params['hmat_format'] == 'sparse_csr':
+            #hmat = sparse.csr_matrix(hmat)
             hmat_csr_size = hmat.data.size/(1024**2)
             print('Size of the sparse Hamiltonian csr_matrix: '+ '%3.2f' %hmat_csr_size + ' MB')
             ham0 = hmat.copy()
@@ -313,22 +316,20 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
             exit()
 
 
+
         """ --- filter hamiltonian matrix  --- """
+
         if params['hmat_format'] == 'numpy_arr':    
             ham_filtered = np.where( np.abs(ham0) < params['hmat_filter'], 0.0, ham0)
-            ham_filtered = sparse.csr_matrix(ham_filtered)
+            #ham_filtered = sparse.csr_matrix(ham_filtered)
 
         elif params['hmat_format'] == 'sparse_csr':
-            nonzero_mask = np.array(ham0[ham0.nonzero()] < params['hmat_filter'])[0]
+            nonzero_mask = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
             rows = ham0.nonzero()[0][nonzero_mask]
             cols = ham0.nonzero()[1][nonzero_mask]
             ham0[rows, cols] = 0
-            print(ham0)
             ham_filtered = ham0.copy()
-            #ham_filtered = ham_filtered.eliminate_zeros()
-            #print(ham_filtered)
-            #print(type(ham_filtered))
-           
+
 
         """ diagonalize hmat """
         if params['hmat_format'] == 'numpy_arr':    
@@ -421,7 +422,7 @@ def proj_wf0_wfinit_dvr(coeffs0, marray, Nbas_global):
 
 def read_ham_init(params):
     if params['hmat_format'] == 'sparse_csr':
-        sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ ".npz" , hmat , compressed = False )
+        hmat = sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ ".npz" )
     elif params['hmat_format'] == 'numpy_arr':
         with open( params['working_dir'] + params['file_hmat_init'] , 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)

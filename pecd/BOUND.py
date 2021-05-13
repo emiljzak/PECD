@@ -221,6 +221,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     if params['hmat_format'] == 'numpy_arr':    
         keomat =  np.zeros((Nbas, Nbas), dtype=float)
     elif params['hmat_format'] == 'sparse_csr':
+        #keomat =  np.zeros((Nbas, Nbas), dtype=float)
         keomat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
     else:
         raise ValueError("Incorrect format type for the Hamiltonian")
