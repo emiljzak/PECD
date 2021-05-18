@@ -276,7 +276,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
-    plt.legend()   
+    #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
         fig.savefig( params['working_dir'] +"/animation/" + "angrad_XZ_t=" +\
@@ -326,7 +326,7 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
-    plt.legend()   
+    #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
         fig.savefig( params['working_dir'] +"/animation/" + "angrad_XY_t=" +\

@@ -7,6 +7,7 @@ import numpy as np
 from scipy import sparse
 from scipy.fftpack import fftn
 from scipy.sparse.linalg import expm, expm_multiply, eigsh
+from scipy.special import sph_harm
 from sympy.physics.wigner import gaunt
 from sympy import N
 import itertools
@@ -129,18 +130,8 @@ def prop_wf( params, ham0, psi_init, maparray, Gr ):
                             " ".join('{:16.8e}'.format(psi[i].real) + '{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
                             '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) + "\n")
         
-
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
-    #sparse
-    """ @numba.jit(nopython=True)
-        def numba_csc_ndarray_dot2(a: csc_matrix, b: np.ndarray):
-            out = np.zeros((a.shape[0], b.shape[1]))
-            for j in range(b.shape[1]):
-                for i in range(b.shape[0]):
-                    for k in range(a.indptr[i], a.indptr[i + 1]):
-                        out[a.indices[k], j] += a.data[k] * b[i, j]
-    return out"""
 
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
@@ -149,45 +140,12 @@ def prop_wf( params, ham0, psi_init, maparray, Gr ):
     print("==post-processing of the wavepacket==")
     print("====================================="+"\n")
 
+    """ for post-processing choose analyze mode """
 
     print("==================================")
     print("== Momentum space wavefunctions ==")
     print("==================================")
 
-    """
-    if params['calculate_pecd'] == True:
-        print("Calculating Photo-electron momentum distributions at time t= " + str(params['time_pecd']))
-
-        # preparing the wavefunction coefficients
-        print(int(params['time_pecd']/params['dt']))
-        psi[:] = wavepacket[int(params['time_pecd']/params['dt']-1),:]   
-
-        WLM_array = self.momentum_pad_expansion(psi)
-        #WLM_array = np.asarray(WLM_array)
-        #print("PECD = " +str( self.pecd(WLM_array)))
-        print("Finished!")
-        exit()
-
-
-        if params['FT_method'] == "quadrature": #set up quadratures
-            print("Using quadratures to calculate FT of the wavefunction")
-
-            FTscheme_ang = quadpy.u3.schemes[params['schemeFT_ang']]()
-
-            if params['schemeFT_rad'][0] == "Gauss-Laguerre":
-                Nquad = params['schemeFT_rad'][1] 
-                x,w = roots_genlaguerre(Nquad ,1)
-                alpha = 1 #parameter of the G-Lag quadrature
-                inv_weight_func = lambda r: r**(-alpha)*np.exp(r)
-            elif params['schemeFT_rad'][0] == "Gauss-Hermite":
-                Nquad = params['schemeFT_rad'][1] 
-                x,w = roots_hermite(Nquad)
-                inv_weight_func = lambda r: np.exp(r**2)
-
-        elif params['FT_method'] == "fftn":
-            print("Using numpy's fftn method to calculate FT of the wavefunction")
-
-    """
 
     print("=========")
     print("==Plots==")
@@ -209,6 +167,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr ):
         for itime, t in enumerate(tgrid): 
             for ielem in plot_times:
                 if itime == ielem:
+                    print("Generating plot at time = " + str(t))
                     psi[:] = wavepacket[itime,:] 
                     PLOTS.plot_snapshot_int(params, psi, maparray, Gr_all, t, flist)
 
@@ -314,8 +273,6 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
             exit()
-
-
 
         """ --- filter hamiltonian matrix  --- """
 
@@ -517,6 +474,147 @@ def read_wavepacket(filename, itime, Nbas):
     """
     return coeffs
 
+def cart2sph(x,y,z):
+    r=np.sqrt(x**2+y**2+z**2)
+    theta=np.arctan(np.sqrt(x**2+y**2)/z)
+    phi=np.arctan(y/x)
+    return r,theta,phi
+    
+def spharmcart(l,m,x,y,z):
+    tol = 1e-8
+    if all(np.abs(x)>tol) and all(np.abs(z)>tol): 
+        r       =   np.sqrt(x**2+y**2+z**2)
+        theta   =   np.arctan(np.sqrt(x**2+y**2)/z)
+        phi     =   np.arctan(y/x)
+    else:
+        r       = 0.0
+        theta   = 0.0
+        phi     = 0.0
+    return sph_harm(m, l, phi, theta)
+
+def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
+    coeff_thr = 1e-3
+    ncontours = 20
+
+    nlobs   = params['nlobs']
+    nbins   = params['bound_nbins'] + params['nbins'] 
+    npoints = 100
+    rmax    = nbins * params['bound_binw']
+    rmin    = 0.0
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axft = fig.add_subplot(spec[0, 0])
+
+    cart_grid = np.linspace(-1.0 * rmax/np.sqrt(3), rmax/np.sqrt(3), npoints, endpoint=True, dtype=float)
+
+    x3d, y3d, z3d = np.meshgrid(cart_grid, cart_grid, cart_grid)
+
+
+    x   =  np.zeros(nlobs)
+    w   =  np.zeros(nlobs)
+    x,w =  GRID.gauss_lobatto(nlobs,14)
+    w   =  np.array(w)
+    x   =  np.array(x) # convert back to np arrays
+
+    val = np.zeros((len(x3d),len(y3d),len(z3d)), dtype = complex)
+    
+    start_time = time.time()
+    for ielem, elem in enumerate(maparray):
+        if np.abs(psi[2*ielem]+1j*psi[2*ielem + 1]) > coeff_thr:
+            print(str(elem) + str(psi[ielem]))
+
+            for i in range(len(cart_grid)):
+                for j in range(len(cart_grid)):
+                    val[i,j,:] +=  ( psi[2*ielem] + 1j * psi[2*ielem + 1] ) * spharmcart(elem[3], elem[4], x3d[i,j,:], y3d[i,j,:], z3d[i,j,:]) * \
+                                    chilist[elem[2]-1](np.sqrt(x3d[i,j,:]**2 + y3d[i,j,:]**2 + z3d[i,j,:]**2)) #
+
+
+    end_time = time.time()
+    print("The time calculation of wavefunction on 3-D cubic grid: " + str("%10.3f"%(end_time-start_time)) + "s")
+
+    start_time = time.time()
+    ftval = fftn(val)
+    end_time = time.time()
+    print("The time calculation 3D Fourier transform: " + str("%10.3f"%(end_time-start_time)) + "s")
+
+    print(np.shape(ftval))
+
+    ft_grid = np.linspace(-1.0/(rmax), 1.0/(rmax), npoints, endpoint=True, dtype=float)
+
+    yftgrid, zftgrid = np.meshgrid(ft_grid,ft_grid)
+
+    line_ft = axft.contourf(yftgrid, zftgrid , ftval[50,:npoints,:npoints].real/np.max(np.abs(ftval)), 
+                                        ncontours, cmap = 'jet', vmin=-0.2, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_ft, ax=axft, aspect=30)
+    
+    #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
+    plt.legend()   
+    plt.show()  
+
+
+def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi):
+    """
+    returns: list of interpolator objects(class 'scipy.interpolate.interpolate.interp1d'). List is labelled by l,m.
+    """
+
+    Nbas = len(maparray_global)
+    Nr = len(maparray_chi)
+    print(np.shape(chilist))
+    print(type(chilist[9]))
+    npts = 10000
+    fine_grid = np.linspace(0.0,rmax,npts,endpoint=False)
+
+    #for i in range(359):
+    #    plt.plot(fine_grid,chilist[i](fine_grid))
+    #plt.show()
+    #exit()
+
+    val = np.zeros(npts, dtype = complex)
+    Plm = []
+
+    print(psi)
+
+    print("number of radial points: " + str(len(maparray_chi)))
+
+    coeffs = np.zeros(Nbas, dtype = complex)
+    for ielem in range(Nbas):
+        coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] 
+
+
+    c_arr = coeffs.reshape(len(maparray_chi),-1)
+    print(c_arr.shape)
+    print(c_arr[Nr-1][(lmax+1)**2-1])
+
+    indang = 0
+    for l in range(0,lmax+1):
+        for m in range(-l,l+1):
+            print(l,m)
+            
+
+            for ielem, elem in enumerate(maparray_chi):
+                val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](fine_grid)
+
+            indang += 1
+            Plm.append([l,m,val])
+            val = 0.0
+
+            plt.plot(fine_grid,np.abs(Plm[indang-1][2]))
+    plt.show()
+    return Plm
+
+def calc_fthankel_psi_3d(params, maparray_chi, maparray_global, Gr, psi, chilist):
+
+    nlobs   = params['nlobs']
+    nbins   = params['bound_nbins'] + params['nbins'] 
+    rmax    = nbins * params['bound_binw']
+
+    calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi)
+
+
+
+
+
 def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
    
     coeff_thr = 1e-5
@@ -629,30 +727,38 @@ if __name__ == "__main__":
                             params['bound_rshift'] )
 
 
-
     if params['mode'] == 'analyze':
-        #read wavepacket from file
 
-        itime = int( params['time_pecd'] / params['dt']) 
+        itime = int( params['analyze_time'] / params['dt']) 
 
-        file_wavepacket      = params['working_dir'] + params['wavepacket_file']
-        #psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
-        #print(np.shape(psi))
-        nbins = params['bound_nbins'] + params['nbins']
-        
-        Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+        if params['analyze_mpad'] == True:
+                    #read wavepacket from file
+            file_wavepacket      = params['working_dir'] + params['wavepacket_file']
+            psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
-        maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                     params['map_type'], params['working_dir'] )
+            #print(np.shape(psi))
+            nbins = params['bound_nbins'] + params['nbins']
+            
+            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
-        chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins + 15, params['bound_binw'], maparray_chi)
+            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                        params['map_type'], params['working_dir'] )
 
-        #calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
+            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
-        file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
-        file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
+            #calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
 
-        calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
+            if params['FT_method']  == "FFT_cart":
+                calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+
+            elif params['FT_method']  == "FFT_hankel":
+                calc_fthankel_psi_3d(params, maparray_chi, maparray_global, Gr, psi, chilist)
+
+        if params['analyze_pecd'] == True:
+            file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
+            file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
+
+            calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
 
     elif params['mode'] == 'propagate':
 
