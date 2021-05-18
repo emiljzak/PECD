@@ -9,7 +9,7 @@ def gen_input():
 
     #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
-    params['mode'] = 'propagate' #'propagate' #'analyze' #
+    params['mode'] = 'analyze' #'propagate' #'analyze' #
 
     """ === molecule directory ==== """ 
 
@@ -26,11 +26,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 5
-    params['bound_nbins']   = 2
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 40
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 1
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -41,7 +41,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -116,9 +116,9 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 100.0 
+    params['tmax']      = 2000.0 
     params['dt']        = 4.0
-    params['ivec']      = 3  
+    params['ivec']      = 5  
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -128,7 +128,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket.dat"
 
@@ -244,7 +244,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],4)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],100)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
@@ -266,8 +266,13 @@ def gen_input():
 
 
     """==== momentum-space distributions ===="""
-    params['calculate_pecd']    = True
+    """ PECD """
+    params['analyze_pecd']    = False
     params['pecd_lmax']         = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['time_pecd']         = params['tmax'] #at what time (in as) do we want to calculate PECD?
+    params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
     
+    """ MPADs """
+    params['analyze_mpad']    = True
+    params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
+
     return params
