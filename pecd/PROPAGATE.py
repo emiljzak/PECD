@@ -12,6 +12,8 @@ from sympy.physics.wigner import gaunt
 from sympy import N
 import itertools
 
+from pyhank import qdht, iqdht, HankelTransform
+
 import MAPPING
 import input
 import GRID
@@ -553,16 +555,14 @@ def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
     plt.show()  
 
 
-def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi):
+def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi,npts):
     """
     returns: list of interpolator objects(class 'scipy.interpolate.interpolate.interp1d'). List is labelled by l,m.
     """
 
     Nbas = len(maparray_global)
     Nr = len(maparray_chi)
-    print(np.shape(chilist))
-    print(type(chilist[9]))
-    npts = 10000
+    print("number of radial points: " + str(len(maparray_chi)))
     fine_grid = np.linspace(0.0,rmax,npts,endpoint=False)
 
     #for i in range(359):
@@ -573,45 +573,59 @@ def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi):
     val = np.zeros(npts, dtype = complex)
     Plm = []
 
-    print(psi)
-
-    print("number of radial points: " + str(len(maparray_chi)))
-
     coeffs = np.zeros(Nbas, dtype = complex)
     for ielem in range(Nbas):
         coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] 
 
-
     c_arr = coeffs.reshape(len(maparray_chi),-1)
-    print(c_arr.shape)
-    print(c_arr[Nr-1][(lmax+1)**2-1])
+    #print(c_arr.shape)
+    #print(c_arr[Nr-1][(lmax+1)**2-1])
 
     indang = 0
     for l in range(0,lmax+1):
         for m in range(-l,l+1):
             print(l,m)
-            
-
+        
             for ielem, elem in enumerate(maparray_chi):
                 val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](fine_grid)
 
             indang += 1
             Plm.append([l,m,val])
-            val = 0.0
-
-            plt.plot(fine_grid,np.abs(Plm[indang-1][2]))
-    plt.show()
+            val = 0.0 + 1j * 0.0
+            #plt.plot(fine_grid,np.abs(Plm[indang-1][2]))
+    #plt.show()
     return Plm
+
+
+def calc_hankel_transforms(Plm,npts,rmax):
+    Flm = [] #list of output Hankel transforms
+  
+
+    fine_grid = np.linspace(0.0,rmax,npts,endpoint=False)
+
+    for ielem, elem in enumerate(Plm):
+        print("Calculating Hankel transform for partial wave Plm: " + str(elem[0]) + " " + str(elem[1]))
+
+        Hank_obj = HankelTransform(elem[0], radial_grid = fine_grid) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
+        #Hank.append(Hank_obj) 
+        Plm_resampled = Hank_obj.to_transform_r(elem[2])
+        F = Hank_obj.qdht(Plm_resampled)
+        Flm.append([elem[0],elem[1],F])
+
+        plt.plot(Hank_obj.v,F)
+    plt.show()
+    return Flm
 
 def calc_fthankel_psi_3d(params, maparray_chi, maparray_global, Gr, psi, chilist):
 
     nlobs   = params['nlobs']
     nbins   = params['bound_nbins'] + params['nbins'] 
     rmax    = nbins * params['bound_binw']
+    npts = 2000 #number of grid points for evaluation of Hankel transform
 
-    calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi)
+    Plm = calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi,npts)
 
-
+    Flm = calc_hankel_transforms(Plm,npts,rmax)
 
 
 
