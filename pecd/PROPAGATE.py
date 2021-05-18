@@ -587,7 +587,9 @@ def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi,npts):
             print(l,m)
         
             for ielem, elem in enumerate(maparray_chi):
-                val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](fine_grid)
+                if elem[0] > 4: #cut-out bound-state electron density
+
+                    val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](fine_grid)
 
             indang += 1
             Plm.append([l,m,val])
@@ -612,20 +614,60 @@ def calc_hankel_transforms(Plm,npts,rmax):
         F = Hank_obj.qdht(Plm_resampled)
         Flm.append([elem[0],elem[1],F])
 
-        plt.plot(Hank_obj.v,F)
-    plt.show()
-    return Flm
+        #plt.plot(Hank_obj.kr,np.abs(F))
+    #plt.show()
+    return Flm, Hank_obj.kr
 
 def calc_fthankel_psi_3d(params, maparray_chi, maparray_global, Gr, psi, chilist):
+
+    """ returns: fourier transform inside a ball grid (r,theta,phi) """
 
     nlobs   = params['nlobs']
     nbins   = params['bound_nbins'] + params['nbins'] 
     rmax    = nbins * params['bound_binw']
-    npts = 2000 #number of grid points for evaluation of Hankel transform
+    npts    = 1000 #number of grid points for evaluation of Hankel transform
+    ncontours = 100
 
+
+    #calculate partial waves on radial grid
     Plm = calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi,npts)
 
-    Flm = calc_hankel_transforms(Plm,npts,rmax)
+    #calculate Hankel transforms on appropriate k-vector grid
+    Flm, kgrid = calc_hankel_transforms(Plm,npts,rmax)
+
+
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axft = fig.add_subplot(spec[0, 0], projection='polar')
+
+    Nrad = len(kgrid)
+    print(Nrad)
+    Nang = Nrad
+
+    N_red = int(Nang/4)
+
+    kgrid_cut = kgrid[0:N_red ]
+
+    theta_1d = np.linspace(-np.pi,   np.pi, N_red , endpoint=True ) # 
+    phi0 = 0.0
+    kmesh, thetamesh = np.meshgrid(kgrid_cut,theta_1d)
+
+    FT = np.zeros((N_red ,N_red ), dtype = complex)
+
+
+    for i in range(N_red):
+        print(i)
+        for elem in Flm:
+            FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:N_red] * PLOTS.spharm(elem[0], elem[1], theta_1d[i] , phi0) 
+
+
+    line_ft = axft.contourf(thetamesh, kmesh, np.abs(FT)/np.max(np.abs(FT)), 
+                            ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_ft, ax=axft, aspect=30)
+    
+    plt.legend()   
+    plt.show()  
 
 
 
