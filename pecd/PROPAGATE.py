@@ -739,38 +739,18 @@ def plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, phi0
 
 
 
-def calc_W_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
+def calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     """calculate numerically average of W over the phi angle"""
-
-    ncontours = 100
-
-    #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi,npts)
-
-    #calculate Hankel transforms on appropriate k-vector grid
-    Flm, kgrid = calc_hankel_transforms(Plm,npts,rmax)
-
-    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-    axft = fig.add_subplot(spec[0, 0], projection='polar')
-
-    Nrad = len(kgrid)
-    Nang = Nrad
-    N_red = int(Nang/4)
-    kgrid_cut = kgrid[0:N_red ]
-    theta_1d = np.linspace(-np.pi,   np.pi, N_red , endpoint=True ) # 
-    #phi0 = np.pi + 3.0*np.pi/4.0
-    kmesh, thetamesh = np.meshgrid(kgrid_cut,theta_1d)
-
 
     Nphi = 10
     phigrid = np.linspace(0, 2.0 * np.pi, Nphi, endpoint=False)
-
+    grid_theta, grid_r = calc_grid_for_FT(params)
+   
     W_arr = []
 
     for iphi in range(Nphi):
-
-        W_arr.append( np.abs( calc_fthankel_psi_3d(params, maparray_chi, maparray_global, psi, chilist,phigrid[iphi]) )**2 ) 
+        FT, kgrid = calc_FT_3D_hankel(params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phigrid[iphi] )
+        W_arr.append( np.abs(FT)**2 ) 
 
 
     Wav = np.copy(W_arr[0])
@@ -779,15 +759,29 @@ def calc_W_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     for elem in W_arr:
         Wav += elem
 
-    #line_ft = axft.contourf(thetamesh, kmesh, np.abs(FT)/np.max(np.abs(FT)), 
-    #                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    #plt.colorbar(line_ft, ax=axft, aspect=30)
+    return Wav / float(Nphi), kgrid
+
+def plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
+    ncontours = 100
+    grid_theta, grid_r = calc_grid_for_FT(params)
+
+    Wav, kgrid  = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axft = fig.add_subplot(spec[0, 0], projection='polar')
+
+    Nrad = len(kgrid)
+
+    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
+
+    axft.set_ylim(0,1) #radial extent
+    line_ft = axft.contourf(thetamesh, kmesh, Wav/np.max(Wav), 
+                            ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_ft, ax=axft, aspect=30)
     
-    #plt.legend()   
-    #plt.show()  
-
-
-    return Wav / Nphi
+    plt.legend()   
+    plt.show()  
 
 
 
@@ -841,6 +835,7 @@ def calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist):
     plt.show()  
 
     return W
+
 
 
 def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
@@ -995,8 +990,8 @@ if __name__ == "__main__":
                 
                 # PLOTS of W:
                 #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-
+                #plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+                plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
 
                 #grid_theta, grid_r = calc_grid_for_FT(params)
                 #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
