@@ -559,15 +559,17 @@ def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
     plt.show()  
 
 
-def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi,npts):
+def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi):
     """
     returns: list of numpy arrays. List is labelled by l,m.
     """
+    Plm = []
 
     Nbas = len(maparray_global)
     Nr = len(maparray_chi)
-    print("number of radial points: " + str(len(maparray_chi)))
+    print("number of radial basis points/functions: " + str(len(maparray_chi)))
 
+    npts = grid_r.size
 
     #for i in range(359):
     #    plt.plot(fine_grid,chilist[i](fine_grid))
@@ -575,15 +577,12 @@ def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi,npts):
     #exit()
 
     val = np.zeros(npts, dtype = complex)
-    Plm = []
 
     coeffs = np.zeros(Nbas, dtype = complex)
     for ielem in range(Nbas):
         coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] 
 
     c_arr = coeffs.reshape(len(maparray_chi),-1)
-    #print(c_arr.shape)
-    #print(c_arr[Nr-1][(lmax+1)**2-1])
 
     indang = 0
     for l in range(0,lmax+1):
@@ -593,7 +592,7 @@ def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi,npts):
             for ielem, elem in enumerate(maparray_chi):
                 if elem[0] > 4: #cut-out bound-state electron density
 
-                    val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](fine_grid)
+                    val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](grid_r)
 
             indang += 1
             Plm.append([l,m,val])
@@ -603,16 +602,13 @@ def calc_partial_waves(chilist,rmax,lmax,psi,maparray_global,maparray_chi,npts):
     return Plm
 
 
-def calc_hankel_transforms(Plm,npts,rmax):
+def calc_hankel_transforms(Plm, grid_r):
     Flm = [] #list of output Hankel transforms
   
-
-    fine_grid = np.linspace(0.0,rmax,npts,endpoint=False)
-
     for ielem, elem in enumerate(Plm):
         print("Calculating Hankel transform for partial wave Plm: " + str(elem[0]) + " " + str(elem[1]))
 
-        Hank_obj = HankelTransform(elem[0], radial_grid = fine_grid) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
+        Hank_obj = HankelTransform(elem[0], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
         #Hank.append(Hank_obj) 
         Plm_resampled = Hank_obj.to_transform_r(elem[2])
         F = Hank_obj.qdht(Plm_resampled)
@@ -622,16 +618,31 @@ def calc_hankel_transforms(Plm,npts,rmax):
     #plt.show()
     return Flm, Hank_obj.kr
 
-def calc_fthankel_psi_3d(params, grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0):
-
+def calc_FT_3D_hankel(lmax, grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0 ):
     """ returns: fourier transform inside a ball grid (r,theta,phi) """
-    ncontours = 100
+
+    npts      = grid_r.size
 
     #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi,npts)
+    Plm = calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi)
 
     #calculate Hankel transforms on appropriate k-vector grid
-    Flm, kgrid = calc_hankel_transforms(Plm,npts,rmax)
+    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+
+    FT = np.zeros((npts  ,npts  ), dtype = complex)
+
+    for i in range(npts ):
+        print(i)
+        for elem in Flm:
+            FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:npts] * PLOTS.spharm(elem[0], elem[1], grid_theta[i] , phi0) 
+
+    return FT, kgrid
+
+def plot_FT_3D_hankel(params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0):
+    ncontours = 100
+    grid_theta, grid_r = calc_grid_for_FT(params)
+
+    FT, kgrid = calc_FT_3D_hankel(params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 )
 
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
@@ -639,27 +650,17 @@ def calc_fthankel_psi_3d(params, grid_theta, grid_r, maparray_chi, maparray_glob
 
     Nrad = len(kgrid)
     Nang = Nrad
-    N_red = int(Nang/4)
-    kgrid_cut = kgrid[0:N_red ]
-    theta_1d = np.linspace(-np.pi,   np.pi, N_red , endpoint=True ) # 
-    #phi0 = np.pi + 3.0*np.pi/4.0
-    kmesh, thetamesh = np.meshgrid(kgrid_cut,theta_1d)
 
-    FT = np.zeros((N_red ,N_red ), dtype = complex)
+    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
 
-    for i in range(N_red):
-        print(i)
-        for elem in Flm:
-            FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:N_red] * PLOTS.spharm(elem[0], elem[1], theta_1d[i] , phi0) 
-
-ax.set_ylim(0,1) 
-    #line_ft = axft.contourf(thetamesh, kmesh, np.abs(FT)/np.max(np.abs(FT)), 
-    #                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    #plt.colorbar(line_ft, ax=axft, aspect=30)
+    axft.set_ylim(0,1) #radial extent
+    line_ft = axft.contourf(thetamesh, kmesh, np.abs(FT)/np.max(np.abs(FT)), 
+                            ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_ft, ax=axft, aspect=30)
     
-    #plt.legend()   
-    #plt.show()  
-    return FT
+    plt.legend()   
+    plt.show()  
+
 
 def calc_W_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     """calculate numerically average of W over the phi angle"""
@@ -813,9 +814,6 @@ def calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist):
     return W
 
 
-
-
-
 def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
    
     coeff_thr = 1e-5
@@ -965,8 +963,10 @@ if __name__ == "__main__":
                 calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
 
             elif params['FT_method']  == "FFT_hankel":
-                r_hank,theta_grid = calc_grid_for_FT(params['N_r_points'])
-                #calc_fthankel_psi_3d(params, maparray_chi, maparray_global, psi, chilist,phi)
+                
+                plot_FT_3D_hankel(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+                #grid_theta, grid_r = calc_grid_for_FT(params)
+                #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
                 #calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
                 #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
 
