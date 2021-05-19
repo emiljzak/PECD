@@ -619,16 +619,10 @@ def calc_hankel_transforms(Plm, grid_r):
     #plt.show()
     return Flm, Hank_obj.kr
 
-def calc_FT_3D_hankel(lmax, grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0 ):
+def calc_FT_3D_hankel(Plm, Flm, kgrid, lmax, grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0 ):
     """ returns: fourier transform inside a ball grid (r,theta,phi) """
 
     npts      = grid_r.size
-
-    #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi)
-
-    #calculate Hankel transforms on appropriate k-vector grid
-    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
 
     FT = np.zeros((npts  ,npts  ), dtype = complex)
 
@@ -643,7 +637,14 @@ def plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.
     ncontours = 100
     grid_theta, grid_r = calc_grid_for_FT(params)
 
-    FT, kgrid = calc_FT_3D_hankel(params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 )
+
+    #calculate partial waves on radial grid
+    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+
+    #calculate Hankel transforms on appropriate k-vector grid
+    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+
+    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 )
 
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
@@ -699,16 +700,17 @@ def calc_W_3D_analytic(lmax, grid_theta, grid_r, maparray_chi, maparray_global, 
         print(elem1[0],elem1[1])
         for elem2 in Flm:
             for L in range( int(np.abs(elem2[0]-elem1[0])), elem1[0] + elem2[0] + 1 ):
-                #for M in range(-L,L+1):
-                if abs(elem2[1]-elem1[1]) <= L:
-                    W[:,:] +=  (-1.0)**(elem2[0]+elem1[1]) * ((1j)**(elem1[0] + elem2[0])) * \
-                                np.conj(elem1[2][:]) * elem2[2][:] * np.sqrt( (2*elem1[0]+1) * (2*elem2[0]+1) / (2*L+1) ) * \
-                                float(N(clebsch_gordan(elem1[0], elem2[0], L, 0, 0, 0))) * float(N(clebsch_gordan(elem1[0], elem2[0], L, -elem1[1], elem2[1], elem2[1]-elem1[1]))) *\
-                                PLOTS.spharm(L, elem2[1]-elem1[1], grid_theta[:] , phi0)
-                            #SP[ str(L) +',' + str(elem1[1]-elem2[1]) ][:]
-                                #float(N(CG(elem1[0],0,elem2[0],0,L,0).doit())) * float(N(CG(elem1[0],-elem1[1],elem2[0],elem2[1],L,M).doit())) *\
-                                #
-                                # 
+                for M in range(-L,L+1):
+                    for i in range(npts):
+                        #if abs(elem2[1]-elem1[1]) <= L:
+                        W[i,:] +=  (-1.0)**(elem2[0]+elem1[1]) * ((1j)**(elem1[0] + elem2[0])) * \
+                                    np.conj(elem1[2][:]) * elem2[2][:] * np.sqrt( (2*elem1[0]+1) * (2*elem2[0]+1) / (2*L+1) ) * \
+                                    float(N(clebsch_gordan(elem1[0], elem2[0], L, 0, 0, 0))) * float(N(clebsch_gordan(elem1[0], elem2[0], L, -elem1[1], elem2[1], M))) *\
+                                    PLOTS.spharm(L, M, grid_theta[i] , phi0)
+                                #SP[ str(L) +',' + str(elem1[1]-elem2[1]) ][:]
+                                    #float(N(CG(elem1[0],0,elem2[0],0,L,0).doit())) * float(N(CG(elem1[0],-elem1[1],elem2[0],elem2[1],L,M).doit())) *\
+                                    #
+                                    # 
     print(W)
     return W, kgrid
 
@@ -742,14 +744,21 @@ def plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, phi0
 def calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     """calculate numerically average of W over the phi angle"""
 
-    Nphi = 10
+    Nphi = 36
     phigrid = np.linspace(0, 2.0 * np.pi, Nphi, endpoint=False)
     grid_theta, grid_r = calc_grid_for_FT(params)
    
     W_arr = []
 
+    #calculate partial waves on radial grid
+    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+
+    #calculate Hankel transforms on appropriate k-vector grid
+    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+
+
     for iphi in range(Nphi):
-        FT, kgrid = calc_FT_3D_hankel(params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phigrid[iphi] )
+        FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phigrid[iphi] )
         W_arr.append( np.abs(FT)**2 ) 
 
 
@@ -789,53 +798,54 @@ def calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist):
     """ returns: square modulus of fourier transform inside a disk (r,theta) calculated with analytic expression
         and averaged over phi"""
 
-    nlobs   = params['nlobs']
-    nbins   = params['bound_nbins'] + params['nbins'] 
-    rmax    = nbins * params['bound_binw']
-    npts    = 1000 #number of grid points for evaluation of Hankel transform
-    ncontours = 100
+    grid_theta, grid_r = calc_grid_for_FT(params)
+    npts      = grid_r.size
 
     #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, rmax, params['bound_lmax'], psi, maparray_global,maparray_chi,npts)
+    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
 
-    Flm, kgrid = calc_hankel_transforms(Plm,npts,rmax)
+    #calculate Hankel transforms on appropriate k-vector grid
+    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+
+    Wav = np.zeros((npts , npts), dtype = complex)
+
+
+    for elem1 in Flm:
+        print(elem1[0],elem1[1])
+        for elem2 in Flm:
+            if elem1[1]==elem2[1]:
+                for L in range(np.abs(elem1[0]-elem2[0]),elem1[0]+elem2[0]+1):
+                    for i in range(npts):
+                        Wav[i,:] +=  (-1.0)**(elem2[0]+elem1[1]) * ((1j)**(elem1[0]+elem2[0])) * \
+                                    np.conj(elem1[2][:]) * elem2[2][:] *\
+                                    float(N(clebsch_gordan(elem1[0], elem2[0], L, 0, 0, 0))) * \
+                                    float(N(clebsch_gordan(elem1[0], elem2[0], L, -elem1[1], elem2[1], 0))) *\
+                                    eval_legendre(L, np.cos(grid_theta[i]))
+
+    print(Wav)
+    return Wav, kgrid
+
+def plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist):
+    ncontours = 100
+    grid_theta, grid_r = calc_grid_for_FT(params)
+
+    Wav, kgrid  = calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
 
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axft = fig.add_subplot(spec[0, 0], projection='polar')
 
     Nrad = len(kgrid)
-    Nang = Nrad
-    N_red = int(Nang/8)
-    kgrid_cut = kgrid[0:N_red ]
-    theta_1d = np.linspace(-np.pi,   np.pi, N_red , endpoint=True ) # 
-    kmesh, thetamesh = np.meshgrid(kgrid_cut,theta_1d)
 
+    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
 
-    W = np.zeros((N_red , N_red ), dtype = complex)
-
-    for i in range(N_red):
-        print(i)
-        for elem1 in Flm:
-            for elem2 in Flm:
-                if elem1[1]==elem2[1]:
-                    for L in range(np.abs(elem1[0]-elem2[0]),elem1[0]+elem2[0]+1):
-
-                        W[i,:] +=  (-1.0)**(elem1[0]+elem1[1]) * ((1j)**(elem1[0]+elem2[0])) * \
-                                    elem1[2][:N_red] * elem2[2][:N_red] *\
-                                    float(N(clebsch_gordan(elem1[0], elem2[0], L, 0, 0, 0))) * \
-                                    float(N(clebsch_gordan(elem1[0], elem2[0], L, -elem1[1], elem2[1], 0))) *\
-                                    eval_legendre(L, np.cos(theta_1d[i]))
-
-    line_ft = axft.contourf(thetamesh, kmesh, np.abs(W)**2/np.max(np.abs(W)**2), 
+    axft.set_ylim(0,1) #radial extent
+    line_ft = axft.contourf(thetamesh, kmesh, Wav/np.max(Wav), 
                             ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_ft, ax=axft, aspect=30)
     
     plt.legend()   
     plt.show()  
-
-    return W
-
 
 
 def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
@@ -990,9 +1000,9 @@ if __name__ == "__main__":
                 
                 # PLOTS of W:
                 #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                #plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
-
+                plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+                #plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+                #plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
                 #grid_theta, grid_r = calc_grid_for_FT(params)
                 #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
                 #calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
