@@ -274,5 +274,5 @@ def gen_input():
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
-
+    params['N_r_points']      = 1000 #number of radial points at which Hankel Transform is evaluated.
     return params
