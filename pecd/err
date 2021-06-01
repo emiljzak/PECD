@@ -1,0 +1,8 @@
+ERROR: ld.so: object 'libdlfaker.so' from LD_PRELOAD cannot be preloaded: ignored.
+ERROR: ld.so: object 'libvglfaker.so' from LD_PRELOAD cannot be preloaded: ignored.
+OMP: Warning #181: OMP_STACKSIZE: ignored because KMP_STACKSIZE has been defined
+OMP: Warning #181: OMP_STACKSIZE: ignored because KMP_STACKSIZE has been defined
+multiple 'pyface.toolkits' plugins found for toolkit 'qt4': pyface.ui.qt4.init, pyface.ui.qt4.init, pyface.ui.qt4.init
+QStandardPaths: XDG_RUNTIME_DIR points to non-existing path '/run/user/33931', please create it with 0700 permissions.
+qt.qpa.screen: QXcbConnection: Could not connect to display :123.0
+Could not connect to any X display.

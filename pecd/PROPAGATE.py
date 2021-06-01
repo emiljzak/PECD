@@ -40,9 +40,9 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.ticker as ticker
 
-from pycallgraph import PyCallGraph
-from pycallgraph.output import GraphvizOutput
-from pycallgraph import Config
+#from pycallgraph import PyCallGraph
+#from pycallgraph.output import GraphvizOutput
+#from pycallgraph import Config
 
 
 
@@ -210,7 +210,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-                return hmat, coeffs
+                return ham0, coeffs
             else:
                 raise ValueError("Incorrect file name for the Hamiltonian matrix")
                 exit()
@@ -1092,7 +1092,7 @@ if __name__ == "__main__":
                     #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
                     Wav += np.abs(FT)**2
-                    PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
             print(Wav)
             PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
 

@@ -19,12 +19,12 @@ from sympy.functions.special.gamma_functions import gamma
 from sympy.polys.orthopolys import (legendre_poly, laguerre_poly,
                                     hermite_poly, jacobi_poly)
 from sympy.polys.rootoftools import RootOf
-from sympy.core.compatibility import range
+#from sympy.core.compatibility import range
 
 def read_leb_quad(scheme):
     sphgrid = []
     #print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
-    fl = open( "/Users/zakemil/Nextcloud/projects/PECD/pecd/" + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
+    fl = open( "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
     for line in fl:
         words   = line.split()
         phi     = float(words[0])
