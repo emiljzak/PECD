@@ -119,7 +119,7 @@ def gen_input():
     params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
 
     # generate 3D grid of Euler angles
-    params['n_euler']   = 2 # number of points per Euler angle. Total number of points is n_euler**3
+    params['n_euler']   = 3 # number of points per Euler angle. Total number of points is n_euler**3
     
 
     params['nlobs']     = params['bound_nlobs']
@@ -289,5 +289,5 @@ def gen_input():
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
-    params['N_r_points']      = 1000 #number of radial points at which Hankel Transform is evaluated.
+    params['N_r_points']      = 200 #number of radial points at which Hankel Transform is evaluated.
     return params
