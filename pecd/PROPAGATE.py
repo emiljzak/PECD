@@ -959,8 +959,19 @@ def calc_grid_for_FT(params):
 
     return grid_theta, grid_r
 
-if __name__ == "__main__":      
 
+def gen_euler_grid(n_euler):
+    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=True))
+    beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
+    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=True))
+    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))).T #cartesian product of [alpha,beta,gamma]
+    n_euler_3d      = euler_grid_3d.shape[1]
+    print("\nTotal number of 3D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
+    #print(euler_grid_3d)
+    return euler_grid_3d, n_euler_3d
+
+
+if __name__ == "__main__":      
 
     params = input.gen_input()
 
@@ -969,13 +980,26 @@ if __name__ == "__main__":
                                                             params['map_type'],
                                                             params['working_dir'] )
 
-    Gr, Nr = GRID.r_grid(   params['bound_nlobs'] , 
-                            params['bound_nbins'] + params['nbins'], 
-                            params['bound_binw'],  
-                            params['bound_rshift'] )
+    Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
+                                                            params['bound_nbins'] + params['nbins'], 
+                                                            params['bound_binw'],  
+                                                            params['bound_rshift'] )
 
 
-    if params['mode'] == 'analyze':
+    if params['mode'] == 'propagate_single':
+
+        ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
+        
+        #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
+        #config = Config(max_depth=4)
+        #with PyCallGraph(output=graphviz, config=config):
+        #print(ham0)
+        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
+        #plt.show()
+
+        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)
+
+    elif params['mode'] == 'analyze_single':
 
         itime = int( params['analyze_time'] / params['dt']) 
 
@@ -1017,28 +1041,51 @@ if __name__ == "__main__":
 
             calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
 
-    elif params['mode'] == 'propagate':
+    elif params['mode'] == 'propagate_grid':
+    
+        grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
 
-        ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
+    elif params['mode'] == 'analyze_grid':
         
-        #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
-        #config = Config(max_depth=4)
-        #with PyCallGraph(output=graphviz, config=config):
-        #print(ham0)
-        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-        #plt.show()
+        itime = int( params['analyze_time'] / params['dt']) 
 
-        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)
+        if params['analyze_mpad'] == True:
+            #read wavepacket from file
+            file_wavepacket      = params['working_dir'] + params['wavepacket_file']
+            psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
-        #coeffs0 = read_coeffs( params['working_dir'] + params['file_psi0'], 1 )
+            #print(np.shape(psi))
+            nbins = params['bound_nbins'] + params['nbins']
+            
+            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
+            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                        params['map_type'], params['working_dir'] )
 
-        #psi_init = proj_wf0_wfinit_dvr(coeffs0, maparray_global, Nbas_global)
-        #print(psi_init)
+            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
-        #ham0 = read_ham0(params)
+            #calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
 
-        #print(ham0)
-        #plt.spy(ham0,precision=params['sph_quad_tol'], markersize=5)
-        #plt.show()
+            if params['FT_method']  == "FFT_cart":
+                calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
 
+            elif params['FT_method']  == "FFT_hankel":
+                
+                # PLOTS of W:
+                #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+                #plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+                plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+                #plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
+                #grid_theta, grid_r = calc_grid_for_FT(params)
+                #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
+                #calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
+                #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
+
+        if params['analyze_pecd'] == True:
+            file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
+            file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
+
+            calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
+    else:
+        raise ValueError("Incorrect execution mode keyword")
+        exit()

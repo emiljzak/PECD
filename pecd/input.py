@@ -1,6 +1,7 @@
 import numpy as np
 import CONSTANTS
 import os
+import itertools
 def gen_input():
 
     params = {}
@@ -114,6 +115,12 @@ def gen_input():
     
 
     """==== PROPAGATE ===="""
+
+    params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
+
+    # generate 3D grid of Euler angles
+    params['n_euler']   = 3 # number of points per Euler angle. Total number of points is n_euler**3
+    
 
     params['nlobs']     = params['bound_nlobs']
     params['nbins']     = 0
