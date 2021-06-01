@@ -12,7 +12,7 @@ def gen_input():
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -35,11 +35,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10
-    params['bound_nbins']   = 40
+    params['bound_nlobs']   = 8
+    params['bound_nbins']   = 5
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -50,7 +50,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -131,7 +131,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 2000.0 
+    params['tmax']      = 1000.0 
     params['dt']        = 4.0
     params['ivec']      = 5  
 
@@ -143,9 +143,9 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
-    params['wavepacket_file']    = "wavepacket.dat"
+    params['wavepacket_file']    = "wavepacket"
 
     params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'] + params['nbins'])   + \
@@ -251,7 +251,7 @@ def gen_input():
 
     """==== POST-PROCESSING: PLOTS ===="""
 
-    params['plot_modes']    = { "snapshot":         True, 
+    params['plot_modes']    = { "snapshot":         False, 
                                 "animation":        False}
 
     params['plot_types']    = { "radial":           False,
@@ -259,7 +259,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],100)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],1)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
@@ -284,7 +284,7 @@ def gen_input():
     """ PECD """
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['analyze_time']    = 2000.0#params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['analyze_time']    = 1000.0#params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True

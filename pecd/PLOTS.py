@@ -542,6 +542,18 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
     
     return chilist
 
+def plot_elfield(Fvec,tgrid,time_to_au):
+    fig = plt.figure()
+    ax = plt.axes()
+    plt.xlabel("time (as)")
+    plt.ylabel("normalized Field components")
+    ax.scatter(tgrid/time_to_au, -Fvec[2].real, label = "Field-x", marker = '.', color = 'r', s = 1)
+    ax.scatter(tgrid/time_to_au, Fvec[0].imag, label = "Field-y", marker = '.', color = 'g', s = 1)
+    ax.scatter(tgrid/time_to_au, Fvec[1], label = "Field-z", marker = '.', color = 'b', s = 1)
+    ax.legend()
+    plt.show()
+
+
 if __name__ == "__main__":      
 
     # preparation of parameters
