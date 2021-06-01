@@ -45,7 +45,7 @@ from pycallgraph import Config
 
 
 
-def prop_wf( params, ham0, psi_init, maparray, Gr ):
+def prop_wf( params, ham0, psi_init, maparray, Gr, euler ):
 
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
 
@@ -964,8 +964,15 @@ def gen_euler_grid(n_euler):
     alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=True))
     beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
     gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=True))
-    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))).T #cartesian product of [alpha,beta,gamma]
-    n_euler_3d      = euler_grid_3d.shape[1]
+    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
+
+    #we can choose meshgrid instead
+    #euler_grid_3d_mesh = np.meshgrid(alpha_1d, beta_1d, gamma_1d)
+    #print(euler_grid_3d_mesh[0].shape)
+    #print(np.vstack(euler_grid_3d_mesh).reshape(3,-1).T)
+    #print(euler_grid_3d)
+    #exit()
+    n_euler_3d      = euler_grid_3d.shape[0]
     print("\nTotal number of 3D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
@@ -997,7 +1004,7 @@ if __name__ == "__main__":
         #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
         #plt.show()
 
-        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr)
+        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, params['euler0'])
 
     elif params['mode'] == 'analyze_single':
 
@@ -1044,6 +1051,14 @@ if __name__ == "__main__":
     elif params['mode'] == 'propagate_grid':
     
         grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
+
+        #ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
+
+        for ipoint in range(n_grid_euler):
+            print(grid_euler[ipoint])
+            #prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[ipoint])
+
+        exit()
 
     elif params['mode'] == 'analyze_grid':
         
