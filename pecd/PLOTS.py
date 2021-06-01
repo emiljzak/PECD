@@ -553,6 +553,17 @@ def plot_elfield(Fvec,tgrid,time_to_au):
     ax.legend()
     plt.show()
 
+def plot_2D_polar_map(func,grid_theta,kgrid,ncontours):
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    axft = fig.add_subplot(spec[0, 0], projection='polar')
+    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
+    axft.set_ylim(0,1) #radial extent
+    line_ft = axft.contourf(thetamesh, kmesh, func/np.max(func), 
+                            ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+    plt.colorbar(line_ft, ax=axft, aspect=30) 
+    plt.legend()   
+    plt.show()  
 
 if __name__ == "__main__":      
 
