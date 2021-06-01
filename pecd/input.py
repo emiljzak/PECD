@@ -9,7 +9,15 @@ def gen_input():
 
     #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
-    params['mode'] = 'analyze' #'propagate' #'analyze' #
+    """ === execution mode ==== """ 
+    
+    params['mode']      = 'propagate_grid' 
+    """
+        1) 'propagate_single':  propagate wavefunction at single orientation
+        2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
+        3) 'analyze_single':    analyze wavefunction at single orientation
+        4) 'analyze_grid':      analyze wavefunction for a grid of Euler angles
+    """
 
     """ === molecule directory ==== """ 
 

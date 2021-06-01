@@ -573,9 +573,9 @@ def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi
     npts = grid_r.size
 
     #for i in range(359):
-    #    plt.plot(fine_grid,chilist[i](fine_grid))
+    #    plt.plot(grid_r,chilist[i](grid_r))
     #plt.show()
-    #exit()
+
 
     val = np.zeros(npts, dtype = complex)
 
@@ -598,8 +598,11 @@ def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi
             indang += 1
             Plm.append([l,m,val])
             val = 0.0 + 1j * 0.0
-            #plt.plot(fine_grid,np.abs(Plm[indang-1][2]))
+    #for s in range(16):
+    #    plt.scatter(grid_r,np.abs(Plm[s][2]),marker='.',label="P_"+str(s))
+    #    plt.legend()
     #plt.show()
+ 
     return Plm
 
 
@@ -977,7 +980,7 @@ if __name__ == "__main__":
         itime = int( params['analyze_time'] / params['dt']) 
 
         if params['analyze_mpad'] == True:
-                    #read wavepacket from file
+            #read wavepacket from file
             file_wavepacket      = params['working_dir'] + params['wavepacket_file']
             psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
@@ -1000,8 +1003,8 @@ if __name__ == "__main__":
                 
                 # PLOTS of W:
                 #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                #plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+                #plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+                plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
                 #plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
                 #grid_theta, grid_r = calc_grid_for_FT(params)
                 #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
