@@ -26,6 +26,7 @@ import BOUND
 import CONSTANTS
 import FIELD
 import PLOTS
+#import ROTDENS
 
 import time
 import os
@@ -617,7 +618,7 @@ def calc_FT_3D_hankel(Plm, Flm, kgrid, lmax, grid_theta, grid_r, maparray_chi, m
     FT = np.zeros((npts  ,npts  ), dtype = complex)
 
     for i in range(npts ):
-        print(i)
+        #print(i)
         for elem in Flm:
             FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:npts] * PLOTS.spharm(elem[0], elem[1], grid_theta[i] , phi0) 
 
@@ -626,7 +627,6 @@ def calc_FT_3D_hankel(Plm, Flm, kgrid, lmax, grid_theta, grid_r, maparray_chi, m
 def plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0):
     ncontours = 100
     grid_theta, grid_r = calc_grid_for_FT(params)
-
 
     #calculate partial waves on radial grid
     Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
@@ -948,9 +948,9 @@ def calc_grid_for_FT(params):
 
 
 def gen_euler_grid(n_euler):
-    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=True))
+    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
     beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
-    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=True))
+    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
     euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
     #we can choose meshgrid instead
@@ -1066,7 +1066,13 @@ if __name__ == "__main__":
 
             grid_theta, grid_r = calc_grid_for_FT(params)
             
+            Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
+
             for ipoint in range(n_grid_euler):
+
+                alpha   = grid_euler[ipoint][0]
+                beta    = grid_euler[ipoint][1]
+                gamma   = grid_euler[ipoint][2]
                 #read wavepacket from file
                 file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(ipoint) + ".dat"
                 psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
@@ -1076,14 +1082,41 @@ if __name__ == "__main__":
                 elif params['FT_method']  == "FFT_hankel":
 
                     #calculate partial waves on radial grid
-                    #Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+                    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
 
                     #calculate Hankel transforms on appropriate k-vector grid
-                    #Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+                    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
 
-                    #FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 )
-                    print(grid_euler[ipoint][2])
-                    plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, grid_euler[ipoint][2])
+                    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
+                    
+                    Wav += np.abs(FT)**2
+ 
+                    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                    axft = fig.add_subplot(spec[0, 0], projection='polar')
+                    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
+                    axft.set_ylim(0,1) #radial extent
+                    line_ft = axft.contourf(thetamesh, kmesh, np.abs(FT)**2/np.max(np.abs(FT)**2), 
+                                            ncontours=100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                    plt.colorbar(line_ft, ax=axft, aspect=30) 
+                    plt.legend()   
+                    plt.show()  
+
+            fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+            spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+            axft = fig.add_subplot(spec[0, 0], projection='polar')
+            kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
+            axft.set_ylim(0,1) #radial extent
+            plt.title('Wav')
+            line_ft = axft.contourf(thetamesh, kmesh, Wav/np.max(Wav), 
+                                    ncontours=100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+            plt.colorbar(line_ft, ax=axft, aspect=30) 
+            plt.legend()   
+            plt.show()  
+
+
+                    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint])
+                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
 
            
     else:
