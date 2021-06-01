@@ -1089,36 +1089,14 @@ if __name__ == "__main__":
 
                     FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
                     
-                    Wav += np.abs(FT)**2
- 
-                    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-                    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-                    axft = fig.add_subplot(spec[0, 0], projection='polar')
-                    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
-                    axft.set_ylim(0,1) #radial extent
-                    line_ft = axft.contourf(thetamesh, kmesh, np.abs(FT)**2/np.max(np.abs(FT)**2), 
-                                            ncontours=100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-                    plt.colorbar(line_ft, ax=axft, aspect=30) 
-                    plt.legend()   
-                    plt.show()  
-
-            fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-            spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-            axft = fig.add_subplot(spec[0, 0], projection='polar')
-            kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
-            axft.set_ylim(0,1) #radial extent
-            plt.title('Wav')
-            line_ft = axft.contourf(thetamesh, kmesh, Wav/np.max(Wav), 
-                                    ncontours=100, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-            plt.colorbar(line_ft, ax=axft, aspect=30) 
-            plt.legend()   
-            plt.show()  
-
-
-                    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint])
+                    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                    Wav += np.abs(FT)**2
+                    PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+            print(Wav)
+            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
 
-           
+
     else:
         raise ValueError("Incorrect execution mode keyword")
         exit()
