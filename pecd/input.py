@@ -22,8 +22,8 @@ def gen_input():
 
     """ === molecule directory ==== """ 
 
-    params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"
-    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"
+    params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
+    params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     params['molec_name']    = "d2s"
 
 
@@ -35,8 +35,8 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 8
-    params['bound_nbins']   = 5
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 10
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 2
@@ -50,7 +50,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
