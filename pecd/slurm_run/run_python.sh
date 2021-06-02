@@ -20,5 +20,5 @@ echo "Start time :" `date`
 
 $exec $1 $2 $3 > log 2> err
 
-echo "Finish time :" date
+echo "Finish time :" `date`
 echo "DONE"

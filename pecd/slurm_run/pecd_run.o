@@ -6,7 +6,7 @@ Current directory : /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/slurm_run
 Executable : python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py
 Job name : pecd_run
 Running on master node : max-cfel021.desy.de
-Job ID : 7808207
-Start time : Tue Jun 1 21:27:12 CEST 2021
+Job ID : 7812725
+Start time : Wed Jun 2 09:03:17 CEST 2021
 Finish time : date
 DONE
