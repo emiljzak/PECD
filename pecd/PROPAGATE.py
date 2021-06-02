@@ -967,22 +967,22 @@ def gen_euler_grid(n_euler):
 
 if __name__ == "__main__":      
 
-    params = input.gen_input()
+	params = input.gen_input()
 
-    maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
+	maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['working_dir'] )
 
-    Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
+	Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] + params['nbins'], 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
 
-    if params['mode'] == 'propagate_single':
+	if params['mode'] == 'propagate_single':
 
-        ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
+		ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
         
         #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
         #config = Config(max_depth=4)
@@ -991,112 +991,115 @@ if __name__ == "__main__":
         #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
         #plt.show()
 
-        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, params['euler0'], 0)
+		prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, params['euler0'], 0)
 
-    elif params['mode'] == 'analyze_single':
+	elif params['mode'] == 'analyze_single':
 
-        itime = int( params['analyze_time'] / params['dt']) 
+		itime = int( params['analyze_time'] / params['dt']) 
 
-        if params['analyze_mpad'] == True:
-            #read wavepacket from file
-            file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + ".dat"
-            psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+		if params['analyze_mpad'] == True:
+			#read wavepacket from file
+			file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + ".dat"
+			psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
-            #print(np.shape(psi))
-            nbins = params['bound_nbins'] + params['nbins']
-            
-            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+			#print(np.shape(psi))
+			nbins = params['bound_nbins'] + params['nbins']
+			
+			Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
-            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                        params['map_type'], params['working_dir'] )
+			maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+				                        params['map_type'], params['working_dir'] )
 
-            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
+			chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
-            #calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
+			#calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
 
-            if params['FT_method']  == "FFT_cart":
-                calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+			if params['FT_method']  == "FFT_cart":
+				calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
 
-            elif params['FT_method']  == "FFT_hankel":
-                
-                # PLOTS of W:
-                #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                #plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
-                #plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
-                #grid_theta, grid_r = calc_grid_for_FT(params)
-                #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
-                #calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
-                #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
+			elif params['FT_method']  == "FFT_hankel":
+				
+				# PLOTS of W:
+				#plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+				#plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
+				plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+				#plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
+				#grid_theta, grid_r = calc_grid_for_FT(params)
+				#calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
+				#calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
+				#calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
 
-        if params['analyze_pecd'] == True:
-            file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
-            file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
+		if params['analyze_pecd'] == True:
+			file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
+			file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
 
-            calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
+			calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
 
-    elif params['mode'] == 'propagate_grid':
-    
-        grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
+	elif params['mode'] == 'propagate_grid':
+		ibatch  = int(sys.argv[1])
+		N_batch = int(sys.argv[2])
+		N_Euler = int(sys.argv[3])
+		print(ibatch, N_batch, N_Euler)
+		N_per_batch = int(N_Euler**3/N_batch)
+		print("number of points per batch = " + str(N_per_batch))
+		grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
+		ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
 
-        ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
+		for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+			print(grid_euler[irun])
+			print(irun)
+			prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
 
-        for ipoint in range(n_grid_euler):
-            print(grid_euler[ipoint])
-            prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[ipoint], ipoint)
-
-        exit()
-
-    elif params['mode'] == 'analyze_grid':
+	elif params['mode'] == 'analyze_grid':
         
-        itime = int( params['analyze_time'] / params['dt']) 
+		itime = int( params['analyze_time'] / params['dt']) 
 
-        if params['analyze_mpad'] == True:
+		if params['analyze_mpad'] == True:
 
-            grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
+			grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
 
-            nbins = params['bound_nbins'] + params['nbins']
-            
-            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+			nbins = params['bound_nbins'] + params['nbins']
+			
+			Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
-            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                        params['map_type'], params['working_dir'] )
+			maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+				                        params['map_type'], params['working_dir'] )
 
-            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
+			chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
-            grid_theta, grid_r = calc_grid_for_FT(params)
-            
-            Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
+			grid_theta, grid_r = calc_grid_for_FT(params)
+			
+			Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
 
-            for ipoint in range(n_grid_euler):
+			for ipoint in range(n_grid_euler):
 
-                alpha   = grid_euler[ipoint][0]
-                beta    = grid_euler[ipoint][1]
-                gamma   = grid_euler[ipoint][2]
-                #read wavepacket from file
-                file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(ipoint) + ".dat"
-                psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+				alpha   = grid_euler[ipoint][0]
+				beta    = grid_euler[ipoint][1]
+				gamma   = grid_euler[ipoint][2]
+				#read wavepacket from file
+				file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(ipoint) + ".dat"
+				psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
-                if params['FT_method']  == "FFT_cart":
-                    calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
-                elif params['FT_method']  == "FFT_hankel":
+				if params['FT_method']  == "FFT_cart":
+				    calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+				elif params['FT_method']  == "FFT_hankel":
 
-                    #calculate partial waves on radial grid
-                    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+				    #calculate partial waves on radial grid
+				    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
 
-                    #calculate Hankel transforms on appropriate k-vector grid
-                    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+				    #calculate Hankel transforms on appropriate k-vector grid
+				    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
 
-                    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
-                    
-                    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
-                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += np.abs(FT)**2
-                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-            print(Wav)
-            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
+				    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
+				    
+				    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
+				    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+				    Wav += np.abs(FT)**2
+				    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+			print(Wav)
+			#PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
 
 
-    else:
-        raise ValueError("Incorrect execution mode keyword")
-        exit()
+	else:
+		raise ValueError("Incorrect execution mode keyword")
+		exit()

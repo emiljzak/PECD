@@ -3,6 +3,8 @@
 export OMP_NUM_THREADS=$nproc
 export OMP_STACKSIZE=8000m
 export KMP_STACKSIZE=8000m
+export XDG_RUNTIME_DIR=$pwd
+export DISPLAY=:0.0
 ulimit -s unlimited
 
 echo "Number of OMP threads :" $OMP_NUM_THREADS
@@ -16,7 +18,7 @@ echo "Running on master node :" `hostname`
 echo "Job ID :" $SLURM_JOB_ID
 echo "Start time :" `date`
 
-time $exec > log 2> err
+$exec 1 8 4 > log 2> err
 
 echo "Finish time :" date
 echo "DONE"

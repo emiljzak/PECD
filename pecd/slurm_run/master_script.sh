@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #export exec="python3 /home/yachmena/RICHMOL/richmol/richmol.py"
-export exec="python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/propagate.py"
+export exec="python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py"
 export jobname="pecd_run"
 export pwd=`pwd`
 
-export jobtype="cfel-cmi,cfel,all"
-export nproc=12 #`nproc --all`
-export wclim=24
+export jobtype="cfel-cmi"
+export nproc=40 #`nproc --all`
+export wclim=100
 export nnodes=1
 
 echo "Job type :" $jobtype

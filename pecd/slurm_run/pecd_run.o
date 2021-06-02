@@ -1,23 +1,12 @@
-Number of OMP threads : 12
+Number of OMP threads : 40
 OMP stack size : 8000m
 KMP stack size : 8000m
 ulimit : unlimited
 Current directory : /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/slurm_run
-Executable : python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/propagate.py
+Executable : python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py
 Job name : pecd_run
 Running on master node : max-cfel021.desy.de
-Job ID : 7036496
-Start time : Tue Mar 16 16:12:05 CET 2021
-An estimated range for spatial grid needed to cover 0.5 a.u. momentum wavepackets is:          0 a.u.
-Number of points per dimension in grid representation of the 3D-FT of the wavepacket =     2
-Electric field carrier frequency =  12962.317 THz
-Electric field oscillation period (optical cycle) =      0.077 fs
-suggested time-step for field linear frequency =    12962.317 THz is:       3.09 as
-field strength
-  5.14e+08
-reading initial wavefunction from file 
-
-Total number of basis functions: 1725
-Total number of basis functions for representing psi0: 500
+Job ID : 7808207
+Start time : Tue Jun 1 21:27:12 CEST 2021
 Finish time : date
 DONE
