@@ -2,7 +2,6 @@ import numpy as np
 import PLOTS 
 
 
-
 def analyze_Wav(N_batches):
 
     working_dir = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
