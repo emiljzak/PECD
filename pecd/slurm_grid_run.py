@@ -14,7 +14,7 @@ def run_propagate(N_euler,N_batches):
 
 
 
-N_euler = 1 #number of euler grid points per dimension
-N_batches = 1
+N_euler = 3 #number of euler grid points per dimension
+N_batches = 3
 
 run_propagate(N_euler,N_batches)

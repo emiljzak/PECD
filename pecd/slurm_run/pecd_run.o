@@ -1,12 +1,36 @@
-Number of OMP threads : 40
+Number of OMP threads : 32
 OMP stack size : 8000m
 KMP stack size : 8000m
 ulimit : unlimited
 Current directory : /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/slurm_run
 Executable : python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py
 Job name : pecd_run
+Number of OMP threads : 32
+OMP stack size : 8000m
+KMP stack size : 8000m
+Number of OMP threads : 32
+OMP stack size : 8000m
+KMP stack size : 8000m
+ulimit : unlimited
+Running on master node : max-cfel023.desy.de
+ulimit : unlimited
+Current directory : /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/slurm_run
+Job ID : 7813129
+Current directory : /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/slurm_run
+Executable : python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py
+Executable : python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py
+Job name : pecd_run
+Job name : pecd_run
+Start time : Wed Jun 2 10:21:15 CEST 2021
 Running on master node : max-cfel021.desy.de
-Job ID : 7812725
-Start time : Wed Jun 2 09:03:17 CEST 2021
-Finish time : date
+Running on master node : max-cfel022.desy.de
+Job ID : 7813127
+Job ID : 7813128
+Start time : Wed Jun 2 10:21:15 CEST 2021
+Start time : Wed Jun 2 10:21:15 CEST 2021
+Finish time : Wed Jun 2 10:21:37 CEST 2021
+DONE
+Finish time : Wed Jun 2 10:21:37 CEST 2021
+DONE
+Finish time : Wed Jun 2 10:21:37 CEST 2021
 DONE
