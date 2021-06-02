@@ -2,95 +2,9 @@ import numpy as np
 import h5py
 import re
 import itertools
-from pywigxjpf.pywigxjpf import wig_table_init, wig_temp_init, wig3jj, wig6jj, wig_temp_free, wig_table_free
 from wigner.wiglib import DJmk, DJ_m_k
 import sys
-import scipy.interpolate
-import random
 
-
-_weight = None
-_max_weight = None
-
-
-def metropolis(rmin, rmax):
-    global _weight, _max_weight
-    xmax = 1.0
-    xmin = 0.0
-    r = []
-    for i in range(len(rmin)):
-        x = random.uniform(xmin,xmax)
-        r.append((x-xmin)*(rmax[i]-rmin[i])/(xmax-xmin)+rmin[i])
-    w = _weight(r[0],r[1],r[2])/_max_weight
-    eta = random.uniform(0.0,1.0)
-    if w>eta:
-        rn = r
-    else:
-        rn = None
-    return rn
-
-
-def euler_rot(chi, theta, phi, xyz):
-    """Rotates Cartesian vector xyz[ix] (ix=x,y,z) by an angle phi around Z,
-    an angle theta around new Y, and an angle chi around new Z.
-    Input values of chi, theta, and phi angles are in radians.
-    """
-    amat = np.zeros((3,3), dtype=np.float64)
-    bmat = np.zeros((3,3), dtype=np.float64)
-    cmat = np.zeros((3,3), dtype=np.float64)
-    rot = np.zeros((3,3), dtype=np.float64)
-
-    amat[0,:] = [np.cos(chi), np.sin(chi), 0.0]
-    amat[1,:] = [-np.sin(chi), np.cos(chi), 0.0]
-    amat[2,:] = [0.0, 0.0, 1.0]
-
-    bmat[0,:] = [np.cos(theta), 0.0, -np.sin(theta)]
-    bmat[1,:] = [0.0, 1.0, 0.0]
-    bmat[2,:] = [np.sin(theta), 0.0, np.cos(theta)]
-
-    cmat[0,:] = [np.cos(phi), np.sin(phi), 0.0]
-    cmat[1,:] = [-np.sin(phi), np.cos(phi), 0.0]
-    cmat[2,:] = [0.0, 0.0, 1.0]
-
-    rot = np.transpose(np.dot(amat, np.dot(bmat, cmat)))
-    xyz_rot = np.dot(rot, xyz)
-    return xyz_rot
-
-
-def monte_carlo(grid, dens, xyz, fname, npoints):
-    global _weight, _max_weight
-    _weight = scipy.interpolate.NearestNDInterpolator(grid.T, dens)
-    _max_weight = np.max(dens)
-    print("_max_weight:", _max_weight)
-    fl = open(fname, "w")
-    #norm = [np.linalg.norm(x) for x in xyz]
-    norm = [1 for x in xyz]
-    print("This is norm of xyz: ", norm)
-    npt = 0
-    nR2 = 0
-    nR1 = 0
-    nR0 = 0
-    nL2 = 0  
-    nL1 = 0
-    nL0 = 0
-    while npt<=npoints:
-        euler = metropolis([0,0,0], [2*np.pi,np.pi,2*np.pi])
-        if euler is None: continue
-        phi = euler[0]
-        theta = euler[1]
-        chi = euler[2]
-        xyz_rot = [euler_rot(chi, theta, phi, x) for x in xyz]
-        #print("the shape of xyz_rot ", np.shape(xyz_rot))
-        if xyz_rot[2][2] > 1.0:
-                nR2+=1
-        if xyz_rot[2][2] < -1.0:
-                nL2+=1
-
-        fl.write( "    ".join(" ".join("%16.12f"%(x[ix]/n) for ix in range(3)) for x,n in zip(xyz_rot,norm)) + "\n")
-        npt+=1
-    print(" number of up oriented molecules = ", nR2, " number of down oriented molecules = ", nL2)
-    print(" enantiomeric excess =",  100.0*(nR2-nL2)/(nR2+nL2))
-    fl.close()
 
 
 def read_coefficients(coef_file, coef_thresh=1.0e-16):
@@ -139,6 +53,86 @@ def read_wavepacket(coef_file, coef_thresh=1.0e-16):
         time.append(t)
     h5.close()
     return time, coefs, quanta
+
+
+def calc_rotdens(grid_3d, coef_file, wavepacket_file):
+    #calc rotdens at a point
+  
+    states = read_coefficients(coef_file, coef_thresh=1.0e-16)
+    time, coefs, quanta = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
+
+  
+    npoints_3d = grid_3d.shape[0]
+    # mapping between wavepacket and rovibrational states
+
+    ind_state = []
+    for q in quanta:
+        j = q[1] #q[0] = M?
+        id = q[2]
+        ideg = q[3]
+        istate = [(state["j"],state["id"],state["ideg"]) for state in states].index((j,id,ideg)) #find in which position in the states list we have quanta j, id, ideg - from the current wavepacket
+	#state["j"] - this is how we refer to elements of a dictionary
+        ind_state.append(istate) #at each time we append an array of indices which locate the current wavepacket in the states dictionary
+
+
+    # lists of J and m quantum numbers
+
+    jlist = list(set(j for j in quanta[:,1]))
+    mlist = []
+    for j in jlist:
+        mlist.append(list(set(m  for m,jj in zip(quanta[:,0],quanta[:,1]) if jj==j)))
+    print("List of J-quanta:", jlist)
+    print("List of m-quanta:", mlist)
+
+
+    # precompute symmetric-top functions on a 3D grid of Euler angles for given J, m=J, and k=-J..J
+
+    print("\nPrecompute symmetric-top functions...")
+    symtop = []
+    for J,ml,ij in zip(jlist,mlist,range(len(jlist))):
+        print("J = ", J)
+        Jfac = np.sqrt((2*J+1)/(8*np.pi**2))
+        symtop.append([])
+        for m in ml:
+            print("m = ", m)
+            wig = DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
+            #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
+       
+            symtop[ij].append( np.conj(wig) * Jfac )
+    print("...done")
+
+
+    # compute rotational density
+
+    vmax = max([max([v for v in state["v"]]) for state in states])
+    func = np.zeros((npoints_3d,vmax+1), dtype=np.complex128)
+    tot_func = np.zeros((npoints_3d,vmax+1), dtype=np.complex128)
+    dens = np.zeros(npoints_3d, dtype=np.complex128)
+
+    for q,cc,istate in zip(quanta,coefs,ind_state): #loop over coefficients in the wavepacket
+
+        m = q[0]
+        j = q[1]
+        state = states[istate]
+
+        ind_j = jlist.index(j)
+        ind_m = mlist[ind_j].index(m)
+
+        # primitive rovibrational function on Euler grid
+        func[:,:] = 0
+        for v,k,c in zip(state["v"],state["k"],state["coef"]): #loop over coefficients of primitive symmetric top functions comprising individual components of the wavepacket
+            func[:,v] += c * symtop[ind_j][ind_m][:,k+int(j)] #identical rotational functions are used for all vibrational states.
+            # The only contribution from vibrations is encoded in v-dependent coefficients. 
+
+        # total function
+        tot_func[:,:] += func[:,:] * cc
+
+    # reduced rotational density on Euler grid
+    dens = np.einsum('ij,ji->i', tot_func, np.conj(tot_func.T)) * np.sin(grid_3d[1,:]) 
+    #tensor contraction: element-wise multuplication of tot_func and transpose of np.conj(tot_func.T)) * np.sin(grid_3d[1,ipoint0:ipoint1] and we take diagonal elements of the output.
+    # This is to remove the vibrational index. 
+
+    return grid_3d, dens
 
 
 def rotdens(npoints, nbatches, ibatch, states, quanta, coefs):

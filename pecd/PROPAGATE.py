@@ -26,7 +26,7 @@ import BOUND
 import CONSTANTS
 import FIELD
 import PLOTS
-#import ROTDENS
+import ROTDENS
 
 import time
 import os
@@ -1071,12 +1071,22 @@ if __name__ == "__main__":
             N_per_batch = int(N_Euler**3/N_batch)
             print("number of points per batch = " + str(N_per_batch))  
 
+
+            #calculate rotational density at grid (alpha, beta, gamma)
+
+            rho = ROTDENS.calc_rotdens(grid_euler.T, params['rot_coeffs_file'], params['rot_wf_file']) #rotational density
+
+
+
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
                 print(irun)
                 alpha   = grid_euler[irun][0]
                 beta    = grid_euler[irun][1]
                 gamma   = grid_euler[irun][2]
+
+                print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
+       
                 #read wavepacket from file
                 file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(irun) + ".dat"
                 psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
@@ -1093,9 +1103,9 @@ if __name__ == "__main__":
 
                     FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
                     
-                    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
+
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += np.abs(FT)**2
+                    Wav += rho * np.abs(FT)**2
                     #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
             print(Wav)
 

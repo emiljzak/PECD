@@ -26,6 +26,8 @@ def gen_input():
     params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     params['molec_name']    = "d2s"
 
+    params['rot_wf_file']       = params['working_dir'] + "wavepacket_J60.h5"
+    params['rot_coeffs_file']   = params['working_dir'] + "coefficients_j0_j60.rchm"
 
     """==== BOUND ===="""
 
