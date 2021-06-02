@@ -10,6 +10,7 @@ def analyze_Wav(N_batches):
     with open( working_dir  + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
 
+    grid = grid.T
     Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
     Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
 
@@ -18,8 +19,8 @@ def analyze_Wav(N_batches):
             Wavi = np.loadtxt(Wavfile)
         Wav += Wavi
 
-    
-    PLOTS.plot_2D_polar_map(Wav,grid[1],grid[1],100)
+    grid = grid.T
+    PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
 
 
 
