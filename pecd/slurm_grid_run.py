@@ -10,9 +10,11 @@ def run_propagate(N_euler,N_batches):
 
 	for ibatch in range(N_batches):
 
-		subprocess.call(START_FILES + "./master_script.sh " + str(ibatch) + " " + N_batches + " " + N_euler , shell=True) 
+		subprocess.call("./slurm_run/master_script.sh " + str(ibatch) + " " + str(N_batches) + " " + str(N_euler) , shell=True) 
 
 
 
 N_euler = 6
 N_batches = 2
+
+run_propagate(N_euler,N_batches)
