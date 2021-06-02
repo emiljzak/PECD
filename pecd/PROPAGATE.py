@@ -1055,8 +1055,9 @@ if __name__ == "__main__":
 		itime = int( params['analyze_time'] / params['dt']) 
 
 		if params['analyze_mpad'] == True:
+            N_Euler = int(sys.argv[3])
 
-			grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
+			grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
 			nbins = params['bound_nbins'] + params['nbins']
 			
@@ -1070,14 +1071,22 @@ if __name__ == "__main__":
 			grid_theta, grid_r = calc_grid_for_FT(params)
 			
 			Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
+            
+            ibatch  = int(sys.argv[1])
+            N_batch = int(sys.argv[2])
 
-			for ipoint in range(n_grid_euler):
-
-				alpha   = grid_euler[ipoint][0]
-				beta    = grid_euler[ipoint][1]
-				gamma   = grid_euler[ipoint][2]
+            print(ibatch, N_batch, N_Euler)
+            N_per_batch = int(N_Euler**3/N_batch)
+            print("number of points per batch = " + str(N_per_batch))  
+            
+            for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+			    print(grid_euler[irun])
+			    print(irun)
+				alpha   = grid_euler[irun][0]
+				beta    = grid_euler[irun][1]
+				gamma   = grid_euler[irun][2]
 				#read wavepacket from file
-				file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(ipoint) + ".dat"
+				file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(irun) + ".dat"
 				psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
 				if params['FT_method']  == "FFT_cart":
@@ -1097,6 +1106,9 @@ if __name__ == "__main__":
 				    Wav += np.abs(FT)**2
 				    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
 			print(Wav)
+
+            with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
+                np.savetxt(Wavfile, Wav, fmt = '%10.4e')
 			#PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
 
 
