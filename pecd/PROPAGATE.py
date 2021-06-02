@@ -1076,8 +1076,8 @@ if __name__ == "__main__":
 
             rho = ROTDENS.calc_rotdens(grid_euler.T, params['rot_coeffs_file'], params['rot_wf_file']) #rotational density
 
-
-
+            print(rho)
+            exit()
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
                 print(irun)

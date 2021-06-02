@@ -2,7 +2,8 @@ import numpy as np
 import h5py
 import re
 import itertools
-from wigner.wiglib import DJmk, DJ_m_k
+import wigner
+#from wigner.wiglib import DJmk, DJ_m_k
 import sys
 
 
@@ -95,7 +96,7 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
         symtop.append([])
         for m in ml:
             print("m = ", m)
-            wig = DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
+            wig = wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
             #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
        
             symtop[ij].append( np.conj(wig) * Jfac )
