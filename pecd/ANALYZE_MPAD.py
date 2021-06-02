@@ -19,6 +19,9 @@ def analyze_Wav(N_batches):
             Wavi = np.loadtxt(Wavfile)
         Wav += Wavi
 
+    with open( working_dir  + "W_av_3D" , 'w') as Wavfile:   
+        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+
     grid = grid.T
     PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
 
