@@ -3,7 +3,7 @@ import h5py
 import re
 import itertools
 import wigner
-#from wigner.wiglib import DJmk, DJ_m_k
+from wigner.wiglib import DJmk, DJ_m_k
 import sys
 
 
