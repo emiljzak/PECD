@@ -12,7 +12,7 @@ def gen_input():
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -35,11 +35,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10
-    params['bound_nbins']   = 10
+    params['bound_nlobs']   = 12
+    params['bound_nbins']   = 40
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
