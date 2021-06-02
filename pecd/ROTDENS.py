@@ -2,10 +2,9 @@ import numpy as np
 import h5py
 import re
 import itertools
-import wigner
-from wigner.wiglib import DJmk, DJ_m_k
 import sys
-
+import quaternionic
+import spherical
 
 
 def read_coefficients(coef_file, coef_thresh=1.0e-16):
@@ -58,14 +57,14 @@ def read_wavepacket(coef_file, coef_thresh=1.0e-16):
 
 def calc_rotdens(grid_3d, coef_file, wavepacket_file):
     #calc rotdens at a point
-  
+  	Jmax = 60
     states = read_coefficients(coef_file, coef_thresh=1.0e-16)
     time, coefs, quanta = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
 
   
     npoints_3d = grid_3d.shape[0]
     # mapping between wavepacket and rovibrational states
-
+	print("shape of grid_3d " + str(grid_3d.shape))
     ind_state = []
     for q in quanta:
         j = q[1] #q[0] = M?
@@ -87,6 +86,9 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
 
 
     # precompute symmetric-top functions on a 3D grid of Euler angles for given J, m=J, and k=-J..J
+	wigner = spherical.Wigner(Jmax)
+
+    R = quaternionic.array.from_euler_angles(grid_3d[0],grid_3d[1],grid_3d[2])
 
     print("\nPrecompute symmetric-top functions...")
     symtop = []
@@ -96,6 +98,8 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
         symtop.append([])
         for m in ml:
             print("m = ", m)
+    		wig = wigner.D(R)
+    		print(wigner.Dindex(1,0,-1))
             wig = wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
             #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
        
