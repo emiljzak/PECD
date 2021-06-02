@@ -1054,62 +1054,60 @@ if __name__ == "__main__":
         
 		itime = int( params['analyze_time'] / params['dt']) 
 
-		if params['analyze_mpad'] == True:
+        if params['analyze_mpad'] == True:
             N_Euler = int(sys.argv[3])
 
-			grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
+            grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
-			nbins = params['bound_nbins'] + params['nbins']
-			
-			Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+            nbins = params['bound_nbins'] + params['nbins']
 
-			maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-				                        params['map_type'], params['working_dir'] )
+            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
-			chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
+            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                        params['map_type'], params['working_dir'] )
 
-			grid_theta, grid_r = calc_grid_for_FT(params)
-			
-			Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
-            
+            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
+
+            grid_theta, grid_r = calc_grid_for_FT(params)
+
+            Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
             ibatch  = int(sys.argv[1])
             N_batch = int(sys.argv[2])
-
             print(ibatch, N_batch, N_Euler)
             N_per_batch = int(N_Euler**3/N_batch)
             print("number of points per batch = " + str(N_per_batch))  
-            
+
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
-			    print(grid_euler[irun])
-			    print(irun)
-				alpha   = grid_euler[irun][0]
-				beta    = grid_euler[irun][1]
-				gamma   = grid_euler[irun][2]
-				#read wavepacket from file
-				file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(irun) + ".dat"
-				psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+                print(grid_euler[irun])
+                print(irun)
+                alpha   = grid_euler[irun][0]
+                beta    = grid_euler[irun][1]
+                gamma   = grid_euler[irun][2]
+                #read wavepacket from file
+                file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(irun) + ".dat"
+                psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
-				if params['FT_method']  == "FFT_cart":
-				    calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
-				elif params['FT_method']  == "FFT_hankel":
+                if params['FT_method']  == "FFT_cart":
+                    calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+                elif params['FT_method']  == "FFT_hankel":
 
-				    #calculate partial waves on radial grid
-				    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+                    #calculate partial waves on radial grid
+                    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
 
-				    #calculate Hankel transforms on appropriate k-vector grid
-				    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+                    #calculate Hankel transforms on appropriate k-vector grid
+                    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
 
-				    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
-				    
-				    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
-				    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-				    Wav += np.abs(FT)**2
-				    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-			print(Wav)
+                    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
+                    
+                    #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
+                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                    Wav += np.abs(FT)**2
+                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+            print(Wav)
 
             with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
-			#PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
+            #PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
 
 
 	else:
