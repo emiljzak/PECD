@@ -18,7 +18,7 @@ echo "Running on master node :" `hostname`
 echo "Job ID :" $SLURM_JOB_ID
 echo "Start time :" `date`
 
-$exec 1 8 4 > log 2> err
+$exec $1 $2 $3 > log 2> err
 
 echo "Finish time :" date
 echo "DONE"

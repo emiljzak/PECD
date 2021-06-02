@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import subprocess
 
 def run_propagate(N_euler,N_batches):
 
@@ -9,7 +10,7 @@ def run_propagate(N_euler,N_batches):
 
 	for ibatch in range(N_batches):
 
-		subprocess.call(START_FILES + "./master_script.sh " + str(ipoint) + " " + N_batches + " " + N_euler , shell=True) 
+		subprocess.call(START_FILES + "./master_script.sh " + str(ibatch) + " " + N_batches + " " + N_euler , shell=True) 
 
 
 
