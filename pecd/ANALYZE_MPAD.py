@@ -1,6 +1,29 @@
 import numpy as np
+
+import quaternionic
+import spherical as sp
 import PLOTS 
 
+from sympy.physics.quantum.spin import Rotation
+
+from sympy import pi, symbols
+from sympy import N
+
+def test_wigner():
+    l = 2
+    #wigner = spherical.Wigner(l)
+
+    alpha = 0.4 * np.pi
+    beta = 0.5 * np.pi 
+    gamma = 0.2 * np.pi
+    #alpha, beta, gamma = symbols('alpha beta gamma')
+    #rot = Rotation.D(1, 1, 0, alpha, beta, gamma)
+    #print(N(rot.evalf(subs={alpha:pi, beta:pi/2, gamma:0})))
+    #R = quaternionic.array.from_euler_angles(alpha, beta, gamma)
+    R=[1.0,1.0,0.0,1.0]
+    #D = wigner.D(R)
+    #print(R)
+    #D[wigner.Dindex(ell, mp, m)]
 
 def analyze_Wav(N_batches):
 
@@ -28,4 +51,6 @@ def analyze_Wav(N_batches):
 
 N_batches = 3
 
-analyze_Wav(N_batches)
+test_wigner()
+
+#analyze_Wav(N_batches)
