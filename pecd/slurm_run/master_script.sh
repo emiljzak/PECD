@@ -6,7 +6,7 @@ export jobname="pecd_run"
 export pwd=`pwd`
 
 export jobtype="cfel-cmi"
-export nproc=40 #`nproc --all`
+export nproc=32 #`nproc --all`
 export wclim=100
 export nnodes=1
 

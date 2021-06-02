@@ -1101,6 +1101,8 @@ if __name__ == "__main__":
 
             with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+            with open( params['working_dir'] + "grid_W_av", 'w') as gridfile:   
+                np.savetxt(gridfile, np.stack(kgrid,grid_theta), fmt = '%10.4e')
             #PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
     else:
         raise ValueError("Incorrect execution mode keyword")
