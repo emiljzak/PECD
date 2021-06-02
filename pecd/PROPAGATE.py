@@ -1047,6 +1047,7 @@ if __name__ == "__main__":
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 		    #print(grid_euler[irun])
             prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
+            
     elif params['mode'] == 'analyze_grid':
         itime = int( params['analyze_time'] / params['dt'])
         if params['analyze_mpad'] == True:

@@ -92,15 +92,29 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
 
     print("\nPrecompute symmetric-top functions...")
     symtop = []
+
     for J,ml,ij in zip(jlist,mlist,range(len(jlist))):
         print("J = ", J)
+        print("m = " , ml)
+
         Jfac = np.sqrt((2*J+1)/(8*np.pi**2))
         symtop.append([])
+
+     
+        for irot, quat in enumerate(R):
+            D = wigner.D(quat)
+            for m in range(-Jmax, Jmax+1):
+                for k in range(-Jmax, Jmax+1):
+                    
+
+
         for m in ml:
             print("m = ", m)
     		wig = wigner.D(R)
     		print(wigner.Dindex(1,0,-1))
-            wig = wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
+            wig =
+            D[wigner.Dindex(J, m, k)]
+             wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
             #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
        
             symtop[ij].append( np.conj(wig) * Jfac )
