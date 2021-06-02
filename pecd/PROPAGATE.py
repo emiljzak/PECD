@@ -210,7 +210,7 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-                return hmat, coeffs
+                return ham0, coeffs
             else:
                 raise ValueError("Incorrect file name for the Hamiltonian matrix")
                 exit()
@@ -1037,15 +1037,24 @@ if __name__ == "__main__":
 
     elif params['mode'] == 'propagate_grid':
     
-        grid_euler, n_grid_euler = gen_euler_grid(params['n_euler'])
+        ibatch  = int(sys.argv[1])
+        N_batch = int(sys.argv[2])
+        N_Euler = int(sys.argv[3])
+        print(ibatch, N_batch, N_Euler)
+        N_per_batch = int(N_Euler**3/N_batch)
+
+        print("number of points per batch = " + str(N_per_batch))
+
+        grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
         ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
 
-        for ipoint in range(n_grid_euler):
-            print(grid_euler[ipoint])
-            prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[ipoint], ipoint)
+        for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+            print(grid_euler[irun])
+            print(irun)
+            prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
 
-        exit()
+       
 
     elif params['mode'] == 'analyze_grid':
         
@@ -1091,9 +1100,9 @@ if __name__ == "__main__":
                     
                     #rho = ROTDENS.calc_rotdens(grid_euler[ipoint]) #rotational density
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += np.abs(FT)**2
-                    PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-            print(Wav)
+                    Wav += np.abs(FT)**2 # * rho
+                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+
             PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
 
 
