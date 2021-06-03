@@ -9,22 +9,52 @@ from sympy.physics.quantum.spin import Rotation
 from sympy import pi, symbols
 from sympy import N
 
-def test_wigner():
-    l = 1
-    wigner = spherical.Wigner(l)
 
+def test_wigner():
+    """ Test wigner functions: orthogonality, symmetry and plots (2D slices of known functions). Decide how to store them """
+
+    Jmax = 4
+    wigner = spherical.Wigner(Jmax)
+
+    #grid
     alpha = 0.4 * np.pi
     beta = 0.5 * np.pi 
     gamma = 0.2 * np.pi
-    #alpha, beta, gamma = symbols('alpha beta gamma')
-    #rot = Rotation.D(1, 1, 0, alpha, beta, gamma)
-    #print(N(rot.evalf(subs={alpha:pi, beta:pi/2, gamma:0})))
+
+    ngrid = 1
+
+    WDMATS = []
+
     R = quaternionic.array.from_euler_angles(alpha, beta, gamma)
-    #R=[1.0,1.0,0.0,1.0]
     D = wigner.D(R)
     print(wigner.Dindex(1,0,-1))
+    print("D:")
     print(D)
-    #D[wigner.Dindex(ell, mp, m)]
+    for J in range(Jmax+1):
+        WDM = np.zeros((2*J+1,2*J+1,ngrid), dtype=complex)
+        for m in range(-J,J+1):
+            for k in range(-J,J+1):
+                WDM[m+J,k+J,:] = D[wigner.Dindex(J,m,k)]
+        print(J,WDM)
+        print(WDM.shape)
+
+        WDMATS.append(WDM)        
+    print("WDMATS:")
+    print(WDMATS)
+
+    #test orthogonality
+    J = 4
+    SMAT = np.zeros((2*J+1,2*J+1), dtype = complex)
+    WDM = WDMATS[J]
+    for k1 in range(-J,J+1):
+        for k2 in range(-J,J+1):
+            SMAT[k1,k2] = np.sum(WDM[:,k1+J,0] * np.conjugate(WDM[:,k2+J,0]) )
+    print("SMAT: ")
+    with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+        print(SMAT)
+
+
+
 
 def analyze_Wav(N_batches):
 
