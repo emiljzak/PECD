@@ -1,4 +1,4 @@
-#from mayavi import mlab
+from mayavi import mlab
 
 import numpy as np
 from scipy.special import sph_harm
@@ -598,6 +598,52 @@ def plot_3D_angfunc(func,grid):
         
     plt.show()
 
+def plot_spharm_rotated(D):
+    # Create a sphere
+    r = 0.3
+    pi = np.pi
+    cos = np.cos
+    sin = np.sin
+    phi, theta = np.mgrid[0:pi:101j, 0:2 * pi:101j]
+
+    x = r * sin(phi) * cos(theta)
+    y = r * sin(phi) * sin(theta)
+    z = r * cos(phi)
+
+    mlab.figure(1, bgcolor=(1, 1, 1), fgcolor=(0, 0, 0), size=(400, 300))
+    mlab.clf()
+    # Represent spherical harmonics on the surface of the sphere
+
+    m = 0 
+    l = 2
+
+    s = sph_harm(m, l, theta, phi).real
+
+    s_rot = np.zeros((theta.shape[0],phi.shape[0]), dtype = complex)
+    print(D.shape)
+
+    for p in range(-l,l+1):
+        s_rot += D[p+l,m+l] * sph_harm(p, l, theta, phi)
+
+    s_rot = s_rot.real
+    #mlab.mesh(x - m, y - n, z, scalars=s, colormap='jet')
+    
+    s[s < 0] *= 0.97
+
+    s /= s.max()
+    mlab.mesh(s * x - m, s * y - l, s * z + 1.3,
+            scalars=s, colormap='Spectral')
+
+    
+    s_rot[s_rot < 0] *= 0.97
+
+    s_rot /= s_rot.max()
+    mlab.mesh(s_rot * x - m, s_rot * y - l, s_rot * z + 1.3,
+            scalars=s_rot, colormap='Spectral')
+    
+
+    #mlab.view(90, 70, 6.2, (-1.3, -2.9, 0.25))
+    mlab.show()
 
 if __name__ == "__main__":      
 
@@ -608,7 +654,8 @@ if __name__ == "__main__":
     params = input.gen_input()
     
     #plot 3D angular function
-    plot_3D_angfunc()
+    #plot_3D_angfunc()
+    #plot_spharm_rotated()
     exit()
 
     #wffile = params['working_dir'] + "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
