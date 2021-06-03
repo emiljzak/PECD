@@ -217,10 +217,10 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
     #counter = 0
 
     y = np.zeros((362,182))
-    for ipoint in coeffs:
+    #for ipoint in coeffs:
 
-        y +=  ipoint[5][2] * chi(ipoint[0],ipoint[1],r0,rgrid,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta_2d, phi_2d).real
-
+        #y  = spharm(ipoint[3], ipoint[4], theta_2d, phi_2d).real #+=  ipoint[5][2] * chi(ipoint[0],ipoint[1],r0,rgrid,w,nlobs,nbins) *
+    y = spharm(1, 0, theta_2d, phi_2d).real
     r = np.abs(y.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
     
     ax.plot_surface(r[0], r[1], r[2], facecolors=colormap.to_rgba(y.real), rstride=1, cstride=1)
@@ -565,6 +565,40 @@ def plot_2D_polar_map(func,grid_theta,kgrid,ncontours):
     plt.legend()   
     plt.show()  
 
+
+
+def plot_3D_angfunc(func,grid):
+    #'func' on 'grid'
+
+    print(func.shape)
+    theta_2d, phi_2d = np.meshgrid(grid[:,1], grid[:,0])
+    #theta_2d, phi_2d = grid[0], grid[1]
+    xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d), np.sin(theta_2d) * np.cos(phi_2d), np.cos(theta_2d)]) #2D grid of cartesian coordinates
+
+    colormap = cm.ScalarMappable( cmap=plt.get_cmap("cool") )
+    colormap.set_clim(-.45, .45)
+    limit = .5
+
+    plt.figure()
+    ax = plt.gca(projection = "3d")
+
+    #counter = 0
+    #y = np.zeros((362,182))
+    #y = spharm(1, 0, theta_2d, phi_2d).real
+    y = func / np.sqrt( 4.0 * np.pi /(2*1+1))
+    r = np.abs(y.real)*xyz_2d #calculate a point in 3D cartesian space for each value of spherical harmonic at (theta,phi)
+    print(r.shape)
+    ax.plot_surface(r[0], r[1], r[2])
+    ax.set_xlim(-limit,limit)
+    ax.set_ylim(-limit,limit)
+    ax.set_zlim(-limit,limit)
+    #ax.set_aspect("equal")
+    #ax.set_axis_off()
+    
+        
+    plt.show()
+
+
 if __name__ == "__main__":      
 
     # preparation of parameters
@@ -573,31 +607,35 @@ if __name__ == "__main__":
 
     params = input.gen_input()
     
-    wffile = params['working_dir'] + "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
+    #plot 3D angular function
+    plot_3D_angfunc()
+    exit()
+
+    #wffile = params['working_dir'] + "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
     nvecs = 7 #how many vectors to load?
     ivec = params['ivec'] #which vector to plot?
-    """
-    coeffs = read_coeffs(wffile,nvecs)
+    
+    #coeffs = read_coeffs(wffile,nvecs)
 
-    psi = np.zeros(len(coeffs), dtype = complex)
-    print(psi.shape)
-    for ielem,elem in enumerate(coeffs):
-        psi[ielem] = elem[5][ivec]
+    #psi = np.zeros(len(coeffs), dtype = complex)
+    #print(psi.shape)
+    #for ielem,elem in enumerate(coeffs):
+    #    psi[ielem] = elem[5][ivec]
 
-    """
+    
     nbins = params['bound_nbins'] + params['nbins']
 
-    Gr, Nr = GRID.r_grid_old( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+    #Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
     #maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
     #                                 params['map_type'], params['working_dir'] )
 
-    maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                     params['map_type'], params['working_dir'] )
+    #maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+    #                                 params['map_type'], params['working_dir'] )
 
 
-    flist = interpolate_chi(Gr,params['bound_nlobs'],nbins,params['bound_binw'] ,maparray_chi)
-    exit()
+    #flist = interpolate_chi(Gr,params['bound_nlobs'],nbins,params['bound_binw'] ,maparray_chi)
+    #exit()
 
     """ plot radial basis """
     #plot_chi(0.0,params['bound_binw']*params['bound_nbins'],1000,Gr,params['bound_nlobs'], params['bound_nbins'])
@@ -609,11 +647,13 @@ if __name__ == "__main__":
     #            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 
     """ plot angular wavefunction at a given distance """
-    #r0 = 2.0
-    #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
+    r0 = 2.0
+    coeffs = 0.0
+    Gr   = 0.0
+    plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
-    plot_snapshot(params,psi,maparray,Gr,t)
+    #plot_snapshot(params,psi,maparray,Gr,t)
     #plot_wf_angrad( 0.0, params['bound_binw'] * params['bound_nbins'], 200,params['bound_nlobs'], nbins,\
     #                psi,maparray ,Gr, params, 0.0)
     #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)
