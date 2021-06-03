@@ -48,11 +48,18 @@ def gen_spherical_grid(n_euler):
     print(euler_grid_3d.shape)
     return euler_grid_3d, n_euler_2d
 
+def rotate_spharm(func,D):
+    rot_angle = [0.0, np.pi/4, 0.0]
+    func_rotated = np.zeros((func.shape[0], func.shape[1]))
+    for m in range(D.shape[1]):
+        func_rotated += D[:,m] * func[:,m]
+
+    return func_rotated
 
 def test_wigner():
     """ Test wigner functions: orthogonality, symmetry and plots (2D slices of known functions). Decide how to store them """
 
-    Jmax = 1
+    Jmax = 2
     wigner = spherical.Wigner(Jmax)
 
     """
@@ -95,6 +102,7 @@ def test_wigner():
         print(SMAT)
     """
 
+    """
     #plot D_m0^J(theta,phi)
     nphi = 181
     ntheta = 91
@@ -112,7 +120,27 @@ def test_wigner():
     k = 0
     WDM = np.zeros((R.shape[0]), dtype=complex)
     WDM = D[:,wigner.Dindex(J,m,k)]
-    PLOTS.plot_3D_angfunc(WDM,grid_euler)
+    
+    #PLOTS.plot_3D_angfunc(WDM,grid_euler)
+    """
+
+    # plot rotated spherical harmonics
+    alpha = 0.0 * np.pi
+    beta = 0.5 * np.pi 
+    gamma = 0.0 * np.pi
+
+    ngrid = 1
+    R = quaternionic.array.from_euler_angles(alpha, beta, gamma)
+    D = wigner.D(R)
+
+    for J in range(Jmax+1):
+        WDM = np.zeros((2*J+1,2*J+1,ngrid), dtype=complex)
+        for m in range(-J,J+1):
+            for k in range(-J,J+1):
+                WDM[m+J,k+J,:] = D[wigner.Dindex(J,m,k)]
+
+    PLOTS.plot_spharm_rotated(WDM[:,:,0])
+
 
 def analyze_Wav(N_batches):
 
