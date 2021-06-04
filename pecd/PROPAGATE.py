@@ -1072,8 +1072,24 @@ if __name__ == "__main__":
     elif params['mode'] == 'analyze_grid':
         itime = int( params['analyze_time'] / params['dt'])
         if params['analyze_mpad'] == True:
+
             N_Euler = int(sys.argv[3])
             grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
+
+            #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
+            Jmax = params['Jmax'] 
+            wigner = spherical.Wigner(Jmax)
+            R = quaternionic.array.from_euler_angles(grid_euler)
+            D = wigner.D(R)
+            print(D.shape)
+            WDMATS = []
+            for J in range(Jmax+1):
+                WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
+                for m in range(-J,J+1):
+                    for k in range(-J,J+1):
+                        WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
+
+                WDMATS.append(WDM)     
 
             nbins = params['bound_nbins'] + params['nbins']
 
@@ -1087,6 +1103,7 @@ if __name__ == "__main__":
             grid_theta, grid_r = calc_grid_for_FT(params)
 
             Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
+
             ibatch  = int(sys.argv[1])
             N_batch = int(sys.argv[2])
             print(ibatch, N_batch, N_Euler)
@@ -1094,9 +1111,10 @@ if __name__ == "__main__":
             print("number of points per batch = " + str(N_per_batch))  
 
 
-            #calculate rotational density at grid (alpha, beta, gamma)
-
-            #rho = ROTDENS.calc_rotdens(grid_euler.T, params['rot_coeffs_file'], params['rot_wf_file']) #rotational density
+            #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
+            rho = ROTDENS.calc_rotdens( grid_euler,
+                                        WDMATS,
+                                        params) 
 
             print(rho)
             exit()

@@ -55,28 +55,38 @@ def read_wavepacket(coef_file, coef_thresh=1.0e-16):
     return time, coefs, quanta
 
 
-def calc_rotdens(grid_3d, coef_file, wavepacket_file):
+def calc_rotdens(grid_3d, WDMATS, params):
     #calc rotdens at a point
-    Jmax = 60
-    states = read_coefficients(coef_file, coef_thresh=1.0e-16)
-    time, coefs, quanta = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
 
-  
+    wavepacket_file = params['rot_wf_file']
+    coef_file       = params['rot_coeffs_file']
+
+    Jmax = params['Jmax']
+    itime = int( params['rv_wavepacket_time']/    params['rv_wavepacket_dt']  )
+
+    states          = read_coefficients(coef_file, coef_thresh=1.0e-16)
+    time, coefs, quanta_all = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
+    quanta = quanta_all[itime]
+
     npoints_3d = grid_3d.shape[0]
     # mapping between wavepacket and rovibrational states
     print("shape of grid_3d " + str(grid_3d.shape))
     ind_state = []
+    print(np.shape(quanta))
+    print(quanta)
     for q in quanta:
-        j = q[1] #q[0] = M?
-        id = q[2]
-        ideg = q[3]
-        istate = [(state["j"],state["id"],state["ideg"]) for state in states].index((j,id,ideg)) #find in which position in the states list we have quanta j, id, ideg - from the current wavepacket
-        #state["j"] - this is how we refer to elements of a dictionary
+        j       = q[1] #q[0] = M
+        id      = q[2]
+        ideg    = q[3]
+        istate  = [(state["j"],state["id"],state["ideg"]) for state in states].index((j,id,ideg)) 
+        """
+        find in which position
+        in the states list we have quanta j, id, ideg - from the current wavepacket
+        """
         ind_state.append(istate) #at each time we append an array of indices which locate the current wavepacket in the states dictionary
 
 
     # lists of J and m quantum numbers
-
     jlist = list(set(j for j in quanta[:,1]))
     mlist = []
     for j in jlist:
@@ -88,7 +98,7 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
     # precompute symmetric-top functions on a 3D grid of Euler angles for given J, m=J, and k=-J..J
     wigner = spherical.Wigner(Jmax)
 
-    R = quaternionic.array.from_euler_angles(grid_3d[0],grid_3d[1],grid_3d[2])
+    R = quaternionic.array.from_euler_angles(grid_3d)
 
     print("\nPrecompute symmetric-top functions...")
     symtop = []
@@ -96,29 +106,21 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
     for J,ml,ij in zip(jlist,mlist,range(len(jlist))):
         print("J = ", J)
         print("m = " , ml)
-
+        print("ij = ", ij)
         Jfac = np.sqrt((2*J+1)/(8*np.pi**2))
         symtop.append([])
 
-    
-        for irot, quat in enumerate(R):
-            D = wigner.D(quat)
-            for m in range(-Jmax, Jmax+1):
-                for k in range(-Jmax, Jmax+1):
-                    print("")
-        """
-        for m in ml:
-            print("m = ", m)
-            wig = wigner.D(R)
-            print(wigner.Dindex(1,0,-1))
-           
-            D[wigner.Dindex(J, m, k)]
-                wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
+
+            #D[wigner.Dindex(J, m, k)]
+            #wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
             #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
-        
-            symtop[ij].append( np.conj(wig) * Jfac )
-        print("...done")
-        """
+            
+        symtop[ij].append( np.conj(WDMATS[int(J)]) * Jfac )
+    print("...done")
+
+    #print(np.shape(symtop))
+    #print(np.shape(symtop[0]))
+
 
     # compute rotational density
 
@@ -136,17 +138,22 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
         ind_j = jlist.index(j)
         ind_m = mlist[ind_j].index(m)
 
+        print(ind_j)
+        print(ind_m)
+        print(m+int(j))
+
         # primitive rovibrational function on Euler grid
         func[:,:] = 0
+        print(np.shape(symtop[ind_j]))
+        print(np.shape(WDMATS))
+        print("shape of grid",np.shape(grid_3d))
         for v,k,c in zip(state["v"],state["k"],state["coef"]): #loop over coefficients of primitive symmetric top functions comprising individual components of the wavepacket
-            func[:,v] += c * symtop[ind_j][ind_m][:,k+int(j)] #identical rotational functions are used for all vibrational states.
-            # The only contribution from vibrations is encoded in v-dependent coefficients. 
-
+            func[:,v] += c * np.conj(WDMATS[int(j)][int(m)+int(j),k+int(j),:]) * Jfac
         # total function
         tot_func[:,:] += func[:,:] * cc
 
     # reduced rotational density on Euler grid
-    dens = np.einsum('ij,ji->i', tot_func, np.conj(tot_func.T)) * np.sin(grid_3d[1,:]) 
+    dens = np.einsum('ij,ji->i', tot_func, np.conj(tot_func.T)) * np.sin(grid_3d[:,1]) 
     #tensor contraction: element-wise multuplication of tot_func and transpose of np.conj(tot_func.T)) * np.sin(grid_3d[1,ipoint0:ipoint1] and we take diagonal elements of the output.
     # This is to remove the vibrational index. 
 

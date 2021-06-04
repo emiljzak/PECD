@@ -12,7 +12,7 @@ def gen_input():
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -26,9 +26,12 @@ def gen_input():
     params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     params['molec_name']    = "d2s"
 
+    """ === ro-vibrational part ==== """ 
     params['rot_wf_file']       = params['working_dir'] + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "coefficients_j0_j60.rchm"
-    params['Jmax']              = 4 #maximum J for the ro-vibrational wavefunction
+    params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
+    params['rv_wavepacket_time']= 50
+    params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
     """==== BOUND ===="""
 
     params['map_type']      = 'DVR' #DVR or SPECT
