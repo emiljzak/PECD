@@ -10,6 +10,9 @@ from scipy.sparse.linalg import expm, expm_multiply, eigsh
 from scipy.special import sph_harm
 from scipy.special import eval_legendre
 
+import quaternionic
+import spherical
+
 from sympy.physics.wigner import gaunt
 from sympy.physics.wigner import clebsch_gordan
 from sympy.physics.quantum.cg import CG
@@ -1043,6 +1046,24 @@ if __name__ == "__main__":
         N_per_batch = int(N_Euler**3/N_batch)
         print("number of points per batch = " + str(N_per_batch))
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
+
+        #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
+        Jmax = params['Jmax'] 
+        wigner = spherical.Wigner(Jmax)
+        R = quaternionic.array.from_euler_angles(grid_euler)
+        D = wigner.D(R)
+        print(D.shape)
+        WDMATS = []
+        for J in range(Jmax+1):
+            WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
+            for m in range(-J,J+1):
+                for k in range(-J,J+1):
+                    WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
+            print(J,WDM)
+            print(WDM.shape)
+
+            WDMATS.append(WDM)        
+ 
         ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 		    #print(grid_euler[irun])
@@ -1075,7 +1096,7 @@ if __name__ == "__main__":
 
             #calculate rotational density at grid (alpha, beta, gamma)
 
-            rho = ROTDENS.calc_rotdens(grid_euler.T, params['rot_coeffs_file'], params['rot_wf_file']) #rotational density
+            #rho = ROTDENS.calc_rotdens(grid_euler.T, params['rot_coeffs_file'], params['rot_wf_file']) #rotational density
 
             print(rho)
             exit()

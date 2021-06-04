@@ -57,21 +57,21 @@ def read_wavepacket(coef_file, coef_thresh=1.0e-16):
 
 def calc_rotdens(grid_3d, coef_file, wavepacket_file):
     #calc rotdens at a point
-  	Jmax = 60
+    Jmax = 60
     states = read_coefficients(coef_file, coef_thresh=1.0e-16)
     time, coefs, quanta = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
 
   
     npoints_3d = grid_3d.shape[0]
     # mapping between wavepacket and rovibrational states
-	print("shape of grid_3d " + str(grid_3d.shape))
+    print("shape of grid_3d " + str(grid_3d.shape))
     ind_state = []
     for q in quanta:
         j = q[1] #q[0] = M?
         id = q[2]
         ideg = q[3]
         istate = [(state["j"],state["id"],state["ideg"]) for state in states].index((j,id,ideg)) #find in which position in the states list we have quanta j, id, ideg - from the current wavepacket
-	#state["j"] - this is how we refer to elements of a dictionary
+        #state["j"] - this is how we refer to elements of a dictionary
         ind_state.append(istate) #at each time we append an array of indices which locate the current wavepacket in the states dictionary
 
 
@@ -86,7 +86,7 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
 
 
     # precompute symmetric-top functions on a 3D grid of Euler angles for given J, m=J, and k=-J..J
-	wigner = spherical.Wigner(Jmax)
+    wigner = spherical.Wigner(Jmax)
 
     R = quaternionic.array.from_euler_angles(grid_3d[0],grid_3d[1],grid_3d[2])
 
@@ -100,26 +100,25 @@ def calc_rotdens(grid_3d, coef_file, wavepacket_file):
         Jfac = np.sqrt((2*J+1)/(8*np.pi**2))
         symtop.append([])
 
-     
+    
         for irot, quat in enumerate(R):
             D = wigner.D(quat)
             for m in range(-Jmax, Jmax+1):
                 for k in range(-Jmax, Jmax+1):
-                    
-
-
+                    print("")
+        """
         for m in ml:
             print("m = ", m)
-    		wig = wigner.D(R)
-    		print(wigner.Dindex(1,0,-1))
-            wig =
+            wig = wigner.D(R)
+            print(wigner.Dindex(1,0,-1))
+           
             D[wigner.Dindex(J, m, k)]
-             wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
+                wigner.wiglib.DJ_m_k(int(J), int(m), grid_3d[:,:]) #grid_3d= (3,npoints_3d). Returns wig = array (npoints, 2*J+1) for each k,  #wig Contains values of D-functions on grid, 
             #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
-       
+        
             symtop[ij].append( np.conj(wig) * Jfac )
-    print("...done")
-
+        print("...done")
+        """
 
     # compute rotational density
 

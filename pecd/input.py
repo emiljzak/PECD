@@ -12,7 +12,7 @@ def gen_input():
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -22,13 +22,13 @@ def gen_input():
 
     """ === molecule directory ==== """ 
 
-    params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
-    params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
+    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     params['molec_name']    = "d2s"
 
     params['rot_wf_file']       = params['working_dir'] + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "coefficients_j0_j60.rchm"
-
+    params['Jmax']              = 4 #maximum J for the ro-vibrational wavefunction
     """==== BOUND ===="""
 
     params['map_type']      = 'DVR' #DVR or SPECT
