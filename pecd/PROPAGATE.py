@@ -967,6 +967,36 @@ def gen_euler_grid(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
+def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax):
+    """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
+    #ind_euler - index of euler angles in global 3D grid
+
+
+    Dsize = (lmax+1)**2
+
+    Dmat = np.zeros((Dsize,Dsize), dtype = complex)
+
+    #fill up the D super-matrix
+
+    for l in range(lmax+1):
+
+        Dmat[lll;lll] = WDMATS[l][:,:,ind_euler]
+
+
+    coeffs_rotated = np.zeros(coeffs.shape[0], dtype = complex)
+    for ielem, elem in enumerate(maparray):
+
+        print(str(elem) + str(coeffs[ielem]))
+
+        for mu in range(-elem[3],elem[3]+1):
+            print(elem[3]+elem[4])
+            #ind_m = maparray[:][4].index(mu)
+
+            #print(ind_m)
+            coeffs_rotated[ielem] += WDMATS[elem[3]][elem[4]+elem[3],mu+elem[3],ind_euler] * coeffs[ielem]
+
+
+    return coeffs_rotated
 
 if __name__ == "__main__":      
 
@@ -1065,6 +1095,12 @@ if __name__ == "__main__":
             WDMATS.append(WDM)        
  
         ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
+
+        psi_init_rotated = rotate_coefficients(1, maparray_global, psi_init[:,params['ivec']], WDMATS)
+        print("psi_init_rotated")
+        print(psi_init_rotated)
+        exit()
+
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 		    #print(grid_euler[irun])
             prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
@@ -1112,11 +1148,13 @@ if __name__ == "__main__":
 
 
             #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-            rho = ROTDENS.calc_rotdens( grid_euler,
+            grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
                                         WDMATS,
                                         params) 
 
-            print(rho)
+
+            print(rho.shape)
+            PLOTS.plot_rotdens(rho[:].real)
             exit()
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
@@ -1145,7 +1183,7 @@ if __name__ == "__main__":
                     
 
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += rho * np.abs(FT)**2
+                    Wav += rho[irun] * np.abs(FT)**2
                     #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
             print(Wav)
 

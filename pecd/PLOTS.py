@@ -645,6 +645,36 @@ def plot_spharm_rotated(D):
     #mlab.view(90, 70, 6.2, (-1.3, -2.9, 0.25))
     mlab.show()
 
+
+def plot_rotdens(rotdens):
+    # Create a sphere
+    r = 0.3
+    pi = np.pi
+    cos = np.cos
+    sin = np.sin
+    phi, theta = np.mgrid[0:pi:1000j, 0:2 * pi:1000j]
+
+    x = r * sin(phi) * cos(theta)
+    y = r * sin(phi) * sin(theta)
+    z = r * cos(phi)
+
+    mlab.figure(1, bgcolor=(1, 1, 1), fgcolor=(0, 0, 0), size=(400, 300))
+    mlab.clf()
+    # Represent spherical harmonics on the surface of the sphere
+
+
+    s = rotdens
+    #mlab.mesh(x - m, y - n, z, scalars=s, colormap='jet')
+    
+    s[s < 0] *= 0.97
+
+    s /= s.max()
+    mlab.mesh(s * x , s * y , s * z + 1.3,
+            scalars=s, colormap='Spectral')
+
+    #mlab.view(90, 70, 6.2, (-1.3, -2.9, 0.25))
+    mlab.show()
+
 if __name__ == "__main__":      
 
     # preparation of parameters
