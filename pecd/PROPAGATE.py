@@ -12,6 +12,7 @@ from scipy.special import eval_legendre
 
 import quaternionic
 import spherical
+from sympy.core.numbers import Integer
 
 from sympy.physics.wigner import gaunt
 from sympy.physics.wigner import clebsch_gordan
@@ -967,34 +968,54 @@ def gen_euler_grid(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
-def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax):
+def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
     """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
     #ind_euler - index of euler angles in global 3D grid
 
-
-    Dsize = (lmax+1)**2
-
+    Dsize = (lmax+1)**2 
     Dmat = np.zeros((Dsize,Dsize), dtype = complex)
 
     #fill up the D super-matrix
+    ind_start = np.zeros(lmax+1, dtype=Integer)
+    ind_end = np.zeros(lmax+1, dtype=Integer)
 
-    for l in range(lmax+1):
+    ind_start[0] = 0
+    ind_end[0] = 0
 
-        Dmat[lll;lll] = WDMATS[l][:,:,ind_euler]
+    for l in range(0,lmax):
+        ind_start[l+1] = ind_start[l] +  2 * l +1
+        ind_end[l+1] = ind_start[l+1] + 2 * (l+1) +1  #checked by hand 5 Jun 2021
 
+    for l in range(0,lmax+1):
+        #print(WDMATS[l][:,:,ind_euler].shape)
+        #print(l, ind_start[l], ind_end[l])
+        Dmat[ind_start[l]:ind_end[l],ind_start[l]:ind_end[l]] = WDMATS[l][:,:,ind_euler]
+
+    with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+        print(Dmat)
 
     coeffs_rotated = np.zeros(coeffs.shape[0], dtype = complex)
-    for ielem, elem in enumerate(maparray):
 
-        print(str(elem) + str(coeffs[ielem]))
+    print("number of radial basis points/functions: " + str(Nr))
 
-        for mu in range(-elem[3],elem[3]+1):
-            print(elem[3]+elem[4])
-            #ind_m = maparray[:][4].index(mu)
+    xi_start    = np.zeros(Nr, dtype=Integer)
+    xi_end      = np.zeros(Nr, dtype=Integer)
+    xi_start[0] = 0 
+    xi_end[0]   = Dsize
 
-            #print(ind_m)
-            coeffs_rotated[ielem] += WDMATS[elem[3]][elem[4]+elem[3],mu+elem[3],ind_euler] * coeffs[ielem]
+    for xi in range(Nr-1):
+        xi_start[xi+1] = xi_start[xi] + Dsize
+        xi_end[xi+1]   = xi_end[xi] +  Dsize
+        
 
+    print("size of single D-mat block: " + str(-xi_start[1]+xi_end[1]))
+
+    for xi in range(Nr):
+        print(xi, xi_start[xi], xi_end[xi]) #checked by hand 5 Jun 2021
+        coeffs_rotated[xi_start[xi]:xi_end[xi]] = np.matmul(Dmat,coeffs[xi_start[xi]:xi_end[xi]])
+
+    print(coeffs_rotated)
+    exit()
 
     return coeffs_rotated
 
@@ -1077,6 +1098,10 @@ if __name__ == "__main__":
         print("number of points per batch = " + str(N_per_batch))
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
+
+        maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                    params['map_type'], params['working_dir'] )
+
         #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
         Jmax = params['Jmax'] 
         wigner = spherical.Wigner(Jmax)
@@ -1096,7 +1121,14 @@ if __name__ == "__main__":
  
         ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
 
-        psi_init_rotated = rotate_coefficients(1, maparray_global, psi_init[:,params['ivec']], WDMATS)
+        ind_euler = 25
+        Nr = len(maparray_chi)
+        psi_init_rotated = rotate_coefficients( 25,
+                                                maparray_global, 
+                                                psi_init[:,params['ivec']], 
+                                                WDMATS, 
+                                                params['bound_lmax'],
+                                                Nr)
         print("psi_init_rotated")
         print(psi_init_rotated)
         exit()
