@@ -24,7 +24,8 @@ from sympy.polys.rootoftools import RootOf
 def read_leb_quad(scheme):
     sphgrid = []
     #print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
-    fl = open( "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
+    fl = open( "/Users/zakemil/Nextcloud/projects/PECD/pecd/" + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
+    #/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/ for maxwell
     for line in fl:
         words   = line.split()
         phi     = float(words[0])

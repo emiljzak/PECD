@@ -728,9 +728,9 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
   
     if params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:
-            sph_quad_list = gen_adaptive_quads_exact( params,  Gr, mol_xyz, irun ) 
+            sph_quad_list = gen_adaptive_quads_exact_rot( params,  Gr, mol_xyz, irun ) 
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
-            sph_quad_list = read_adaptive_quads(params)
+            sph_quad_list = read_adaptive_quads_rot(params,irun)
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
             print("using global quadrature scheme")
 
@@ -796,7 +796,25 @@ def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
 
 def read_adaptive_quads(params):
     levels = []
+
     quadfilename = params['working_dir'] + params['file_quad_levels'] 
+    fl = open( quadfilename , 'r' )
+    for line in fl:
+        words   = line.split()
+        i       = int(words[0])
+        n       = int(words[1])
+        xi      = int(words[2])
+        scheme  = str(words[3])
+        levels.append([i,n,xi,scheme])
+    return levels
+
+
+def read_adaptive_quads_rot(params,irun):
+    #for grid calculations on rotated molecules
+    levels = []
+
+    quadfilename = params['working_dir'] + params['file_quad_levels'] + "_"+str(irun)
+
     fl = open( quadfilename , 'r' )
     for line in fl:
         words   = line.split()

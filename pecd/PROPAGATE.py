@@ -1172,7 +1172,6 @@ def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
         coeffs_rotated[xi_start[xi]:xi_end[xi]] = np.matmul(Dmat,coeffs[xi_start[xi]:xi_end[xi]])
 
     #print(coeffs_rotated)
-    exit()
 
     return coeffs_rotated
 
@@ -1256,11 +1255,9 @@ if __name__ == "__main__":
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
         #save Euler grid in file
-        print(grid_euler[1][2])
 
         with open( params['working_dir'] + "grid_euler.dat" , 'w') as eulerfile:   
                 np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
-        exit()
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                     params['map_type'], params['working_dir'] )
@@ -1283,19 +1280,25 @@ if __name__ == "__main__":
             WDMATS.append(WDM)        
  
         #irun = 0 means unrotated frame: MF = LF
-        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler[0], 0)
+        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, 0)
         #unrotated wavefunction and Hamiltonian
 
-        ind_euler = 25
+
+        ind_euler = 0
         Nr = len(maparray_chi)
-        psi_init_rotated = rotate_coefficients( 25,
+        psi_init_rotated = rotate_coefficients( ind_euler,
                                                 maparray_global, 
                                                 psi_init[:,params['ivec']], 
                                                 WDMATS, 
                                                 params['bound_lmax'],
                                                 Nr)
+        
         print("psi_init_rotated")
-        print(psi_init_rotated)
+
+        with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+
+            print(psi_init_rotated[:]-psi_init[:,params['ivec']])
+        exit()
 
 
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
