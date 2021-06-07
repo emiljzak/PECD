@@ -470,20 +470,20 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( params['working_dir'] + params['file_hmat_init'] , ham0 , compressed = False )
+                sparse.save_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , ham0 , compressed = False )
             elif params['hmat_format'] == 'numpy_arr':
-                with open( params['working_dir'] + params['file_hmat_init'] , 'w') as hmatfile:   
+                with open( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , 'w') as hmatfile:   
                     np.savetxt(hmatfile, ham0, fmt = '%10.4e')
 
         if params['save_psi_init'] == True:
-            psifile = open(params['working_dir'] + params['file_psi_init'], 'w')
+            psifile = open(params['working_dir'] + params['file_psi_init']+ "_"+str(irun), 'w')
             for ielem,elem in enumerate(maparray):
                 psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                                 " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                                 "\t\t ".join('{:10.5e}'.format(coeffs[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
 
         if params['save_enr_init'] == True:
-            with open(params['working_dir'] + params['file_enr_init'], "w") as energyfile:   
+            with open(params['working_dir'] + params['file_enr_init']+ "_"+str(irun), "w") as energyfile:   
                 np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
     
 
@@ -538,6 +538,16 @@ def read_ham_init(params):
         hmat = sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ ".npz" )
     elif params['hmat_format'] == 'numpy_arr':
         with open( params['working_dir'] + params['file_hmat_init'] , 'r') as hmatfile:   
+            hmat = np.loadtxt(hmatfile)
+    return hmat
+
+
+def read_ham_init_rot(params):
+    #rotated version
+    if params['hmat_format'] == 'sparse_csr':
+        hmat = sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun)+ ".npz" )
+    elif params['hmat_format'] == 'numpy_arr':
+        with open( params['working_dir'] + params['file_hmat_init'] + "_"+str(irun), 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)
     return hmat
 
@@ -1295,10 +1305,11 @@ if __name__ == "__main__":
         
         print("psi_init_rotated")
 
-        with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
 
-            print(psi_init_rotated[:]-psi_init[:,params['ivec']])
-        exit()
+        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+
+        #    print(psi_init_rotated[:]-psi_init[:,params['ivec']])
+        #exit()
 
 
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
