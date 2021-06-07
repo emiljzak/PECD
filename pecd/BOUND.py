@@ -162,7 +162,7 @@ def BUILD_HMAT0(params):
         
     for ielem, elem in enumerate(potmat0):
         #print(potind[ielem][0],potind[ielem][1])
-        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0]
+        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0] #we can speed up this bit
 
 
     start_time = time.time()
@@ -596,6 +596,59 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
         potmat = convert_lists_to_csr(potmat0,potind)
     """
     return potmat0, potind
+
+""" ============ POTMAT0 ROTATED ============ """
+def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
+
+    if params['esp_mode'] == "exact":
+        if  params['gen_adaptive_quads'] == True:
+            sph_quad_list = gen_adaptive_quads_exact( params,  Gr ) #checked 30 Apr 2021
+        elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
+            sph_quad_list = read_adaptive_quads(params)
+        elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
+            print("using global quadrature scheme")
+
+    start_time = time.time()
+    Gs = GRID.GEN_GRID( sph_quad_list )
+    end_time = time.time()
+    print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    if params['esp_mode'] == "exact":
+        start_time = time.time()
+        VG = POTENTIAL.BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, grid_euler, irun)
+        end_time = time.time()
+        print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    #if params['enable_cutoff'] == True: 
+    #print() 
+
+    start_time = time.time()
+    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = np.asarray(vlist)
+    end_time = time.time()
+    print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+    """we can cut vlist  to set cut-off for the ESP"""
+
+    if params['calc_method'] == 'jit':
+        start_time = time.time()
+        potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
+        end_time = time.time()
+        print("First call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+        #start_time = time.time()
+        #potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
+        #end_time = time.time()
+        #print("Second call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+    """
+    if params['hmat_format'] == "regular":
+        potmat = convert_lists_to_regular(potmat0,potind)
+    elif params['hmat_format'] == "csr":
+        potmat = convert_lists_to_csr(potmat0,potind)
+    """
+    return potmat0, potind
+
+
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""
