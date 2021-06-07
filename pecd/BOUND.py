@@ -660,8 +660,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
     print(mol_xyz)
     
     print("Rotation matrix:")
-    #alpha,beta,gamma = grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]
-    rotmat = R.from_euler('zyz', [[np.pi, 0.0 , 0.0 ]], degrees=False)
+    rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
     #rmat = rotmat.as_matrix()
     #print(rmat)
 
@@ -682,7 +681,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
     ax.scatter(mol_xyz[0,:], mol_xyz[1,:], mol_xyz[2,:])
     plt.show()
     exit()
-    """
+
     mlab.figure(1, bgcolor=(0, 0, 0), size=(350, 350))
     mlab.clf()
 
@@ -715,9 +714,9 @@ def rotate_mol_xyz(params, grid_euler, irun):
     mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
                 tube_radius=0.4, colormap='Reds')
 
-  
 
     mlab.show()
+    """
 
     return mol_xyz_rotated
 
@@ -727,8 +726,6 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
 
     mol_xyz = rotate_mol_xyz(params, grid_euler, irun)
   
-
-
     if params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:
             sph_quad_list = gen_adaptive_quads_exact( params,  Gr, mol_xyz, irun ) 
