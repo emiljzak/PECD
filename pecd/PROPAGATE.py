@@ -344,7 +344,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             if os.path.isfile(params['working_dir'] + params['file_hmat_init'] + "_" + str(irun) + ".dat"  ):
         
                 print (params['file_hmat_init'] + " file exist")
-                hmat = read_ham_init(params)
+                hmat = read_ham_init_rot(params,irun)
                 """ diagonalize hmat """
                 start_time = time.time()
                 enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
@@ -363,7 +363,11 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
             if os.path.isfile(params['working_dir'] + params['file_hmat_init'] + "_" + str(irun) + ".npz" ):
                 print (params['file_hmat_init'] + "_" + str(irun) + ".npz" + " file exist")
-                ham0 = read_ham_init(params)
+                ham0 =  read_ham_init_rot(params,irun)
+                #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+                #plt.legend()
+                #plt.show()
+        
 
                 """ diagonalize hmat """
                 start_time = time.time()
@@ -470,10 +474,10 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , ham0 , compressed = False )
+                sparse.save_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , ham_filtered , compressed = False )
             elif params['hmat_format'] == 'numpy_arr':
                 with open( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , 'w') as hmatfile:   
-                    np.savetxt(hmatfile, ham0, fmt = '%10.4e')
+                    np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
 
         if params['save_psi_init'] == True:
             psifile = open(params['working_dir'] + params['file_psi_init']+ "_"+str(irun), 'w')
@@ -487,7 +491,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
                 np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
     
 
-        return ham0, coeffs
+        return ham_filtered, coeffs
 
 
 
@@ -542,12 +546,12 @@ def read_ham_init(params):
     return hmat
 
 
-def read_ham_init_rot(params):
+def read_ham_init_rot(params,irun):
     #rotated version
     if params['hmat_format'] == 'sparse_csr':
         hmat = sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun)+ ".npz" )
     elif params['hmat_format'] == 'numpy_arr':
-        with open( params['working_dir'] + params['file_hmat_init'] + "_"+str(irun), 'r') as hmatfile:   
+        with open( params['working_dir'] + params['file_hmat_init'] + "_"+str(irun)+".dat", 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)
     return hmat
 
