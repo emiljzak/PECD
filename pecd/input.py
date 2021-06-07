@@ -26,6 +26,12 @@ def gen_input():
     params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     params['molec_name']    = "d2s"
 
+    """ === molecule definition ==== """ 
+    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #in next generation load internal geometry from file
+    params['mol_masses']    = {"S":32.0, "D":2.0}
+    params['mol_embedding'] = "bisector" #TROVE's bisector embedding
+
+
     """ === ro-vibrational part ==== """ 
     params['rot_wf_file']       = params['working_dir'] + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "coefficients_j0_j60.rchm"
@@ -55,7 +61,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -148,7 +154,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 

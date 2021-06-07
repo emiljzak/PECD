@@ -129,9 +129,8 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
     return VG
 
 
-def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, grid_euler, irun):
+def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
 
-    alpha,beta,gamma = grid_euler[irun]
 
     if os.path.isfile(params['working_dir'] + "esp/" + params['file_esp']):
         print (params['file_esp'] + " file exist")
@@ -169,11 +168,11 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, grid_euler, irun):
 
         grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
         grid_xyz = np.asarray(grid_xyz)
-        V        = GRID.CALC_ESP_PSI4_ROT(params['working_dir'] + "esp/", params)
+        V        = GRID.CALC_ESP_PSI4_ROT(params['working_dir'] + "esp/", params, mol_xyz)
         V        = -1.0 * np.asarray(V)
 
         esp_grid = np.hstack((grid_xyz,V[:,None])) 
-        fl       = open(params['working_dir'] + "esp/" + params['file_esp'], "w")
+        fl       = open(params['working_dir'] + "esp/" + params['file_esp'] + "_"+str(irun), "w")
         np.savetxt(fl, esp_grid, fmt='%10.6f')
 
     r_array = Gr.flatten()

@@ -1276,7 +1276,9 @@ if __name__ == "__main__":
 
             WDMATS.append(WDM)        
  
-
+        #irun = 0 means unrotated frame: MF = LF
+        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler[0], 0)
+        #unrotated wavefunction and Hamiltonian
 
         ind_euler = 25
         Nr = len(maparray_chi)

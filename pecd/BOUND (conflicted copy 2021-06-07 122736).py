@@ -648,7 +648,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
     RCM /= np.sum(mVec)
 
     print(RCM)
-  
+    exit()
 
 
     print("Rotation matrix:")
