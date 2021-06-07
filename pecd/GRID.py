@@ -255,6 +255,33 @@ def CALC_ESP_PSI4(dir,params):
     os.chdir("../")
     return Vvals
 
+
+def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
+    os.chdir(dir)
+    psi4.core.be_quiet()
+    properties_origin=["COM"]
+    ang_au = CONSTANTS.angstrom_to_au
+
+    mol = psi4.geometry("""
+    1 2
+    noreorient
+    units au
+    
+    S	{0} {1} {2}
+    H1	{3} {4} {5}
+    H2	{6} {7} {8}
+
+    """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
+                mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
+                mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
+    )
+
+    psi4.set_options({'basis': params['scf_basis'], 'e_convergence': params['scf_enr_conv'], 'reference': params['scf_method']})
+    E, wfn = psi4.prop('scf', properties = ["GRID_ESP"], return_wfn = True)
+    Vvals = wfn.oeprop.Vvals()
+    os.chdir("../")
+    return Vvals
+
     #h2o = psi4.geometry("""
     #1 2
     #noreorient

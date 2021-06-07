@@ -74,6 +74,8 @@ def gen_input():
     params['scf_basis']          = '6-31G**' #"cc-pDTZ" #"631G**"
     params['scf_method']         = 'uhf'
 
+    params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
+
     """ Note: r_cutoff can be infered from quad_levels file: 
                                          when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0.
                                          only in interpolation esp_mode. cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory.
@@ -157,21 +159,21 @@ def gen_input():
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method_name'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])  
 
     params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'] + params['nbins'])   + \
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method_name'])   + ".dat"
+                                    "_" + str(params['esp_method_name'])  
 
     params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'] + params['nbins'])   + \
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
                                     "_" + str(params['bound_lmax'])  + \
-                                    "_" + str(params['esp_method_name'])   + ".dat"
+                                    "_" + str(params['esp_method_name']) 
 
 
     """ ====== FIELD PARAMETERS ====== """
