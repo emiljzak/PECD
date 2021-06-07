@@ -1255,6 +1255,12 @@ if __name__ == "__main__":
         print("number of points per batch = " + str(N_per_batch))
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
+        #save Euler grid in file
+        print(grid_euler[1][2])
+
+        with open( params['working_dir'] + "grid_euler.dat" , 'w') as eulerfile:   
+                np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
+        exit()
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                     params['map_type'], params['working_dir'] )
@@ -1264,7 +1270,7 @@ if __name__ == "__main__":
         wigner = spherical.Wigner(Jmax)
         R = quaternionic.array.from_euler_angles(grid_euler)
         D = wigner.D(R)
-        print(D.shape)
+        #print(D.shape)
         WDMATS = []
         for J in range(Jmax+1):
             WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
