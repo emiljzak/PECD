@@ -14,6 +14,7 @@ import numpy as np
 from numpy.linalg import multi_dot
 from scipy import sparse
 from scipy.special import sph_harm
+from scipy.spatial.transform import Rotation as R
 import quadpy
 
 from sympy.functions.elementary.miscellaneous import sqrt
@@ -597,6 +598,8 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     """
     return potmat0, potind
 
+
+
 def rotate_mol_xyz(params, grid_euler, irun):
     """ Generate raw cartesian coordinates of atoms from Z-matrix,
         followed by shift to the centre of mass,
@@ -608,6 +611,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
     print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
 
     mol_xyz = np.zeros( (3,3), dtype = float) #for triatomic molecules only for now
+    mol_xyz_rotated = np.zeros( (3,3), dtype = float) #for triatomic molecules only for now
 
     # Sx D1x D2x
     # Sy D1y D2y
@@ -649,14 +653,33 @@ def rotate_mol_xyz(params, grid_euler, irun):
 
     print(RCM)
   
+    for iatom in range(3):
+        mol_xyz[:,iatom] -= RCM[:] 
 
-
+    print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
+    print(mol_xyz)
+    
     print("Rotation matrix:")
+    #alpha,beta,gamma = grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]
+    rotmat = R.from_euler('zyz', [[0, 0, np.pi ]], degrees=False)
+    #rmat = rotmat.as_matrix()
+    #print(rmat)
+
+    for iatom in range(3):
+        mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+
+    print("rotated molecular cartesian matrix:")
+    print(mol_xyz_rotated)
+
+    #veryfiy rotated geometry by plots
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.scatter(mol_xyz_rotated[0,:], mol_xyz_rotated[1,:], mol_xyz_rotated[2,:])
+    plt.show()
+
     exit()
-    print(rotmat)
 
 
-    alpha,beta,gamma = grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]
 
     return mol_xyz
 
