@@ -27,7 +27,7 @@ from numba import jit, prange
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
-
+from mayavi import mlab
 """ start of @jit section """
 jitcache = False
 
@@ -661,7 +661,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
     
     print("Rotation matrix:")
     #alpha,beta,gamma = grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]
-    rotmat = R.from_euler('zyz', [[0, 0, np.pi ]], degrees=False)
+    rotmat = R.from_euler('zyz', [[np.pi, 0.0 , 0.0 ]], degrees=False)
     #rmat = rotmat.as_matrix()
     #print(rmat)
 
@@ -672,16 +672,54 @@ def rotate_mol_xyz(params, grid_euler, irun):
     print(mol_xyz_rotated)
 
     #veryfiy rotated geometry by plots
+    """
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
+    ax.set_xlim(-2.0,2.0)
+    ax.set_ylim(-2.0,2.0)
+    ax.set_zlim(-2.0,2.0)
     ax.scatter(mol_xyz_rotated[0,:], mol_xyz_rotated[1,:], mol_xyz_rotated[2,:])
+    ax.scatter(mol_xyz[0,:], mol_xyz[1,:], mol_xyz[2,:])
     plt.show()
-
     exit()
+    """
+    mlab.figure(1, bgcolor=(0, 0, 0), size=(350, 350))
+    mlab.clf()
 
+    # The position of the atoms
+    atoms_x = mol_xyz_rotated[0,:]
+    atoms_y = mol_xyz_rotated[1,:]
+    atoms_z = mol_xyz_rotated[2,:]
+    axes = mlab.axes(color=(0, 0, 0), nb_labels=5)
+    mlab.orientation_axes()
+    O = mlab.points3d(atoms_x[1:-1], atoms_y[1:-1], atoms_z[1:-1],
+                    scale_factor=3,
+                    resolution=20,
+                    color=(1, 0, 0),
+                    scale_mode='none')
 
+    H1 = mlab.points3d(atoms_x[:1], atoms_y[:1], atoms_z[:1],
+                    scale_factor=2,
+                    resolution=20,
+                    color=(1, 1, 1),
+                    scale_mode='none')
 
-    return mol_xyz
+    H2 = mlab.points3d(atoms_x[-1:], atoms_y[-1:], atoms_z[-1:],
+                    scale_factor=2,
+                    resolution=20,
+                    color=(1, 1, 1),
+                    scale_mode='none')
+
+    # The bounds between the atoms, we use the scalar information to give
+    # color
+    mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
+                tube_radius=0.4, colormap='Reds')
+
+  
+
+    mlab.show()
+
+    return mol_xyz_rotated
 
 """ ============ POTMAT0 ROTATED ============ """
 def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
