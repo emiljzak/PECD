@@ -1162,12 +1162,12 @@ def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
         #print(l, ind_start[l], ind_end[l])
         Dmat[ind_start[l]:ind_end[l],ind_start[l]:ind_end[l]] = WDMATS[l][:,:,ind_euler]
 
-    with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
-        print(Dmat)
+    #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+    #    print(Dmat)
 
     coeffs_rotated = np.zeros(coeffs.shape[0], dtype = complex)
 
-    print("number of radial basis points/functions: " + str(Nr))
+    #print("number of radial basis points/functions: " + str(Nr))
 
     xi_start    = np.zeros(Nr, dtype=Integer)
     xi_end      = np.zeros(Nr, dtype=Integer)
@@ -1182,7 +1182,7 @@ def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
     print("size of single D-mat block: " + str(-xi_start[1]+xi_end[1]))
 
     for xi in range(Nr):
-        print(xi, xi_start[xi], xi_end[xi]) #checked by hand 5 Jun 2021
+        #print(xi, xi_start[xi], xi_end[xi]) #checked by hand 5 Jun 2021
         coeffs_rotated[xi_start[xi]:xi_end[xi]] = np.matmul(Dmat,coeffs[xi_start[xi]:xi_end[xi]])
 
     #print(coeffs_rotated)
@@ -1293,12 +1293,14 @@ if __name__ == "__main__":
 
             WDMATS.append(WDM)        
  
+
+        """ TEST: eigenfunction of rotated potential vs. rotated wavefunction of unrotated potential """
+        ind_euler = 1
         #irun = 0 means unrotated frame: MF = LF
-        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, 0)
+        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, 0 )
         #unrotated wavefunction and Hamiltonian
 
 
-        ind_euler = 0
         Nr = len(maparray_chi)
         psi_init_rotated = rotate_coefficients( ind_euler,
                                                 maparray_global, 
@@ -1308,12 +1310,11 @@ if __name__ == "__main__":
                                                 Nr)
         
         print("psi_init_rotated")
+        ham_init, psi_init_1 = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, ind_euler )
 
-
-        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
-
-        #    print(psi_init_rotated[:]-psi_init[:,params['ivec']])
-        #exit()
+        with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=20):
+            print(psi_init_rotated[:]-psi_init_1[:,params['ivec']])
+        exit()
 
 
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
@@ -1371,8 +1372,8 @@ if __name__ == "__main__":
 
 
             print(rho.shape)
-            PLOTS.plot_rotdens(rho[:].real)
-            exit()
+            #PLOTS.plot_rotdens(rho[:].real)
+            #exit()
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
                 print(irun)
@@ -1396,19 +1397,21 @@ if __name__ == "__main__":
                     #calculate Hankel transforms on appropriate k-vector grid
                     Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
 
-                    FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, gamma )
+                    FT, kgrid = calc_FT_3D_hankel(  Plm, Flm, kgrid, params['bound_lmax'], 
+                                                    grid_theta, grid_r, maparray_chi, 
+                                                    maparray_global, psi, chilist, gamma )
                     
 
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += rho[irun] * np.abs(FT)**2
-                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+                    Wav += float(rho[irun]) * np.abs(FT)**2
+                    PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
             print(Wav)
 
             with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
             with open( params['working_dir'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid,grid_theta)), fmt = '%10.4e')
-            #PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
+            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
     else:
         raise ValueError("Incorrect execution mode keyword")
         exit()
