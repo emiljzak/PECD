@@ -1297,10 +1297,11 @@ if __name__ == "__main__":
         """ TEST: eigenfunction of rotated potential vs. rotated wavefunction of unrotated potential """
         ind_euler = 1
         #irun = 0 means unrotated frame: MF = LF
+        """
         ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, 0 )
         #unrotated wavefunction and Hamiltonian
 
-
+        
         Nr = len(maparray_chi)
         psi_init_rotated = rotate_coefficients( ind_euler,
                                                 maparray_global, 
@@ -1315,7 +1316,7 @@ if __name__ == "__main__":
         with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=20):
             print(psi_init_rotated[:]-psi_init_1[:,params['ivec']])
         exit()
-
+        """
 
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 		    #print(grid_euler[irun])
