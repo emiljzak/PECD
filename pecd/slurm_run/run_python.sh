@@ -7,6 +7,8 @@ export XDG_RUNTIME_DIR=$pwd
 export DISPLAY=:0.0
 ulimit -s unlimited
 
+source activate p4env
+
 echo "Number of OMP threads :" $OMP_NUM_THREADS
 echo "OMP stack size :" $OMP_STACKSIZE
 echo "KMP stack size :" $KMP_STACKSIZE

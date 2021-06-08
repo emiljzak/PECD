@@ -5,7 +5,7 @@ export exec="python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py"
 export jobname="pecd_run"
 export pwd=`pwd`
 
-export jobtype="cfel-cmi"
+export jobtype="cfel-cmi,cfel,all"
 export nproc=32 #`nproc --all`
 export wclim=100
 export nnodes=1

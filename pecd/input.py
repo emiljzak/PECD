@@ -22,8 +22,8 @@ def gen_input():
 
     """ === molecule directory ==== """ 
     params['molec_name']    = "d2s"
-    params['main_dir']      = os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
-    params['working_dir']   = params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"#os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
+    params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/" #params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
     """ === molecule definition ==== """ 
     params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
