@@ -12,7 +12,7 @@ def gen_input():
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -21,13 +21,12 @@ def gen_input():
     """
 
     """ === molecule directory ==== """ 
-
-    params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
-    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     params['molec_name']    = "d2s"
+    params['main_dir']      = os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
+    params['working_dir']   = params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
     """ === molecule definition ==== """ 
-    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #in next generation load internal geometry from file
+    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
     params['mol_masses']    = {"S":32.0, "D":2.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
@@ -46,11 +45,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 8
-    params['bound_nbins']   = 6
+    params['bound_nlobs']   = 12
+    params['bound_nbins']   = 40
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -61,7 +60,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -129,10 +128,10 @@ def gen_input():
 
     """==== PROPAGATE ===="""
 
-    params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
+    #params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
 
     # generate 3D grid of Euler angles
-    params['n_euler']   = 2 # number of points per Euler angle. Total number of points is n_euler**3
+    #params['n_euler']   = 2 # number of points per Euler angle. Total number of points is n_euler**3
     
 
     params['nlobs']     = params['bound_nlobs']
@@ -144,7 +143,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 1000.0 
+    params['tmax']      = 4000.0 
     params['dt']        = 4.0
     params['ivec']      = 5  
 
@@ -156,7 +155,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -185,7 +184,7 @@ def gen_input():
     """ ====== FIELD PARAMETERS ====== """
 
     """ ---- carrier frequency ----- """
-    params['omega']     = 60.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 266.0 #23.128 = 54 eV, 60nm = 20 eV
     freq_units          = "nm" #nm or eV
 
     if freq_units == "nm":
@@ -222,8 +221,8 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 500.0 #as: pulse duration (sigma)
-    params['tc']        = 1000.0 #as: pulse centre
+    params['tau']       = 1000.0 #as: pulse duration (sigma)
+    params['tc']        = 2000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -272,7 +271,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],1)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    True,
@@ -303,4 +302,5 @@ def gen_input():
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
+    
     return params
