@@ -22,8 +22,8 @@ def gen_input():
 
     """ === molecule directory ==== """ 
     params['molec_name']    = "d2s"
-    params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"#os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
-    params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/" #params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
+    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
     """ === molecule definition ==== """ 
     params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
@@ -45,11 +45,11 @@ def gen_input():
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 12
-    params['bound_nbins']   = 40
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 8
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -60,7 +60,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -155,7 +155,7 @@ def gen_input():
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -263,7 +263,7 @@ def gen_input():
 
     """==== POST-PROCESSING: PLOTS ===="""
 
-    params['plot_modes']    = { "snapshot":         False, 
+    params['plot_modes']    = { "snapshot":         True, 
                                 "animation":        False}
 
     params['plot_types']    = { "radial":           False,
@@ -274,7 +274,7 @@ def gen_input():
     params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
-                                "show_snapshot":    True,
+                                "show_snapshot":    False,
                                 "show_anim":        False, 
                                 "fname_snapshot":   "obs",
                                 "fname_animation":  "anim_obs"}
@@ -296,11 +296,11 @@ def gen_input():
     """ PECD """
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['analyze_time']    = 1000.0#params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
-    
+
     return params

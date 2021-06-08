@@ -754,7 +754,7 @@ def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi
             print(l,m)
         
             for ielem, elem in enumerate(maparray_chi):
-                if elem[0] > -1: #cut-out bound-state electron density
+                if elem[0] > 2: #cut-out bound-state electron density
 
                     val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](grid_r)
 
@@ -1326,6 +1326,7 @@ if __name__ == "__main__":
             
     elif params['mode'] == 'analyze_grid':
         itime = int( params['analyze_time'] / params['dt'])
+
         if params['analyze_mpad'] == True:
 
             N_Euler = int(sys.argv[3])
@@ -1405,14 +1406,14 @@ if __name__ == "__main__":
 
                     #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
                     Wav += float(rho[irun]) * np.abs(FT)**2
-                    PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
             print(Wav)
 
             with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
             with open( params['working_dir'] + "grid_W_av", 'w') as gridfile:   
-                np.savetxt(gridfile, np.stack((kgrid,grid_theta)), fmt = '%10.4e')
-            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
+                np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
+            #PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
     else:
         raise ValueError("Incorrect execution mode keyword")
         exit()
