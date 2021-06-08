@@ -12,7 +12,7 @@ def gen_input():
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -154,7 +154,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
