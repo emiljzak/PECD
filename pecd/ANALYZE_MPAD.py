@@ -144,7 +144,7 @@ def test_wigner():
 
 def analyze_Wav(N_batches):
 
-    working_dir = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    working_dir = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
     with open( working_dir  + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
@@ -167,8 +167,8 @@ def analyze_Wav(N_batches):
 
 
 os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
-N_batches = 3
+N_batches = 1
 
-test_wigner()
+#test_wigner()
 
-#analyze_Wav(N_batches)
+analyze_Wav(N_batches)

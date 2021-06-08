@@ -46,8 +46,8 @@ def read_wavepacket(coef_file, coef_thresh=1.0e-16):
     for key in h5.keys():
         st = re.sub(r"results_t_", "", key)
         t = float(re.sub("_", ".", st))
-        q = h5[key]["quanta_t_"+st].value
-        c = h5[key]["coef_t_"+st].value
+        q = h5[key]["quanta_t_"+st][:]
+        c = h5[key]["coef_t_"+st][:]
         quanta.append(q[abs(c)**2>coef_thresh,:])
         coefs.append(c[abs(c)**2>coef_thresh])
         time.append(t)
