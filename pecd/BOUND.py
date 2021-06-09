@@ -598,7 +598,31 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     """
     return potmat0, potind
 
+def euler_rot(chi, theta, phi, xyz):
+    """Rotates Cartesian vector xyz[ix] (ix=x,y,z) by an angle phi around Z,
+    an angle theta around new Y, and an angle chi around new Z.
+    Input values of chi, theta, and phi angles are in radians.
+    """
+    amat = np.zeros((3,3), dtype=np.float64)
+    bmat = np.zeros((3,3), dtype=np.float64)
+    cmat = np.zeros((3,3), dtype=np.float64)
+    rot = np.zeros((3,3), dtype=np.float64)
 
+    amat[0,:] = [np.cos(chi), np.sin(chi), 0.0]
+    amat[1,:] = [-np.sin(chi), np.cos(chi), 0.0]
+    amat[2,:] = [0.0, 0.0, 1.0]
+
+    bmat[0,:] = [np.cos(theta), 0.0, -np.sin(theta)]
+    bmat[1,:] = [0.0, 1.0, 0.0]
+    bmat[2,:] = [np.sin(theta), 0.0, np.cos(theta)]
+
+    cmat[0,:] = [np.cos(phi), np.sin(phi), 0.0]
+    cmat[1,:] = [-np.sin(phi), np.cos(phi), 0.0]
+    cmat[2,:] = [0.0, 0.0, 1.0]
+
+    rot = np.transpose(np.dot(amat, np.dot(bmat, cmat)))
+    xyz_rot = np.dot(rot, xyz)
+    return xyz_rot
 
 def rotate_mol_xyz(params, grid_euler, irun):
     """ Generate raw cartesian coordinates of atoms from Z-matrix,
@@ -661,12 +685,16 @@ def rotate_mol_xyz(params, grid_euler, irun):
     
     print("Rotation matrix:")
     rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+   
+    #ALTErnatively use
+    #euler_rot(chi, theta, phi, xyz):
+   
     #rmat = rotmat.as_matrix()
     #print(rmat)
 
     for iatom in range(3):
         mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
-
+        #mol_xyz_rotated[:,iatom] = euler_rot(cgrid_euler[irun][2], grid_euler[irun][1], grid_euler[irun][0], mol_xyz[:,iatom]):
     print("rotated molecular cartesian matrix:")
     print(mol_xyz_rotated)
 

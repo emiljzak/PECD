@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "slurm_grid_run.py", line 20, in <module>
-    run_propagate(N_euler,N_batches)
-  File "slurm_grid_run.py", line 13, in run_propagate
-    subprocess.call(START_FILES + "./master_script.sh " + str(ibatch) + " " + N_batches + " " + N_euler , shell=True) 
-TypeError: can only concatenate list (not "str") to list

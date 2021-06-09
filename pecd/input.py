@@ -55,7 +55,7 @@ def gen_input():
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
 
-    params['num_ini_vec']   = 10 # number of initial wavefunctions (orbitals) stored in file
+    params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
 
     """==== potential energy matrix ===="""
