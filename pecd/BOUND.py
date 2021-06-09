@@ -121,7 +121,7 @@ def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
 def BUILD_HMAT0(params):
 
     maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
-                                     params['map_type'], params['working_dir'] )
+                                     params['map_type'], params['job_directory'] )
 
     Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
 
@@ -196,20 +196,20 @@ def BUILD_HMAT0(params):
 
     if params['save_ham0'] == True:
         if params['hmat_format'] == 'csr':
-            sparse.save_npz( params['working_dir'] + params['file_hmat0'] , hmat , compressed = False )
+            sparse.save_npz(params['job_directory'] + params['file_hmat0'] , hmat , compressed = False )
         elif params['hmat_format'] == 'regular':
-            with open( params['working_dir'] + params['file_hmat0'] , 'w') as hmatfile:   
+            with open( params['job_directory'] + params['file_hmat0'] , 'w') as hmatfile:   
                 np.savetxt(hmatfile, hmat, fmt = '%10.4e')
 
     if params['save_psi0'] == True:
-        psi0file = open(params['working_dir'] + params['file_psi0'], 'w')
+        psi0file = open(params['job_directory'] + params['file_psi0'], 'w')
         for ielem,elem in enumerate(maparray):
             psi0file.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                             " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                             "\t\t ".join('{:10.5e}'.format(coeffs0[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
 
     if params['save_enr0'] == True:
-        with open(params['working_dir'] + params['file_enr0'], "w") as energyfile:   
+        with open(params['job_directory'] + params['file_enr0'], "w") as energyfile:   
             np.savetxt( energyfile, enr0 * CONSTANTS.au_to_ev , fmt='%10.5f' )
 
 
@@ -825,7 +825,7 @@ def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
 def read_adaptive_quads(params):
     levels = []
 
-    quadfilename = params['working_dir'] + params['file_quad_levels'] 
+    quadfilename = params['job_directory'] + params['file_quad_levels'] 
     fl = open( quadfilename , 'r' )
     for line in fl:
         words   = line.split()
@@ -915,7 +915,7 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
 
     print("Converged quadrature levels: ")
     print(sph_quad_list)
-    quadfilename = params['working_dir'] + params['file_quad_levels'] 
+    quadfilename = params['job_directory'] + params['file_quad_levels'] 
     fl = open(quadfilename,'w')
     print("saving quadrature levels to file: " + quadfilename )
     for item in sph_quad_list:
@@ -959,26 +959,26 @@ def gen_adaptive_quads_exact(params , rgrid):
                 #pull potential at quadrature points
                 potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme
 
-                if os.path.isfile(params['working_dir'] + "esp/" + potfilename):
+                if os.path.isfile(params['job_directory'] + "esp/" + potfilename):
                     print (potfilename + " file exist")
 
 
-                    filesize = os.path.getsize(params['working_dir'] + "esp/" + potfilename)
+                    filesize = os.path.getsize(params['job_directory']+ "esp/" + potfilename)
 
                     if filesize == 0:
                         print("The file is empty: " + str(filesize))
-                        os.remove(params['working_dir'] + "esp/" + potfilename)
-                        GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['working_dir']+"esp/")
+                        os.remove(params['job_directory']+ "esp/" + potfilename)
+                        GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['job_directory']+"esp/")
 
-                        V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/",params)
+                        V = GRID.CALC_ESP_PSI4(params['job_directory']+"esp/",params)
                         V = np.asarray(V)
 
-                        fl = open(params['working_dir'] + "esp/" + potfilename,"w")
+                        fl = open(params['job_directory'] + "esp/" + potfilename,"w")
                         np.savetxt(fl,V,fmt='%10.6f')
 
                     else:
                         print("The file is not empty: " + str(filesize))
-                        fl = open(params['working_dir'] + "esp/" + potfilename , 'r' )
+                        fl = open(params['job_directory'] + "esp/" + potfilename , 'r' )
                         V = []
                         for line in fl:
                             words = line.split()
@@ -990,12 +990,12 @@ def gen_adaptive_quads_exact(params , rgrid):
                     print (potfilename + " file does not exist")
 
                     #generate xyz grid
-                    GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['working_dir']+"esp/")
+                    GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['job_directory']+"esp/")
 
-                    V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/",params)
+                    V = GRID.CALC_ESP_PSI4(params['job_directory']+"esp/",params)
                     V = np.asarray(V)
 
-                    fl = open(params['working_dir'] + "esp/" + potfilename,"w")
+                    fl = open(params['job_directory'] + "esp/" + potfilename,"w")
                     np.savetxt(fl, V, fmt='%10.6f')
 
 
@@ -1034,7 +1034,7 @@ def gen_adaptive_quads_exact(params , rgrid):
 
     print("Converged quadrature levels: ")
     print(sph_quad_list)
-    quadfilename = params['working_dir'] + params['file_quad_levels'] 
+    quadfilename = params['job_directory'] + params['file_quad_levels'] 
     fl = open(quadfilename,'w')
     print("saving quadrature levels to file: " + quadfilename )
     for item in sph_quad_list:

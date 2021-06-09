@@ -61,7 +61,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -127,12 +127,12 @@ def gen_input():
                                     "_" + str(params['esp_method_name'])    + ".dat"
     
 
-    params['job_directory'] =   params['molec_name']   + \
+    params['job_directory'] =  params['working_dir'] + params['molec_name']   + \
                                 "_" + str(params['bound_nbins'])   + \
                                 "_" + str(params['bound_nlobs'])   + \
                                 "_" + str(params['bound_binw'])    + \
                                 "_" + str(params['bound_lmax'])    + \
-                                "_" + str(params['esp_method_name'])
+                                "_" + str(params['esp_method_name']) +"/"
 
 
     """==== PROPAGATE ===="""
@@ -220,7 +220,7 @@ def gen_input():
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 2.0e+14 #W/cm^2 #peak intensity
+    intensity       = 1.0e+14 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 

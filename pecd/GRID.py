@@ -204,6 +204,7 @@ def GEN_XYZ_GRID(Gs,Gr,working_dir):
     grid = []
     r_array = Gr.flatten()
     print(r_array)
+    print("working dir: " + working_dir )
     gridfile = open(working_dir + "grid.dat", 'w')
 
     for k in range(len(r_array)):
