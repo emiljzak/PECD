@@ -23,7 +23,7 @@ def gen_input():
     """ === molecule directory ==== """ 
     params['molec_name']    = "d2s"
     params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
-    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s_conv/"#params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
 
     """ === molecule definition ==== """ 
@@ -153,7 +153,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 4000.0 
+    params['tmax']      = 40.0 
     params['dt']        = 4.0
     params['ivec']      = 8 
 
@@ -281,7 +281,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],2)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
