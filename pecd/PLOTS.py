@@ -52,7 +52,7 @@ def read_coeffs(filename,nvecs):
     return coeffs
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
-    coeffs = read_coeffs(wffile,nvecs=5)
+    coeffs = read_coeffs(wffile,nvecs=10)
 
     xl=np.zeros(nlobs)
     w=np.zeros(nlobs)
@@ -60,18 +60,23 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     w=np.array(w)
 
     X, Y, Z = grid[0], grid[1], grid[2]
-    print(X.shape)
+    #print(X.shape)
     val = np.zeros((X.shape[0]*X.shape[0]*X.shape[0]))
 
 
-    rx,thetax,phix = cart2sph(X,Y,Z)
-    r= rx.flatten()
-    theta =thetax.flatten()
-    phi =phix.flatten()
+    rx,thetax,phix  = cart2sph(X,Y,Z)
+    r               = rx.flatten()
+    theta           = thetax.flatten()
+    phi             = phix.flatten()
 
-    print(theta.shape)
-    for ipoint in coeffs:
-        print(ipoint)
+    #print(theta.shape)
+    #print(np.shape(coeffs))
+    #print(type(coeffs))
+
+
+    for icount, ipoint in enumerate(coeffs):
+        print(icount)
+        #print(np.shape(ipoint[5][ivec]))
         if np.abs(ipoint[5][ivec]) > 1e-2:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi).real / r
 
@@ -336,19 +341,21 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
 
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
+    
+    ivec = 8
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
     mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=10.0, figure=fig)
 
-    plot_molecule = False
+    plot_molecule = True
 
     if plot_molecule == True:
         # The position of the atoms
         scale = 40.0 / 5.5
         trans = np.array([0.0, 0.0, 0.0])
-        atoms_O = np.array([0.0, 0.0, 0.0]) * scale + trans
-        atoms_H1 = np.array([0.757,   0.586,    0.0000]) * scale + trans
-        atoms_H2 = np.array([ -0.757,    0.586,     0.000]) * scale + trans
+        atoms_O = np.array([0.0, -0.02, 0.2]) * scale + trans
+        atoms_H1 = np.array([0.0, -1.8,   -1.53,  ]) * scale + trans
+        atoms_H2 = np.array([ 0.0,    2.15,    -1.89]) * scale + trans
 
 
 
@@ -388,22 +395,22 @@ def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     ymax = grange
     ymin = -1.0 * grange
     
-    ivec = 2
+
 
     x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
     #wf = np.sin(x**2 + y**2 + 2. * z**2)
     wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
     fmin = wf.min()
     fmax = wf.max()
-    print(wf)
+    #print(wf)
     wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
-    print(wf2)
+    #print(wf2)
     #plot volume
     #mlab.pipeline.volume(mlab.pipeline.scalar_field(wf),  vmin=fmin + 0.65 * (fmax - fmin),
     #                               vmax=fmin + 0.9 * (fmax - fmin))
     
     #plot isosurface
-    mywf = mlab.contour3d(wf2, contours=[0.05,0.1,0.2], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
+    mywf = mlab.contour3d(wf2, contours=[0.1,0.2,0.5,0.8], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
@@ -683,13 +690,8 @@ if __name__ == "__main__":
 
     params = input.gen_input()
     
-    #plot 3D angular function
-    #plot_3D_angfunc()
-    #plot_spharm_rotated()
-    exit()
-
-    #wffile = params['working_dir'] + "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
-    nvecs = 7 #how many vectors to load?
+    wffile = params['job_directory'] + "psi_init_d2s_8_10_5.0_2_uhf_631Gss_0"# "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
+    nvecs = 10 #how many vectors to load?
     ivec = params['ivec'] #which vector to plot?
     
     #coeffs = read_coeffs(wffile,nvecs)
@@ -703,7 +705,7 @@ if __name__ == "__main__":
     nbins = params['bound_nbins'] + params['nbins']
 
     #Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
-
+    Gr, Nr = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
     #maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
     #                                 params['map_type'], params['working_dir'] )
 
@@ -724,10 +726,10 @@ if __name__ == "__main__":
     #            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 
     """ plot angular wavefunction at a given distance """
-    r0 = 2.0
-    coeffs = 0.0
-    Gr   = 0.0
-    plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
+    #r0 = 2.0
+    #coeffs = 0.0
+    #Gr   = 0.0
+    #plot_wf_ang(r0,coeffs,Gr,params['bound_nlobs'], params['bound_nbins'])
 
     """ plot angular-radial wavefunction on a polar plot"""
     #plot_snapshot(params,psi,maparray,Gr,t)
@@ -735,7 +737,7 @@ if __name__ == "__main__":
     #                psi,maparray ,Gr, params, 0.0)
     #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
-    #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+    plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'], Gr, wffile)
 
 
     """ plot 4D volume of the wavefunction amplitude (density)"""
