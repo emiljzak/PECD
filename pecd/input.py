@@ -33,13 +33,14 @@ def gen_input():
 
 
     """ === ro-vibrational part ==== """ 
-    params['rot_wf_file']       = params['working_dir'] + "wavepacket_J60.h5"
-    params['rot_coeffs_file']   = params['working_dir'] + "coefficients_j0_j60.rchm"
+    params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
+    params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
     params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
     params['rv_wavepacket_time']= 50
     params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
-    """==== BOUND ===="""
 
+
+    """==== BOUND ===="""
     params['map_type']      = 'DVR' #DVR or SPECT
     params['hmat_format']   = "sparse_csr" # numpy_arr
     params['file_format']   = 'dat' #npz, hdf5
@@ -220,7 +221,7 @@ def gen_input():
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 1.0e+14 #W/cm^2 #peak intensity
+    intensity       = 5.0e+13 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 

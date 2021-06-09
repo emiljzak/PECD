@@ -1232,6 +1232,9 @@ if __name__ == "__main__":
                                                             params['map_type'],
                                                             params['job_directory'] )
 
+    os.chdir(params['job_directory'])
+    os.rename("map.dat", "map_global.dat")
+
     Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] + params['nbins'], 
                                                             params['bound_binw'],  
@@ -1313,6 +1316,9 @@ if __name__ == "__main__":
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                     params['map_type'], path )
+
+        os.chdir(params['job_directory'])
+        os.rename("map.dat", "map_radial.dat")
 
         #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
         WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
