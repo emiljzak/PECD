@@ -841,7 +841,7 @@ def read_adaptive_quads_rot(params,irun):
     #for grid calculations on rotated molecules
     levels = []
 
-    quadfilename = params['working_dir'] + params['file_quad_levels'] + "_"+str(irun)
+    quadfilename = params['job_directory']  + params['file_quad_levels'] + "_"+str(irun)
 
     fl = open( quadfilename , 'r' )
     for line in fl:
@@ -1079,26 +1079,26 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                 #pull potential at quadrature points
                 potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme + "_"+str(irun)
 
-                if os.path.isfile(params['working_dir'] + "esp/" + potfilename):
+                if os.path.isfile(params['job_directory']  + "esp/" + potfilename):
                     print (potfilename + " file exist")
 
 
-                    filesize = os.path.getsize(params['working_dir'] + "esp/" + potfilename)
+                    filesize = os.path.getsize(params['job_directory']  + "esp/" + potfilename)
 
                     if filesize == 0:
                         print("The file is empty: " + str(filesize))
-                        os.remove(params['working_dir'] + "esp/" + potfilename)
-                        GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['working_dir']+"esp/")
+                        os.remove(params['job_directory']  + "esp/" + potfilename)
+                        GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['job_directory'] + "esp/")
 
-                        V = GRID.CALC_ESP_PSI4(params['working_dir']+"esp/",params)
+                        V = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/", params)
                         V = np.asarray(V)
 
-                        fl = open(params['working_dir'] + "esp/" + potfilename,"w")
+                        fl = open(params['job_directory'] + "esp/" + potfilename,"w")
                         np.savetxt(fl,V,fmt='%10.6f')
 
                     else:
                         print("The file is not empty: " + str(filesize))
-                        fl = open(params['working_dir'] + "esp/" + potfilename , 'r' )
+                        fl = open(params['job_directory'] + "esp/" + potfilename , 'r' )
                         V = []
                         for line in fl:
                             words = line.split()
@@ -1110,9 +1110,9 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                     print (potfilename + " file does not exist")
 
                     #generate xyz grid
-                    GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['working_dir']+"esp/")
+                    GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['job_directory'] + "esp/")
 
-                    V = GRID.CALC_ESP_PSI4_ROT(params['working_dir']+"esp/",params, mol_xyz)
+                    V = GRID.CALC_ESP_PSI4_ROT(params['job_directory'] + "esp/", params, mol_xyz)
                     V = np.asarray(V)
 
                     #fl = open(params['working_dir'] + "esp/" + potfilename,"w")
@@ -1154,7 +1154,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 
     print("Converged quadrature levels: ")
     print(sph_quad_list)
-    quadfilename = params['working_dir'] + params['file_quad_levels'] + "_" + str(irun)
+    quadfilename = params['job_directory'] + params['file_quad_levels'] + "_" + str(irun)
     fl = open(quadfilename,'w')
     print("saving quadrature levels to file: " + quadfilename )
     for item in sph_quad_list:

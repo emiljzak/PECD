@@ -279,7 +279,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['working_dir'] +"/animation/" + "angrad_XZ_t=" +\
+        fig.savefig( params['job_directory']  + "/animation/" + "angrad_XZ_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()
@@ -329,7 +329,7 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['working_dir'] +"/animation/" + "angrad_XY_t=" +\
+        fig.savefig( params['job_directory']  + "/animation/" + "angrad_XY_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()

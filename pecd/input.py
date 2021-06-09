@@ -25,6 +25,7 @@ def gen_input():
     params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
     params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
+
     """ === molecule definition ==== """ 
     params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
     params['mol_masses']    = {"S":32.0, "D":2.0}
@@ -60,7 +61,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -126,6 +127,14 @@ def gen_input():
                                     "_" + str(params['esp_method_name'])    + ".dat"
     
 
+    params['job_directory'] =   params['molec_name']   + \
+                                "_" + str(params['bound_nbins'])   + \
+                                "_" + str(params['bound_nlobs'])   + \
+                                "_" + str(params['bound_binw'])    + \
+                                "_" + str(params['bound_lmax'])    + \
+                                "_" + str(params['esp_method_name'])
+
+
     """==== PROPAGATE ===="""
 
     #params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
@@ -145,7 +154,7 @@ def gen_input():
     params['t0']        = 0.0 
     params['tmax']      = 4000.0 
     params['dt']        = 4.0
-    params['ivec']      = 5  
+    params['ivec']      = 8 
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
