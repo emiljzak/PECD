@@ -234,7 +234,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
     plt.show()
 
 
-def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
+def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist,irun):
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-5
@@ -279,12 +279,12 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['job_directory']  + "/animation/" + "angrad_YZ_t=" +\
+        fig.savefig( params['job_directory']  + "/animation/" + "angrad_YZ" + "_" + str(irun) + "_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()
 
-def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist):
+def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist,irun):
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-5
@@ -329,7 +329,7 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['job_directory']  + "/animation/" + "angrad_XY_t=" +\
+        fig.savefig( params['job_directory']  + "/animation/" + "angrad_XY" + "_" + str(irun) + "_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()
@@ -496,7 +496,7 @@ def plot_snapshot(params,psi,maparray,Gr,t):
 
         plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t)
 
-def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
+def plot_snapshot_int(params,psi,maparray,Gr,t,flist, irun):
     #plot snapshots using interpolation for the chi functions
     #make it general
     nlobs = params['bound_nlobs']
@@ -513,8 +513,8 @@ def plot_snapshot_int(params,psi,maparray,Gr,t,flist):
         for elem in params['FEMLIST']:
             width += elem[0] * elem[2]
 
-        plot_wf_angrad_int_XZ(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist)
-        plot_wf_angrad_int_XY(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist)
+        plot_wf_angrad_int_XZ(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
+        plot_wf_angrad_int_XY(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
     
     
 def interpolate_chi(Gr,nlobs,nbins,binw,maparray):

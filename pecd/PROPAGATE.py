@@ -168,7 +168,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
                 if itime == ielem:
                     print("Generating plot at time = " + str(t))
                     psi[:] = wavepacket[itime,:] 
-                    PLOTS.plot_snapshot_int(params, psi, maparray, Gr_all, t, flist)
+                    PLOTS.plot_snapshot_int(params, psi, maparray, Gr_all, t, flist, ieuler)
 
 
 
@@ -1206,7 +1206,7 @@ def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
         WDMATS.append(WDM)  
     return WDMATS
 
-def create_dirs(params):
+def create_dirs(params,N_euler_3D):
 
     os.chdir(params['working_dir'])
     path =  params['job_directory']
@@ -1220,12 +1220,17 @@ def create_dirs(params):
         os.chdir(params['job_directory'])
         os.mkdir("esp")
         os.mkdir("animation")
-    
+        os.chdir("esp")
+        for irun in range(N_euler_3D):
+            os.mkdir(str(irun))
     return path
 
 if __name__ == "__main__":      
 
     params = input.gen_input() #we can make input module a user provided command line variable
+
+    N_Euler = int(sys.argv[3])
+    path = create_dirs(params,N_Euler**3) #create appropriate directories
 
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
@@ -1239,8 +1244,6 @@ if __name__ == "__main__":
                                                             params['bound_nbins'] + params['nbins'], 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
-
-    path = create_dirs(params) #create appropriate directories
 
     if params['mode'] == 'propagate_single':
 
