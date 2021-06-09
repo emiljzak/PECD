@@ -82,7 +82,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     dt = params['dt'] * time_to_au
 
     print("Allocating wavepacket")
-    flwavepacket      = open( params['working_dir'] + params['wavepacket_file'] + "_" + str(ieuler) + ".dat", 'w' )
+    flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + "_" + str(ieuler) + ".dat", 'w' )
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     #psi               = np.zeros( Nbas, dtype=complex ) 
     psi               = psi_init
@@ -341,7 +341,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
     if params['read_ham_init_file'] == True:
 
         if params['hmat_format']   == "numpy_arr":
-            if os.path.isfile(params['working_dir'] + params['file_hmat_init'] + "_" + str(irun) + ".dat"  ):
+            if os.path.isfile(params['job_directory'] + params['file_hmat_init'] + "_" + str(irun) + ".dat"  ):
         
                 print (params['file_hmat_init'] + " file exist")
                 hmat = read_ham_init_rot(params,irun)
@@ -361,14 +361,13 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         elif params['hmat_format']   == "sparse_csr":
 
-            if os.path.isfile(params['working_dir'] + params['file_hmat_init'] + "_" + str(irun) + ".npz" ):
+            if os.path.isfile(params['job_directory'] + params['file_hmat_init'] + "_" + str(irun) + ".npz" ):
                 print (params['file_hmat_init'] + "_" + str(irun) + ".npz" + " file exist")
                 ham0 =  read_ham_init_rot(params,irun)
                 #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
                 #plt.legend()
                 #plt.show()
         
-
                 """ diagonalize hmat """
                 start_time = time.time()
                 enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal')
@@ -474,20 +473,20 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , ham_filtered , compressed = False )
+                sparse.save_npz( pparams['job_directory']  + params['file_hmat_init'] + "_" + str(irun) , ham_filtered , compressed = False )
             elif params['hmat_format'] == 'numpy_arr':
-                with open( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun) , 'w') as hmatfile:   
+                with open( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) , 'w') as hmatfile:   
                     np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
 
         if params['save_psi_init'] == True:
-            psifile = open(params['working_dir'] + params['file_psi_init']+ "_"+str(irun), 'w')
+            psifile = open(params['job_directory']  + params['file_psi_init']+ "_"+str(irun), 'w')
             for ielem,elem in enumerate(maparray):
                 psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                                 " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                                 "\t\t ".join('{:10.5e}'.format(coeffs[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
 
         if params['save_enr_init'] == True:
-            with open(params['working_dir'] + params['file_enr_init']+ "_"+str(irun), "w") as energyfile:   
+            with open(params['job_directory'] + params['file_enr_init']+ "_"+str(irun), "w") as energyfile:   
                 np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
     
 
@@ -549,9 +548,9 @@ def read_ham_init(params):
 def read_ham_init_rot(params,irun):
     #rotated version
     if params['hmat_format'] == 'sparse_csr':
-        hmat = sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ "_"+str(irun)+ ".npz" )
+        hmat = sparse.load_npz( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) + ".npz" )
     elif params['hmat_format'] == 'numpy_arr':
-        with open( params['working_dir'] + params['file_hmat_init'] + "_"+str(irun)+".dat", 'r') as hmatfile:   
+        with open( params['job_directory'] + params['file_hmat_init'] + "_"+str(irun) + ".dat", 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)
     return hmat
 
@@ -1189,9 +1188,41 @@ def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
 
     return coeffs_rotated
 
+def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
+
+    wigner = spherical.Wigner(Jmax)
+    R = quaternionic.array.from_euler_angles(grid_euler)
+    D = wigner.D(R)
+    #print(D.shape)
+    WDMATS = []
+    for J in range(Jmax+1):
+        WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
+        for m in range(-J,J+1):
+            for k in range(-J,J+1):
+                WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
+        print(J,WDM)
+        print(WDM.shape)
+
+        WDMATS.append(WDM)  
+    return WDMATS
+
+def create_dirs(params):
+
+    os.chdir(params['working_dir'])
+    path = params['working_dir'] + params['job_directory']
+
+    isdir = os.path.isdir(path) 
+    if isdir:
+        print("job directory exists: " + str(isdir) + ", " + path) 
+    else:
+        print("creating job directory: " + str(isdir) + ", " + path) 
+        os.mkdir(params['job_directory'])
+    
+    return path
+
 if __name__ == "__main__":      
 
-    params = input.gen_input()
+    params = input.gen_input() #we can make input module a user provided command line variable
 
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
@@ -1203,6 +1234,7 @@ if __name__ == "__main__":
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
+    path = create_dirs(params) #create appropriate directories
 
     if params['mode'] == 'propagate_single':
 
@@ -1260,39 +1292,28 @@ if __name__ == "__main__":
             calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
 
     elif params['mode'] == 'propagate_grid':
+
         ibatch  = int(sys.argv[1])
         N_batch = int(sys.argv[2])
         N_Euler = int(sys.argv[3])
-        print(ibatch, N_batch, N_Euler)
+
         N_per_batch = int(N_Euler**3/N_batch)
+        print("Total number of Euler grid points = " + str(N_Euler**3))
         print("number of points per batch = " + str(N_per_batch))
+        print("batch ID = " + str(ibatch))
+
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
         #save Euler grid in file
-
-        with open( params['working_dir'] + "grid_euler.dat" , 'w') as eulerfile:   
+        with open( path + "grid_euler.dat" , 'w') as eulerfile:   
                 np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                    params['map_type'], params['working_dir'] )
+                                    params['map_type'], path )
 
         #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
-        Jmax = params['Jmax'] 
-        wigner = spherical.Wigner(Jmax)
-        R = quaternionic.array.from_euler_angles(grid_euler)
-        D = wigner.D(R)
-        #print(D.shape)
-        WDMATS = []
-        for J in range(Jmax+1):
-            WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
-            for m in range(-J,J+1):
-                for k in range(-J,J+1):
-                    WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
-            print(J,WDM)
-            print(WDM.shape)
-
-            WDMATS.append(WDM)        
- 
+        WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
+   
 
         """ TEST: eigenfunction of rotated potential vs. rotated wavefunction of unrotated potential """
         ind_euler = 1
