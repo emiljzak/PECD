@@ -1264,7 +1264,7 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
             #read wavepacket from file
-            file_wavepacket      = params['job_directory']  + params['wavepacket_file'] + ".dat"
+            file_wavepacket      = params['job_directory']  + params['wavepacket_file'] + "_" + str(ieuler) + ".dat"
             psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
             #print(np.shape(psi))
@@ -1401,13 +1401,24 @@ if __name__ == "__main__":
 
 
             #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-            grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
-                                        WDMATS,
-                                        params) 
+            #grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
+            #                            WDMATS,
+            #                            params) 
+
+            #calculate density on a grid for plotting
+            #theta, chi = np.mgrid[0:np.pi:20j, 0:2 * np.pi:20j]
+
+            #x =  np.sin(theta) * np.cos(chi)
+            #y =  np.sin(theta) * np.sin(chi)
+            #z =  np.cos(theta)
+
+            #grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
+            #                            WDMATS,
+            #                            params) 
 
 
             print(rho.shape)
-            #PLOTS.plot_rotdens(rho[:].real)
+            PLOTS.plot_rotdens(rho[:].real)
             #exit()
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
