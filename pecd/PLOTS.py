@@ -258,7 +258,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
 
     y = np.zeros((len(rang),len(rang)), dtype=complex)
 
-    phi0 = 0.0 * np.pi/2 #fixed polar angle
+    phi0 = 0.0 * np.pi/2 #fixed polar angle. #YZ plane
     #here we can do phi-averaging
     
     for ielem, elem in enumerate(maparray):
@@ -279,7 +279,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['job_directory']  + "/animation/" + "angrad_XZ_t=" +\
+        fig.savefig( params['job_directory']  + "/animation/" + "angrad_YZ_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()

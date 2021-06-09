@@ -682,7 +682,6 @@ def rotate_mol_xyz(params, grid_euler, irun):
 
     print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
     print(mol_xyz)
-    
     print("Rotation matrix:")
     rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
    
