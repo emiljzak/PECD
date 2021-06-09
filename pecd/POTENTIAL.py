@@ -132,28 +132,28 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
 
 
-    if os.path.isfile(params['job_directory']  + "esp/" + params['file_esp']):
+    if os.path.isfile(params['job_directory']  + "esp/" +str(irun) + "/" + params['file_esp']):
         print (params['file_esp'] + " file exist")
 
         #os.remove(params['working_dir'] + "esp/" + params['file_esp'])
 
-        if os.path.getsize(params['job_directory'] + "esp/" + params['file_esp']) == 0:
+        if os.path.getsize(params['job_directory'] + "esp/" +str(irun) + "/"  + params['file_esp']) == 0:
 
             print("But the file is empty.")
-            os.remove(params['job_directory'] + "esp/" + params['file_esp'])
-            os.remove(params['job_directory']  + "esp/grid.dat")
+            os.remove(params['job_directory'] + "esp/"+str(irun) + "/"  + params['file_esp'])
+            os.remove(params['job_directory']  + "esp" +str(irun) + "/" +"grid.dat")
 
-            grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/")
+            grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/"+str(irun) + "/" )
             grid_xyz = np.asarray(grid_xyz)
-            V        = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/", params)
+            V        = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/"+str(irun) + "/" , params)
             V        = -1.0 * np.asarray(V)
             esp_grid = np.hstack((grid_xyz,V[:,None])) 
-            fl       = open(params['job_directory']  + "esp/" + params['file_esp'], "w")
+            fl       = open(params['job_directory']  + "esp/"+str(irun) + "/"  + params['file_esp'], "w")
             np.savetxt(fl,esp_grid, fmt='%10.6f')
 
         else:
             print("The file is not empty.")
-            flpot1 = open(params['job_directory']  + "esp/" + params['file_esp'], "r")
+            flpot1 = open(params['job_directory']  + "esp/" +str(irun) + "/" + params['file_esp'], "r")
             V = []
             for line in flpot1:
                 words   = line.split()
@@ -166,13 +166,13 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
 
         #os.remove(params['working_dir'] + "esp/grid.dat")
 
-        grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/")
+        grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/"+str(irun) + "/" )
         grid_xyz = np.asarray(grid_xyz)
-        V        = GRID.CALC_ESP_PSI4_ROT(params['job_directory']  + "esp/", params, mol_xyz)
+        V        = GRID.CALC_ESP_PSI4_ROT(params['job_directory']  + "esp/"+str(irun) + "/" , params, mol_xyz)
         V        = -1.0 * np.asarray(V)
 
         esp_grid = np.hstack((grid_xyz,V[:,None])) 
-        fl       = open(params['job_directory']  + "esp/" + params['file_esp'] + "_"+str(irun), "w")
+        fl       = open(params['job_directory']  + "esp/"+str(irun) + "/"  + params['file_esp'] + "_"+str(irun), "w")
         np.savetxt(fl, esp_grid, fmt='%10.6f')
 
     r_array = Gr.flatten()
