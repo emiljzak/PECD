@@ -159,7 +159,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         Gr_all, Nr_all = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                     params['map_type'], params['working_dir'] )
+                                     params['map_type'], params['job_directory'] )
 
         flist = PLOTS.interpolate_chi(Gr_all, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
@@ -473,7 +473,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( pparams['job_directory']  + params['file_hmat_init'] + "_" + str(irun) , ham_filtered , compressed = False )
+                sparse.save_npz( params['job_directory']  + params['file_hmat_init'] + "_" + str(irun) , ham_filtered , compressed = False )
             elif params['hmat_format'] == 'numpy_arr':
                 with open( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) , 'w') as hmatfile:   
                     np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
@@ -1209,7 +1209,7 @@ def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
 def create_dirs(params):
 
     os.chdir(params['working_dir'])
-    path = params['working_dir'] + params['job_directory']
+    path =  params['job_directory']
 
     isdir = os.path.isdir(path) 
     if isdir:
@@ -1217,6 +1217,9 @@ def create_dirs(params):
     else:
         print("creating job directory: " + str(isdir) + ", " + path) 
         os.mkdir(params['job_directory'])
+        os.chdir(params['job_directory'])
+        os.mkdir("esp")
+        os.mkdir("animation")
     
     return path
 
@@ -1227,7 +1230,7 @@ if __name__ == "__main__":
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
                                                             params['map_type'],
-                                                            params['working_dir'] )
+                                                            params['job_directory'] )
 
     Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] + params['nbins'], 
@@ -1255,7 +1258,7 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
             #read wavepacket from file
-            file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + ".dat"
+            file_wavepacket      = params['job_directory']  + params['wavepacket_file'] + ".dat"
             psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
             #print(np.shape(psi))
@@ -1264,7 +1267,7 @@ if __name__ == "__main__":
             Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
             maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                        params['map_type'], params['working_dir'] )
+                                        params['map_type'], params['job_directory']  )
 
             chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
@@ -1373,7 +1376,7 @@ if __name__ == "__main__":
             Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
             maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                        params['map_type'], params['working_dir'] )
+                                        params['map_type'], params['job_directory']  )
 
             chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
 
