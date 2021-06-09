@@ -76,8 +76,8 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
 
     for icount, ipoint in enumerate(coeffs):
         print(icount)
-        #print(ipoint[5][ivec])
-        if np.abs(ipoint[5][ivec]) > 1e-3:
+        print(np.shape(ipoint[5][ivec]))
+        if np.abs(ipoint[5][ivec]) > 1e-2:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi).real / r
 
     return val/ np.max(val)
@@ -342,10 +342,10 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     
-    ivec = 9
+    ivec = 8
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
-    mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=20.0, figure=fig)
+    mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=10.0, figure=fig)
 
     plot_molecule = True
 
@@ -383,8 +383,8 @@ def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
                         figure=fig,
                         mode='sphere')
 
-    npts = 60j
-    grange = 20.0
+    npts = 40j
+    grange = 5.0
     
     xmax = grange
     xmin = -1.0 * grange
@@ -410,7 +410,7 @@ def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     #                               vmax=fmin + 0.9 * (fmax - fmin))
     
     #plot isosurface
-    mywf = mlab.contour3d(wf2, contours=[0.2,0.5,0.8], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
+    mywf = mlab.contour3d(wf2, contours=[0.1,0.2,0.5,0.8], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
@@ -653,20 +653,29 @@ def plot_spharm_rotated(D):
     mlab.show()
 
 
-def plot_rotdens(rotdens, grid):
+def plot_rotdens(rotdens):
     # Create a sphere
     r = 0.3
+    pi = np.pi
+    cos = np.cos
+    sin = np.sin
+    phi, theta = np.mgrid[0:pi:1000j, 0:2 * pi:1000j]
 
+    x = r * sin(phi) * cos(theta)
+    y = r * sin(phi) * sin(theta)
+    z = r * cos(phi)
 
     mlab.figure(1, bgcolor=(1, 1, 1), fgcolor=(0, 0, 0), size=(400, 300))
     mlab.clf()
     # Represent spherical harmonics on the surface of the sphere
+
+
     s = rotdens
     #mlab.mesh(x - m, y - n, z, scalars=s, colormap='jet')
     
     s[s < 0] *= 0.97
-    s /= s.max()
 
+    s /= s.max()
     mlab.mesh(s * x , s * y , s * z + 1.3,
             scalars=s, colormap='Spectral')
 
