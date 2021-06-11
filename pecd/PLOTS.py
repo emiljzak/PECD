@@ -656,19 +656,37 @@ def plot_spharm_rotated(D):
 def plot_rotdens(rotdens, grid):
     # Create a sphere
     r = 0.3
+    theta = grid[:,0]
+    chi = grid[:,1]
 
+    #theta, chi = np.meshgrid(theta1d,chi1d)
 
+    print(theta.shape)
+    x =  np.sin(theta) * np.cos(chi)
+    y =  np.sin(theta) * np.sin(chi)
+    z =  np.cos(theta)
+
+    s = rotdens
+    #mlab.mesh(x - m, y - n, z, scalars=s, colormap='jet')
+    
+    s /= s.max()
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1, projection='3d')
+    plot = ax.plot_trisurf(
+        x, y, s ,cmap=plt.cm.Spectral )
+
+    plt.show()
+    exit()
     mlab.figure(1, bgcolor=(1, 1, 1), fgcolor=(0, 0, 0), size=(400, 300))
     mlab.clf()
     # Represent spherical harmonics on the surface of the sphere
     s = rotdens
     #mlab.mesh(x - m, y - n, z, scalars=s, colormap='jet')
     
-    s[s < 0] *= 0.97
     s /= s.max()
-
-    mlab.mesh(s * x , s * y , s * z + 1.3,
-            scalars=s, colormap='Spectral')
+    mlab.points3d(x, y, z, s)
+    #mlab.mesh(s * x, s * y , s * z + 1.3,
+    #        scalars=s, colormap='Spectral')
 
     #mlab.view(90, 70, 6.2, (-1.3, -2.9, 0.25))
     mlab.show()

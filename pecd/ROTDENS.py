@@ -61,12 +61,12 @@ def calc_rotdens(grid_3d, WDMATS, params):
     wavepacket_file = params['rot_wf_file']
     coef_file       = params['rot_coeffs_file']
 
-    Jmax = params['Jmax']
-    itime = int( params['rv_wavepacket_time']/    params['rv_wavepacket_dt']  )
+    Jmax            = params['Jmax']
+    itime           = int( params['rv_wavepacket_time']/    params['rv_wavepacket_dt']  )
 
-    states          = read_coefficients(coef_file, coef_thresh=1.0e-16)
-    time, coefs, quanta_all = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
-    quanta = quanta_all[itime]
+    states                   = read_coefficients(coef_file, coef_thresh=1.0e-16)
+    time, coefs, quanta_all  = read_wavepacket(wavepacket_file, coef_thresh=1.0e-16)
+    quanta                   = quanta_all[itime]
 
     npoints_3d = grid_3d.shape[0]
     # mapping between wavepacket and rovibrational states
@@ -120,7 +120,6 @@ def calc_rotdens(grid_3d, WDMATS, params):
 
     #print(np.shape(symtop))
     #print(np.shape(symtop[0]))
-
 
     # compute rotational density
 

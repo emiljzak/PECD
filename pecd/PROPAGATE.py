@@ -1138,6 +1138,23 @@ def gen_euler_grid(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
+
+def gen_euler_grid_theta_chi(n_euler):
+    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
+    beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
+    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=False))
+    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
+
+    #we can choose meshgrid instead
+    #euler_grid_3d_mesh = np.meshgrid(alpha_1d, beta_1d, gamma_1d)
+    #print(euler_grid_3d_mesh[0].shape)
+    #print(np.vstack(euler_grid_3d_mesh).reshape(3,-1).T)
+
+    n_euler_3d      = euler_grid_3d.shape[0]
+    print("\nTotal number of 3D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
+    #print(euler_grid_3d)
+    return euler_grid_3d, n_euler_3d
+
 def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
     """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
     #ind_euler - index of euler angles in global 3D grid
@@ -1200,8 +1217,8 @@ def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
         for m in range(-J,J+1):
             for k in range(-J,J+1):
                 WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
-        print(J,WDM)
-        print(WDM.shape)
+        #print(J,WDM)
+        #print(WDM.shape)
 
         WDMATS.append(WDM)  
     return WDMATS
@@ -1238,7 +1255,8 @@ if __name__ == "__main__":
                                                             params['job_directory'] )
 
     os.chdir(params['job_directory'])
-    os.rename("map.dat", "map_global.dat")
+    if os.path.isfile("map.dat"):
+        os.rename("map.dat", "map_global.dat")
 
     Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] + params['nbins'], 
@@ -1264,7 +1282,7 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
             #read wavepacket from file
-            file_wavepacket      = params['job_directory']  + params['wavepacket_file'] + "_" + str(ieuler) + ".dat"
+            file_wavepacket      = params['job_directory']  + params['wavepacket_file'] + ".dat"
             psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
             #print(np.shape(psi))
@@ -1321,7 +1339,8 @@ if __name__ == "__main__":
                                     params['map_type'], path )
 
         os.chdir(params['job_directory'])
-        os.rename("map.dat", "map_radial.dat")
+        if os.path.isfile("map.dat"):
+            os.rename("map.dat", "map_global.dat")
 
         #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
         WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
@@ -1363,22 +1382,7 @@ if __name__ == "__main__":
         if params['analyze_mpad'] == True:
 
             N_Euler = int(sys.argv[3])
-            grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
-
-            #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
-            Jmax = params['Jmax'] 
-            wigner = spherical.Wigner(Jmax)
-            R = quaternionic.array.from_euler_angles(grid_euler)
-            D = wigner.D(R)
-            print(D.shape)
-            WDMATS = []
-            for J in range(Jmax+1):
-                WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
-                for m in range(-J,J+1):
-                    for k in range(-J,J+1):
-                        WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
-
-                WDMATS.append(WDM)     
+            grid_euler, n_grid_euler = gen_euler_grid(N_Euler)            
 
             nbins = params['bound_nbins'] + params['nbins']
 
@@ -1406,20 +1410,27 @@ if __name__ == "__main__":
             #                            params) 
 
             #calculate density on a grid for plotting
-            #theta, chi = np.mgrid[0:np.pi:20j, 0:2 * np.pi:20j]
-
-            #x =  np.sin(theta) * np.cos(chi)
-            #y =  np.sin(theta) * np.sin(chi)
-            #z =  np.cos(theta)
-
-            #grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
-            #                            WDMATS,
-            #                            params) 
 
 
-            print(rho.shape)
-            PLOTS.plot_rotdens(rho[:].real)
-            #exit()
+            grid_euler_2d, n_grid_euler_2d = gen_euler_grid_theta_chi(N_Euler)
+
+            print(grid_euler_2d.shape)
+            print(n_grid_euler_2d)
+
+
+            WDMATS  = gen_wigner_dmats(n_grid_euler_2d, params['Jmax'] , grid_euler_2d)
+
+      
+            grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
+                                        WDMATS,
+                                        params) 
+            print("shape of rho")
+            print(np.shape(rho))
+
+            #print(rho.shape)
+            PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
+            
+            exit()
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
                 print(irun)

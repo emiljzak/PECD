@@ -144,7 +144,7 @@ def test_wigner():
 
 def analyze_Wav(N_batches):
 
-    working_dir = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    working_dir = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_RCPL/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
 
     with open( working_dir  + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
@@ -152,16 +152,53 @@ def analyze_Wav(N_batches):
     grid = grid.T
     Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
     Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
-
-    for ibatch in range(N_batches):
+    grid = grid.T
+    batch_list = [1,2,6,7,8,9,10,13,14,17,23,24,29,30]
+    for icount, ibatch in enumerate(batch_list):
         with open( working_dir + "W_av_3D_" + str(ibatch), 'r') as Wavfile:   
             Wavi = np.loadtxt(Wavfile)
+        PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
         Wav += Wavi
 
     with open( working_dir  + "W_av_3D" , 'w') as Wavfile:   
         np.savetxt(Wavfile, Wav, fmt = '%10.4e')
 
+
+    PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
+
+
+
+def calc_pecd(N_batches):
+
+    working_dir_L = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_RCPL/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    working_dir_R = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_LCPL/"
+    
+    
+    with open( working_dir_L  + "grid_W_av" , 'r') as gridfile:   
+        grid = np.loadtxt(gridfile)
+
     grid = grid.T
+    Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
+    Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
+
+
+    pecd = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
+
+    grid = grid.T
+
+
+    batch_list = [1,2,6,7,8,9,10,13,14,17,23,24,29,30]
+    
+    for icount, ibatch in enumerate(batch_list):
+        with open( working_dir + "W_av_3D_" + str(ibatch), 'r') as Wavfile:   
+            Wavi = np.loadtxt(Wavfile)
+        PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
+        Wav += Wavi
+
+    with open( working_dir  + "W_av_3D" , 'w') as Wavfile:   
+        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+
+
     PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
 
 

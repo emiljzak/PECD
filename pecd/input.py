@@ -62,7 +62,7 @@ def gen_input():
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -153,7 +153,7 @@ def gen_input():
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 40.0 
+    params['tmax']      = 16000.0 
     params['dt']        = 4.0
     params['ivec']      = 8 
 
@@ -163,9 +163,9 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -231,8 +231,8 @@ def gen_input():
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 1000.0 #as: pulse duration (sigma)
-    params['tc']        = 2000.0 #as: pulse centre
+    params['tau']       = 4000.0 #as: pulse duration (sigma)
+    params['tc']        = 8000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -281,7 +281,7 @@ def gen_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],2)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
