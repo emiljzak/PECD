@@ -22,7 +22,7 @@ def gen_input(jobtype):
     params['molec_name']        = "d2s"
 
     if jobtype == "maxwell":
-        params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/pecd/" 
+        params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" 
         params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
     elif jobtype == "local":
         params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#
