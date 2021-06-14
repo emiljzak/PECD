@@ -4,7 +4,7 @@ import subprocess
 
 def run_propagate(N_euler,N_batches,jobtype,inputfile):
 
-	if jobtype == "slurm":
+	if jobtype == "maxwell":
 		print("Submitting SLURM job")
 		path = os.getcwd()
 		print ("The current working directory is %s" % path)
@@ -12,7 +12,7 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile):
 		os.chdir(path+"/slurm_run")
 		for ibatch in range(N_batches):
 			subprocess.call("./master_script.sh " 	+ str(ibatch) 	+\
-				 			" " + str(N_batches) + " " + str(N_euler) + " " 	+\
+				 			" " + str(N_batches) + " " + str(N_euler) + " " +\
 					 		jobtype + " " + inputfile , shell=True)
 	
 	elif jobtype == "local":
@@ -24,7 +24,7 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile):
 				 			" " + str(N_batches) + " " + str(N_euler) + " "	+\
 					 		jobtype + " " + inputfile , shell=True) 
 
-jobtype 	= "local" #slurm
+jobtype 	= "local" #maxwell
 inputfile 	= "input_d2s"
 N_euler 	= 1 #number of euler grid points per dimension
 N_batches 	= 1
