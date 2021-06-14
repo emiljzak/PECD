@@ -1241,15 +1241,23 @@ def create_dirs(params,N_euler_3D):
             os.mkdir(str(irun))
     return path
 
-if __name__ == "__main__":      
+if __name__ == "__main__":   
 
-    input = __import__(str(sys.argv[4]))
-    import input
-    print("importing input file module: " + str(sys.argv[4]))
+    print(" ")
+    print("---------------------- START --------------------")
+    print(" ")
 
-    params = input.gen_input() 
+    import importlib
+    input_module = importlib.import_module(str(sys.argv[5]))
+    print("importing input file module: " + str(sys.argv[5]))
+    jobtype = str(sys.argv[4])
+    print("jobtype: " + str(jobtype))
+    print(" ")
+    print("---------------------- INPUT ECHOs --------------------")
+    print(" ")
+    params = input_module.gen_input(jobtype) 
 
-    exit()
+    exit()  
     N_Euler = int(sys.argv[3])
     path = create_dirs(params,N_Euler**3) #create appropriate directories
 

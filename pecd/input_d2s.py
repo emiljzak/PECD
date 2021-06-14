@@ -2,13 +2,11 @@ import numpy as np
 import CONSTANTS
 import os
 import itertools
-def gen_input():
+def gen_input(jobtype):
 
     params = {}
 
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
-
-    #saving in parallel in hdf5 file conda install -c  conda-forge "h5py>=2.9=mpi*"
 
     """ === execution mode ==== """ 
     
@@ -21,9 +19,14 @@ def gen_input():
     """
 
     """ === molecule directory ==== """ 
-    params['molec_name']    = "d2s"
-    params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#os.getcwd() ##"/Users/zakemil/Nextcloud/projects/PECD/pecd/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd"
-    params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s_conv/"#params['main_dir'] + "/" + params['molec_name']  #"/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    params['molec_name']        = "d2s"
+
+    if jobtype == "maxwell":
+        params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/pecd/" 
+        params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
+    elif jobtype == "local":
+        params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#
+        params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/"
 
 
     """ === molecule definition ==== """ 
@@ -163,7 +166,7 @@ def gen_input():
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = True
 
