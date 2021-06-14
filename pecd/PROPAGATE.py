@@ -1257,7 +1257,7 @@ if __name__ == "__main__":
     print(" ")
     params = input_module.gen_input(jobtype) 
 
-    exit()  
+
     N_Euler = int(sys.argv[3])
     path = create_dirs(params,N_Euler**3) #create appropriate directories
 

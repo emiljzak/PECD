@@ -1,6 +1,5 @@
 #!/bin/bash
 
-module load anaconda/3
 #export exec="python3 /home/yachmena/RICHMOL/richmol/richmol.py"
 export exec="python3 /gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/PROPAGATE.py"
 export jobname="pecd_run"

@@ -21,12 +21,11 @@ from sympy.polys.orthopolys import (legendre_poly, laguerre_poly,
 from sympy.polys.rootoftools import RootOf
 #from sympy.core.compatibility import range
 
-def read_leb_quad(scheme):
+def read_leb_quad(scheme, path):
     sphgrid = []
     #print("reading Lebedev grid from file:" + "/lebedev_grids/"+str(scheme)+".txt")
-    print("currecnt working directory is: " + os.getcwd())
-    exit()
-    fl = open( "/Users/zakemil/Nextcloud/projects/PECD/pecd/" + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
+
+    fl = open( path + "lebedev_grids/" + str(scheme) + ".txt", 'r' )
     #/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/ for maxwell
     for line in fl:
         words   = line.split()
@@ -54,10 +53,10 @@ def read_leb_quad(scheme):
     """
     return sphgrid
 
-def GEN_GRID(sph_quad_list):
+def GEN_GRID(sph_quad_list, path):
     Gs = []
     for elem in sph_quad_list:
-        gs = read_leb_quad(str(elem[3]))
+        gs = read_leb_quad(str(elem[3]), path)
         Gs.append( gs )
     return Gs
 

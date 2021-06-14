@@ -553,7 +553,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
 
     start_time = time.time()
-    Gs = GRID.GEN_GRID( sph_quad_list )
+    Gs = GRID.GEN_GRID( sph_quad_list, params['main_dir'] )
     end_time = time.time()
     print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -762,7 +762,7 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
             print("using global quadrature scheme")
 
     start_time = time.time()
-    Gs = GRID.GEN_GRID( sph_quad_list )
+    Gs = GRID.GEN_GRID( sph_quad_list, params['main_dir'])
     end_time = time.time()
     print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -953,7 +953,7 @@ def gen_adaptive_quads_exact(params , rgrid):
                 ischeme = 0 #use enumerate()
 
                 #get grid
-                Gs = GRID.read_leb_quad(scheme)
+                Gs = GRID.read_leb_quad(scheme, params['main_dir'] )
 
                 #pull potential at quadrature points
                 potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme
@@ -1073,7 +1073,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                 ischeme = 0 #use enumerate()
 
                 #get grid
-                Gs = GRID.read_leb_quad(scheme)
+                Gs = GRID.read_leb_quad(scheme, params['main_dir'] )
 
                 #pull potential at quadrature points
                 potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme + "_"+str(irun)
