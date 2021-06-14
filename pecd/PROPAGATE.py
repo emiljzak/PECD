@@ -24,7 +24,6 @@ import itertools
 from pyhank import qdht, iqdht, HankelTransform
 
 import MAPPING
-import input
 import GRID
 import BOUND
 import CONSTANTS
@@ -1244,8 +1243,13 @@ def create_dirs(params,N_euler_3D):
 
 if __name__ == "__main__":      
 
-    params = input.gen_input() #we can make input module a user provided command line variable
+    input = __import__(str(sys.argv[4]))
+    import input
+    print("importing input file module: " + str(sys.argv[4]))
 
+    params = input.gen_input() 
+
+    exit()
     N_Euler = int(sys.argv[3])
     path = create_dirs(params,N_Euler**3) #create appropriate directories
 
