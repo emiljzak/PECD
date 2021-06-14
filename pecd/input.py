@@ -51,7 +51,11 @@ def gen_input():
     params['bound_nbins']   = 8
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 3
+<<<<<<< HEAD
+    params['bound_lmax']    = 2
+=======
+    params['bound_lmax']    = 2
+>>>>>>> 44337a9fcedcf91762540976c95417bbb7b28781
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
