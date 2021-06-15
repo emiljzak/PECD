@@ -521,7 +521,7 @@ def plot_rotdens(rotdens, grid):
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     
-    ivec = 0
+    ivec = 1
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
     mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=20.0, figure=fig)
@@ -691,7 +691,7 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
         if np.abs(ipoint[5][ivec]) > 1e-4:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
 
-    val *= np.sin(theta) 
+    #val *= np.sin(theta) 
     return  np.abs(val)**2/ np.max(np.abs(val)**2)
 
 if __name__ == "__main__":      
@@ -705,7 +705,7 @@ if __name__ == "__main__":
     print(" ")
 
     import importlib
-    input_module = importlib.import_module("input_n2")
+    input_module = importlib.import_module("input_h")
     jobtype = "local"
     print("jobtype: " + str(jobtype))
     print(" ")

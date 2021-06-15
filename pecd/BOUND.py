@@ -722,6 +722,14 @@ def rotate_mol_xyz(params, grid_euler, irun):
         print("rotated molecular cartesian matrix:")
         print(mol_xyz_rotated)
 
+    elif params['molec_name'] == "h":
+        
+        mol_xyz = np.zeros( (3,1), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
+
+        #  Hx
+        #  Hy 
+        #  Hz 
     else:
         print("Error: molecule name not found")
         exit()
