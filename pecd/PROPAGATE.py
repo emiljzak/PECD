@@ -209,7 +209,8 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
 
                 """ diagonalize hmat """
                 start_time = time.time()
-                enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal')
+                enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal',
+                                    tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -293,7 +294,8 @@ def BUILD_HMAT(params, Gr, maparray, Nbas):
             end_time = time.time()
         elif params['hmat_format'] == 'sparse_csr':
             start_time = time.time()
-            enr, coeffs = eigsh(ham_filtered, k = params['num_ini_vec'], which='SA', return_eigenvectors=True, mode='normal')
+            enr, coeffs = eigsh(ham_filtered, k = params['num_ini_vec'], which='SA', return_eigenvectors=True, mode='normal',
+                                tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
             end_time = time.time()
 
    
@@ -369,7 +371,8 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         
                 """ diagonalize hmat """
                 start_time = time.time()
-                enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal')
+                enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal',
+                                    tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -452,7 +455,9 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             end_time = time.time()
         elif params['hmat_format'] == 'sparse_csr':
             start_time = time.time()
-            enr, coeffs = eigsh(ham_filtered, k = params['num_ini_vec'], which='SA', return_eigenvectors=True, mode='normal')
+            enr, coeffs = eigsh( ham_filtered, k = params['num_ini_vec'], which='SA', 
+                                return_eigenvectors=True, mode='normal', 
+                                tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
             end_time = time.time()
 
    

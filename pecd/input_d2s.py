@@ -62,6 +62,10 @@ def gen_input(jobtype):
 
     params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
+    """ ARPACK eigensolver parameters """
+    params['ARPACK_tol']    = 1e-4
+    params['ARPACK_maxiter']= 40000
+
 
     """==== potential energy matrix ===="""
 

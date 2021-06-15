@@ -50,11 +50,11 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 16
-    params['bound_nbins']   = 25
-    params['bound_binw']    = 1.0
+    params['bound_nlobs']   = 8
+    params['bound_nbins']   = 40
+    params['bound_binw']    = 0.5
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 3
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -62,10 +62,13 @@ def gen_input(jobtype):
 
     params['num_ini_vec']   = 15 # number of initial wavefunctions (orbitals) stored in file
 
+    """ ARPACK eigensolver parameters """
+    params['ARPACK_tol']    = 1e-4
+    params['ARPACK_maxiter']= 40000
 
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5

@@ -521,7 +521,7 @@ def plot_rotdens(rotdens, grid):
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     
-    ivec = 1
+    ivec = 3
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
     mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=20.0, figure=fig)
