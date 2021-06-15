@@ -271,8 +271,8 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     units au
     
     S	{0} {1} {2}
-    H1	{3} {4} {5}
-    H2	{6} {7} {8}
+    H	{3} {4} {5}
+    H	{6} {7} {8}
 
     """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
                 mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
@@ -284,6 +284,11 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     Vvals = wfn.oeprop.Vvals()
     os.chdir("../")
     return Vvals
+
+
+
+
+
 
     #h2o = psi4.geometry("""
     #1 2
