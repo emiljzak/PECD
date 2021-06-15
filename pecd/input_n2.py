@@ -30,7 +30,7 @@ def gen_input(jobtype):
 
 
     """ === molecule definition ==== """ 
-    params['mol_geometry']  = {"rNN":1.06} #angstroms
+    params['mol_geometry']  = {"rNN":1.0977} #angstroms
     params['mol_masses']    = {"N":14.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
@@ -50,11 +50,11 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 12
-    params['bound_nbins']   = 8
-    params['bound_binw']    = 5.0
+    params['bound_nlobs']   = 16
+    params['bound_nbins']   = 10
+    params['bound_binw']    = 3.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -64,8 +64,8 @@ def gen_input(jobtype):
 
 
     """==== potential energy matrix ===="""
-
-    params['gen_adaptive_quads'] = False
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -166,7 +166,7 @@ def gen_input(jobtype):
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+
     
     params['plot_elfield']       = True
 

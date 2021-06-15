@@ -1386,6 +1386,7 @@ if __name__ == "__main__":
 		    #print(grid_euler[irun])
             """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
             ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
+            exit()
             prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
             
     elif params['mode'] == 'analyze_grid':
