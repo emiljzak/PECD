@@ -30,7 +30,7 @@ def gen_input(jobtype):
 
 
     """ === molecule definition ==== """ 
-    params['mol_geometry']  = {"rNN":1.06} #angstroms#in next generation load internal geometry from file
+    params['mol_geometry']  = {"rNN":1.06} #angstroms
     params['mol_masses']    = {"N":14.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
@@ -65,7 +65,7 @@ def gen_input(jobtype):
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -156,9 +156,9 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 16000.0 
+    params['tmax']      = 4000.0 
     params['dt']        = 4.0
-    params['ivec']      = 8 
+    params['ivec']      = 6 
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -166,7 +166,7 @@ def gen_input(jobtype):
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = True
 
@@ -224,7 +224,7 @@ def gen_input(jobtype):
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 5.0e+13 #W/cm^2 #peak intensity
+    intensity       = 2.0e+13 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
@@ -234,8 +234,8 @@ def gen_input(jobtype):
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 4000.0 #as: pulse duration (sigma)
-    params['tc']        = 8000.0 #as: pulse centre
+    params['tau']       = 1000.0 #as: pulse duration (sigma)
+    params['tc']        = 2000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""

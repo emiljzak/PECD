@@ -634,68 +634,97 @@ def rotate_mol_xyz(params, grid_euler, irun):
     print("irun = " + str(irun))
     print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
 
-    mol_xyz = np.zeros( (3,3), dtype = float) #for triatomic molecules only for now
-    mol_xyz_rotated = np.zeros( (3,3), dtype = float) #for triatomic molecules only for now
+    if params['molec_name'] == "d2s":
 
-    # Sx D1x D2x
-    # Sy D1y D2y
-    # Sz D1z D2z
+        mol_xyz = np.zeros( (3,3), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,3), dtype = float) #
 
-    ang_au = CONSTANTS.angstrom_to_au
-    # create raw cartesian coordinates from input molecular geometry and embedding
-    rSD1 = params['mol_geometry']["rSD1"] * ang_au
-    rSD2 = params['mol_geometry']["rSD2"] * ang_au
-    alphaDSD = params['mol_geometry']["alphaDSD"] * np.pi / 180.0
+        # Sx D1x D2x
+        # Sy D1y D2y
+        # Sz D1z D2z
 
-    mS = params['mol_masses']["S"]    
-    mD = params['mol_masses']["D"]
+        ang_au = CONSTANTS.angstrom_to_au
+        # create raw cartesian coordinates from input molecular geometry and embedding
+        rSD1 = params['mol_geometry']["rSD1"] * ang_au
+        rSD2 = params['mol_geometry']["rSD2"] * ang_au
+        alphaDSD = params['mol_geometry']["alphaDSD"] * np.pi / 180.0
 
-    mVec = np.array ( [mS, mD, mD])
+        mS = params['mol_masses']["S"]    
+        mD = params['mol_masses']["D"]
 
-    Sz = 1.1 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
+        mVec = np.array ( [mS, mD, mD])
 
-    mol_xyz[2,0] = Sz
+        Sz = 1.1 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
 
-    mol_xyz[1,1] = -1.0 * rSD1 * np.sin(alphaDSD / 2.0)
-    mol_xyz[2,1] = -1.0 * rSD1 * np.cos(alphaDSD / 2.0 ) + Sz #checked
+        mol_xyz[2,0] = Sz
 
-    mol_xyz[1,2] = 1.0 * rSD2 * np.sin(alphaDSD / 2.0)
-    mol_xyz[2,2] = -1.0 * rSD2 * np.cos(alphaDSD / 2.0 ) + Sz #checked
+        mol_xyz[1,1] = -1.0 * rSD1 * np.sin(alphaDSD / 2.0)
+        mol_xyz[2,1] = -1.0 * rSD1 * np.cos(alphaDSD / 2.0 ) + Sz #checked
+
+        mol_xyz[1,2] = 1.0 * rSD2 * np.sin(alphaDSD / 2.0)
+        mol_xyz[2,2] = -1.0 * rSD2 * np.cos(alphaDSD / 2.0 ) + Sz #checked
 
 
-    print("raw cartesian molecular-geometry matrix")
-    print(mol_xyz)
+        print("raw cartesian molecular-geometry matrix")
+        print(mol_xyz)
 
+        
+        print("Centre-of-mass coordinates: ")
+        RCM = np.zeros(3, dtype=float)
+
+        for iatom in range(3):
+            RCM[:] += mVec[iatom] * mol_xyz[:,iatom]
+
+        RCM /= np.sum(mVec)
+
+        print(RCM)
     
-    print("Centre-of-mass coordinates: ")
-    RCM = np.zeros(3, dtype=float)
+        for iatom in range(3):
+            mol_xyz[:,iatom] -= RCM[:] 
 
-    for iatom in range(3):
-        RCM[:] += mVec[iatom] * mol_xyz[:,iatom]
+        print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
+        print(mol_xyz)
+        print("Rotation matrix:")
+        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    
+        #ALTErnatively use
+        #euler_rot(chi, theta, phi, xyz):
+    
+        #rmat = rotmat.as_matrix()
+        #print(rmat)
 
-    RCM /= np.sum(mVec)
+        for iatom in range(3):
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+            #mol_xyz_rotated[:,iatom] = euler_rot(cgrid_euler[irun][2], grid_euler[irun][1], grid_euler[irun][0], mol_xyz[:,iatom]):
+        print("rotated molecular cartesian matrix:")
+        print(mol_xyz_rotated)
 
-    print(RCM)
-  
-    for iatom in range(3):
-        mol_xyz[:,iatom] -= RCM[:] 
 
-    print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
-    print(mol_xyz)
-    print("Rotation matrix:")
-    rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
-   
-    #ALTErnatively use
-    #euler_rot(chi, theta, phi, xyz):
-   
-    #rmat = rotmat.as_matrix()
-    #print(rmat)
+    elif params['molec_name'] == "n2":
+        
+        mol_xyz = np.zeros( (3,2), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
 
-    for iatom in range(3):
-        mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
-        #mol_xyz_rotated[:,iatom] = euler_rot(cgrid_euler[irun][2], grid_euler[irun][1], grid_euler[irun][0], mol_xyz[:,iatom]):
-    print("rotated molecular cartesian matrix:")
-    print(mol_xyz_rotated)
+        #  N1x N2x
+        #  N1y N2y
+        #  N1z N2z
+
+        ang_au = CONSTANTS.angstrom_to_au
+
+        mol_xyz[2,0] = ang_au * params['mol_geometry']["rNN"] / 2.0 
+        mol_xyz[2,1] =  -1.0 * mol_xyz[2,0] 
+
+        print("Rotation matrix:")
+        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    
+        for iatom in range(2):
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+        print("rotated molecular cartesian matrix:")
+        print(mol_xyz_rotated)
+
+    else:
+        print("Error: molecule name not found")
+        exit()
 
     #veryfiy rotated geometry by plots
     """

@@ -265,19 +265,32 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     properties_origin=["COM"]
     ang_au = CONSTANTS.angstrom_to_au
 
-    mol = psi4.geometry("""
-    1 2
-    noreorient
-    units au
-    
-    S	{0} {1} {2}
-    H	{3} {4} {5}
-    H	{6} {7} {8}
+    if params['molec_name'] == "d2s":
+        mol = psi4.geometry("""
+        1 2
+        noreorient
+        units au
+        
+        S	{0} {1} {2}
+        H	{3} {4} {5}
+        H	{6} {7} {8}
 
-    """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
-                mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
-                mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
-    )
+        """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
+                    mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
+                    mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
+        )
+    elif params['molec_name'] == "n2":
+        mol = psi4.geometry("""
+        1 2
+        noreorient
+        units au
+        
+        N	{0} {1} {2}
+        N	{3} {4} {5}
+
+        """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
+                    mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1])
+        )
 
     psi4.set_options({'basis': params['scf_basis'], 'e_convergence': params['scf_enr_conv'], 'reference': params['scf_method']})
     E, wfn = psi4.prop('scf', properties = ["GRID_ESP"], return_wfn = True)
