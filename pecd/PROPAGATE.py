@@ -457,6 +457,23 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             ham_filtered = ham0.copy()
 
 
+
+        #BOUND.plot_wf_rad(  0.0, params['bound_binw']* ( params['bound_nbins'] + params['nbins']), 1000, \
+        #                    coeffs, maparray, Gr, params['bound_nlobs'], \
+        #                    params['bound_nbins'] + params['nbins'])
+        #exit()
+        
+        #PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
+        #                1000, Gr, params['bound_nlobs'], params['bound_nbins'])
+
+        if params['save_ham_init'] == True:
+            if params['hmat_format'] == 'sparse_csr':
+                sparse.save_npz( params['job_directory']  + params['file_hmat_init'] + "_" + str(irun) , ham_filtered , compressed = False )
+            elif params['hmat_format'] == 'numpy_arr':
+                with open( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) , 'w') as hmatfile:   
+                    np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
+
+
         """ diagonalize hmat """
         if params['hmat_format'] == 'numpy_arr':    
             start_time = time.time()
@@ -472,24 +489,11 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
    
         print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        #BOUND.plot_wf_rad(  0.0, params['bound_binw']* ( params['bound_nbins'] + params['nbins']), 1000, \
-        #                    coeffs, maparray, Gr, params['bound_nlobs'], \
-        #                    params['bound_nbins'] + params['nbins'])
-        #exit()
-        
-        #PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
-        #                1000, Gr, params['bound_nlobs'], params['bound_nbins'])
 
         print("Normalization of initial wavefunctions: ")
         for v in range(params['num_ini_vec']):
             print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
 
-        if params['save_ham_init'] == True:
-            if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( params['job_directory']  + params['file_hmat_init'] + "_" + str(irun) , ham_filtered , compressed = False )
-            elif params['hmat_format'] == 'numpy_arr':
-                with open( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) , 'w') as hmatfile:   
-                    np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
 
         if params['save_psi_init'] == True:
             psifile = open(params['job_directory']  + params['file_psi_init']+ "_"+str(irun), 'w')
@@ -1358,7 +1362,6 @@ if __name__ == "__main__":
 		    #print(grid_euler[irun])
             """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
             ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
-            exit()
             prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
             
     elif params['mode'] == 'analyze_grid':

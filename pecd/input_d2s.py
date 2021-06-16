@@ -52,7 +52,7 @@ def gen_input(jobtype):
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 12
-    params['bound_nbins']   = 8
+    params['bound_nbins']   = 40
     params['bound_binw']    = 5.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 2
@@ -70,7 +70,7 @@ def gen_input(jobtype):
 
     """==== potential energy matrix ===="""
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -161,7 +161,7 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 16000.0 
+    params['tmax']      = 4000.0 
     params['dt']        = 4.0
     params['ivec']      = 8 
 
@@ -173,7 +173,7 @@ def gen_input(jobtype):
     params['save_enr_init']      = True
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -239,8 +239,8 @@ def gen_input(jobtype):
 
     """ ---- field intensity ----- """
     
-    params['tau']       = 4000.0 #as: pulse duration (sigma)
-    params['tc']        = 8000.0 #as: pulse centre
+    params['tau']       = 1000.0 #as: pulse duration (sigma)
+    params['tc']        = 2000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
