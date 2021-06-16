@@ -521,7 +521,7 @@ def plot_rotdens(rotdens, grid):
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     
-    ivec = 3
+    ivec = 2
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
     mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=20.0, figure=fig)
@@ -716,7 +716,7 @@ if __name__ == "__main__":
     nvecs = 10 #how many vectors to load?
     ivec = params['ivec'] #which vector to plot?
     
-    #coeffs = read_coeffs(wffile,nvecs)
+    coeffs = read_coeffs(wffile,nvecs)
 
     #psi = np.zeros(len(coeffs), dtype = complex)
     #print(psi.shape)
@@ -744,8 +744,8 @@ if __name__ == "__main__":
 
     """ plot radial wavefunction at a given ray=(theta,phi) """
 
-    #plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
-    #            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
+    plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
+                Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 
     """ plot angular wavefunction at a given distance """
     #r0 = 2.0

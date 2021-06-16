@@ -50,21 +50,21 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 24
-    params['bound_nbins']   = 15
+    params['bound_nlobs']   = 28
+    params['bound_nbins']   = 40
     params['bound_binw']    = 2.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
 
-    params['num_ini_vec']   = 15 # number of initial wavefunctions (orbitals) stored in file
+    params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
     """ ARPACK eigensolver parameters """
-    params['ARPACK_tol']    = 1e-4
-    params['ARPACK_maxiter']= 40000
+    params['ARPACK_tol']    = 1e-2
+    params['ARPACK_maxiter']= 50000
 
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
