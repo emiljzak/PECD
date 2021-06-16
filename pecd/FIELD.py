@@ -14,12 +14,12 @@ class Field():
         #all vectors are returned in spherical tensor form -1, 0, 1 order
         if spherical == True:
             if   typef == "LCPL":
-                    fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, - (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) )] ) 
+                    fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, 0.0 ] ) 
             elif typef == "RCPL":
-                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) + 1j * np.sin( omega * t + CEP0 ) , 0.0, - (np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ) )] ) 
+                fieldvec = E0 * np.array( [ 0.0 , 0.0, - (np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ) )] ) 
         else:
             if typef == "LCPL":
-                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, - (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) )] ) 
+                fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, 0.0] ) 
         return fieldvec
 
     def fieldLP(self, t, function_name, omega, E0, CEP0):

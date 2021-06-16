@@ -53,7 +53,7 @@ def gen_input(jobtype):
     params['bound_nlobs']   = 28
     params['bound_nbins']   = 40
     params['bound_binw']    = 2.0
-    params['bound_rshift']  = 0.0
+    params['bound_rshift']  = 0.05
     params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
