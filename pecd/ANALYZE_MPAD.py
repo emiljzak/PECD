@@ -148,26 +148,32 @@ def legendre_expansion(Wav,grid,Lmax):
     return bcoeffs
 
 
-def analyze_Wav(N_batches):
+def analyze_Wav(N_batches,params):
 
-    working_dir = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_RCPL/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
-
-    with open( working_dir  + "grid_W_av" , 'r') as gridfile:   
+    with open( params['job_directory'] + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
+
+    if params['fieldCPL']['typef'] == "LCPL":
+        helicity = "L"
+    elif params['fieldCPL']['typef'] == "RCPL":
+        helicity = "R"
+    else:
+        helicity = "0"
+
 
     grid = grid.T
     Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
     Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
     grid = grid.T
 
-    batch_list = [1,2,6,7,8,9,10,13,14,17,23,24,29,30]
+    batch_list = [0]
     for icount, ibatch in enumerate(batch_list):
-        with open( working_dir + "W_av_3D_" + str(ibatch), 'r') as Wavfile:   
+        with open( params['job_directory']+ "W" + "_"+ helicity + "_av_3D_" + str(ibatch), 'r') as Wavfile:   
             Wavi = np.loadtxt(Wavfile)
         PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
         Wav += Wavi
 
-    with open( working_dir  + "W_av_3D" , 'w') as Wavfile:   
+    with open( params['job_directory']  +  "W" + "_"+ helicity + "_av_3D" , 'w') as Wavfile:   
         np.savetxt(Wavfile, Wav, fmt = '%10.4e')
 
 
@@ -176,36 +182,23 @@ def analyze_Wav(N_batches):
 
 
 def calc_pecd(N_batches,params):
-
-
-        
-    with open( working_dir_L  + "grid_W_av" , 'r') as gridfile:   
+    
+    with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
 
-    grid = grid.T
-    Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
-    Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
+    with open( params['job_directory'] + "W_R_av_3D", 'r') as Wavfile:   
+        WavR = np.loadtxt(Wavfile)
+
+    with open( params['job_directory'] + "W_L_av_3D", 'r') as Wavfile:   
+        WavL = np.loadtxt(Wavfile)
 
 
-    pecd = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
-
-    grid = grid.T
-
-
-    batch_list = [1,2,6,7,8,9,10,13,14,17,23,24,29,30]
-    
-    for icount, ibatch in enumerate(batch_list):
-        with open( working_dir + "W_av_3D_" + str(ibatch), 'r') as Wavfile:   
-            Wavi = np.loadtxt(Wavfile)
-        PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
-        Wav += Wavi
-
-    with open( working_dir  + "W_av_3D" , 'w') as Wavfile:   
-        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+    pecd = WavR-WavL
+    print("plotting PECD")
+    PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
 
 
-    PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
-
+    return pecd
 
 
 if __name__ == "__main__": 

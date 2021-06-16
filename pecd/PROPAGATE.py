@@ -1366,6 +1366,13 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
 
+            if params['fieldCPL']['typef'] == "LCPL":
+                helicity = "L"
+            elif params['fieldCPL']['typef'] == "RCPL":
+                helicity = "R"
+            else:
+                helicity = "0"
+
             N_Euler = int(sys.argv[3])
             grid_euler, n_grid_euler = gen_euler_grid(N_Euler)            
 
@@ -1450,7 +1457,7 @@ if __name__ == "__main__":
                     elif params['density_averaging'] == False:
                         Wav += np.abs(FT)**2
 
-            with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
+            with open( params['working_dir'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
             with open( params['working_dir'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
