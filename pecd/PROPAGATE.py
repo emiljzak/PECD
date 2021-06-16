@@ -81,7 +81,16 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     dt = params['dt'] * time_to_au
 
     print("Allocating wavepacket")
-    flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + "_" + str(ieuler) + ".dat", 'w' )
+
+    if params['fieldCPL']['typef'] == "LCPL":
+        helicity = "L"
+    elif params['fieldCPL']['typef'] == "RCPL":
+        helicity = "R"
+    else:
+        helicity = "0"
+
+
+    flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(ieuler) + ".dat", 'w' )
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     #psi               = np.zeros( Nbas, dtype=complex ) 
     psi               = psi_init
@@ -1077,38 +1086,6 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
 
     return fty, yftgrid, zftgrid 
 
-def calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist):
-    
-    Nbas = len(maparray_global)
-
-    itime = int( params['time_pecd'] / params['dt']) 
-
-
-    psi_rcpl =  read_wavepacket(file_rcpl, itime, Nbas)
-    psi_lcpl =  read_wavepacket(file_rcpl, itime, Nbas)
-
-
-    ft_rcpl, yftgrid, zftgrid = calc_ftpsi_2d(params, maparray_global, Gr, psi_rcpl, chilist)
-    ft_lcpl, yftgrid, zftgrid = calc_ftpsi_2d(params, maparray_global, Gr, psi_lcpl, chilist)
-
-
-    ncontours = 100
-
-    nlobs   = params['nlobs']
-    nbins   = params['bound_nbins'] + params['nbins'] 
-    npoints = 200
-    rmax    = nbins * params['bound_binw']
-    rmin    = 10.0
-
-    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-    axpecd = fig.add_subplot(spec[0, 0])
-
-    line_pecd = axpecd.contourf(yftgrid, zftgrid , ( ft_rcpl[:npoints].imag - ft_lcpl[:npoints].imag ) , 
-                                        ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_pecd, ax=axpecd, aspect=30)
-    plt.legend()   
-    plt.show()  
 
 def calc_grid_for_FT(params):
     """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
@@ -1284,14 +1261,6 @@ if __name__ == "__main__":
     if params['mode'] == 'propagate_single':
 
         ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
-        
-        #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
-        #config = Config(max_depth=4)
-        #with PyCallGraph(output=graphviz, config=config):
-        #print(ham0)
-        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-        #plt.show()
-
         prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, params['euler0'], 0)
 
     elif params['mode'] == 'analyze_single':
@@ -1330,11 +1299,6 @@ if __name__ == "__main__":
                 #calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
                 #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
 
-        if params['analyze_pecd'] == True:
-            file_rcpl = params['working_dir'] + "wavepacket_RCPL.dat"
-            file_lcpl = params['working_dir'] + "wavepacket_LCPL.dat"
-
-            calc_pecd(file_lcpl,file_rcpl, params, maparray_global, Gr, chilist)
 
     elif params['mode'] == 'propagate_grid':
 
@@ -1425,33 +1389,30 @@ if __name__ == "__main__":
             print("number of points per batch = " + str(N_per_batch))  
 
 
-            #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-            #grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
-            #                            WDMATS,
-            #                            params) 
+            if params['density_averaging'] == True:
+                WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
 
+                #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
+                grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
+                                            WDMATS,
+                                            params) 
+
+           
+     
             #calculate density on a grid for plotting
-
-
+            """
             grid_euler_2d, n_grid_euler_2d = gen_euler_grid_theta_chi(N_Euler)
-
             print(grid_euler_2d.shape)
             print(n_grid_euler_2d)
-
-
-            WDMATS  = gen_wigner_dmats(n_grid_euler_2d, params['Jmax'] , grid_euler_2d)
-
-      
             grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
                                         WDMATS,
                                         params) 
             print("shape of rho")
             print(np.shape(rho))
-
             #print(rho.shape)
-            PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
-            
-            exit()
+            #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
+            """
+
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
                 print(irun)
@@ -1459,31 +1420,35 @@ if __name__ == "__main__":
                 beta    = grid_euler[irun][1]
                 gamma   = grid_euler[irun][2]
 
-                print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
+                if params['density_averaging'] == True:
+                    print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
        
                 #read wavepacket from file
                 file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(irun) + ".dat"
-                psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+                psi                  =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
-                if params['FT_method']  == "FFT_cart":
+                if params['FT_method']    == "FFT_cart":
                     calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
                 elif params['FT_method']  == "FFT_hankel":
 
                     #calculate partial waves on radial grid
-                    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+                    Plm         = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
 
                     #calculate Hankel transforms on appropriate k-vector grid
-                    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
+                    Flm, kgrid  = calc_hankel_transforms(Plm, grid_r)
 
-                    FT, kgrid = calc_FT_3D_hankel(  Plm, Flm, kgrid, params['bound_lmax'], 
-                                                    grid_theta, grid_r, maparray_chi, 
-                                                    maparray_global, psi, chilist, gamma )
+                    FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
+                                                        grid_theta, grid_r, maparray_chi, 
+                                                        maparray_global, psi, chilist, gamma )
                     
 
-                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += float(rho[irun]) * np.abs(FT)**2
-                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-            print(Wav)
+                    if params['density_averaging'] == True:
+                        #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                        Wav += float(rho[irun]) * np.abs(FT)**2
+                        #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+
+                    elif params['density_averaging'] == False:
+                        Wav += np.abs(FT)**2
 
             with open( params['working_dir'] + "W_av_3D_" + str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
@@ -1493,3 +1458,11 @@ if __name__ == "__main__":
     else:
         raise ValueError("Incorrect execution mode keyword")
         exit()
+
+""" diagnostics """
+        #graphviz = GraphvizOutput(output_file=params['working_dir']+'BUILD_HMAT.png')
+        #config = Config(max_depth=4)
+        #with PyCallGraph(output=graphviz, config=config):
+        #print(ham0)
+        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
+        #plt.show()

@@ -50,11 +50,11 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 28
+    params['bound_nlobs']   = 30
     params['bound_nbins']   = 40
     params['bound_binw']    = 2.0
-    params['bound_rshift']  = 0.05
-    params['bound_lmax']    = 2
+    params['bound_rshift']  = 0.0
+    params['bound_lmax']    = 3
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0

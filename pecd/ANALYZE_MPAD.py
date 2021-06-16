@@ -2,13 +2,11 @@ import numpy as np
 
 import quaternionic
 import spherical
-import PLOTS
 import itertools
 import os
-from sympy.physics.quantum.spin import Rotation
+import sys
 
-from sympy import pi, symbols
-from sympy import N
+import PLOTS
 
 def gen_euler_grid(n_euler):
     alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
@@ -142,6 +140,14 @@ def test_wigner():
     PLOTS.plot_spharm_rotated(WDM[:,:,0])
 
 
+def legendre_expansion(Wav,grid,Lmax):
+    """ Calculate Legendre expansion coefficients as a function of photo-electron momentum """
+
+    bcoeffs = np.zeros(grid.shape[0])
+
+    return bcoeffs
+
+
 def analyze_Wav(N_batches):
 
     working_dir = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_RCPL/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
@@ -153,6 +159,7 @@ def analyze_Wav(N_batches):
     Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
     Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
     grid = grid.T
+
     batch_list = [1,2,6,7,8,9,10,13,14,17,23,24,29,30]
     for icount, ibatch in enumerate(batch_list):
         with open( working_dir + "W_av_3D_" + str(ibatch), 'r') as Wavfile:   
@@ -168,12 +175,10 @@ def analyze_Wav(N_batches):
 
 
 
-def calc_pecd(N_batches):
+def calc_pecd(N_batches,params):
 
-    working_dir_L = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_RCPL/"#"/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/d2s/"
-    working_dir_R = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/d2s/d2s_50_10_4.0_4_uhf_631Gss/40au_cutoff_FT_LCPL/"
-    
-    
+
+        
     with open( working_dir_L  + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
 
@@ -203,9 +208,24 @@ def calc_pecd(N_batches):
 
 
 
-os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
-N_batches = 1
+if __name__ == "__main__": 
 
-#test_wigner()
+    jobtype = "local"
+    inputfile = "input_d2s"
 
-analyze_Wav(N_batches)
+    os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
+    import importlib
+    input_module = importlib.import_module(inputfile)
+    print("importing input file module: " + inputfile)
+    print("jobtype: " + str(jobtype))
+    print(" ")
+    print("---------------------- INPUT ECHOs --------------------")
+    print(" ")
+    params = input_module.gen_input(jobtype) 
+
+
+    N_batches = 1
+
+    calc_pecd(N_batches,params) 
+
+    #analyze_Wav(N_batches)

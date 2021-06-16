@@ -36,6 +36,7 @@ def gen_input(jobtype):
 
 
     """ === ro-vibrational part ==== """ 
+    params['density_averaging'] = False #use rotational proability density for orientation averageing. Otherwise uniform probability. 
     params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
     params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
