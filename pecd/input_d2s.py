@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -289,7 +289,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],4)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],80)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,

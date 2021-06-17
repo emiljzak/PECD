@@ -193,7 +193,7 @@ def calc_pecd(N_batches,params):
         WavL = np.loadtxt(Wavfile)
 
 
-    pecd = WavR-WavL #/ (np.abs(WavR)+np.abs(WavL))
+    pecd = (WavR - WavL)/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
     print("plotting PECD")
     PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
 
