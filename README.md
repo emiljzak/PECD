@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="" height="100px"/>
+  <img src="https://github.com/CFEL-CMI/PECD/blob/develop/temp_logo.png" height="100px"/>
 </div>
 
 # Quantum-mechanical calculations of photo-electron circular-dichroism (PECD)
@@ -14,6 +14,6 @@ PECD is currently being developed and maintained by theory team of the Controlle
 
 ## Quick start
 
-To run the code type python3 slurm_grid_run.py. Input file is given in xxx_input.py, where xxx is molecule name, e.g. n2, d2s, etc.
+To run the code type `python3 slurm_grid_run.py`. Input file is given in xxx_input.py, where xxx is molecule name, e.g. n2, d2s, etc.
 
 ## Documentation
