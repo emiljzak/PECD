@@ -82,9 +82,9 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
     print("Allocating wavepacket")
 
-    if params['fieldCPL']['typef'] == "LCPL":
+    if params['field_type']['typef'] == "LCPL":
         helicity = "L"
-    elif params['fieldCPL']['typef'] == "RCPL":
+    elif params['field_type']['typef'] == "RCPL":
         helicity = "R"
     else:
         helicity = "0"
@@ -1273,7 +1273,7 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
             #read wavepacket from file
-            file_wavepacket      = params['job_directory']  + params['wavepacket_file'] + ".dat"
+            file_wavepacket      = params['job_directory']  +  params['wavepacket_file'] + helicity + "_" + ".dat"
             psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
             #print(np.shape(psi))
@@ -1369,9 +1369,9 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
 
-            if params['fieldCPL']['typef'] == "LCPL":
+            if params['field_type']['typef'] == "LCPL":
                 helicity = "L"
-            elif params['fieldCPL']['typef'] == "RCPL":
+            elif params['field_type']['typef'] == "RCPL":
                 helicity = "R"
             else:
                 helicity = "0"
@@ -1434,7 +1434,7 @@ if __name__ == "__main__":
                     print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
        
                 #read wavepacket from file
-                file_wavepacket      = params['working_dir'] + params['wavepacket_file'] + "_" +str(irun) + ".dat"
+                file_wavepacket      = params['job_directory'] +  params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
                 psi                  =  read_wavepacket(file_wavepacket, itime, Nbas_global)
 
                 if params['FT_method']    == "FFT_cart":
@@ -1458,11 +1458,12 @@ if __name__ == "__main__":
                         #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
 
                     elif params['density_averaging'] == False:
+                        print("proceeding with uniform rotational density")
                         Wav += np.abs(FT)**2
 
-            with open( params['working_dir'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
+            with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
-            with open( params['working_dir'] + "grid_W_av", 'w') as gridfile:   
+            with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
             #PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
     else:

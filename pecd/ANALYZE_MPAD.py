@@ -153,9 +153,9 @@ def analyze_Wav(N_batches,params):
     with open( params['job_directory'] + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
 
-    if params['fieldCPL']['typef'] == "LCPL":
+    if params['field_type']['typef'] == "LCPL":
         helicity = "L"
-    elif params['fieldCPL']['typef'] == "RCPL":
+    elif params['field_type']['typef'] == "RCPL":
         helicity = "R"
     else:
         helicity = "0"
@@ -193,7 +193,7 @@ def calc_pecd(N_batches,params):
         WavL = np.loadtxt(Wavfile)
 
 
-    pecd = WavR-WavL
+    pecd = WavR-WavL #/ (np.abs(WavR)+np.abs(WavL))
     print("plotting PECD")
     PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
 
     N_batches = 1
-
+    #analyze_Wav(N_batches,params)
     calc_pecd(N_batches,params) 
 
     #analyze_Wav(N_batches)
