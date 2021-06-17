@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/CFEL-CMI/PECD/blob/develop/temp_logo.png" height="100px"/>
+  <img src="https://github.com/CFEL-CMI/PECD/blob/develop/temp_logo.png" height="200px"/>
 </div>
 
 # Quantum-mechanical calculations of photo-electron circular-dichroism (PECD)

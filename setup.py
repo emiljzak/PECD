@@ -7,7 +7,7 @@ from setuptools import setup
 
 copyright = 'Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>'
 name = "PECD"
-version = "0.2.dev0"
+version = "0.9.dev0"
 release = version
 long_description = """
 Original author:    Emil Zak <emil.zak@cfel.de>
@@ -22,7 +22,7 @@ setup(name=name,
       maintainer          = "Emil Zak",
       maintainer_email    = "emil.zak@cfel.de",
       url                 = "https://github.com/CFEL-CMI/PECD",
-      description         = "High-accuracy calculations of photo-electron circular dichroism",
+      description         = "Quantum-mechanical calculations of photo-electron circular dichroism",
       version             = version,
       long_description    = long_description,
       license             = "GPL",
