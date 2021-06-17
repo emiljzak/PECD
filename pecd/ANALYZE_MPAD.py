@@ -180,10 +180,7 @@ def legendre_expansion(grid,Wav,Lmax):
     #plt.show()
 
     # Define function and interval
-    a = -1
-    b = 1
-
-    deg = 4
+    deg = Lmax + 10
     nleg = deg
     x, w = np.polynomial.legendre.leggauss(deg)
 
@@ -196,37 +193,37 @@ def legendre_expansion(grid,Wav,Lmax):
 
     for n in range(0,Lmax):
         Pn = eval_legendre(n, x).reshape(nleg,-1)
-
-        for ipoint,k in enumerate(list(kgrid)) :
-            W_interp1 = W_interp(k,np.arccos(x)).reshape(nleg,-1)
+        for ipoint,k in enumerate(list(kgrid)):
+            W_interp1 = W_interp(k,np.cos(x)).reshape(nleg,-1)
             print(k)
-            bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0])
+            bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-        plt.plot(kgrid,bcoeff[:,n],label=n)
-        plt.legend()   
-    plt.show()
-    exit()
-
-    thetatestgrid = np.linspace(0.0, 2*np.pi, 100)
-    ktest ,  Thetatestgrid  = np.meshgrid( kgrid,  thetatestgrid )
+      #  plt.plot(kgrid,bcoeff[:,n],label=n)
+     #   plt.legend()   
+    #plt.show()
 
 
-    W_legendre = np.zeros((nkpoints,thetatestgrid.shape[0]), dtype = float)
-    print(thetatestgrid.shape[0])
+    #plot Legendre-reconstructed W_av on test grid 
+    thetagridtest       = np.linspace(0,2* np.pi, nkpoints)
+    kgridtest           = np.linspace(0.05, 1, nkpoints)
+    kgridtestmesh, thetatestmesh    = np.meshgrid(kgridtest, thetagridtest )
 
-    for n in range(0,Lmax):
-        Pn = eval_legendre(n, thetatestgrid).reshape(thetatestgrid.shape[0],1)
-        print(Pn.shape)
-        for ipoint in range(nkpoints):
-            
-            W_legendre[ipoint,:] += bcoeff[ipoint,n] * Pn[:,0]
+    #W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
+
+    W_legendre = np.zeros((kgridtest.shape[0],thetagridtest.shape[0]), dtype = float)
+
+    for ipoint in range(nkpoints):
+
+        for n in range(0,Lmax):
+            Pn = eval_legendre(n, np.cos(thetagridtest)).reshape(thetagridtest.shape[0],1)
+            W_legendre[ipoint,:] += bcoeff[ipoint,n] * Pn[:,0] 
 
     
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     ax = fig.add_subplot(spec[0, 0], projection='polar')
     ax.set_ylim(0,1) #radial extent
-    line_ft2 = ax.contourf(  ktest, Thetatestgrid, W_legendre, 50, cmap = 'jet') 
+    line_legendre = ax.contourf(   thetatestmesh ,kgridtestmesh, W_legendre.T, 100, cmap = 'jet') 
     
     plt.show()
     exit()

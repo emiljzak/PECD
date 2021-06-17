@@ -313,7 +313,7 @@ def gen_input(jobtype):
     """==== momentum-space distributions ===="""
     """ PECD """
     params['analyze_pecd']    = False
-    params['pecd_lmax']       = 8 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
+    params['pecd_lmax']       = 16 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
