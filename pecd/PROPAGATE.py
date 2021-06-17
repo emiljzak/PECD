@@ -472,7 +472,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             elif params['hmat_format'] == 'numpy_arr':
                 with open( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) , 'w') as hmatfile:   
                     np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
-
+            print("Hamiltonian matrix saved.")
 
         """ diagonalize hmat """
         if params['hmat_format'] == 'numpy_arr':    

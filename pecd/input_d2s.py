@@ -64,13 +64,13 @@ def gen_input(jobtype):
     params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
     """ ARPACK eigensolver parameters """
-    params['ARPACK_tol']    = 1e-4
-    params['ARPACK_maxiter']= 40000
-    params['energy_guess']  = -10.0 # (eV)
-    params['energy_guess'] /= CONSTANTS.au_to_ev
+    params['ARPACK_tol']    = 1e-3
+    params['ARPACK_maxiter']= 60000
+    params['energy_guess']  = None # (eV)
+    #params['energy_guess'] /= CONSTANTS.au_to_ev
 
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
@@ -162,7 +162,7 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 4000.0 
+    params['tmax']      = 5000.0 
     params['dt']        = 4.0
     params['ivec']      = 8 
 
@@ -250,7 +250,7 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
                     "spherical":        True, 
-                    "typef":            "RCPL"}
+                    "typef":            "LCPL"}
 
     field_LP    = { "function_name":    "fieldLP", 
                     "omega":            params['omega'], 
@@ -289,7 +289,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],4)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,

@@ -254,7 +254,14 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['job_directory']  + "/animation/" + "angrad_YZ" + "_" + str(irun) + "_t=" +\
+
+        if params['field_type']['typef'] == "LCPL":
+            helicity = "L"
+        elif params['field_type']['typef'] == "RCPL":
+            helicity = "R"
+        else:
+            helicity = "0"
+        fig.savefig( params['job_directory']  + "/animation/" + helicity + "_angrad_YZ" + "_" + str(irun) + "_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()
@@ -304,7 +311,13 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        fig.savefig( params['job_directory']  + "/animation/" + "angrad_XY" + "_" + str(irun) + "_t=" +\
+        if params['field_type']['typef'] == "LCPL":
+            helicity = "L"
+        elif params['field_type']['typef'] == "RCPL":
+            helicity = "R"
+        else:
+            helicity = "0"
+        fig.savefig( params['job_directory']  + "/animation/" + helicity + "_angrad_XY" + "_" + str(irun) + "_t=" +\
                      str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                      bbox_inches='tight')
     plt.close()

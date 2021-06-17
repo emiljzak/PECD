@@ -170,7 +170,7 @@ def analyze_Wav(N_batches,params):
     for icount, ibatch in enumerate(batch_list):
         with open( params['job_directory']+ "W" + "_"+ helicity + "_av_3D_" + str(ibatch), 'r') as Wavfile:   
             Wavi = np.loadtxt(Wavfile)
-        PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
+        #PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
         Wav += Wavi
 
     with open( params['job_directory']  +  "W" + "_"+ helicity + "_av_3D" , 'w') as Wavfile:   

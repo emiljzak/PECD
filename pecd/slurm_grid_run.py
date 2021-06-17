@@ -25,7 +25,7 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile):
 					 		jobtype + " " + inputfile , shell=True) 
 
 jobtype 	= "local" #maxwell
-inputfile 	= "input_h"
+inputfile 	= "input_d2s"
 N_euler 	= 1 #number of euler grid points per dimension
 N_batches 	= 1
 
