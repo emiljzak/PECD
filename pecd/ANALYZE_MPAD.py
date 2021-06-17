@@ -5,6 +5,14 @@ import spherical
 import itertools
 import os
 import sys
+import matplotlib.pyplot as plt
+from scipy.special import eval_legendre
+from scipy import integrate
+from scipy import interpolate
+from matplotlib import cm, colors
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+import matplotlib.gridspec as gridspec
 
 import PLOTS
 
@@ -140,12 +148,94 @@ def test_wigner():
     PLOTS.plot_spharm_rotated(WDM[:,:,0])
 
 
-def legendre_expansion(Wav,grid,Lmax):
+def legendre_expansion(grid,Wav,Lmax):
     """ Calculate Legendre expansion coefficients as a function of photo-electron momentum """
 
-    bcoeffs = np.zeros(grid.shape[0])
+    kgrid       = grid[0]
+    thetagrid   = grid[1]
 
-    return bcoeffs
+    """ Interpolate W(k,theta)"""
+    W_interp    = interpolate.interp2d(kgrid, thetagrid , Wav, kind='cubic')
+
+
+    """fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    ax = fig.add_subplot(spec[0, 0], projection='polar')
+    ax.set_ylim(0,1) #radial extent
+    kmesh,thetamesh  = np.meshgrid(grid[0], grid[1])
+    W = W_interp(grid[0], grid[1])
+    #line_ft = ax.contourf(thetamesh, kmesh, W, 
+    #                        100, cmap = 'jet') 
+    thetatest = np.linspace(-np.pi, np.pi, 72)
+    rtest = np.linspace(0, 1, 20)
+    Rtest ,  Thetatest  = np.meshgrid(rtest,  thetatest )
+
+    Valtest = W_interp( rtest ,  thetatest )
+    line_ft2 = ax.contourf(Thetatest, Rtest  , Valtest, 
+                            100, cmap = 'jet') 
+    #ax2.pcolormesh(Xtest, Ytest, Ztest)
+    #plt.show()
+    """
+    # Define function and interval
+    a = -1
+    b = 1
+
+    # Gauss-Legendre (default interval is [-1, 1])
+    deg = 20
+    nleg = deg
+    x, w = np.polynomial.legendre.leggauss(deg)
+
+    # Translate x values from the interval [-1, 1] to [a, b]
+    t = 0.5*(x + 1)*(b - a) + a
+
+
+    w = w.reshape(nleg,-1)
+
+    
+    nkpoints = 100
+    bcoeff = np.zeros((nkpoints,Lmax), dtype = float)
+    kgrid = np.linspace(0.05,1.0,nkpoints)
+
+    for n in range(0,Lmax):
+        Pn = eval_legendre(n, t).reshape(nleg,-1)
+
+        for ipoint,k in enumerate(list(kgrid)) :
+            W_interp1 = W_interp(k,t).reshape(nleg,-1)
+        
+            print(k)
+            bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * 0.5*(b - a)
+
+        plt.plot(kgrid,bcoeff[:,n],label=n)
+        plt.legend()   
+    #plt.show()
+
+
+    thetatestgrid = np.linspace(0.0, 2*np.pi, 100)
+    ktest ,  Thetatestgrid  = np.meshgrid( kgrid,  thetatestgrid )
+
+
+    W_legendre = np.zeros((nkpoints,thetatestgrid.shape[0]), dtype = float)
+    print(thetatestgrid.shape[0])
+
+    for n in range(0,Lmax):
+        Pn = eval_legendre(n, thetatestgrid).reshape(thetatestgrid.shape[0],1)
+        print(Pn.shape)
+        for ipoint in range(nkpoints):
+            
+            W_legendre[ipoint,:] += bcoeff[ipoint,n] * Pn[:,0]
+
+    
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    ax = fig.add_subplot(spec[0, 0], projection='polar')
+    ax.set_ylim(0,1) #radial extent
+    line_ft2 = ax.contourf(  ktest, Thetatestgrid, W_legendre, 50, cmap = 'jet') 
+    
+    plt.show()
+    exit()
+
+
+    #return bcoeffs
 
 
 def analyze_Wav(N_batches,params):
@@ -177,9 +267,9 @@ def analyze_Wav(N_batches,params):
         np.savetxt(Wavfile, Wav, fmt = '%10.4e')
 
 
-    PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
+    #PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
 
-
+    return grid, Wav
 
 def calc_pecd(N_batches,params):
     
@@ -195,13 +285,14 @@ def calc_pecd(N_batches,params):
 
     pecd = (WavR - WavL)/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
     print("plotting PECD")
-    PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
+    #PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
 
 
     return pecd
 
 
 if __name__ == "__main__": 
+    os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
 
     jobtype = "local"
     inputfile = "input_d2s"
@@ -218,7 +309,10 @@ if __name__ == "__main__":
 
 
     N_batches = 1
-    #analyze_Wav(N_batches,params)
-    calc_pecd(N_batches,params) 
+    grid, Wav = analyze_Wav(N_batches,params)
 
-    #analyze_Wav(N_batches)
+    legendre_expansion(grid,Wav,params['pecd_lmax'])
+    exit()
+
+    #calc_pecd(N_batches,params) 
+
