@@ -155,60 +155,57 @@ def legendre_expansion(grid,Wav,Lmax):
     thetagrid   = grid[1]
 
     """ Interpolate W(k,theta)"""
-    W_interp    = interpolate.interp2d(kgrid, thetagrid , Wav, kind='cubic')
+    W_interp    = interpolate.interp2d(kgrid, thetagrid, Wav, kind='cubic')
 
+    #fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    #ax = fig.add_subplot(spec[0, 0], projection='polar')
+    #ax.set_ylim(0,1) #radial extent
 
-    """fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-    ax = fig.add_subplot(spec[0, 0], projection='polar')
-    ax.set_ylim(0,1) #radial extent
-    kmesh,thetamesh  = np.meshgrid(grid[0], grid[1])
-    W = W_interp(grid[0], grid[1])
-    #line_ft = ax.contourf(thetamesh, kmesh, W, 
+    #plot W_av on the original grid
+    #W_interp_mesh = W_interp(kgrid, thetagrid)
+    #kmesh,thetamesh  = np.meshgrid(kgrid, thetagrid)
+    #line_W_original = ax.contourf(thetamesh, kmesh, W_interp_mesh, 
     #                        100, cmap = 'jet') 
-    thetatest = np.linspace(-np.pi, np.pi, 72)
-    rtest = np.linspace(0, 1, 20)
-    Rtest ,  Thetatest  = np.meshgrid(rtest,  thetatest )
-
-    Valtest = W_interp( rtest ,  thetatest )
-    line_ft2 = ax.contourf(Thetatest, Rtest  , Valtest, 
-                            100, cmap = 'jet') 
-    #ax2.pcolormesh(Xtest, Ytest, Ztest)
     #plt.show()
-    """
+
+    #plot W_av on test grid 
+    #thetagridtest       = np.linspace(-np.pi, np.pi, 200)
+    #kgridtest           = np.linspace(0, 1, 200)
+    #kgridtestmesh ,thetatestmesh    = np.meshgrid(kgridtest, thetagridtest )
+
+    #W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
+    #line_test = ax.contourf(thetatestmesh, kgridtestmesh  , W_interp_testmesh , 
+    #                        100, cmap = 'jet') 
+    #plt.show()
+
     # Define function and interval
     a = -1
     b = 1
 
-    # Gauss-Legendre (default interval is [-1, 1])
-    deg = 20
+    deg = 4
     nleg = deg
     x, w = np.polynomial.legendre.leggauss(deg)
 
     # Translate x values from the interval [-1, 1] to [a, b]
-    t = 0.5*(x + 1)*(b - a) + a
-
-
     w = w.reshape(nleg,-1)
 
-    
-    nkpoints = 100
+    nkpoints = 500
     bcoeff = np.zeros((nkpoints,Lmax), dtype = float)
     kgrid = np.linspace(0.05,1.0,nkpoints)
 
     for n in range(0,Lmax):
-        Pn = eval_legendre(n, t).reshape(nleg,-1)
+        Pn = eval_legendre(n, x).reshape(nleg,-1)
 
         for ipoint,k in enumerate(list(kgrid)) :
-            W_interp1 = W_interp(k,t).reshape(nleg,-1)
-        
+            W_interp1 = W_interp(k,np.arccos(x)).reshape(nleg,-1)
             print(k)
-            bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * 0.5*(b - a)
+            bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0])
 
         plt.plot(kgrid,bcoeff[:,n],label=n)
         plt.legend()   
-    #plt.show()
-
+    plt.show()
+    exit()
 
     thetatestgrid = np.linspace(0.0, 2*np.pi, 100)
     ktest ,  Thetatestgrid  = np.meshgrid( kgrid,  thetatestgrid )
