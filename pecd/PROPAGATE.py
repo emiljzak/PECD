@@ -481,7 +481,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             end_time = time.time()
         elif params['hmat_format'] == 'sparse_csr':
             start_time = time.time()
-            enr, coeffs = eigsh( ham_filtered, k = params['num_ini_vec'], which='SA', 
+            enr, coeffs = eigsh( ham_filtered, k = params['num_ini_vec'], which='SA', sigma=params['energy_guess'],
                                 return_eigenvectors=True, mode='normal', 
                                 tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
             end_time = time.time()

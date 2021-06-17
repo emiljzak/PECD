@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -66,10 +66,11 @@ def gen_input(jobtype):
     """ ARPACK eigensolver parameters """
     params['ARPACK_tol']    = 1e-4
     params['ARPACK_maxiter']= 40000
-
+    params['energy_guess']  = -10.0 # (eV)
+    params['energy_guess'] /= CONSTANTS.au_to_ev
 
     """==== potential energy matrix ===="""
-
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
@@ -171,7 +172,6 @@ def gen_input(jobtype):
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
     params['save_psi_init']      = True
     params['save_enr_init']      = True
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     
     params['plot_elfield']       = False
 
@@ -250,7 +250,7 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
                     "spherical":        True, 
-                    "typef":            "LCPL"}
+                    "typef":            "RCPL"}
 
     field_LP    = { "function_name":    "fieldLP", 
                     "omega":            params['omega'], 

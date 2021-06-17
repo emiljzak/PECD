@@ -66,7 +66,10 @@ def gen_input(jobtype):
     """ ARPACK eigensolver parameters """
     params['ARPACK_tol']    = 1e-4
     params['ARPACK_maxiter']= 40000
+    params['energy_guess']  = -10.0 # (eV)
+    params['energy_guess'] /= CONSTANTS.au_to_ev
 
+    
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     params['gen_adaptive_quads'] = True
