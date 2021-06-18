@@ -150,7 +150,6 @@ def test_wigner():
 
 def legendre_expansion(grid,Wav,Lmax):
     """ Calculate Legendre expansion coefficients as a function of photo-electron momentum """
-    """ Calculate photo-electron energy spectrum """
 
     kgrid       = grid[0]
     thetagrid   = grid[1]
@@ -181,37 +180,28 @@ def legendre_expansion(grid,Wav,Lmax):
     #plt.show()
 
     # Define function and interval
-    deg     = Lmax + 10
-    nleg    = deg
-    x, w    = np.polynomial.legendre.leggauss(deg)
-    w       = w.reshape(nleg,-1)
+    deg = Lmax + 10
+    nleg = deg
+    x, w = np.polynomial.legendre.leggauss(deg)
 
-    nkpoints    = 100
-    bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
-    spectrum    = np.zeros(nkpoints, dtype = float)
-    kgrid       = np.linspace(0.05,1.0,nkpoints)
+    # Translate x values from the interval [-1, 1] to [a, b]
+    w = w.reshape(nleg,-1)
 
-    """ calculating Legendre moments """
-    for n in range(0,Lmax+1):
+    nkpoints = 100
+    bcoeff = np.zeros((nkpoints,Lmax), dtype = float)
+    kgrid = np.linspace(0.05,1.0,nkpoints)
+
+    for n in range(0,Lmax):
         Pn = eval_legendre(n, x).reshape(nleg,-1)
         for ipoint,k in enumerate(list(kgrid)):
             W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
             print(k)
             bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
-        #plt.plot(kgrid,bcoeff[:,n],label=n)
-        #plt.legend()   
+
+      #  plt.plot(kgrid,bcoeff[:,n],label=n)
+     #   plt.legend()   
     #plt.show()
-   
-    """ calculating photo-electron spectrum """
-    for ipoint,k in enumerate(list(kgrid)):   
-        W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
-        spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) )
-    plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
-    plt.xlabel("momentum (a.u.)")
-    plt.ylabel("cross section")
-    plt.legend()   
-    plt.show()
-    exit()
+
 
     #plot Legendre-reconstructed W_av on test grid 
     thetagridtest       = np.linspace(-np.pi,np.pi, nkpoints)
@@ -224,7 +214,7 @@ def legendre_expansion(grid,Wav,Lmax):
 
     for ipoint in range(nkpoints):
 
-        for n in range(0,Lmax+1):
+        for n in range(0,Lmax):
             Pn = eval_legendre(n, np.cos(thetagridtest)).reshape(thetagridtest.shape[0],1)
             W_legendre[ipoint,:] += bcoeff[ipoint,n] * Pn[:,0] 
 
@@ -237,7 +227,7 @@ def legendre_expansion(grid,Wav,Lmax):
     plt.colorbar(line_legendre, ax=ax, aspect=30) 
     #plt.show()
 
-    return bcoeff, kgrid, spectrum/spectrum.max()
+    return bcoeff, kgrid
 
 
 def analyze_Wav(N_batches,params):
@@ -279,9 +269,6 @@ def find_nearest(array, value):
     return array[idx], idx
 
 
-
-
-
 def calc_pecd(N_batches,params,bcoeff,kgrid):
     
     with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
@@ -303,12 +290,14 @@ def calc_pecd(N_batches,params,bcoeff,kgrid):
         k_pecd.append(k)
         ind_kgrid.append(ind)
 
+    print(k_pecd)
+
 
     pecd_sph = []
     pecd_mph = []
 
     for ielem, k in enumerate(k_pecd):
-        print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax']+1)) + "\n")
+        print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax'])) + "\n")
         pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
 
     pecd_pad = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
@@ -336,11 +325,10 @@ if __name__ == "__main__":
 
 
     N_batches = 1
+    grid, Wav = analyze_Wav(N_batches,params)
 
-    grid, Wav = analyze_Wav(N_batches,params) #return fully averaged (over batches) PAD
+    bcoeff, kgrid = legendre_expansion(grid,Wav,params['pecd_lmax'])
 
-    bcoeff, kgrid, spectrum = legendre_expansion(grid,Wav,params['pecd_lmax']) #returns legendre expansion coefficients of PAD
+    pecd_sph = calc_pecd(N_batches,params,bcoeff,kgrid) 
 
-    pecd_sph = calc_pecd(N_batches,params,bcoeff,kgrid) #calculates PECD and other related quantities
-
-    print("Single-photon contribution to PECD: " + str(pecd_sph) +"%" )
+    print("Single-photon contribution to PECD: " + str(pecd_sph) )
