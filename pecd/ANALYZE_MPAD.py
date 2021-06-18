@@ -187,14 +187,14 @@ def legendre_expansion(grid,Wav,Lmax):
     # Translate x values from the interval [-1, 1] to [a, b]
     w = w.reshape(nleg,-1)
 
-    nkpoints = 500
+    nkpoints = 100
     bcoeff = np.zeros((nkpoints,Lmax), dtype = float)
     kgrid = np.linspace(0.05,1.0,nkpoints)
 
     for n in range(0,Lmax):
         Pn = eval_legendre(n, x).reshape(nleg,-1)
         for ipoint,k in enumerate(list(kgrid)):
-            W_interp1 = W_interp(k,np.cos(x)).reshape(nleg,-1)
+            W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
             print(k)
             bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
@@ -204,7 +204,7 @@ def legendre_expansion(grid,Wav,Lmax):
 
 
     #plot Legendre-reconstructed W_av on test grid 
-    thetagridtest       = np.linspace(0,2* np.pi, nkpoints)
+    thetagridtest       = np.linspace(-np.pi,np.pi, nkpoints)
     kgridtest           = np.linspace(0.05, 1, nkpoints)
     kgridtestmesh, thetatestmesh    = np.meshgrid(kgridtest, thetagridtest )
 
@@ -223,13 +223,11 @@ def legendre_expansion(grid,Wav,Lmax):
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     ax = fig.add_subplot(spec[0, 0], projection='polar')
     ax.set_ylim(0,1) #radial extent
-    line_legendre = ax.contourf(   thetatestmesh ,kgridtestmesh, W_legendre.T, 100, cmap = 'jet') 
-    
+    line_legendre = ax.contourf(   thetatestmesh ,kgridtestmesh, W_legendre.T / W_legendre.max(), 100, cmap = 'jet') 
+    plt.colorbar(line_legendre, ax=ax, aspect=30) 
     plt.show()
-    exit()
 
-
-    #return bcoeffs
+    return bcoeff, kgrid
 
 
 def analyze_Wav(N_batches,params):
@@ -265,6 +263,12 @@ def analyze_Wav(N_batches,params):
 
     return grid, Wav
 
+def find_nearest(array, value):
+    array   = np.asarray(array)
+    idx     = (np.abs(array - value)).argmin()
+    return array[idx], idx
+
+
 def calc_pecd(N_batches,params):
     
     with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
@@ -277,10 +281,13 @@ def calc_pecd(N_batches,params):
         WavL = np.loadtxt(Wavfile)
 
 
-    pecd = (WavR - WavL)/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
+    pecd = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
     print("plotting PECD")
     #PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
 
+    print("Quantitative PECD analysis")
+    k_pecd, ind_kgrid = find_nearest(kgrid, params['k_pecd'])
+    
 
     return pecd
 
@@ -305,8 +312,7 @@ if __name__ == "__main__":
     N_batches = 1
     grid, Wav = analyze_Wav(N_batches,params)
 
-    legendre_expansion(grid,Wav,params['pecd_lmax'])
-    exit()
+    bcoeff, kgrid = legendre_expansion(grid,Wav,params['pecd_lmax'])
 
-    #calc_pecd(N_batches,params) 
+    calc_pecd(N_batches,params,bcoeff,kgrid) 
 
