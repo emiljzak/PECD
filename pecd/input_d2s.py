@@ -314,7 +314,7 @@ def gen_input(jobtype):
     """ PECD """
     params['analyze_pecd']    = True
     params['pecd_lmax']       = 12 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['k_pecd']          = 0.3 #(eV) at what electron momentum do you want PECD?
+    params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
     params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """

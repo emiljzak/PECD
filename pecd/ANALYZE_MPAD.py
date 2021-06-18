@@ -225,7 +225,7 @@ def legendre_expansion(grid,Wav,Lmax):
     ax.set_ylim(0,1) #radial extent
     line_legendre = ax.contourf(   thetatestmesh ,kgridtestmesh, W_legendre.T / W_legendre.max(), 100, cmap = 'jet') 
     plt.colorbar(line_legendre, ax=ax, aspect=30) 
-    plt.show()
+    #plt.show()
 
     return bcoeff, kgrid
 
@@ -269,7 +269,7 @@ def find_nearest(array, value):
     return array[idx], idx
 
 
-def calc_pecd(N_batches,params):
+def calc_pecd(N_batches,params,bcoeff,kgrid):
     
     with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
@@ -281,15 +281,30 @@ def calc_pecd(N_batches,params):
         WavL = np.loadtxt(Wavfile)
 
 
-    pecd = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
-    print("plotting PECD")
-    #PLOTS.plot_2D_polar_map(pecd,grid[1],grid[0],100)
-
     print("Quantitative PECD analysis")
-    k_pecd, ind_kgrid = find_nearest(kgrid, params['k_pecd'])
-    
+    k_pecd      = []
+    ind_kgrid   = []
 
-    return pecd
+    for kelem in params['k_pecd']:
+        k, ind = find_nearest(kgrid, kelem)
+        k_pecd.append(k)
+        ind_kgrid.append(ind)
+
+    print(k_pecd)
+
+
+    pecd_sph = []
+    pecd_mph = []
+
+    for ielem, k in enumerate(k_pecd):
+        print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax'])) + "\n")
+        pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
+
+    pecd_pad = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
+    print("plotting PECD")
+    #PLOTS.plot_2D_polar_map(pecd_pad,grid[1],grid[0],100)
+
+    return pecd_sph
 
 
 if __name__ == "__main__": 
@@ -314,5 +329,6 @@ if __name__ == "__main__":
 
     bcoeff, kgrid = legendre_expansion(grid,Wav,params['pecd_lmax'])
 
-    calc_pecd(N_batches,params,bcoeff,kgrid) 
+    pecd_sph = calc_pecd(N_batches,params,bcoeff,kgrid) 
 
+    print("Single-photon contribution to PECD: " + str(pecd_sph) )
