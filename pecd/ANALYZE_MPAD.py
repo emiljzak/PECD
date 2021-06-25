@@ -15,6 +15,7 @@ from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import matplotlib.gridspec as gridspec
 
 import PLOTS
+import CONSTANTS
 
 def gen_euler_grid(n_euler):
     alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
@@ -206,8 +207,11 @@ def legendre_expansion(grid,Wav,Lmax):
     for ipoint,k in enumerate(list(kgrid)):   
         W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
         spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) )
-    plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
-    plt.xlabel("momentum (a.u.)")
+    #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
+    plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
+    plt.xlabel("Energy (eV)")
+    plt.xlim([0,6]) 
+   #plt.xlabel("momentum (a.u.)")
     plt.ylabel("cross section")
     plt.legend()   
     plt.show()

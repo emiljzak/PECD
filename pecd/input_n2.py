@@ -66,7 +66,7 @@ def gen_input(jobtype):
     """ ARPACK eigensolver parameters """
     params['ARPACK_tol']    = 1e-4
     params['ARPACK_maxiter']= 40000
-    params['energy_guess']  = -10.0 # (eV)
+    params['energy_guess']  = -180.0 # (eV)
     params['energy_guess'] /= CONSTANTS.au_to_ev
 
     
