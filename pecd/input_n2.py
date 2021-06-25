@@ -50,11 +50,11 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 16
-    params['bound_nbins']   = 10
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 50
     params['bound_binw']    = 3.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -64,15 +64,17 @@ def gen_input(jobtype):
 
 
     """ ARPACK eigensolver parameters """
-    params['ARPACK_tol']    = 1e-4
-    params['ARPACK_maxiter']= 40000
-    params['energy_guess']  = -180.0 # (eV)
-    params['energy_guess'] /= CONSTANTS.au_to_ev
+    params['ARPACK_tol']        = 1e-3
+    params['ARPACK_maxiter']    = 60000
+    params['ARPACK_enr_guess']  = None # (eV)
+    params['ARPACK_which']      = 'SA'
+    params['ARPACK_mode']       = "normal"
+    #
 
     
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -163,9 +165,9 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 4000.0 
-    params['dt']        = 4.0
-    params['ivec']      = 6 
+    params['tmax']      = 200.0 
+    params['dt']        = 0.1
+    params['ivec']      = 6
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -242,7 +244,7 @@ def gen_input(jobtype):
     """ ---- field intensity ----- """
     
     params['tau']       = 1000.0 #as: pulse duration (sigma)
-    params['tc']        = 2000.0 #as: pulse centre
+    params['tc']        = 50.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -281,8 +283,9 @@ def gen_input(jobtype):
     params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
 
     env_sin2 = {"function_name": "envsin2", 
-                    "Ncycles": 10, 
-                    "t0": (time_to_au * params['tc'])  }
+                    "Ncycles": 15 , 
+                    "t0": (time_to_au * params['tc']),
+                    "t_cycle": params['opt_cycle']  }
 
     params['field_env'] = env_sin2 
 
@@ -302,7 +305,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,

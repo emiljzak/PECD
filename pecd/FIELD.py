@@ -37,7 +37,7 @@ class Field():
 
     def envsin2(self,t,function_name,Ncycles,t0,t_cycle):
 
-        fieldenv = np.sin(np.pi * (t-t0) / (Ncycles * t_cycle))**2
+        fieldenv = np.sin(np.pi * (t) / (Ncycles * t_cycle))**2
         
         return fieldenv
 

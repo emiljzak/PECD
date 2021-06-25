@@ -481,9 +481,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             end_time = time.time()
         elif params['hmat_format'] == 'sparse_csr':
             start_time = time.time()
-            enr, coeffs = eigsh( -1.0 * ham_filtered, k = params['num_ini_vec'], which='LA', sigma=params['energy_guess'],
-                                return_eigenvectors=True, mode='normal', 
-                                tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
+            enr, coeffs = call_eigensolver(ham_filtered, params)
             end_time = time.time()
 
    
@@ -509,7 +507,47 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         return ham_filtered, coeffs
 
+def call_eigensolver(A,params):
+    if params['ARPACK_enr_guess'] == None:
+        print("No eigenvalue guess defined")
+    else:
+        params['ARPACK_enr_guess'] /= CONSTANTS.au_to_ev
 
+
+    if params['ARPACK_which'] == 'LA':
+        print("using which = LA option in ARPACK: changing sign of the Hamiltonian")
+
+        enr, coeffs = eigsh(    -1.0 * A, k = params['num_ini_vec'], 
+                                which=params['ARPACK_which'] , 
+                                sigma=params['ARPACK_enr_guess'],
+                                return_eigenvectors=True, 
+                                mode='normal', 
+                                tol = params['ARPACK_tol'],
+                                maxiter = params['ARPACK_maxiter'])
+        enr *= -1.0
+        enr = np.sort(enr)
+
+        coeffs_sorted = np.copy(coeffs)
+
+        for i in range(params['num_ini_vec']):
+            coeffs_sorted[:,i] = coeffs[:,params['num_ini_vec']-i-1]
+        coeffs = coeffs_sorted
+
+        
+    else:
+        enr, coeffs = eigsh(    A, k = params['num_ini_vec'], 
+                                which=params['ARPACK_which'] , 
+                                sigma=params['ARPACK_enr_guess'],
+                                return_eigenvectors=True, 
+                                mode='normal', 
+                                tol = params['ARPACK_tol'],
+                                maxiter = params['ARPACK_maxiter'])
+
+    print(coeffs.shape)
+    print(enr.shape)
+    #sort coeffs
+
+    return enr, coeffs
 
 def read_coeffs(filename,nvecs):
 
@@ -1304,7 +1342,7 @@ if __name__ == "__main__":
                 #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
 
 
-        elif params['mode'] == 'propagate_grid':
+    elif params['mode'] == 'propagate_grid':
 
         ibatch  = int(sys.argv[1])
         N_batch = int(sys.argv[2])
