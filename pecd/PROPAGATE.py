@@ -481,7 +481,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             end_time = time.time()
         elif params['hmat_format'] == 'sparse_csr':
             start_time = time.time()
-            enr, coeffs = eigsh( ham_filtered, k = params['num_ini_vec'], which='SA', sigma=params['energy_guess'],
+            enr, coeffs = eigsh( -1.0 * ham_filtered, k = params['num_ini_vec'], which='LA', sigma=params['energy_guess'],
                                 return_eigenvectors=True, mode='normal', 
                                 tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
             end_time = time.time()
@@ -1304,7 +1304,7 @@ if __name__ == "__main__":
                 #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
 
 
-    elif params['mode'] == 'propagate_grid':
+        elif params['mode'] == 'propagate_grid':
 
         ibatch  = int(sys.argv[1])
         N_batch = int(sys.argv[2])

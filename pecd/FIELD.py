@@ -35,6 +35,11 @@ class Field():
         fieldenv = np.exp(-4*np.log(2)*(t-t0)**2/FWHM**2)
         return fieldenv
 
+    def envsin2(self,t,function_name,Ncycles,t0,t_cycle):
+
+        fieldenv = np.sin(np.pi * (t-t0) / (Ncycles * t_cycle))**2
+        
+        return fieldenv
 
     """ =================================== GENERATE FIELD =================================== """
     def gen_field(self,t):

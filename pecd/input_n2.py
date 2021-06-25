@@ -204,7 +204,7 @@ def gen_input(jobtype):
     """ ====== FIELD PARAMETERS ====== """
 
     """ ---- carrier frequency ----- """
-    params['omega']     = 266.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 5.0 #23.128 = 54 eV, 60nm = 20 eV
     freq_units          = "nm" #nm or eV
 
     if freq_units == "nm":
@@ -231,7 +231,7 @@ def gen_input(jobtype):
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 2.0e+13 #W/cm^2 #peak intensity
+    intensity       = 1.0e+14 #W/cm^2 #peak intensity
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
@@ -261,9 +261,7 @@ def gen_input(jobtype):
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
-    env_gaussian = {"function_name": "envgaussian", 
-                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
-                    "t0": (time_to_au * params['tc'])  }
+
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 
@@ -274,11 +272,24 @@ def gen_input(jobtype):
         3) field_omega2omega
     """
 
-    params['field_env'] = env_gaussian 
+
+    env_gaussian = {"function_name": "envgaussian", 
+                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
+                    "t0": (time_to_au * params['tc'])  }
+    
+
+    params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
+
+    env_sin2 = {"function_name": "envsin2", 
+                    "Ncycles": 10, 
+                    "t0": (time_to_au * params['tc'])  }
+
+    params['field_env'] = env_sin2 
 
     """ Available envelopes :
         1) env_gaussian
         2) env_flat
+        3) env_sin2
     """
 
     """==== POST-PROCESSING: PLOTS ===="""
