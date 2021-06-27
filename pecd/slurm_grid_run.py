@@ -19,6 +19,7 @@ def create_dirs(params,N_euler_3D):
         os.chdir("esp")
         for irun in range(N_euler_3D):
             os.mkdir(str(irun))
+	os.chdir(params['main_dir'])
     return path
 
 
@@ -46,7 +47,7 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 				 			" " + str(N_batches) + " " + str(N_euler) + " "	+\
 					 		jobtype + " " + inputfile , shell=True) 
 
-jobtype 	= "local" #maxwell
+jobtype 	= "maxwell" #maxwell
 inputfile 	= "input_n2"
 N_euler 	= 1 #number of euler grid points per dimension
 N_batches 	= 1
@@ -58,6 +59,5 @@ if __name__ == "__main__":
 	input_module = importlib.import_module(inputfile)
 	print("jobtype: " + str(jobtype))
 	params = input_module.gen_input(jobtype)
-	jobdir = params['job_directory']
-	path = create_dirs(params, N_euler**3)
+	jobdir = create_dirs(params, N_euler**3)
 	run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir)
