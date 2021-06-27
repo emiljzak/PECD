@@ -33,10 +33,10 @@ N_batches 	= 1
 
 if __name__ == "__main__":    
 
-    import importlib
-    input_module = importlib.import_module(inputfile)
-    print("jobtype: " + str(jobtype))
-    params = input_module.gen_input(jobtype)
+	import importlib
+	input_module = importlib.import_module(inputfile)
+	print("jobtype: " + str(jobtype))
+	params = input_module.gen_input(jobtype)
 	jobdir = params['job_directory']
-	
+
 	run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir)
