@@ -380,8 +380,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         
                 """ diagonalize hmat """
                 start_time = time.time()
-                enr, coeffs = eigsh(ham0, k = params['num_ini_vec'], which='SA', return_eigenvectors = True, mode='normal',
-                                    sigma=params['energy_guess'], tol = params['ARPACK_tol'], maxiter = params['ARPACK_maxiter'])
+                enr, coeffs = call_eigensolver(ham0, params)
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -533,7 +532,7 @@ def call_eigensolver(A,params):
             coeffs_sorted[:,i] = coeffs[:,params['num_ini_vec']-i-1]
         coeffs = coeffs_sorted
 
-        
+
     else:
         enr, coeffs = eigsh(    A, k = params['num_ini_vec'], 
                                 which=params['ARPACK_which'] , 
