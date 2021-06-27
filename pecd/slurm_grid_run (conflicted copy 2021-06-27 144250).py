@@ -2,27 +2,6 @@ import numpy as np
 import os
 import subprocess
 
-def create_dirs(params,N_euler_3D):
-
-    os.chdir(params['working_dir'])
-    path =  params['job_directory']
-
-    isdir = os.path.isdir(path) 
-    if isdir:
-        print("job directory exists: " + str(isdir) + ", " + path) 
-    else:
-        print("creating job directory: " + str(isdir) + ", " + path) 
-        os.mkdir(params['job_directory'])
-        os.chdir(params['job_directory'])
-        os.mkdir("esp")
-        os.mkdir("animation")
-        os.chdir("esp")
-        for irun in range(N_euler_3D):
-            os.mkdir(str(irun))
-    return path
-
-
-
 def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 
 	if jobtype == "maxwell":
@@ -59,5 +38,5 @@ if __name__ == "__main__":
 	print("jobtype: " + str(jobtype))
 	params = input_module.gen_input(jobtype)
 	jobdir = params['job_directory']
-	path = create_dirs(params, N_euler**3)
+
 	run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir)
