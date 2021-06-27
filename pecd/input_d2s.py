@@ -64,14 +64,15 @@ def gen_input(jobtype):
     params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
     """ ARPACK eigensolver parameters """
-    params['ARPACK_tol']    = 1e-3
-    params['ARPACK_maxiter']= 60000
-    params['energy_guess']  = None # (eV)
-    #params['energy_guess'] /= CONSTANTS.au_to_ev
+    params['ARPACK_tol']        = 1e-3
+    params['ARPACK_maxiter']    = 100000
+    params['ARPACK_enr_guess']  = None # (eV)
+    params['ARPACK_which']      = 'SA'
+    params['ARPACK_mode']       = "normal"
 
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = False
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-5
@@ -272,11 +273,25 @@ def gen_input(jobtype):
         3) field_omega2omega
     """
 
-    params['field_env'] = env_gaussian 
+
+    env_gaussian = {"function_name": "envgaussian", 
+                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
+                    "t0": (time_to_au * params['tc'])  }
+    
+
+    params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
+
+    env_sin2 = {"function_name": "envsin2", 
+                    "Ncycles": 15 , 
+                    "t0": (time_to_au * params['tc']),
+                    "t_cycle": params['opt_cycle']  }
+
+    params['field_env'] = env_sin2 
 
     """ Available envelopes :
         1) env_gaussian
         2) env_flat
+        3) env_sin2
     """
 
     """==== POST-PROCESSING: PLOTS ===="""
