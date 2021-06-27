@@ -4,29 +4,30 @@ import subprocess
 
 def create_dirs(params,N_euler_3D):
 
-    os.chdir(params['working_dir'])
-    path =  params['job_directory']
+	os.chdir(params['working_dir'])
+	path =  params['job_directory']
 
-    isdir = os.path.isdir(path) 
-    if isdir:
-        print("job directory exists: " + str(isdir) + ", " + path) 
-    else:
-        print("creating job directory: " + str(isdir) + ", " + path) 
-        os.mkdir(params['job_directory'])
-        os.chdir(params['job_directory'])
-        os.mkdir("esp")
-        os.mkdir("animation")
-        os.chdir("esp")
-        for irun in range(N_euler_3D):
-            os.mkdir(str(irun))
+	isdir = os.path.isdir(path) 
+	if isdir:
+		print("job directory exists: " + str(isdir) + ", " + path) 
+	else:
+		print("creating job directory: " + str(isdir) + ", " + path) 
+		os.mkdir(params['job_directory'])
+		os.chdir(params['job_directory'])
+		os.mkdir("esp")
+		os.mkdir("animation")
+		os.chdir("esp")
+		for irun in range(N_euler_3D):
+			os.mkdir(str(irun))
 	os.chdir(params['main_dir'])
-    return path
+	return path
 
 
 
 def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 
 	if jobtype == "maxwell":
+		flag = []
 		print("Submitting SLURM job")
 		path = os.getcwd()
 		print ("The current working directory is %s" % path)
@@ -34,27 +35,42 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 		os.chdir(path+"/slurm_run")
 		print ("Job directory is %s" % path)
 		for ibatch in range(N_batches):
-			subprocess.call("./master_script.sh " 	+ str(ibatch) 	+\
+			pecd_process = "./master_script.sh " 	+ str(ibatch) 	+\
 				 			" " + str(N_batches) + " " + str(N_euler) + " " +\
-					 		jobtype + " " + inputfile + " " + jobdir, shell=True)
+					 		jobtype + " " + inputfile + " " + jobdir
+			iflag = subprocess.call(pecd_process, shell=True)
 	
+			flag.append([ibatch,iflag])
+		print(flag)
+
+
+
 	elif jobtype == "local":
+		flag = []
 		print("Executing local job")
 		path = os.getcwd()
 		print ("The current working directory is %s" % path)
 		for ibatch in range(N_batches):
-			subprocess.call("python3 PROPAGATE.py " 	+ str(ibatch) 	+\
+			iflag = subprocess.call("python3 PROPAGATE.py " 	+ str(ibatch) 	+\
 				 			" " + str(N_batches) + " " + str(N_euler) + " "	+\
 					 		jobtype + " " + inputfile , shell=True) 
+			flag.append([ibatch,iflag])
+		print(flag)
 
-jobtype 	= "maxwell" #maxwell
+
+jobtype 	= "local" #maxwell
 inputfile 	= "input_n2"
-N_euler 	= 1 #number of euler grid points per dimension
+N_euler 	= 3 #number of euler grid points per dimension
 N_batches 	= 1
 
 
 if __name__ == "__main__":    
 
+	#from subprocess import check_call
+	#import shlex
+	#flag = check_call(shlex.split('lsa -adfsdfsl'))
+	#print(flag)
+	#exit()
 	import importlib
 	input_module = importlib.import_module(inputfile)
 	print("jobtype: " + str(jobtype))

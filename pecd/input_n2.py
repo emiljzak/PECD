@@ -51,8 +51,8 @@ def gen_input(jobtype):
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 10
-    params['bound_nbins']   = 50
-    params['bound_binw']    = 3.0
+    params['bound_nbins']   = 5
+    params['bound_binw']    = 2.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 2
     
@@ -73,7 +73,7 @@ def gen_input(jobtype):
 
     
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
     params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
@@ -165,7 +165,7 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 200.0 
+    params['tmax']      = 100.0 
     params['dt']        = 0.1
     params['ivec']      = 6
 
@@ -177,7 +177,7 @@ def gen_input(jobtype):
     params['save_enr_init']      = True
 
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -305,7 +305,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],1)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
