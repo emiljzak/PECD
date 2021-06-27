@@ -18,6 +18,6 @@ echo "Requested number of cores :" $nproc
 echo "sbatch submit..."
 
 sbatch --partition=$jobtype --ntasks=$nproc --time=$wclim:00:00 --job-name=$jobname --output=$jobname.o --error=$jobname.e \
-       $pwd/run_python.sh $1 $2 $3 $4 $5
+       $pwd/run_python.sh $1 $2 $3 $4 $5 $6
 
 #$pwd/run_python.sh
