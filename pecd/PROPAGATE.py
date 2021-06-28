@@ -93,17 +93,12 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     """ Plot initial orbitals """
     if params['plot_ini_orb'] == True:
         PLOTS.plot_initial_orbitals(params,maparray,psi_init)
-    exit()
 
     flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(ieuler) + ".dat", 'w' )
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     #psi               = np.zeros( Nbas, dtype=complex ) 
     psi               =  psi_init[:,params['ivec']]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
-
-
-
-    exit()
 
     print(" Initialize the interaction matrix ")
     intmat0 = []# np.zeros(( Nbas , Nbas, 3 ), dtype = complex)

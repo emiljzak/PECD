@@ -51,10 +51,10 @@ def gen_input(jobtype):
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 10
-    params['bound_nbins']   = 5
-    params['bound_binw']    = 2.0
+    params['bound_nbins']   = 20
+    params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -67,19 +67,19 @@ def gen_input(jobtype):
     params['ARPACK_tol']        = 1e-3
     params['ARPACK_maxiter']    = 60000
     params['ARPACK_enr_guess']  = None # (eV)
-    params['ARPACK_which']      = 'SA'
+    params['ARPACK_which']      = 'LA'
     params['ARPACK_mode']       = "normal"
     #
 
     
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = False
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
-    params['sph_quad_tol']       = 1e-5
+    params['sph_quad_tol']       = 1e-4
     params['calc_method']        = 'jit' #jit, quadpy, vec
-    params['hmat_filter']        = 1e-3 #threshold value for keeping matrix elements of field-free Ham
+    params['hmat_filter']        = 1e-2 #threshold value for keeping matrix elements of field-free Ham
 
     """==== electrostatic potential ===="""
 
