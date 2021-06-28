@@ -168,6 +168,7 @@ def gen_input(jobtype):
     params['tmax']      = 100.0 
     params['dt']        = 0.1
     params['ivec']      = 6
+    params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]

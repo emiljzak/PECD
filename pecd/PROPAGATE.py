@@ -90,12 +90,20 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         helicity = "0"
 
 
+    """ Plot initial orbitals """
+    if params['plot_ini_orb'] == True:
+        PLOTS.plot_initial_orbitals(params,maparray,psi_init)
+    exit()
+
     flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(ieuler) + ".dat", 'w' )
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     #psi               = np.zeros( Nbas, dtype=complex ) 
-    psi               = psi_init
+    psi               =  psi_init[:,params['ivec']]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
+
+
+    exit()
 
     print(" Initialize the interaction matrix ")
     intmat0 = []# np.zeros(( Nbas , Nbas, 3 ), dtype = complex)
@@ -1399,7 +1407,7 @@ if __name__ == "__main__":
 		    #print(grid_euler[irun])
             """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
             ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
-            prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, grid_euler[irun], irun)
+            prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
             
     elif params['mode'] == 'analyze_grid':
         itime = int( params['analyze_time'] / params['dt'])

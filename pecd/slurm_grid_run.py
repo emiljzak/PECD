@@ -60,7 +60,7 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 
 jobtype 	= "local" #maxwell
 inputfile 	= "input_n2"
-N_euler 	= 3 #number of euler grid points per dimension
+N_euler 	= 1 #number of euler grid points per dimension
 N_batches 	= 1
 
 

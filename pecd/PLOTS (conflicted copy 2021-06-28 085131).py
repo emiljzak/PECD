@@ -323,27 +323,8 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
                      bbox_inches='tight')
     plt.close()
 
-def plot_initial_orbitals(params,maparray,orbitals):
-    maparray = np.asarray(maparray)
 
-    nlobs = params['bound_nlobs']
-    nbins = params['bound_nbins'] + params['nbins']
-    npoints = 360
-    rmax    = nbins * params['bound_binw']
-    rmin = 0.0
-    Gr_all, Nr_all = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
-
-    maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                params['map_type'], params['job_directory'] )
-
-    flist = interpolate_chi(Gr_all, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
-    
-    for iorb in range(params['ivec']+2):
-        psi = orbitals[:,iorb]
-        plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb)
-
-
-def plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb):
+def plot_initial_orbitals(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist,irun,iorb):
     #================ radial-angular in real space ===============#
 
     coeff_thr = 1e-5
@@ -359,6 +340,7 @@ def plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb):
 
     rmesh, phimesh = np.meshgrid(rang, gridphi1d)
 
+
     fig_XZ = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec_XZ = gridspec.GridSpec(ncols=1, nrows=1, figure=fig_XZ)
     axradang_r_XZ = fig_XZ.add_subplot(spec_XZ[0, 0], projection='polar')
@@ -368,6 +350,7 @@ def plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb):
     gridtheta1d = 2 * np.pi * unity_vec
 
     rmesh, thetamesh = np.meshgrid(rang, gridtheta1d)
+
 
     x   =  np.zeros(nlobs)
     w   =  np.zeros(nlobs)
@@ -414,11 +397,13 @@ def plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb):
             helicity = "0"
 
         fig_XY.savefig( params['job_directory']  + "/animation/" + helicity + "_angrad_XY" + \
-                        "_" + "orb_" + str(iorb) +"_.png" ,\
+                        "_" + "orb_" + str(iorb) + "_" + str(irun) + "_t=" +\
+                        str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                         bbox_inches='tight')
 
         fig_XZ.savefig( params['job_directory']  + "/animation/" + helicity + "_angrad_YZ" + \
-                        "_" + "orb_" + str(iorb) + "_.png" ,\
+                        "_" + "orb_" + str(iorb) + "_"  + str(irun) + "_t=" +\
+                        str("%4.1f"%(t/np.float64(1.0/24.188)))+"_.png" ,\
                         bbox_inches='tight')
     plt.close()
 
