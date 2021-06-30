@@ -36,6 +36,7 @@ def gen_input(jobtype):
 
 
     """ === ro-vibrational part ==== """ 
+    params['density_averaging'] = False #use rotational proability density for orientation averageing. Otherwise uniform probability. 
     params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
     params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
@@ -62,7 +63,6 @@ def gen_input(jobtype):
 
     params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
-
     """ ARPACK eigensolver parameters """
     params['ARPACK_tol']        = 1e-3
     params['ARPACK_maxiter']    = 60000
@@ -70,8 +70,6 @@ def gen_input(jobtype):
     params['ARPACK_which']      = 'LA'
     params['ARPACK_mode']       = "normal"
     #
-
-    
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     params['gen_adaptive_quads'] = True
@@ -262,9 +260,6 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0}
 
-    # if gaussian width is given: e^-t^2/sigma^2
-    # FWHM = 2.355 * sigma/sqrt(2)
-
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 
@@ -275,6 +270,8 @@ def gen_input(jobtype):
         3) field_omega2omega
     """
 
+    # if gaussian width is given: e^-t^2/sigma^2
+    # FWHM = 2.355 * sigma/sqrt(2)
 
     env_gaussian = {"function_name": "envgaussian", 
                     "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 

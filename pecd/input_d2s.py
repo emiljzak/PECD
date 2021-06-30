@@ -166,6 +166,7 @@ def gen_input(jobtype):
     params['tmax']      = 5000.0 
     params['dt']        = 4.0
     params['ivec']      = 8 
+    params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -258,11 +259,6 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0}
 
-    # if gaussian width is given: e^-t^2/sigma^2
-    # FWHM = 2.355 * sigma/sqrt(2)
-    env_gaussian = {"function_name": "envgaussian", 
-                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
-                    "t0": (time_to_au * params['tc'])  }
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 
@@ -273,6 +269,8 @@ def gen_input(jobtype):
         3) field_omega2omega
     """
 
+    # if gaussian width is given: e^-t^2/sigma^2
+    # FWHM = 2.355 * sigma/sqrt(2)
 
     env_gaussian = {"function_name": "envgaussian", 
                     "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
@@ -304,7 +302,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],80)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
