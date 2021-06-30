@@ -14,6 +14,8 @@ import numpy as np
 from numpy.linalg import multi_dot
 from scipy import sparse
 from scipy.special import sph_harm
+import scipy.integrate as integrate
+from scipy import interpolate
 from scipy.spatial.transform import Rotation as R
 import quadpy
 
@@ -111,8 +113,10 @@ def calc_potmat_jit( vlist, VG, Gs ):
 def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
     #calculate matrix elements from sphlist at point xi with V and Gs calculated at a given quadrature grid.
     w = Gs[:,2]
-    f = SH( l1 , m1  , Gs[:,0], Gs[:,1] + np.pi ) * \
-        SH( l2 , m2  , Gs[:,0], Gs[:,1] + np.pi ) * V[:]
+    #f = SH( l1 , m1  , Gs[:,0], Gs[:,1] + np.pi ) * \
+    #    SH( l2 , m2  , Gs[:,0], Gs[:,1] + np.pi ) * V[:]
+
+    f = V[:]
     return np.dot(w,f.T) * 4.0 * np.pi 
 
 """ end of @jit section """
@@ -1099,6 +1103,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
             spherical_schemes.append(elem)
 
     xi = 0
+    esp_int = [] #list of values of integrals for all grid points
     for i in range(np.size( rgrid, axis=0 )): 
         for n in range(np.size( rgrid, axis=1 )): 
             #if i == np.size( rgrid, axis=0 ) - 1 and n == np.size( rgrid, axis=1 ) - 1: break
@@ -1175,7 +1180,13 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                         val_prev[ischeme] = val[ischeme]
                 elif ( np.all( diff < quad_tol ) ):     
                     print( str(scheme) + " convergence reached !!!")
+                    
+                    if params['integrate_esp'] == True:
+                        esp_int.append([xi,rin,val[0]])
+                        flesp = open("esp_radial",'w')
+                        flesp.write( str('%4d '%xi) + str('%12.6f '%rin) + str('%12.6f '%val[0]) + "\n")
 
+                        
                     sph_quad_list.append([ i, n + 1, xi + 1, str(scheme)]) #new, natural ordering n = 1, 2, 3, ..., N-1, where N-1 is bridge
                     xi += 1
                     break
@@ -1187,6 +1198,16 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 
                     sph_quad_list.append([ i, n + 1, xi + 1, str(scheme)])
                     xi += 1
+
+    if params['integrate_esp'] == True:
+        print("list of spherical integrals of ESP on radial grid:")
+        print(esp_int)
+        esp_int = np.asarray(esp_int)
+        plt.plot(esp_int[:,1], esp_int[:,2])
+        plt.show()
+        esp_int_interp  = interpolate.interp1d(esp_int[:,1], esp_int[:,2])
+        integral_esp = integrate.quad(lambda x: esp_int_interp(x)*x**2, 0.05, 20.0)
+        exit()
 
     print("Converged quadrature levels: ")
     print(sph_quad_list)
