@@ -627,9 +627,20 @@ def calc_intmat(field,maparray,rgrid,Nbas):
     elif params['hmat_format'] == 'sparse_csr':
         intmat = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
     
-
-
     D = np.zeros(3)
+
+    """precompute all necessary 3-j symbols"""
+    #store in arrays:
+    # 1) tjmat0[l,l'] = (l,1,l'; 0,0,0)
+    # 2) tjmat[l,l',m,sigma]
+
+    tjmat0 = np.zeros( (lmax+1,lmax+1), dtype = float)
+
+    tjmat = np.zeros( (lmax+1,lmax+1,2*lmax+1,3), dtype = float)
+
+
+
+
     for i in range(Nbas):
         rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]
         for j in range(Nbas):
@@ -1272,6 +1283,19 @@ def create_dirs(params,N_euler_3D):
             os.mkdir(str(irun))
     return path
 
+def gen_3j():
+    """precompute all necessary 3-j symbols"""
+    #store in arrays:
+    # 1) tjmat0[l,l'] = (l,1,l'; 0,0,0)
+    # 2) tjmat[l,l',m,sigma]
+
+    tjmat0 = np.zeros( (lmax+1,lmax+1), dtype = float)
+
+    tjmat = np.zeros( (lmax+1,lmax+1,2*lmax+1,3), dtype = float)
+
+
+
+
 if __name__ == "__main__":   
 
     print(" ")
@@ -1361,6 +1385,12 @@ if __name__ == "__main__":
         print("batch ID = " + str(ibatch))
 
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
+
+        #TEST:
+        #generate arrays of 3j symbols with 'spherical':
+        gen_3j()
+        exit()
+
 
         #save Euler grid in file
         with open( path + "grid_euler.dat" , 'w') as eulerfile:   
