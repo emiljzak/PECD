@@ -800,7 +800,11 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
   
     if params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:
+            start_time = time.time()
             sph_quad_list = gen_adaptive_quads_exact_rot( params,  Gr, mol_xyz, irun ) 
+            end_time = time.time()
+            print("Total time for construction adaptive quads: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
             sph_quad_list = read_adaptive_quads_rot(params,irun)
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:

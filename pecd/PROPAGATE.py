@@ -101,10 +101,15 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
     print(" Initialize the interaction matrix ")
+
+
+    start_time = time.time()
     intmat0 = []# np.zeros(( Nbas , Nbas, 3 ), dtype = complex)
     intmat0.append(calc_intmat( [1.0, 0.0, 0.0], maparray, Gr, Nbas) ) #-1
     intmat0.append(calc_intmat( [0.0, 1.0, 0.0], maparray, Gr, Nbas)  )#0
     intmat0.append(calc_intmat( [0.0, 0.0, 1.0], maparray, Gr, Nbas)  ) #+1
+    end_time = time.time()
+    print("time for initalization of interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
 
     print("initialize electric field")
@@ -1272,7 +1277,7 @@ if __name__ == "__main__":
     print(" ")
     print("---------------------- START --------------------")
     print(" ")
-
+    start_time_total = time.time()
     import importlib
     input_module = importlib.import_module(str(sys.argv[5]))
     print("importing input file module: " + str(sys.argv[5]))
@@ -1371,7 +1376,7 @@ if __name__ == "__main__":
 
 
         #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
-        WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
+        #WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
    
 
         """ TEST: eigenfunction of rotated potential vs. rotated wavefunction of unrotated potential """
@@ -1517,3 +1522,6 @@ if __name__ == "__main__":
         #print(ham0)
         #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
         #plt.show()
+
+end_time_total = time.time()
+print("Global time =  " + str("%10.3f"%(end_time_total-start_time_total)) + "s")
