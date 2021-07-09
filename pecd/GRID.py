@@ -262,7 +262,7 @@ def CALC_ESP_PSI4(dir,params):
 def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     os.chdir(dir)
     psi4.core.be_quiet()
-    properties_origin=["COM"]
+    #properties_origin=["COM"]
     ang_au = CONSTANTS.angstrom_to_au
 
     if params['molec_name'] == "d2s":
@@ -303,8 +303,8 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         H	{6} {7} {8}
 
         """.format( 0.0, 0.0, 0.0,
-                    0.0, 0.5*ang_au, 0.5*ang_au,
-                    0.0, -0.5*ang_au, 0.5*ang_au,)
+                    0.0, 1.0, 1.0,
+                    0.0, -2.0, 2.0,)
         )
 
     elif params['molec_name'] == "h":

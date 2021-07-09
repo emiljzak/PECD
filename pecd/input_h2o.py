@@ -19,7 +19,7 @@ def gen_input(jobtype):
     """
     params['integrate_esp'] = True
     """ === molecule directory ==== """ 
-    params['molec_name']        = "n2"
+    params['molec_name']        = "h2o"
 
     if jobtype == "maxwell":
         params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" 
@@ -51,9 +51,9 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10
-    params['bound_nbins']   = 20
-    params['bound_binw']    = 1.0
+    params['bound_nlobs']   = 40
+    params['bound_nbins']   = 8
+    params['bound_binw']    = 0.4
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 1
     
@@ -75,7 +75,7 @@ def gen_input(jobtype):
     params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
-    params['sph_quad_tol']       = 1e-1
+    params['sph_quad_tol']       = 1e-2
     params['calc_method']        = 'jit' #jit, quadpy, vec
     params['hmat_filter']        = 1e-2 #threshold value for keeping matrix elements of field-free Ham
 

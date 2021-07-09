@@ -734,6 +734,10 @@ def rotate_mol_xyz(params, grid_euler, irun):
         #  Hx
         #  Hy 
         #  Hz 
+
+    elif params['molec_name'] == "h2o":
+        mol_xyz = np.zeros( (3,1), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
     else:
         print("Error: molecule name not found")
         exit()
@@ -1103,6 +1107,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
             spherical_schemes.append(elem)
 
     xi = 0
+    flesp = open("esp_radial",'w')
     esp_int = [] #list of values of integrals for all grid points
     for i in range(np.size( rgrid, axis=0 )): 
         for n in range(np.size( rgrid, axis=1 )): 
@@ -1131,9 +1136,8 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                         os.remove(params['job_directory']  + "esp/"+ str(irun) + "/"  + potfilename)
                         GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['job_directory'] + "esp/"+ str(irun) + "/" )
 
-                        V = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/" + str(irun) + "/" , params)
+                        V = GRID.CALC_ESP_PSI4_ROT(params['job_directory'] + "esp/"+ str(irun) + "/" , params, mol_xyz)
                         V = np.asarray(V)
-
                         fl = open(params['job_directory'] + "esp/"+ str(irun) + "/"  + potfilename,"w")
                         np.savetxt(fl,V,fmt='%10.6f')
 
@@ -1183,7 +1187,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                     
                     if params['integrate_esp'] == True:
                         esp_int.append([xi,rin,val[0]])
-                        flesp = open("esp_radial",'w')
+                        
                         flesp.write( str('%4d '%xi) + str('%12.6f '%rin) + str('%12.6f '%val[0]) + "\n")
 
                         
@@ -1202,11 +1206,11 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
     if params['integrate_esp'] == True:
         print("list of spherical integrals of ESP on radial grid:")
         print(esp_int)
-        esp_int = np.asarray(esp_int)
+        esp_int = np.asarray(esp_int,dtype=float)
         plt.plot(esp_int[:,1], esp_int[:,2])
         plt.show()
         esp_int_interp  = interpolate.interp1d(esp_int[:,1], esp_int[:,2])
-        integral_esp = integrate.quad(lambda x: esp_int_interp(x)*x**2, 0.05, 20.0)
+        integral_esp = integrate.quad(lambda x: float(esp_int_interp(x)), 0.05, 200.0)
         exit()
 
     print("Converged quadrature levels: ")

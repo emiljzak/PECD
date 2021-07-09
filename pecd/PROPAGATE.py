@@ -129,19 +129,19 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         dip = Fvec[itime][0] * intmat0[0]  + Fvec[itime][2] * intmat0[2]
 
         #dip = sparse.csr_matrix(dip)
-
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
                 
         psi_out             = expm_multiply( -1.0j * ( ham0 + dip ) * dt, psi ) 
         wavepacket[itime,:] = psi_out
         psi                 = wavepacket[itime,:]
 
+
+        end_time = time.time()
+        print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
+
         flwavepacket.write( '{:10.3f}'.format(t) + 
                             " ".join('{:16.8e}'.format(psi[i].real) + '{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
                             '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) + "\n")
-        
-        end_time = time.time()
-        print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
