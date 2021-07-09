@@ -17,7 +17,7 @@ def gen_input(jobtype):
         3) 'analyze_single':    analyze wavefunction at single orientation
         4) 'analyze_grid':      analyze wavefunction for a grid of Euler angles
     """
-
+    params['integrate_esp'] = False
     """ === molecule directory ==== """ 
     params['molec_name']        = "n2"
 
@@ -51,11 +51,11 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 10
-    params['bound_nbins']   = 20
+    params['bound_nlobs']   = 8
+    params['bound_nbins']   = 10
     params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 2
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -303,7 +303,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],1)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],4)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
