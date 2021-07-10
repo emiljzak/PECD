@@ -51,11 +51,11 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 8
-    params['bound_nbins']   = 10
+    params['bound_nlobs']   = 4
+    params['bound_nbins']   = 3
     params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 1
     
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -72,7 +72,7 @@ def gen_input(jobtype):
     #
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4
@@ -166,7 +166,7 @@ def gen_input(jobtype):
     params['tmax']      = 100.0 
     params['dt']        = 0.1
     params['ivec']      = 6
-    params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['plot_ini_orb'] = False#plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]

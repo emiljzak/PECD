@@ -104,13 +104,13 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
 
     start_time = time.time()
-    intmat0 = []# np.zeros(( Nbas , Nbas, 3 ), dtype = complex)
-    intmat0.append(calc_intmat( [1.0, 0.0, 0.0], maparray, Gr, Nbas) ) #-1
-    intmat0.append(calc_intmat( [0.0, 1.0, 0.0], maparray, Gr, Nbas)  )#0
-    intmat0.append(calc_intmat( [0.0, 0.0, 1.0], maparray, Gr, Nbas)  ) #+1
+    intmat0 = []
+    intmat0.append( calc_intmat( [1.0, 0.0, 0.0], maparray, Gr, Nbas)  )  #-1
+    intmat0.append( calc_intmat( [0.0, 1.0, 0.0], maparray, Gr, Nbas)   ) #0
+    intmat0.append( calc_intmat( [0.0, 0.0, 1.0], maparray, Gr, Nbas)  )  #+1
     end_time = time.time()
     print("time for initalization of interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
-
+    exit()
 
     print("initialize electric field")
     Elfield = FIELD.Field(params)
@@ -131,7 +131,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime][0] * intmat0[0]  + Fvec[itime][2] * intmat0[2]
+        dip = Fvec[itime][0] * intmat0[0]  + Fvec[itime][1] * intmat0[1] + Fvec[itime][2] * intmat0[2]
 
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
@@ -626,24 +626,19 @@ def calc_intmat(field,maparray,rgrid,Nbas):
         intmat =   np.zeros(( Nbas , Nbas ), dtype = complex)
     elif params['hmat_format'] == 'sparse_csr':
         intmat = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-    
+        intmat_new = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
+
     D = np.zeros(3)
 
     """precompute all necessary 3-j symbols"""
-    #store in arrays:
-    # 1) tjmat0[l,l'] = (l,1,l'; 0,0,0)
-    # 2) tjmat[l,l',m,sigma]
-
-    tjmat0 = np.zeros( (lmax+1,lmax+1), dtype = float)
-
-    tjmat = np.zeros( (lmax+1,lmax+1,2*lmax+1,3), dtype = float)
-
-
-
+    #generate arrays of 3j symbols with 'spherical':
+    tjmat = gen_3j(params['bound_lmax'])
+  
 
     for i in range(Nbas):
         rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]
         for j in range(Nbas):
+
             if  maparray[i][2] == maparray[j][2]:
                 D[0] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], -1, maparray[j][4] ) )
                 D[1] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 0, maparray[j][4] ) ) * np.sqrt(2.)
@@ -651,9 +646,23 @@ def calc_intmat(field,maparray,rgrid,Nbas):
 
                 intmat[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * np.dot(field, D) * rin 
 
-    #plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
+                D[0] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4]+maparray[i][3], 0 ] 
+                D[1] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4]+maparray[i][3], 1 ] * np.sqrt(2.)
+                D[2] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4]+maparray[i][3], 2 ] 
 
+                intmat_new[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * np.dot(field, D) * rin 
+
+
+    plt.spy(intmat_new-intmat, precision=params['sph_quad_tol'], markersize=5)
+    #plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='r')
+    plt.show()
+    #rtol=1e-05
+    #atol=1e-08
+    #print(intmat_new)
+
+    #np.allclose(intmat, intmat_new, rtol=rtol, atol=atol)
+
+    #exit()
     #intmat += np.conjugate(intmat.T)
 
     #print("Interaction matrix")
@@ -1283,18 +1292,23 @@ def create_dirs(params,N_euler_3D):
             os.mkdir(str(irun))
     return path
 
-def gen_3j():
+def gen_3j(lmax):
     """precompute all necessary 3-j symbols"""
     #store in arrays:
-    # 1) tjmat0[l,l'] = (l,1,l'; 0,0,0)
-    # 2) tjmat[l,l',m,sigma]
+    # 2) tjmat[l,l',m,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
+    tjmat = np.zeros( (lmax+1, lmax+1, 2*lmax+1, 3), dtype = float)
 
-    tjmat0 = np.zeros( (lmax+1,lmax+1), dtype = float)
+    for mu in range(0,3):
+        for l1 in range(lmax+1):
+            for l2 in range(lmax+1):
+                for m in range(-l1,l1+1):
+                    
+                    tjmat[l1,l2,l1+m,mu] = spherical.Wigner3j(l1, 1, l2, m, mu-1, -(m+mu-1)) * spherical.Wigner3j(l1, 1, l2, 0, 0, 0)
+                    tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi))
 
-    tjmat = np.zeros( (lmax+1,lmax+1,2*lmax+1,3), dtype = float)
-
-
-
+    #print("3j symbols in array:")
+    #print(tjmat)
+    return tjmat
 
 if __name__ == "__main__":   
 
@@ -1386,10 +1400,6 @@ if __name__ == "__main__":
 
         grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
 
-        #TEST:
-        #generate arrays of 3j symbols with 'spherical':
-        gen_3j()
-        exit()
 
 
         #save Euler grid in file
