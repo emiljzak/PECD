@@ -163,7 +163,7 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 100.0 
+    params['tmax']      = 10.0 
     params['dt']        = 0.1
     params['ivec']      = 6
     params['plot_ini_orb'] = False#plot initial orbitals? iorb = 0,1, ..., ivec + 1

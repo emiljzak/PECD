@@ -105,10 +105,13 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
     start_time = time.time()
     intmat0 = []
-    intmat0[0], intmat0[1], intmat0[2] =  calc_intmat( maparray, Gr, Nbas) 
+    h1, h2, h3 =  calc_intmat( maparray, Gr, Nbas) 
+    intmat0.append(h1)
+    intmat0.append(h2)
+    intmat0.append(h3)
     end_time = time.time()
-    print("time for initalization of interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
-    exit()
+    print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
+
 
     print("initialize electric field")
     Elfield = FIELD.Field(params)
@@ -620,22 +623,14 @@ def calc_intmat(maparray,rgrid,Nbas):
     #field: (E_-1, E_0, E_1) in spherical tensor form
     """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
 
-    intmat_list = []
-
     if params['hmat_format'] == 'numpy_arr':    
         intmat =   np.zeros(( Nbas , Nbas ), dtype = complex)
     elif params['hmat_format'] == 'sparse_csr':
         intmat1 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
         intmat2 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
         intmat3 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-        intmat_new1 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-        intmat_new2 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-        intmat_new3 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-
 
     D = np.zeros(3)
-    Dnew = np.zeros(3)
-
 
     """precompute all necessary 3-j symbols"""
     #generate arrays of 3j symbols with 'spherical':
@@ -647,35 +642,35 @@ def calc_intmat(maparray,rgrid,Nbas):
         for j in range(Nbas):
 
             if  maparray[i][2] == maparray[j][2]:
-                D[0] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], -1, maparray[j][4] ) )
-                D[1] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 0, maparray[j][4] ) ) * np.sqrt(2.)
-                D[2] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 1, maparray[j][4] ) ) 
+                #D[0] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], -1, maparray[j][4] ) )
+                #D[1] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 0, maparray[j][4] ) ) * np.sqrt(2.)
+                #D[2] = N( gaunt( maparray[i][3], 1, maparray[j][3], maparray[i][4], 1, maparray[j][4] ) ) 
 
-                intmat1[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[0] * rin 
-                intmat2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[1] * rin 
-                intmat3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[2] * rin 
+                #intmat1[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[0] * rin 
+                #intmat2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[1] * rin 
+                #intmat3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[2] * rin 
 
-                Dnew[:] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4]+maparray[i][3], : ] #-1, 0 , +1
+                D[:] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4]+maparray[i][3], : ] #-1, 0 , +1
                 if maparray[j][4] == maparray[i][4]:
-                    intmat_new2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * Dnew[1] * rin * np.sqrt(2.)
+                    intmat2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[1] * rin * np.sqrt(2.)
                 elif maparray[j][4] ==1- maparray[i][4]:
-                    intmat_new1[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * Dnew[0] * rin 
+                    intmat1[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[0] * rin 
                 elif maparray[j][4] ==-1- maparray[i][4]:
-                    intmat_new3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * Dnew[2] * rin 
+                    intmat3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[2] * rin 
 
 
     #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5)
-    plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5, color='r')
-    plt.spy(intmat_new2, precision=params['sph_quad_tol'], markersize=5, color='g')
-    plt.spy(intmat_new3, precision=params['sph_quad_tol'], markersize=5, color='b')
-    plt.show()
+    #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5, color='r')
+    #plt.spy(intmat_new2, precision=params['sph_quad_tol'], markersize=5, color='g')
+    #plt.spy(intmat_new3, precision=params['sph_quad_tol'], markersize=5, color='b')
+    #plt.show()
     #rtol=1e-05
     #atol=1e-08
     #print(intmat_new)
 
     #np.allclose(intmat, intmat_new, rtol=rtol, atol=atol)
 
-    exit()
+
     #intmat += np.conjugate(intmat.T)
 
     #print("Interaction matrix")
@@ -683,7 +678,7 @@ def calc_intmat(maparray,rgrid,Nbas):
     #    print(intmat)
     #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
 
-    return intmat_new1, intmat_new2,intmat_new3
+    return intmat1,intmat2,intmat3
 
 
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
