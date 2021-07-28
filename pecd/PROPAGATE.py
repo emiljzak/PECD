@@ -660,10 +660,11 @@ def calc_intmat(maparray,rgrid,Nbas):
 
 
     #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5)
-    #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5, color='r')
-    #plt.spy(intmat_new2, precision=params['sph_quad_tol'], markersize=5, color='g')
-    #plt.spy(intmat_new3, precision=params['sph_quad_tol'], markersize=5, color='b')
+    #plt.spy(intmat1, precision=params['sph_quad_tol'], markersize=5, color='r')
+    #plt.spy(intmat2, precision=params['sph_quad_tol'], markersize=5, color='g')
+    #plt.spy(intmat3, precision=params['sph_quad_tol'], markersize=5, color='b')
     #plt.show()
+    #exit()
     #rtol=1e-05
     #atol=1e-08
     #print(intmat_new)

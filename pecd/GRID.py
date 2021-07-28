@@ -292,6 +292,37 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
                     mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1])
         )
 
+
+    elif params['molec_name'] == "co":
+        mol = psi4.geometry("""
+        1 2
+        noreorient
+        units au
+        
+        C	{0} {1} {2}
+        O	{3} {4} {5}
+
+        """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
+                    mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1])
+        )
+
+    elif params['molec_name'] == "ocs":
+        mol = psi4.geometry("""
+        1 2
+        noreorient
+        units au
+        
+        O	{0} {1} {2}
+        C	{3} {4} {5}
+        S	{6} {7} {8}
+
+        """.format( mol_xyz[0,0], mol_xyz[1,0], mol_xyz[2,0],
+                    mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
+                    mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
+
+        )
+
+
     elif params['molec_name'] == "h2o":
         mol = psi4.geometry("""
         1 2

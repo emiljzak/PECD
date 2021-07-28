@@ -19,19 +19,19 @@ def gen_input(jobtype):
     """
     params['integrate_esp'] = False
     """ === molecule directory ==== """ 
-    params['molec_name']        = "n2"
+    params['molec_name']        = "co"
 
     if jobtype == "maxwell":
         params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" 
-        params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/n2/"
+        params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/co/"
     elif jobtype == "local":
         params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#
-        params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/n2/"
+        params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/co/"
 
 
     """ === molecule definition ==== """ 
-    params['mol_geometry']  = {"rNN":1.0977} #angstroms
-    params['mol_masses']    = {"N":14.0}
+    params['mol_geometry']  = {"rCO":1.14} #angstroms
+    params['mol_masses']    = {"C":12.0,"O":16.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
 
@@ -165,8 +165,8 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 170.0 
-    params['dt']        = 0.1
+    params['tmax']      = 1000.0 
+    params['dt']        = 0.3
     params['ivec']      = 6
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
@@ -238,7 +238,7 @@ def gen_input(jobtype):
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 3.0e+14 #W/cm^2 #peak intensity
+    intensity       = 1.0e+14 #W/cm^2 #peak intensity
 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
@@ -248,8 +248,8 @@ def gen_input(jobtype):
 
 
     """ ---- field intensity ----- """
-    params['tau']       = 70.0 #as: pulse duration (sigma)
-    params['tc']        = 100.0 #as: pulse centre
+    params['tau']       = 300.0 #as: pulse duration (sigma)
+    params['tc']        = 500.0 #as: pulse centre
 
     
 
@@ -293,7 +293,7 @@ def gen_input(jobtype):
                     "t_cycle": params['opt_cycle']  }
 
 
-    params['field_env'] = env_gaussian
+    params['field_env'] = env_sin2
 
     """ Available envelopes :
         1) env_gaussian
@@ -311,7 +311,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
 
                                 "save_snapshots":   True,
                                 "save_anim":        False,
