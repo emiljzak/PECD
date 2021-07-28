@@ -51,20 +51,13 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-<<<<<<< HEAD
+
     params['bound_nlobs']   = 8
-    params['bound_nbins']   = 20
+    params['bound_nbins']   = 40
     params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 2
-=======
-    params['bound_nlobs']   = 4
-    params['bound_nbins']   = 3
-    params['bound_binw']    = 1.0
-    params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 1
->>>>>>> b02563c6c2b821205146827b25648b2d283d618c
-    
+
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
@@ -80,11 +73,8 @@ def gen_input(jobtype):
     #
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-<<<<<<< HEAD
+
     params['gen_adaptive_quads'] = True
-=======
-    params['gen_adaptive_quads'] = False
->>>>>>> b02563c6c2b821205146827b25648b2d283d618c
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4
@@ -175,17 +165,10 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-<<<<<<< HEAD
     params['tmax']      = 1000.0 
     params['dt']        = 0.3
     params['ivec']      = 6
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
-=======
-    params['tmax']      = 10.0 
-    params['dt']        = 0.1
-    params['ivec']      = 6
-    params['plot_ini_orb'] = False#plot initial orbitals? iorb = 0,1, ..., ivec + 1
->>>>>>> b02563c6c2b821205146827b25648b2d283d618c
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -224,21 +207,16 @@ def gen_input(jobtype):
     """ ====== FIELD PARAMETERS ====== """
 
     """ ---- carrier frequency ----- """
-<<<<<<< HEAD
+
     params['omega']     = 40.0 #23.128 = 54 eV, 60nm = 20 eV
-=======
-    params['omega']     = 5.0 #23.128 = 54 eV, 60nm = 20 eV
->>>>>>> b02563c6c2b821205146827b25648b2d283d618c
+
     freq_units          = "nm" #nm or eV
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
     elif freq_units == "ev":
-<<<<<<< HEAD
         params['omega']     = CONSTANTS.ev_to_hz * params['omega']   # from ev to frequency  (Hz)
-=======
-        params['omega']     = 0.0   # from ev to frequency  (Hz)
->>>>>>> b02563c6c2b821205146827b25648b2d283d618c
+
     else:
         raise ValueError("Incorrect units for frequency")
 
