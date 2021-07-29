@@ -165,7 +165,7 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 170.0 
+    params['tmax']      = 1000.0 
     params['dt']        = 0.1
     params['ivec']      = 6
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 30 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 5 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "nm" #nm or ev
 
@@ -248,8 +248,8 @@ def gen_input(jobtype):
 
 
     """ ---- field intensity ----- """
-    params['tau']       = 70.0 #as: pulse duration (sigma)
-    params['tc']        = 100.0 #as: pulse centre
+    params['tau']       = 200.0 #as: pulse duration (sigma)
+    params['tc']        = 500.0 #as: pulse centre
 
     
 
@@ -269,7 +269,7 @@ def gen_input(jobtype):
 
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_CPL 
+    params['field_type'] = field_LP
 
     """ Available field types :
         1) field_CPL
@@ -338,7 +338,7 @@ def gen_input(jobtype):
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-    params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['analyze_time']    = params['tmax']/2.0 #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True

@@ -255,10 +255,11 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.show()  
     if params["save_snapthots"] == True:
 
-        if params['field_type']['typef'] == "LCPL":
-            helicity = "L"
-        elif params['field_type']['typef'] == "RCPL":
-            helicity = "R"
+        if params['field_type']['function_name'] == "fieldCPL":
+            if params['field_type']['typef'] == "LCPL":
+                helicity = "L"
+            elif params['field_type']['typef'] == "RCPL":
+                helicity = "R"
         else:
             helicity = "0"
         fig.savefig( params['job_directory']  + "/animation/" + helicity + "_angrad_YZ" + "_" + str(irun) + "_t=" +\
@@ -312,10 +313,11 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        if params['field_type']['typef'] == "LCPL":
-            helicity = "L"
-        elif params['field_type']['typef'] == "RCPL":
-            helicity = "R"
+        if params['field_type']['function_name'] == "fieldCPL":
+            if params['field_type']['typef'] == "LCPL":
+                helicity = "L"
+            elif params['field_type']['typef'] == "RCPL":
+                helicity = "R"
         else:
             helicity = "0"
         fig.savefig( params['job_directory']  + "/animation/" + helicity + "_angrad_XY" + "_" + str(irun) + "_t=" +\
@@ -492,7 +494,7 @@ def plot_elfield(Fvec,tgrid,time_to_au):
     ax = plt.axes()
     plt.xlabel("time (as)")
     plt.ylabel("normalized Field components")
-    ax.scatter(tgrid/time_to_au, -Fvec[2].real, label = "Field-x", marker = '.', color = 'r', s = 1)
+    ax.scatter(tgrid/time_to_au, -Fvec[0].real, label = "Field-x", marker = '.', color = 'r', s = 1)
     ax.scatter(tgrid/time_to_au, Fvec[0].imag, label = "Field-y", marker = '.', color = 'g', s = 1)
     ax.scatter(tgrid/time_to_au, Fvec[1], label = "Field-z", marker = '.', color = 'b', s = 1)
     ax.legend()
