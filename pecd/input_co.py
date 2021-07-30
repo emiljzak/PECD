@@ -72,9 +72,9 @@ def gen_input(jobtype):
     params['ARPACK_mode']       = "normal"
     #
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = True#if available read the prestored initial hamiltonian from file
 
-    params['gen_adaptive_quads'] = True
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4

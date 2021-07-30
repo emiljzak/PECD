@@ -809,6 +809,38 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     #val *= np.sin(theta) 
     return  np.abs(val)**2/ np.max(np.abs(val)**2)
 
+
+def find_nearest(array, value):
+    array   = np.asarray(array)
+    idx     = (np.abs(array - value)).argmin()
+    return array[idx], idx
+
+def plot_pad_polar(klist,helicity):
+    """ polar plot of angular distribution of photoelectron momentum for a given energy (wavevector)"""
+
+    with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
+        grid = np.loadtxt(gridfile)
+
+    with open( params['job_directory'] + "W" + "_"+ str(helicity) + "_av_3D_0", 'r') as Wavfile:   
+        Wav = np.loadtxt(Wavfile)
+
+    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+    ind_kgrid   = [] #index of electron momentum in the list
+
+    for kelem in klist:
+        k, ind = find_nearest(grid[0], kelem)
+        ind_kgrid.append(ind)
+        plt.polar(grid[1], Wav[ind,:],'r')
+
+    thetagrid = np.linspace(0,2.0*np.pi,400)
+
+
+    plt.legend()   
+    plt.show()  
+    exit()
+
 if __name__ == "__main__":      
 
     # preparation of parameters
@@ -819,17 +851,22 @@ if __name__ == "__main__":
     print("---------------------- PLOTS --------------------")
     print(" ")
 
+
+
+
     import importlib
-    input_module = importlib.import_module("input_h")
+    input_module = importlib.import_module("input_n2")
     jobtype = "local"
     print("jobtype: " + str(jobtype))
     print(" ")
 
     params = input_module.gen_input(jobtype) 
     
+    plot_pad_polar(params['k_list_pad'],0)
+
     wffile = params['job_directory'] + params['file_psi_init']+"_0"  # "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
     nvecs = 10 #how many vectors to load?
-    ivec = params['ivec'] #which vector to plot?
+    ivec = params['ivec']-3 #which vector to plot?
     
     coeffs = read_coeffs(wffile,nvecs)
 
@@ -875,7 +912,7 @@ if __name__ == "__main__":
     #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)
 
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
-    plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'], Gr, wffile)
+    #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'], Gr, wffile)
 
 
     """ plot 4D volume of the wavefunction amplitude (density)"""

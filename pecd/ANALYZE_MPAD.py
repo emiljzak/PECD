@@ -317,7 +317,7 @@ def calc_pecd(N_batches,params,bcoeff,kgrid):
 
     pecd_pad = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
     print("plotting PECD")
-    #PLOTS.plot_2D_polar_map(pecd_pad,grid[1],grid[0],100)
+    PLOTS.plot_2D_polar_map(pecd_pad,grid[1],grid[0],100)
 
     return pecd_sph
 
