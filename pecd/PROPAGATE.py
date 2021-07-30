@@ -123,7 +123,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
     Fvec = np.asarray(Fvec)
     Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
-    #Fvec += np.conjugate(Fvec)
+    Fvec += np.conjugate(Fvec)
 
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
@@ -1560,8 +1560,8 @@ if __name__ == "__main__":
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
             with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
-            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
-            PLOTS.plot_pad_polar(k0,kdens)
+            #PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
+            PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
 
     else:
         raise ValueError("Incorrect execution mode keyword")

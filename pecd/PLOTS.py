@@ -815,7 +815,7 @@ def find_nearest(array, value):
     idx     = (np.abs(array - value)).argmin()
     return array[idx], idx
 
-def plot_pad_polar(klist,helicity):
+def plot_pad_polar(params,klist,helicity):
     """ polar plot of angular distribution of photoelectron momentum for a given energy (wavevector)"""
 
     with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
@@ -832,7 +832,7 @@ def plot_pad_polar(klist,helicity):
     for kelem in klist:
         k, ind = find_nearest(grid[0], kelem)
         ind_kgrid.append(ind)
-        plt.polar(grid[1], Wav[ind,:],'r')
+        plt.polar(grid[1], Wav[:,ind],'r')
 
     thetagrid = np.linspace(0,2.0*np.pi,400)
 
