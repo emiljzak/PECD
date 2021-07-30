@@ -661,11 +661,11 @@ def calc_intmat(maparray,rgrid,Nbas):
 
 
     #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5)
-    #plt.spy(intmat1, precision=params['sph_quad_tol'], markersize=5, color='r')
+    plt.spy(intmat1, precision=params['sph_quad_tol'], markersize=5, color='r')
     #plt.spy(intmat2, precision=params['sph_quad_tol'], markersize=5, color='g')
     #plt.spy(intmat3, precision=params['sph_quad_tol'], markersize=5, color='b')
-    #plt.show()
-    #exit()
+    plt.show()
+    exit()
     #rtol=1e-05
     #atol=1e-08
     #print(intmat_new)
@@ -1464,13 +1464,13 @@ if __name__ == "__main__":
 
         if params['analyze_mpad'] == True:
 
-            if params['field_type']['typef'] == "LCPL":
-                helicity = "L"
-            elif params['field_type']['typef'] == "RCPL":
-                helicity = "R"
+            if params['field_type']['function_name'] == "fieldCPL":
+                if params['field_type']['typef'] == "LCPL":
+                    helicity = "L"
+                elif params['field_type']['typef'] == "RCPL":
+                    helicity = "R"
             else:
                 helicity = "0"
-
             N_Euler = int(sys.argv[3])
             grid_euler, n_grid_euler = gen_euler_grid(N_Euler)            
 

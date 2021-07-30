@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 5 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 10 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "nm" #nm or ev
 
@@ -238,7 +238,7 @@ def gen_input(jobtype):
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 3.0e+14 #W/cm^2 #peak intensity
+    intensity       = 5.0e+15 #W/cm^2 #peak intensity
 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)

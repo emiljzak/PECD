@@ -72,9 +72,9 @@ def gen_input(jobtype):
     params['ARPACK_mode']       = "normal"
     #
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4
@@ -168,7 +168,7 @@ def gen_input(jobtype):
     params['tmax']      = 1000.0 
     params['dt']        = 0.3
     params['ivec']      = 6
-    params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -293,7 +293,7 @@ def gen_input(jobtype):
                     "t_cycle": params['opt_cycle']  }
 
 
-    params['field_env'] = env_sin2
+    params['field_env'] = env_gaussian
 
     """ Available envelopes :
         1) env_gaussian

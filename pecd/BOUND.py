@@ -726,6 +726,29 @@ def rotate_mol_xyz(params, grid_euler, irun):
         print("rotated molecular cartesian matrix:")
         print(mol_xyz_rotated)
 
+
+    elif params['molec_name'] == "co":
+        
+        mol_xyz = np.zeros( (3,2), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
+
+        #  N1x N2x
+        #  N1y N2y
+        #  N1z N2z
+
+        ang_au = CONSTANTS.angstrom_to_au
+
+        mol_xyz[2,0] = ang_au * params['mol_geometry']["rCO"] / 2.0 
+        mol_xyz[2,1] =  -1.0 * mol_xyz[2,0] 
+
+        print("Rotation matrix:")
+        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    
+        for iatom in range(2):
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+        print("rotated molecular cartesian matrix:")
+        print(mol_xyz_rotated)
+
     elif params['molec_name'] == "h":
         
         mol_xyz = np.zeros( (3,1), dtype = float) #
