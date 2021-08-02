@@ -283,9 +283,6 @@ def find_nearest(array, value):
     return array[idx], idx
 
 
-
-
-
 def calc_pecd(N_batches,params,bcoeff,kgrid):
     
     with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   

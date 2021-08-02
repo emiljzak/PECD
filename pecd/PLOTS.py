@@ -207,7 +207,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
     
             
     plt.show()
-
+    plt.close()
 
 def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist,irun):
     #================ radial-angular in real space ===============#
@@ -839,7 +839,7 @@ def plot_pad_polar(params,klist,helicity):
 
     plt.legend()   
     plt.show()  
-    exit()
+    plt.close()
 
 if __name__ == "__main__":      
 
