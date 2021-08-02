@@ -734,8 +734,14 @@ def rotate_mol_xyz(params, grid_euler, irun):
 
         ang_au = CONSTANTS.angstrom_to_au
 
-        mol_xyz[2,0] = ang_au * params['mol_geometry']["rCO"] / 2.0 
-        mol_xyz[2,1] =  -1.0 * mol_xyz[2,0] 
+        mC = params['mol_masses']["C"]    
+        mO = params['mol_masses']["O"]
+        rCO = params['mol_geometry']["rCO"] 
+
+        # C = O   in ----> positive direction of z-axis.
+
+        mol_xyz[2,0] = ang_au * mC * rCO / (mC + mO)
+        mol_xyz[2,1] = - 1.0 * ang_au * mO * rCO / (mC + mO)
 
         print("Rotation matrix:")
         rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)

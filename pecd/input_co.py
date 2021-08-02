@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
