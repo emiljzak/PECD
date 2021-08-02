@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -165,8 +165,8 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 200.0 
-    params['dt']        = 0.05
+    params['tmax']      = 300.0 
+    params['dt']        = 0.3
     params['ivec']      = 1
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 220 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 150 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "ev" #nm or ev
 
@@ -344,5 +344,6 @@ def gen_input(jobtype):
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
-    params['k_list_pad']      = list(np.linspace(0.1,3.0,10)) #list of wavevectors for MFPAD plots
+    # [15.0,50.0]
+    params['k_list_pad']      = [15.0/CONSTANTS.au_to_ev,50.0/CONSTANTS.au_to_ev]  #list(np.linspace(0.1,3.0,10)) #list of wavevectors for MFPAD plots
     return params
