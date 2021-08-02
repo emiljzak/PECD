@@ -134,7 +134,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
         dip = Fvec[itime][0] * intmat0[0]  + Fvec[itime][1] * intmat0[1] + Fvec[itime][2] * intmat0[2]
-
+        #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
                 
@@ -845,7 +845,7 @@ def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi
             print(l,m)
         
             for ielem, elem in enumerate(maparray_chi):
-                if elem[0] > 2: #cut-out bound-state electron density
+                if elem[0] > 5: #cut-out bound-state electron density
 
                     val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](grid_r)
 
@@ -1561,7 +1561,7 @@ if __name__ == "__main__":
             with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
             PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
-            #PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
+            PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
 
     else:
         raise ValueError("Incorrect execution mode keyword")

@@ -832,7 +832,7 @@ def plot_pad_polar(params,klist,helicity):
     for kelem in klist:
         k, ind = find_nearest(grid[0], kelem)
         ind_kgrid.append(ind)
-        plt.polar(grid[1], Wav[:,ind],'r')
+        plt.polar(grid[1], Wav[:,ind])
 
     thetagrid = np.linspace(0,2.0*np.pi,400)
 

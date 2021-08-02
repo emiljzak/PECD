@@ -53,10 +53,10 @@ def gen_input(jobtype):
 
 
     params['bound_nlobs']   = 8
-    params['bound_nbins']   = 40
+    params['bound_nbins']   = 100
     params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_lmax']    = 4
 
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -167,7 +167,7 @@ def gen_input(jobtype):
     params['t0']        = 0.0 
     params['tmax']      = 1000.0 
     params['dt']        = 0.1
-    params['ivec']      = 6
+    params['ivec']      = 1
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
@@ -208,9 +208,9 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 10 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 180 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
-    freq_units          = "nm" #nm or ev
+    freq_units          = "ev" #nm or ev
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
@@ -238,7 +238,7 @@ def gen_input(jobtype):
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 5.0e+15 #W/cm^2 #peak intensity
+    intensity       = 2.0e+14 #W/cm^2 #peak intensity
 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
@@ -293,7 +293,7 @@ def gen_input(jobtype):
                     "t_cycle": params['opt_cycle']  }
 
 
-    params['field_env'] = env_gaussian
+    params['field_env'] = env_sin2
 
     """ Available envelopes :
         1) env_gaussian
@@ -311,7 +311,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
 
                                 "save_snapshots":   True,
                                 "save_anim":        False,

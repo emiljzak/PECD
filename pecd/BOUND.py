@@ -732,10 +732,6 @@ def rotate_mol_xyz(params, grid_euler, irun):
         mol_xyz = np.zeros( (3,2), dtype = float) #
         mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
 
-        #  N1x N2x
-        #  N1y N2y
-        #  N1z N2z
-
         ang_au = CONSTANTS.angstrom_to_au
 
         mol_xyz[2,0] = ang_au * params['mol_geometry']["rCO"] / 2.0 
