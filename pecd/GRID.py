@@ -279,6 +279,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
                     mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
                     mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
         )
+        
     elif params['molec_name'] == "n2":
         mol = psi4.geometry("""
         1 2

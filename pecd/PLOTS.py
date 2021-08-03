@@ -212,7 +212,7 @@ def plot_wf_ang(r0,coeffs,rgrid, nlobs,nbins):
 def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist,irun):
     #================ radial-angular in real space ===============#
 
-    coeff_thr = 1e-5
+    coeff_thr = 1e-6
     ncontours = 100
 
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
@@ -247,7 +247,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
                            chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
-                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.5) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
@@ -270,7 +270,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
 def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t,flist,irun):
     #================ radial-angular in real space ===============#
 
-    coeff_thr = 1e-5
+    coeff_thr = 1e-6
     ncontours = 100
 
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
@@ -306,7 +306,7 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
                            chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
-                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.5) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
@@ -408,10 +408,11 @@ def plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb):
     #plt.legend()   
     #plt.show()  
     if params["save_snapthots"] == True:
-        if params['field_type']['typef'] == "LCPL":
-            helicity = "L"
-        elif params['field_type']['typef'] == "RCPL":
-            helicity = "R"
+        if params['field_type']['function_name'] == "fieldCPL":
+            if params['field_type']['typef'] == "LCPL":
+                helicity = "L"
+            elif params['field_type']['typef'] == "RCPL":
+                helicity = "R"
         else:
             helicity = "0"
 
@@ -505,7 +506,7 @@ def plot_2D_polar_map(func,grid_theta,kgrid,ncontours):
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axft = fig.add_subplot(spec[0, 0], projection='polar')
     kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
-    axft.set_ylim(0,1) #radial extent
+    axft.set_ylim(0,5) #radial extent
     line_ft = axft.contourf(thetamesh, kmesh, func/np.max(func), 
                             ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_ft, ax=axft, aspect=30) 

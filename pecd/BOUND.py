@@ -729,8 +729,9 @@ def rotate_mol_xyz(params, grid_euler, irun):
 
     elif params['molec_name'] == "co":
         
-        mol_xyz = np.zeros( (3,2), dtype = float) #
+        mol_xyz = np.zeros( (3,2), dtype = float) # initial embedding coordinates (0 degrees rotation)
         mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
+        mol_xyz_MF= np.zeros( (3,2), dtype = float) #rotated coordinates: molecular frame embedding
 
         ang_au = CONSTANTS.angstrom_to_au
 
@@ -743,11 +744,20 @@ def rotate_mol_xyz(params, grid_euler, irun):
         mol_xyz[2,0] = ang_au * mC * rCO / (mC + mO)
         mol_xyz[2,1] = - 1.0 * ang_au * mO * rCO / (mC + mO)
 
+        """rotation associated with MF embedding"""
+        rotmatMF = R.from_euler('zyz', [0.0, params['mol_embedding'], 0.0], degrees=True)
+
+        for iatom in range(2):
+            mol_xyz_MF[:,iatom] = rotmatMF.apply(mol_xyz[:,iatom])
+        print("rotated MF cartesian matrix:")
+        print(mol_xyz_MF)
+
+
         print("Rotation matrix:")
         rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
     
         for iatom in range(2):
-            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz_MF[:,iatom])
         print("rotated molecular cartesian matrix:")
         print(mol_xyz_rotated)
 

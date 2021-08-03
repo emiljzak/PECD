@@ -187,10 +187,10 @@ def legendre_expansion(grid,Wav,Lmax):
     x, w    = np.polynomial.legendre.leggauss(deg)
     w       = w.reshape(nleg,-1)
 
-    nkpoints    = 100
+    nkpoints    = 300
     bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
     spectrum    = np.zeros(nkpoints, dtype = float)
-    kgrid       = np.linspace(0.05,1.0,nkpoints)
+    kgrid       = np.linspace(0.05,5.0,nkpoints)
 
     """ calculating Legendre moments """
     for n in range(0,Lmax+1):
@@ -210,7 +210,7 @@ def legendre_expansion(grid,Wav,Lmax):
     #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.xlabel("Energy (eV)")
-    plt.xlim([0,6]) 
+    plt.xlim([0,100]) 
    #plt.xlabel("momentum (a.u.)")
     plt.ylabel("cross section")
     plt.legend()   
@@ -249,10 +249,11 @@ def analyze_Wav(N_batches,params):
     with open( params['job_directory'] + "grid_W_av" , 'r') as gridfile:   
         grid = np.loadtxt(gridfile)
 
-    if params['field_type']['typef'] == "LCPL":
-        helicity = "L"
-    elif params['field_type']['typef'] == "RCPL":
-        helicity = "R"
+    if params['field_type']["function_name"] == "fieldCPL":
+        if params['field_type']['typef'] == "LCPL":
+            helicity = "L"
+        elif params['field_type']['typef'] == "RCPL":
+            helicity = "R"
     else:
         helicity = "0"
 
@@ -323,7 +324,7 @@ if __name__ == "__main__":
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
 
     jobtype = "local"
-    inputfile = "input_d2s"
+    inputfile = "input_co"
 
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
     import importlib

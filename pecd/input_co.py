@@ -32,7 +32,7 @@ def gen_input(jobtype):
     """ === molecule definition ==== """ 
     params['mol_geometry']  = {"rCO":1.14} #angstroms
     params['mol_masses']    = {"C":12.0,"O":16.0}
-    params['mol_embedding'] = "bisector" #TROVE's bisector embedding
+    params['mol_embedding'] = 0.0 #degrees 0.0 = z-parallel C=0 embedding with O in positive direction.
 
 
     """ === ro-vibrational part ==== """ 
@@ -54,7 +54,7 @@ def gen_input(jobtype):
 
     params['bound_nlobs']   = 8
     params['bound_nbins']   = 100
-    params['bound_binw']    = 1.0
+    params['bound_binw']    = 0.9
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 4
 
@@ -168,7 +168,7 @@ def gen_input(jobtype):
     params['tmax']      = 300.0 
     params['dt']        = 0.3
     params['ivec']      = 1
-    params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -238,7 +238,7 @@ def gen_input(jobtype):
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 3e+14 #W/cm^2 #peak intensity
+    intensity       = 1e+14 #W/cm^2 #peak intensity
 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
@@ -311,7 +311,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
 
                                 "save_snapshots":   True,
                                 "save_anim":        False,
@@ -345,5 +345,5 @@ def gen_input(jobtype):
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      = [15.0/CONSTANTS.au_to_ev,50.0/CONSTANTS.au_to_ev]  #list(np.linspace(0.1,3.0,10)) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(5.0,100.0,20)/CONSTANTS.au_to_ev) #list of wavevectors for MFPAD plots
     return params
