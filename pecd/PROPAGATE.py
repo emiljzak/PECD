@@ -150,9 +150,10 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
-        flwavepacket.write( '{:8.3f}'.format(t) + 
-                            " ".join('{:12.5e}'.format(psi[i].real) + '{:12.5e}'.format(psi[i].imag) for i in range(0,Nbas))  + "\n")
-                            #+\'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))
+        flwavepacket.write( '{:10.3f}'.format(t) + 
+                            " ".join('{:15.5e}'.format(psi[i].real) + '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
+                                '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))  + "\n")
+
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
 
