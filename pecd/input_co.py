@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -165,7 +165,7 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 300.0 
+    params['tmax']      = 500.0 
     params['dt']        = 0.3
     params['ivec']      = 1
     params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 227 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 180 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "ev" #nm or ev
 
@@ -311,7 +311,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],10)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],5)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
 
                                 "save_snapshots":   True,
                                 "save_anim":        False,
@@ -338,12 +338,12 @@ def gen_input(jobtype):
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-    params['analyze_time']    = 180.0 #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['analyze_time']    = 500.0 #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(5.0,20.0,5)/CONSTANTS.au_to_ev) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(0.6,3.0,5)) #list of wavevectors for MFPAD plots
     return params

@@ -210,7 +210,7 @@ def legendre_expansion(grid,Wav,Lmax):
     #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.xlabel("Energy (eV)")
-    plt.xlim([0,100]) 
+    plt.xlim([0,200]) 
    #plt.xlabel("momentum (a.u.)")
     plt.ylabel("cross section")
     plt.legend()   

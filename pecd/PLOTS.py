@@ -867,12 +867,20 @@ def plot_pad_polar(params,klist,helicity):
 
     ind_kgrid   = [] #index of electron momentum in the list
     ax = fig.add_subplot(projection="polar", facecolor="lightgoldenrodyellow")
-    ax.legend(bbox_to_anchor=(1.2,1.2))
+    plt.legend(loc="lower left",bbox_to_anchor=(1.5,1.0))
+    ax.tick_params(grid_color="palegoldenrod")
+    ax.set_rlabel_position(70)
+    #ax.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
 
     for kelem in klist:
         k, ind = find_nearest(grid[0], kelem)
         ind_kgrid.append(ind)
-        ax.plot(grid[1], Wav[:,ind],label=str("%5.1f"%(k * CONSTANTS.au_to_ev)))
+        
+    #find maximum
+    Wmax = np.max(Wav[:,ind_kgrid])
+    for i,kelem in enumerate(klist):
+        k, ind = find_nearest(grid[0], kelem)
+        ax.plot(grid[1], Wav[:,ind_kgrid[i]]/Wmax,label=str("%5.1f"%(0.5*k**2 * CONSTANTS.au_to_ev)))
 
     thetagrid = np.linspace(0,2.0*np.pi,400)
 
