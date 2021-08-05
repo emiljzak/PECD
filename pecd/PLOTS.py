@@ -9,6 +9,7 @@ import os
 import input
 import GRID
 import MAPPING
+import CONSTANTS
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
@@ -865,11 +866,13 @@ def plot_pad_polar(params,klist,helicity):
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
     ind_kgrid   = [] #index of electron momentum in the list
+    ax = fig.add_subplot(projection="polar", facecolor="lightgoldenrodyellow")
+    ax.legend(bbox_to_anchor=(1.2,1.2))
 
     for kelem in klist:
         k, ind = find_nearest(grid[0], kelem)
         ind_kgrid.append(ind)
-        plt.polar(grid[1], Wav[:,ind])
+        ax.plot(grid[1], Wav[:,ind],label=str("%5.1f"%(k * CONSTANTS.au_to_ev)))
 
     thetagrid = np.linspace(0,2.0*np.pi,400)
 

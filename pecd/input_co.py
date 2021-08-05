@@ -345,5 +345,5 @@ def gen_input(jobtype):
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(10.0,60.0,10)/CONSTANTS.au_to_ev) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(5.0,20.0,5)/CONSTANTS.au_to_ev) #list of wavevectors for MFPAD plots
     return params
