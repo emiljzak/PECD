@@ -53,10 +53,10 @@ def gen_input(jobtype):
 
 
     params['bound_nlobs']   = 8
-    params['bound_nbins']   = 101
-    params['bound_binw']    = 0.9
+    params['bound_nbins']   = 100
+    params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 6
 
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 200 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 227 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "ev" #nm or ev
 
@@ -338,12 +338,12 @@ def gen_input(jobtype):
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-    params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['analyze_time']    = 180.0 #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(20.0,100.0,10)/CONSTANTS.au_to_ev) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(10.0,60.0,10)/CONSTANTS.au_to_ev) #list of wavevectors for MFPAD plots
     return params

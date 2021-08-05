@@ -637,7 +637,7 @@ def plot_rotdens(rotdens, grid):
 
 def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     
-    ivec = 2
+    ivec = 1
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
     mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=20.0, figure=fig)
@@ -700,7 +700,7 @@ def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
     wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
 
     #plot isosurface
-    mywf = mlab.contour3d(wf2, contours=[0.7,0.8,0.9], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
+    mywf = mlab.contour3d(wf2, contours=[0.2,0.3,0.5,0.9], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
     mlab.view(132, 54, 45, [21, 20, 21.5])  
     mlab.show()
 
@@ -758,7 +758,7 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     ymax = grange
     ymin = -1.0 * grange
     
-    ivec = 2
+    ivec = 0
 
     x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
     #wf = np.sin(x**2 + y**2 + 2. * z**2)
@@ -769,7 +769,7 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
 
     #plot volume
-    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf2),  vmin=fmin + 0.65 * (fmax - fmin),
+    mlab.pipeline.volume(mlab.pipeline.scalar_field(wf2),  vmin=fmin + 0.25 * (fmax - fmin),
                                    vmax=fmin + 0.9 * (fmax - fmin))
     
 
@@ -777,18 +777,54 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.show()
 
 
+def build_cube(params,Gr,wffile):
+    ivec = params['ivec'] 
+
+    npts = 10j
+    cube_range = 5.0
+    
+    xmax = cube_range
+    xmin = -1.0 * cube_range
+    
+    zmax = cube_range
+    zmin = -1.0 * cube_range
+    
+    ymax = cube_range
+    ymin = -1.0 * cube_range
+    
+    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
+    #wf = np.sin(x**2 + y**2 + 2. * z**2)
+    wf = calc_wf_xyzgrid(params['nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
+    fmin = wf.min()
+    fmax = wf.max()
+    print(fmin,fmax)
+    #print(wf)
+    wf_cube = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
+    
+    f = z/(z**2+y**2+x**2)
+
+    print(np.shape(wf_cube))
+
+    cubefile = open(params['job_directory'] + str(ivec)+".cube", 'w')
+    for ix in range(npts):
+        for iy in range(npts):
+            for iz in range(npts):
+                cubefile.write( x[ix,iy,iz], y[ix,iy,iz], z[ix,iy,iz], f[ix,iy,iz])
+
+
+    return wf_cube
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     coeffs = read_coeffs(wffile,ivec+1)
 
-    xl=np.zeros(nlobs)
-    w=np.zeros(nlobs)
-    xl,w=GRID.gauss_lobatto(nlobs,14)
-    w=np.array(w)
+    xl      =   np.zeros(nlobs)
+    w       =   np.zeros(nlobs)
+    xl,w    =   GRID.gauss_lobatto(nlobs,14)
+    w       =   np.array(w)
 
     X, Y, Z = grid[0], grid[1], grid[2]
     #print(X.shape)
-    val = np.zeros((X.shape[0]*X.shape[0]*X.shape[0]), dtype = complex)
+    val = np.zeros((X.shape[0] * X.shape[0] * X.shape[0]), dtype = complex)
 
 
     rx,thetax,phix  = cart2sph(X,Y,Z)
@@ -804,7 +840,7 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     for icount, ipoint in enumerate(coeffs):
         print(icount)
         #print(ipoint[5][ivec])
-        if np.abs(ipoint[5][ivec]) > 1e-4:
+        if np.abs(ipoint[5][ivec]) > 1e-5:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
 
     #val *= np.sin(theta) 
@@ -863,7 +899,7 @@ if __name__ == "__main__":
 
     params = input_module.gen_input(jobtype) 
     
-    plot_pad_polar(params['k_list_pad'],0)
+    #plot_pad_polar(params['k_list_pad'],0)
 
     wffile = params['job_directory'] + params['file_psi_init']+"_0"  # "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
     nvecs = 10 #how many vectors to load?
@@ -897,8 +933,8 @@ if __name__ == "__main__":
 
     """ plot radial wavefunction at a given ray=(theta,phi) """
 
-    plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
-                Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
+    #plot_wf_rad(0.0, params['bound_binw']*params['bound_nbins'], 1000, coeffs ,\
+    #            Gr, params['bound_nlobs'], params['bound_nbins'],nvecs)
 
     """ plot angular wavefunction at a given distance """
     #r0 = 2.0
@@ -917,6 +953,6 @@ if __name__ == "__main__":
 
 
     """ plot 4D volume of the wavefunction amplitude (density)"""
-    #plot_wf_volume(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+    plot_wf_volume(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
     exit()
 

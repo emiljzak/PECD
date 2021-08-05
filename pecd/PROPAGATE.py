@@ -129,7 +129,11 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     for itime, t in enumerate(tgrid): 
 
         start_time = time.time()
-        print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
+        if itime%10 == 0:
+            print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
+        else:
+            print("t = " + str( "%10.1f"%(t/time_to_au)) + " as")
+       
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
@@ -146,10 +150,9 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
-        flwavepacket.write( '{:10.3f}'.format(t) + 
-                            " ".join('{:16.8e}'.format(psi[i].real) + '{:16.8e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
-                            '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) + "\n")
-
+        flwavepacket.write( '{:8.3f}'.format(t) + 
+                            " ".join('{:12.5e}'.format(psi[i].real) + '{:12.5e}'.format(psi[i].imag) for i in range(0,Nbas))  + "\n")
+                            #+\'{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
 
