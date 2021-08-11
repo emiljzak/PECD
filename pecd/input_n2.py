@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 180 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 200 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "ev" #nm or ev
 
@@ -248,8 +248,8 @@ def gen_input(jobtype):
 
 
     """ ---- field intensity ----- """
-    params['tau']       = 200.0 #as: pulse duration (sigma)
-    params['tc']        = 500.0 #as: pulse centre
+    params['tau']       = 300.0 #as: pulse duration (sigma)
+    params['tc']        = 600.0 #as: pulse centre
 
     
 

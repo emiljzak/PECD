@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -54,7 +54,7 @@ def gen_input(jobtype):
 
     params['bound_nlobs']   = 8
     params['bound_nbins']   = 100
-    params['bound_binw']    = 1.0
+    params['bound_binw']    = 0.9
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 6
 
@@ -165,10 +165,10 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 500.0 
-    params['dt']        = 0.3
+    params['tmax']      = 1000.0 
+    params['dt']        = 0.1
     params['ivec']      = 1
-    params['plot_ini_orb'] = True #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 180 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 200 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "ev" #nm or ev
 
@@ -248,8 +248,8 @@ def gen_input(jobtype):
 
 
     """ ---- field intensity ----- """
-    params['tau']       = 500.0 #as: pulse duration (sigma)
-    params['tc']        = 1000.0 #as: pulse centre
+    params['tau']       = 200.0 #as: pulse duration (sigma)
+    params['tc']        = 500.0 #as: pulse centre
 
     
 
@@ -293,7 +293,7 @@ def gen_input(jobtype):
                     "t_cycle": params['opt_cycle']  }
 
 
-    params['field_env'] = env_sin2
+    params['field_env'] = env_gaussian
 
     """ Available envelopes :
         1) env_gaussian
