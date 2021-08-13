@@ -54,9 +54,9 @@ def gen_input(jobtype):
 
     params['bound_nlobs']   = 8
     params['bound_nbins']   = 100
-    params['bound_binw']    = 0.9
+    params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 6
+    params['bound_lmax']    = 8
 
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -166,8 +166,8 @@ def gen_input(jobtype):
 
     params['t0']        = 0.0 
     params['tmax']      = 1000.0 
-    params['dt']        = 0.1
-    params['ivec']      = 1
+    params['dt']        = 0.3
+    params['ivec']      = 6
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
@@ -178,7 +178,7 @@ def gen_input(jobtype):
     params['save_enr_init']      = True
 
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -208,7 +208,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 200 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     = 189 #40.0 #23.128 = 54 eV, 60nm = 20 eV
 
     freq_units          = "ev" #nm or ev
 
@@ -260,7 +260,7 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
                     "spherical":        True, 
-                    "typef":            "LCPL"}
+                    "typef":            "RCPL"}
 
     field_LP    = { "function_name":    "fieldLP", 
                     "omega":            params['omega'], 
@@ -269,7 +269,7 @@ def gen_input(jobtype):
 
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_LP 
+    params['field_type'] = field_LP
 
     """ Available field types :
         1) field_CPL
@@ -338,12 +338,12 @@ def gen_input(jobtype):
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-    params['analyze_time']    = 250.0 #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(0.6,3.0,5)) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(1,2.0,8)) #list of wavevectors for MFPAD plots
     return params

@@ -502,7 +502,7 @@ def plot_elfield(Fvec,tgrid,time_to_au):
     ax.legend()
     plt.show()
 
-def plot_2D_polar_map(func,grid_theta,kgrid,ncontours):
+def plot_2D_polar_map(func,grid_theta,kgrid,ncontours,params):
     fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axft = fig.add_subplot(spec[0, 0], projection='polar')
@@ -510,9 +510,12 @@ def plot_2D_polar_map(func,grid_theta,kgrid,ncontours):
     axft.set_ylim(0,5) #radial extent
     line_ft = axft.contourf(thetamesh, kmesh, func/np.max(func), 
                             ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_ft, ax=axft, aspect=30) 
+    plt.colorbar(line_ft, ax=axft, aspect=30)
     plt.legend()   
-    plt.show()  
+    fig.savefig( params['job_directory']  + "/MF-MPAD.png",bbox_inches='tight')
+
+    #plt.show()  
+
 
 
 
@@ -781,9 +784,13 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
 def build_cube(params,Gr,wffile):
     ivec = params['ivec'] 
 
-    npts = 10j
-    cube_range = 5.0
-    
+    npts = 40j
+    npt = 40
+    cube_range = 4.0
+    dx = 2*cube_range/npt
+    dy = dx
+    dz = dx
+
     xmax = cube_range
     xmin = -1.0 * cube_range
     
@@ -794,6 +801,7 @@ def build_cube(params,Gr,wffile):
     ymin = -1.0 * cube_range
     
     x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
+    print(np.shape(x))
     #wf = np.sin(x**2 + y**2 + 2. * z**2)
     wf = calc_wf_xyzgrid(params['nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
     fmin = wf.min()
@@ -805,13 +813,26 @@ def build_cube(params,Gr,wffile):
     f = z/(z**2+y**2+x**2)
 
     print(np.shape(wf_cube))
+    print(params['job_directory'])
 
-    cubefile = open(params['job_directory'] + str(ivec)+".cube", 'w')
-    for ix in range(npts):
-        for iy in range(npts):
-            for iz in range(npts):
-                cubefile.write( x[ix,iy,iz], y[ix,iy,iz], z[ix,iy,iz], f[ix,iy,iz])
+    cubefile = open(params['job_directory'] + "/" + str(ivec)+".cub", 'w')
 
+    """ print header"""
+    cubefile.write( "CO orbitals" + "\n" + "normalized electronic density" + "\n")
+    cubefile.write( "3  0.000000    0.000000    0.000000" + "\n" +\
+        str(npt) + " " + str(dx) + "  0.000000    0.000000" + "\n" +\
+        str(npt) + " " +  "0.000000 " +  str(dy) + " 0.000000" + "\n" +\
+        str(npt) + " " +  "0.000000    0.000000 " +  str(dz)  + "\n" +\
+        " 6    6.000000    0.000000    0.000000    -1.000000" + "\n" +\
+        " 8    8.000000    0.000000    0.000000    1.500000" + "\n" )
+
+    for ix in range(npt):
+        for iy in range(npt):
+            for iz in range(npt):
+                #cubefile.write( str(x[ix,iy,iz]) + " "+ str(y[ix,iy,iz]) + " "+ str(z[ix,iy,iz]) + " "+str(wf_cube[ix,iy,iz]))
+                cubefile.write( "%12.6e"%wf_cube[ix,iy,iz] + " ")
+                if iz%6==5:
+                    cubefile.write("\n")
 
     return wf_cube
 
@@ -841,7 +862,7 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     for icount, ipoint in enumerate(coeffs):
         print(icount)
         #print(ipoint[5][ivec])
-        if np.abs(ipoint[5][ivec]) > 1e-5:
+        if np.abs(ipoint[5][ivec]) > 1e-4:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
 
     #val *= np.sin(theta) 
@@ -886,7 +907,8 @@ def plot_pad_polar(params,klist,helicity):
 
 
     plt.legend()   
-    plt.show()  
+    fig.savefig( params['job_directory']  + "/MF-PAD.png",bbox_inches='tight')
+    #plt.show()  
     plt.close()
 
 if __name__ == "__main__":      
@@ -899,11 +921,8 @@ if __name__ == "__main__":
     print("---------------------- PLOTS --------------------")
     print(" ")
 
-
-
-
     import importlib
-    input_module = importlib.import_module("input_n2")
+    input_module = importlib.import_module("input_co")
     jobtype = "local"
     print("jobtype: " + str(jobtype))
     print(" ")
@@ -914,7 +933,7 @@ if __name__ == "__main__":
 
     wffile = params['job_directory'] + params['file_psi_init']+"_0"  # "psi0_h2o_1_12_30.0_4_uhf_631Gss.dat"# "psi_init_h2o_3_24_20.0_2_uhf_631Gss.dat"#+ "psi0_h2o_1_20_10.0_4_uhf_631Gss.dat"
     nvecs = 10 #how many vectors to load?
-    ivec = params['ivec']-3 #which vector to plot?
+    ivec = params['ivec'] #which vector to plot?
     
     coeffs = read_coeffs(wffile,nvecs)
 
@@ -964,6 +983,10 @@ if __name__ == "__main__":
 
 
     """ plot 4D volume of the wavefunction amplitude (density)"""
-    plot_wf_volume(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+    #plot_wf_volume(params['bound_nlobs'], params['bound_nbins'],Gr,wffile)
+
+
+    """ generate cube file"""
+    build_cube(params,Gr,wffile)
     exit()
 

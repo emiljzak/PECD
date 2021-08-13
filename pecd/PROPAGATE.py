@@ -1564,7 +1564,7 @@ if __name__ == "__main__":
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
             with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
-            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100)
+            PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100,params)
             PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
 
     else:
