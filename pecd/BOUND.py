@@ -741,8 +741,8 @@ def rotate_mol_xyz(params, grid_euler, irun):
 
         # C = O   in ----> positive direction of z-axis.
 
-        mol_xyz[2,0] = ang_au * mC * rCO / (mC + mO)
-        mol_xyz[2,1] = - 1.0 * ang_au * mO * rCO / (mC + mO)
+        mol_xyz[2,0] = - 1.0 * ang_au * mO * rCO / (mC + mO) #z_C
+        mol_xyz[2,1] =  1.0 * ang_au * mC * rCO / (mC + mO) #z_O
 
         """rotation associated with MF embedding"""
         rotmatMF = R.from_euler('zyz', [0.0, params['mol_embedding'], 0.0], degrees=True)

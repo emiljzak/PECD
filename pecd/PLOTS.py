@@ -784,9 +784,9 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
 def build_cube(params,Gr,wffile):
     ivec = params['ivec'] 
 
-    npts = 40j
-    npt = 40
-    cube_range = 4.0
+    npts = 50j
+    npt = 50
+    cube_range = 5.0
     dx = 2*cube_range/npt
     dy = dx
     dz = dx
@@ -800,7 +800,11 @@ def build_cube(params,Gr,wffile):
     ymax = cube_range
     ymin = -1.0 * cube_range
     
+    x1d = np.linspace(xmin,xmax,npt)
+
+    
     x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
+    #x, y, z = np.meshgrid(x1d, x1d, x1d)
     print(np.shape(x))
     #wf = np.sin(x**2 + y**2 + 2. * z**2)
     wf = calc_wf_xyzgrid(params['nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
@@ -819,21 +823,21 @@ def build_cube(params,Gr,wffile):
 
     """ print header"""
     cubefile.write( "CO orbitals" + "\n" + "normalized electronic density" + "\n")
-    cubefile.write( "3  0.000000    0.000000    0.000000" + "\n" +\
+    cubefile.write( "2  0.000000    0.000000    0.000000" + "\n" +\
         str(npt) + " " + str(dx) + "  0.000000    0.000000" + "\n" +\
         str(npt) + " " +  "0.000000 " +  str(dy) + " 0.000000" + "\n" +\
         str(npt) + " " +  "0.000000    0.000000 " +  str(dz)  + "\n" +\
-        " 6    6.000000    0.000000    0.000000    -1.000000" + "\n" +\
-        " 8    8.000000    0.000000    0.000000    1.500000" + "\n" )
+        " 6    6.000000    0.000000    0.000000    0.000000" + "\n" +\
+        " 8    8.000000    0.000000    0.000000    1.000000" + "\n" )
 
     for ix in range(npt):
         for iy in range(npt):
             for iz in range(npt):
                 #cubefile.write( str(x[ix,iy,iz]) + " "+ str(y[ix,iy,iz]) + " "+ str(z[ix,iy,iz]) + " "+str(wf_cube[ix,iy,iz]))
-                cubefile.write( "%12.6e"%wf_cube[ix,iy,iz] + " ")
+                cubefile.write( "%12.6e"%wf_cube[ix,iy,iz] + " ")#
                 if iz%6==5:
                     cubefile.write("\n")
-
+            cubefile.write("\n")
     return wf_cube
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
@@ -862,11 +866,11 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     for icount, ipoint in enumerate(coeffs):
         print(icount)
         #print(ipoint[5][ivec])
-        if np.abs(ipoint[5][ivec]) > 1e-4:
+        if np.abs(ipoint[5][ivec]) > 1e-5:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
 
     #val *= np.sin(theta) 
-    return  np.abs(val)**2/ np.max(np.abs(val)**2)
+    return  np.abs(val)**2/ (np.max(np.abs(val)**2))
 
 
 def find_nearest(array, value):
