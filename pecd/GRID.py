@@ -262,7 +262,7 @@ def CALC_ESP_PSI4(dir,params):
 def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     os.chdir(dir)
     psi4.core.be_quiet()
-    #properties_origin=["COM"]
+    properties_origin=[x, y, z] #[“NUCLEAR_CHARGE”] or ["COM"]
     ang_au = CONSTANTS.angstrom_to_au
 
     if params['molec_name'] == "d2s":
@@ -270,7 +270,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         1 2
         noreorient
         units au
-        
+        nocom
         S	{0} {1} {2}
         H	{3} {4} {5}
         H	{6} {7} {8}
@@ -285,7 +285,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         1 2
         noreorient
         units au
-        
+        nocom
         N	{0} {1} {2}
         N	{3} {4} {5}
 
@@ -299,7 +299,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         1 2
         noreorient
         units au
-        
+        nocom
         C	{0} {1} {2}
         O	{3} {4} {5}
 
