@@ -740,9 +740,9 @@ def rotate_mol_xyz(params, grid_euler, irun):
         rCO = params['mol_geometry']["rCO"] 
 
         # C = O   in ----> positive direction of z-axis.
-
-        mol_xyz[2,0] = - 1.0 * ang_au * mO * rCO / (mC + mO) #z_C
-        mol_xyz[2,1] =  1.0 * ang_au * mC * rCO / (mC + mO) #z_O
+        #centre of charge obtained from vanishing dipole moment in psi4 calculations is z_C = -0.01 a.u. , z_O = 2.14 a.u
+        mol_xyz[2,0] = -0.01 #- 1.0 * ang_au * mO * rCO / (mC + mO) #z_C
+        mol_xyz[2,1] = 2.14# 1.0 * ang_au * mC * rCO / (mC + mO) #z_O
 
         """rotation associated with MF embedding"""
         rotmatMF = R.from_euler('zyz', [0.0, params['mol_embedding'], 0.0], degrees=True)

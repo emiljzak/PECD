@@ -53,10 +53,10 @@ def gen_input(jobtype):
 
 
     params['bound_nlobs']   = 8
-    params['bound_nbins']   = 100
-    params['bound_binw']    = 0.9
+    params['bound_nbins']   = 107
+    params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 4
+    params['bound_lmax']    = 6
 
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -167,7 +167,7 @@ def gen_input(jobtype):
     params['t0']        = 0.0 
     params['tmax']      = 1000.0 
     params['dt']        = 0.3
-    params['ivec']      = 0
+    params['ivec']      = 5
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
