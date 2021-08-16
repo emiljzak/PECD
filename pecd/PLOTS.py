@@ -782,10 +782,12 @@ def plot_wf_volume(nlobs,nbins,Gr,wffile):
 
 
 def build_cube(params,Gr,wffile):
-    ivec = params['ivec'] 
+    
+    ivec_min = 0
+    ivec_max = 7
 
-    npts = 50j
-    npt = 50
+    npts = 40j
+    npt = 40
     cube_range = 5.0
     dx = 2*cube_range/npt
     dy = dx
@@ -807,37 +809,33 @@ def build_cube(params,Gr,wffile):
     #x, y, z = np.meshgrid(x1d, x1d, x1d)
     print(np.shape(x))
     #wf = np.sin(x**2 + y**2 + 2. * z**2)
-    wf = calc_wf_xyzgrid(params['nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
-    fmin = wf.min()
-    fmax = wf.max()
-    print(fmin,fmax)
-    #print(wf)
-    wf_cube = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
     
-    f = z/(z**2+y**2+x**2)
-
-    print(np.shape(wf_cube))
     print(params['job_directory'])
+    for ivec in range(ivec_min,ivec_max+1):
 
-    cubefile = open(params['job_directory'] + "/" + str(ivec)+".cub", 'w')
+        wf = calc_wf_xyzgrid(params['nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
 
-    """ print header"""
-    cubefile.write( "CO orbitals" + "\n" + "normalized electronic density" + "\n")
-    cubefile.write( "2  0.000000    0.000000    0.000000" + "\n" +\
-        str(npt) + " " + str(dx) + "  0.000000    0.000000" + "\n" +\
-        str(npt) + " " +  "0.000000 " +  str(dy) + " 0.000000" + "\n" +\
-        str(npt) + " " +  "0.000000    0.000000 " +  str(dz)  + "\n" +\
-        " 6    6.000000    0.000000    0.000000    0.000000" + "\n" +\
-        " 8    8.000000    0.000000    0.000000    1.000000" + "\n" )
+        wf_cube = wf.reshape(npt,npt,npt)
+    
+        cubefile = open(params['job_directory'] + "/" + str(ivec)+".cub", 'w')
 
-    for ix in range(npt):
-        for iy in range(npt):
-            for iz in range(npt):
-                #cubefile.write( str(x[ix,iy,iz]) + " "+ str(y[ix,iy,iz]) + " "+ str(z[ix,iy,iz]) + " "+str(wf_cube[ix,iy,iz]))
-                cubefile.write( "%12.6e"%wf_cube[ix,iy,iz] + " ")#
-                if iz%6==5:
-                    cubefile.write("\n")
-            cubefile.write("\n")
+        """ print header"""
+        cubefile.write( "CO orbitals" + "\n" + "normalized electronic density" + "\n")
+        cubefile.write( "2  " + str(-1.0*cube_range) + " " + str(-1.0*cube_range) + " "+ str(-1.0*cube_range) + "\n" +\
+            str(npt) + " " + str(dx) + "  0.000000    0.000000" + "\n" +\
+            str(npt) + " " +  "0.000000 " +  str(dy) + " 0.000000" + "\n" +\
+            str(npt) + " " +  "0.000000    0.000000 " +  str(dz)  + "\n" +\
+            " 6    6.000000    0.000000    0.000000    -1.230854" + "\n" +\
+            " 8    8.000000    0.000000    0.000000     0.923434" + "\n" )
+
+        for ix in range(npt):
+            for iy in range(npt):
+                for iz in range(npt):
+                    #cubefile.write( str(x[ix,iy,iz]) + " "+ str(y[ix,iy,iz]) + " "+ str(z[ix,iy,iz]) + " "+str(wf_cube[ix,iy,iz]))
+                    cubefile.write( "%12.6e"%wf_cube[ix,iy,iz] + " ")#
+                    if iz%6==5:
+                        cubefile.write("\n")
+                cubefile.write("\n")
     return wf_cube
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
@@ -866,10 +864,11 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     for icount, ipoint in enumerate(coeffs):
         print(icount)
         #print(ipoint[5][ivec])
-        if np.abs(ipoint[5][ivec]) > 1e-5:
+        if np.abs(ipoint[5][ivec]) > 1e-2:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
 
     #val *= np.sin(theta) 
+    #val.real/(np.max(val))#
     return  np.abs(val)**2/ (np.max(np.abs(val)**2))
 
 

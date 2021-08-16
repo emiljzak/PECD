@@ -53,7 +53,7 @@ def gen_input(jobtype):
 
 
     params['bound_nlobs']   = 8
-    params['bound_nbins']   = 107
+    params['bound_nbins']   = 100
     params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 6
@@ -87,7 +87,7 @@ def gen_input(jobtype):
     params['esp_mode']           = "exact" #exact or interpolate
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
-    params['plot_esp']           = False
+    params['plot_esp']           = True
 
     params['scf_enr_conv']       = 1.0e-5 #convergence threshold for SCF
     params['scf_basis']          = '6-31G**' #"cc-pDTZ" #"631G**"
@@ -167,7 +167,7 @@ def gen_input(jobtype):
     params['t0']        = 0.0 
     params['tmax']      = 1000.0 
     params['dt']        = 0.3
-    params['ivec']      = 5
+    params['ivec']      = 0
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     params['time_units']         = "as"
