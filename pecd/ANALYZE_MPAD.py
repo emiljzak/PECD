@@ -206,7 +206,7 @@ def legendre_expansion(grid,Wav,Lmax):
     """ calculating photo-electron spectrum """
     for ipoint,k in enumerate(list(kgrid)):   
         W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
-        spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) )
+        spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) #*k (see Demekhin 2013)
     #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.xlabel("Energy (eV)")

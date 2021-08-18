@@ -786,8 +786,8 @@ def build_cube(params,Gr,wffile):
     ivec_min = 0
     ivec_max = 7
 
-    npts = 40j
-    npt = 40
+    npts = 50j
+    npt = 50
     cube_range = 5.0
     dx = 2*cube_range/npt
     dy = dx

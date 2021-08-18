@@ -113,6 +113,8 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     end_time = time.time()
     print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
+    if params['calc_free_energy'] == True:
+        felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
 
     print("initialize electric field")
     Elfield = FIELD.Field(params)
@@ -146,6 +148,14 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         wavepacket[itime,:] = psi_out
         psi                 = wavepacket[itime,:]
 
+        if params['calc_free_energy'] == True: 
+            #here we put free photoelectron energy as
+            free_energy = np.dot(np.dot(psi.T,ham0 - vmat + dip),psi)
+            #where ham0 is only KEO
+            #store in file and average.
+            felenfile.write( '{:10.3f}'.format(t) +\
+                            " ".join('{:15.5e}'.format(free_energy .real) +\
+                            '{:15.5e}'.format(free_energy.imag))  + "\n")
 
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
