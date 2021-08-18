@@ -51,10 +51,10 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
     params['bound_nlobs']   = 8
-    params['bound_nbins']   = 40
+    params['bound_nbins']   = 100
     params['bound_binw']    = 1.0
-    params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
+    params['bound_rshift']  = 0.0   
+    params['bound_lmax']    = 6
 
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -346,4 +346,7 @@ def gen_input(jobtype):
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
     params['k_list_pad']      =  list(np.linspace(1,2.0,8)) #list of wavevectors for MFPAD plots
+    
+    params['n_pes_pts']         = 500 #numer of points for PES evaluation
+    params['max_pes_en']        = 5.0 #in a.u.
     return params

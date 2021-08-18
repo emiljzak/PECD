@@ -149,7 +149,7 @@ def test_wigner():
     PLOTS.plot_spharm_rotated(WDM[:,:,0])
 
 
-def legendre_expansion(grid,Wav,Lmax):
+def legendre_expansion(params,grid,Wav,Lmax): #include params into this
     """ Calculate Legendre expansion coefficients as a function of photo-electron momentum """
     """ Calculate photo-electron energy spectrum """
 
@@ -187,10 +187,10 @@ def legendre_expansion(grid,Wav,Lmax):
     x, w    = np.polynomial.legendre.leggauss(deg)
     w       = w.reshape(nleg,-1)
 
-    nkpoints    = 300
+    nkpoints    = params['n_pes_pts'] 
     bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
     spectrum    = np.zeros(nkpoints, dtype = float)
-    kgrid       = np.linspace(0.05,5.0,nkpoints)
+    kgrid       = np.linspace(0.05,params['max_pes_en'] ,nkpoints)
 
     """ calculating Legendre moments """
     for n in range(0,Lmax+1):
@@ -208,8 +208,8 @@ def legendre_expansion(grid,Wav,Lmax):
         W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
         spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) #*k (see Demekhin 2013)
     #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
-    plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
-    plt.xlabel("Energy (eV)")
+    plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,kgrid * np.log(spectrum), label = r"$\sigma(k)$", marker = '.', color = 'r')
+    plt.xlabel("Energy (eV)") #/spectrum.max()
     plt.xlim([0,200]) 
    #plt.xlabel("momentum (a.u.)")
     plt.ylabel("cross section")
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 
     grid, Wav = analyze_Wav(N_batches,params) #return fully averaged (over batches) PAD
 
-    bcoeff, kgrid, spectrum = legendre_expansion(grid,Wav,params['pecd_lmax']) #returns legendre expansion coefficients of PAD
+    bcoeff, kgrid, spectrum = legendre_expansion(params,grid,Wav,params['pecd_lmax']) #returns legendre expansion coefficients of PAD
 
     pecd_sph = calc_pecd(N_batches,params,bcoeff,kgrid) #calculates PECD and other related quantities
 
