@@ -50,11 +50,11 @@ def gen_input(jobtype):
     params['file_format']   = 'dat' #npz, hdf5
 
     """==== basis set parameters for BOUND ===="""
-    params['bound_nlobs']   = 8
+    params['bound_nlobs']   = 7
     params['bound_nbins']   = 100
     params['bound_binw']    = 1.0
     params['bound_rshift']  = 0.0   
-    params['bound_lmax']    = 6
+    params['bound_lmax']    = 2
 
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
@@ -70,9 +70,9 @@ def gen_input(jobtype):
     params['ARPACK_mode']       = "normal"
     #
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
 
-    params['gen_adaptive_quads'] = False
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4
@@ -163,12 +163,12 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 1000.0 
-    params['dt']        = 0.3
-    params['ivec']      = 0
+    params['tmax']      = 30000.0 
+    params['dt']        = 50.0
+    params['ivec']      = 6
     params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
-    params['calc_free_energy'] = True #calculate instantaneous energy of the free electron wavepacket in the field
+    params['calc_free_energy'] = False #calculate instantaneous energy of the free electron wavepacket in the field
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -178,7 +178,7 @@ def gen_input(jobtype):
     params['save_enr_init']      = True
 
     
-    params['plot_elfield']       = False
+    params['plot_elfield']       = True
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -208,9 +208,9 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
 
-    params['omega']     = 189 #40.0 #23.128 = 54 eV, 60nm = 20 eV
+    params['omega']     =  800#40.0 #23.128 = 54 eV, 60nm = 20 eV
 
-    freq_units          = "ev" #nm or ev
+    freq_units          = "nm" #nm or ev
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
@@ -247,9 +247,9 @@ def gen_input(jobtype):
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
 
-    """ ---- field intensity ----- """
-    params['tau']       = 200.0 #as: pulse duration (sigma)
-    params['tc']        = 500.0 #as: pulse centre
+    """ ---- field params ----- """
+    params['tau']       = 8000.0 #as: pulse duration (sigma)
+    params['tc']        = 15000.0 #as: pulse centre
 
     
 
@@ -347,6 +347,6 @@ def gen_input(jobtype):
     # [15.0,50.0]
     params['k_list_pad']      =  list(np.linspace(1,2.0,8)) #list of wavevectors for MFPAD plots
     
-    params['n_pes_pts']         = 500 #numer of points for PES evaluation
-    params['max_pes_en']        = 5.0 #in a.u.
+    params['n_pes_pts']         = 2000 #numer of points for PES evaluation
+    params['max_pes_en']        = 6.0 #in a.u.
     return params

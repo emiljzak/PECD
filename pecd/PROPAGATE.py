@@ -101,6 +101,16 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     psi               =  psi_init[:,params['ivec']]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
+    if params['calc_free_energy'] == True:
+        felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
+
+    print("initialize electric field")
+    Elfield = FIELD.Field(params)
+    Fvec = Elfield.gen_field(tgrid) 
+    
+    if params['plot_elfield'] == True:
+        PLOTS.plot_elfield(Fvec,tgrid,time_to_au)
+
     print(" Initialize the interaction matrix ")
 
 
@@ -113,15 +123,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     end_time = time.time()
     print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
-    if params['calc_free_energy'] == True:
-        felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
 
-    print("initialize electric field")
-    Elfield = FIELD.Field(params)
-    Fvec = Elfield.gen_field(tgrid) 
-    
-    if params['plot_elfield'] == True:
-        PLOTS.plot_elfield(Fvec,tgrid,time_to_au)
 
     Fvec = np.asarray(Fvec)
     Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 

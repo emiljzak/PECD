@@ -262,7 +262,7 @@ def CALC_ESP_PSI4(dir,params):
 def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     os.chdir(dir)
     psi4.core.be_quiet()
-    properties_origin=[x, y, z] #[“NUCLEAR_CHARGE”] or ["COM"]
+    properties_origin=["COM"] #[“NUCLEAR_CHARGE”] or ["COM"] #here might be the shift!
     ang_au = CONSTANTS.angstrom_to_au
 
     if params['molec_name'] == "d2s":

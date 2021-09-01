@@ -63,19 +63,20 @@ def gen_input(jobtype):
     params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
     """ ARPACK eigensolver parameters """
-    params['ARPACK_tol']    = 1e-2
-    params['ARPACK_maxiter']= 50000
-    params['energy_guess']  = None # (eV)
-    params['energy_guess'] /= CONSTANTS.au_to_ev
+    params['ARPACK_tol']        = 1e-3
+    params['ARPACK_maxiter']    = 60000
+    params['energy_guess']      = None # (eV)
+    params['ARPACK_which']      = 'LA'
+    params['ARPACK_mode']       = "normal"
 
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
     params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
-    params['sph_quad_tol']       = 1e-5
+    params['sph_quad_tol']       = 1e-4
     params['calc_method']        = 'jit' #jit, quadpy, vec
-    params['hmat_filter']        = 1e-3 #threshold value for keeping matrix elements of field-free Ham
+    params['hmat_filter']        = 1e-2 #threshold value for keeping matrix elements of field-free Ham
 
     """==== electrostatic potential ===="""
 
@@ -161,9 +162,14 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 4000.0 
+    params['tmax']      = 100.0 
     params['dt']        = 4.0
-    params['ivec']      = 6 
+    params['ivec']      = 0 
+
+    params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
+
+
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -202,13 +208,13 @@ def gen_input(jobtype):
     """ ====== FIELD PARAMETERS ====== """
 
     """ ---- carrier frequency ----- """
-    params['omega']     = 266.0 #23.128 = 54 eV, 60nm = 20 eV
-    freq_units          = "nm" #nm or eV
+    params['omega']     = 53.6057 #23.128 = 54 eV, 60nm = 20 eV
+    freq_units          = "eV" #nm or eV
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
     elif freq_units == "ev":
-        params['omega']     = 0.0   # from ev to frequency  (Hz)
+        params['omega']     = CONSTANTS.ev_to_hz * params['omega']   # from ev to frequency  (Hz)
     else:
         raise ValueError("Incorrect units for frequency")
 
@@ -229,18 +235,18 @@ def gen_input(jobtype):
     field_units     = "V/cm"
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-    intensity       = 2.0e+13 #W/cm^2 #peak intensity
+
+    intensity       = 7.0e+16 #W/cm^2 #peak intensity
+
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
     params['E0']        = field_strength
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
-
-    """ ---- field intensity ----- """
-    
+    """ ---- field params----- """
     params['tau']       = 1000.0 #as: pulse duration (sigma)
-    params['tc']        = 2000.0 #as: pulse centre
+    params['tc']        = 3000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -257,11 +263,7 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0}
 
-    # if gaussian width is given: e^-t^2/sigma^2
-    # FWHM = 2.355 * sigma/sqrt(2)
-    env_gaussian = {"function_name": "envgaussian", 
-                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
-                    "t0": (time_to_au * params['tc'])  }
+
 
     params['field_form'] = "analytic" #or numerical
     params['field_type'] = field_CPL 
@@ -271,6 +273,20 @@ def gen_input(jobtype):
         2) field_LP
         3) field_omega2omega
     """
+
+    # if gaussian width is given: e^-t^2/sigma^2
+    # FWHM = 2.355 * sigma/sqrt(2)
+    env_gaussian = {"function_name": "envgaussian", 
+                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
+                    "t0": (time_to_au * params['tc'])  }
+
+    params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
+
+    env_sin2 = {"function_name": "envsin2", 
+                    "Ncycles": 10 , 
+                    "t0": (time_to_au * params['tc']),
+                    "t_cycle": params['opt_cycle']  }
+
 
     params['field_env'] = env_gaussian 
 
@@ -289,7 +305,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],20)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],5)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
@@ -314,11 +330,17 @@ def gen_input(jobtype):
     """ PECD """
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['analyze_time']    = params['tmax'] #at what time(s) (in as) do we want to calculate PECD and other observables?
+    params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
+    params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
     
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
+    # [15.0,50.0]
+    params['k_list_pad']      =  list(np.linspace(1,2.0,8)) #list of wavevectors for MFPAD plots
+    
+    params['n_pes_pts']         = 1000 #numer of points for PES evaluation
+    params['max_pes_en']        = 3.0 #in a.u.
 
     return params
