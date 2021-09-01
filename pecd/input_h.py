@@ -17,7 +17,7 @@ def gen_input(jobtype):
         3) 'analyze_single':    analyze wavefunction at single orientation
         4) 'analyze_grid':      analyze wavefunction for a grid of Euler angles
     """
-
+    params['integrate_esp'] = False
     """ === molecule directory ==== """ 
     params['molec_name']        = "h"
 
@@ -50,8 +50,8 @@ def gen_input(jobtype):
 
     """==== basis set parameters for BOUND ===="""
 
-    params['bound_nlobs']   = 28
-    params['bound_nbins']   = 40
+    params['bound_nlobs']   = 20
+    params['bound_nbins']   = 100
     params['bound_binw']    = 2.0
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 2
@@ -65,13 +65,13 @@ def gen_input(jobtype):
     """ ARPACK eigensolver parameters """
     params['ARPACK_tol']        = 1e-3
     params['ARPACK_maxiter']    = 60000
-    params['energy_guess']      = None # (eV)
+    params['ARPACK_enr_guess']  = None # (eV)
     params['ARPACK_which']      = 'LA'
     params['ARPACK_mode']       = "normal"
 
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = True
+    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
+    params['gen_adaptive_quads'] = False
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4
@@ -162,8 +162,8 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 100.0 
-    params['dt']        = 4.0
+    params['tmax']      = 4000.0 
+    params['dt']        = 1.5
     params['ivec']      = 0 
 
     params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
@@ -209,7 +209,7 @@ def gen_input(jobtype):
 
     """ ---- carrier frequency ----- """
     params['omega']     = 53.6057 #23.128 = 54 eV, 60nm = 20 eV
-    freq_units          = "eV" #nm or eV
+    freq_units          = "ev" #nm or ev
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
@@ -246,7 +246,7 @@ def gen_input(jobtype):
 
     """ ---- field params----- """
     params['tau']       = 1000.0 #as: pulse duration (sigma)
-    params['tc']        = 3000.0 #as: pulse centre
+    params['tc']        = 2000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -305,7 +305,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],5)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
