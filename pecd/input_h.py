@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'propagate_grid' 
+    params['mode']      = 'analyze_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -36,6 +36,7 @@ def gen_input(jobtype):
 
 
     """ === ro-vibrational part ==== """ 
+    params['density_averaging'] = False #use rotational proability density for orientation averageing. Otherwise uniform probability. 
     params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
     params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
@@ -70,8 +71,8 @@ def gen_input(jobtype):
     params['ARPACK_mode']       = "normal"
 
     """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = True #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = False
+    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
+    params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
     params['sph_quad_tol']       = 1e-4
@@ -236,7 +237,7 @@ def gen_input(jobtype):
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 7.0e+16 #W/cm^2 #peak intensity
+    intensity       = 3.0e+16 #W/cm^2 #peak intensity
 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
@@ -266,7 +267,7 @@ def gen_input(jobtype):
 
 
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_CPL 
+    params['field_type'] = field_LP 
 
     """ Available field types :
         1) field_CPL
@@ -305,7 +306,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],50)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
@@ -338,7 +339,7 @@ def gen_input(jobtype):
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(1,2.0,8)) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
     
     params['n_pes_pts']         = 1000 #numer of points for PES evaluation
     params['max_pes_en']        = 3.0 #in a.u.

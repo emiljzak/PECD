@@ -507,7 +507,7 @@ def plot_2D_polar_map(func,grid_theta,kgrid,ncontours,params):
     spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
     axft = fig.add_subplot(spec[0, 0], projection='polar')
     kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
-    axft.set_ylim(0,5) #radial extent
+    axft.set_ylim(0,2.5) #radial extent
     line_ft = axft.contourf(thetamesh, kmesh, func/np.max(func), 
                             ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_ft, ax=axft, aspect=30)

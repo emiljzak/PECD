@@ -208,9 +208,9 @@ def legendre_expansion(params,grid,Wav,Lmax): #include params into this
         W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
         spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) #*k (see Demekhin 2013)
     #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
-    plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,kgrid * np.log(spectrum), label = r"$\sigma(k)$", marker = '.', color = 'r')
+    plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,kgrid * spectrum, label = r"$\sigma(k)$", marker = '.', color = 'r')
     plt.xlabel("Energy (eV)") #/spectrum.max()
-    plt.xlim([0,500]) 
+    plt.xlim([0,120]) 
    #plt.xlabel("momentum (a.u.)")
     plt.ylabel("cross section")
     plt.legend()   
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
 
     jobtype = "local"
-    inputfile = "input_co"
+    inputfile = "input_h"
 
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
     import importlib
