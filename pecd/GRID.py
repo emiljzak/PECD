@@ -350,6 +350,17 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         """.format( 0.0, 0.0, 0.0)
         )
 
+    elif params['molec_name'] == "c":
+        mol = psi4.geometry("""
+        1 2
+        noreorient
+        units au
+        
+        C	{0} {1} {2}
+
+        """.format( 0.0, 0.0, 0.0)
+        )
+
     psi4.set_options({'basis': params['scf_basis'], 'e_convergence': params['scf_enr_conv'], 'reference': params['scf_method']})
     E, wfn = psi4.prop('scf', properties = ["GRID_ESP"], return_wfn = True)
     Vvals = wfn.oeprop.Vvals()

@@ -10,7 +10,7 @@ def gen_input(jobtype):
 
     """ === execution mode ==== """ 
     
-    params['mode']      = 'analyze_grid' 
+    params['mode']      = 'propagate_grid' 
     """
         1) 'propagate_single':  propagate wavefunction at single orientation
         2) 'propagate_grid':    propagate wavefunction for a grid of Euler angles
@@ -19,20 +19,20 @@ def gen_input(jobtype):
     """
     params['integrate_esp'] = False
     """ === molecule directory ==== """ 
-    params['molec_name']        = "co"
+    params['molec_name']        = "c"
 
     if jobtype == "maxwell":
         params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" 
-        params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/co/"
+        params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/c/"
     elif jobtype == "local":
         params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#
-        params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/co/"
+        params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/c/"
 
 
     """ === molecule definition ==== """ 
-    params['mol_geometry']  = {"rCO":1.14} #angstroms
-    params['mol_masses']    = {"C":12.0,"O":16.0}
-    params['mol_embedding'] = 0.0 #degrees 0.0 = z-parallel C=0 embedding with O in positive direction.
+    params['mol_geometry']  = {"rc":0.0} #angstroms
+    params['mol_masses']    = {"c":12.0}
+    params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
 
     """ === ro-vibrational part ==== """ 
@@ -50,12 +50,13 @@ def gen_input(jobtype):
     params['file_format']   = 'dat' #npz, hdf5
 
     """==== basis set parameters for BOUND ===="""
-    params['bound_nlobs']   = 8
-    params['bound_nbins']   = 100
-    params['bound_binw']    = 0.9
-    params['bound_rshift']  = 0.0   
-    params['bound_lmax']    = 6
 
+    params['bound_nlobs']   = 10
+    params['bound_nbins']   = 30
+    params['bound_binw']    = 1.65
+    params['bound_rshift']  = 0.0
+    params['bound_lmax']    = 2
+    
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
@@ -68,16 +69,15 @@ def gen_input(jobtype):
     params['ARPACK_enr_guess']  = None # (eV)
     params['ARPACK_which']      = 'LA'
     params['ARPACK_mode']       = "normal"
-    #
+
     """==== potential energy matrix ===="""
     params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-
     params['gen_adaptive_quads'] = True
     params['use_adaptive_quads'] = True
     params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
-    params['sph_quad_tol']       = 1e-4
+    params['sph_quad_tol']       = 1e-5
     params['calc_method']        = 'jit' #jit, quadpy, vec
-    params['hmat_filter']        = 1e-2 #threshold value for keeping matrix elements of field-free Ham
+    params['hmat_filter']        = 1e-4 #threshold value for keeping matrix elements of field-free Ham
 
     """==== electrostatic potential ===="""
 
@@ -85,9 +85,9 @@ def gen_input(jobtype):
     params['esp_mode']           = "exact" #exact or interpolate
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
-    params['plot_esp']           = True
+    params['plot_esp']           = False
 
-    params['scf_enr_conv']       = 1.0e-5 #convergence threshold for SCF
+    params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
     params['scf_basis']          = '6-31G**' #"cc-pDTZ" #"631G**"
     params['scf_method']         = 'uhf'
 
@@ -163,12 +163,14 @@ def gen_input(jobtype):
 
 
     params['t0']        = 0.0 
-    params['tmax']      = 2000.0 
-    params['dt']        = 0.3
-    params['ivec']      = 6
-    params['plot_ini_orb'] = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['tmax']      = 4.0 
+    params['dt']        = 1.5
+    params['ivec']      = 0 
 
-    params['calc_free_energy'] = False #calculate instantaneous energy of the free electron wavepacket in the field
+    params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+    params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
+
+
 
     params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
@@ -178,7 +180,7 @@ def gen_input(jobtype):
     params['save_enr_init']      = True
 
     
-    params['plot_elfield']       = True
+    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -207,16 +209,13 @@ def gen_input(jobtype):
     """ ====== FIELD PARAMETERS ====== """
 
     """ ---- carrier frequency ----- """
-
-    params['omega']     =  186.0#40.0 #23.128 = 54 eV, 60nm = 20 eV
-
+    params['omega']     = 53.6057 #23.128 = 54 eV, 60nm = 20 eV
     freq_units          = "ev" #nm or ev
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
     elif freq_units == "ev":
         params['omega']     = CONSTANTS.ev_to_hz * params['omega']   # from ev to frequency  (Hz)
-
     else:
         raise ValueError("Incorrect units for frequency")
 
@@ -238,7 +237,7 @@ def gen_input(jobtype):
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 1e+14 #W/cm^2 #peak intensity
+    intensity       = 3.0e+16 #W/cm^2 #peak intensity
 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
@@ -246,11 +245,9 @@ def gen_input(jobtype):
     params['E0']        = field_strength
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
-
-    """ ---- field params ----- """
-    params['tau']       = 500.0 #as: pulse duration (sigma)
-    params['tc']        = 1000.0 #as: pulse centre
-
+    """ ---- field params----- """
+    params['tau']       = 1000.0 #as: pulse duration (sigma)
+    params['tc']        = 2000.0 #as: pulse centre
     
 
     """==== field dictionaries ===="""
@@ -260,7 +257,7 @@ def gen_input(jobtype):
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
                     "spherical":        True, 
-                    "typef":            "RCPL"}
+                    "typef":            "LCPL"}
 
     field_LP    = { "function_name":    "fieldLP", 
                     "omega":            params['omega'], 
@@ -268,8 +265,9 @@ def gen_input(jobtype):
                     "CEP0":             0.0}
 
 
+
     params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_LP
+    params['field_type'] = field_LP 
 
     """ Available field types :
         1) field_CPL
@@ -279,11 +277,9 @@ def gen_input(jobtype):
 
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
-
     env_gaussian = {"function_name": "envgaussian", 
                     "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
                     "t0": (time_to_au * params['tc'])  }
-    
 
     params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
 
@@ -293,12 +289,11 @@ def gen_input(jobtype):
                     "t_cycle": params['opt_cycle']  }
 
 
-    params['field_env'] = env_gaussian
+    params['field_env'] = env_gaussian 
 
     """ Available envelopes :
         1) env_gaussian
         2) env_flat
-        3) env_sin2
     """
 
     """==== POST-PROCESSING: PLOTS ===="""
@@ -311,8 +306,7 @@ def gen_input(jobtype):
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],5)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
-
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],3)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
@@ -345,8 +339,9 @@ def gen_input(jobtype):
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(1,2.0,8)) #list of wavevectors for MFPAD plots
+    params['k_list_pad']      =  list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
     
-    params['n_pes_pts']         = 2000 #numer of points for PES evaluation
-    params['max_pes_en']        = 6.0 #in a.u.
+    params['n_pes_pts']         = 1000 #numer of points for PES evaluation
+    params['max_pes_en']        = 3.0 #in a.u.
+
     return params

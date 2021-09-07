@@ -769,6 +769,15 @@ def rotate_mol_xyz(params, grid_euler, irun):
         #  Hx
         #  Hy 
         #  Hz 
+        
+    elif params['molec_name'] == "c":
+        
+        mol_xyz = np.zeros( (3,1), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
+
+        #  Cx
+        #  Cy 
+        #  Cz 
 
     elif params['molec_name'] == "h2o":
         mol_xyz = np.zeros( (3,1), dtype = float) #
