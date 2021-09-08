@@ -769,7 +769,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
         #  Hx
         #  Hy 
         #  Hz 
-        
+
     elif params['molec_name'] == "c":
         
         mol_xyz = np.zeros( (3,1), dtype = float) #
@@ -1015,124 +1015,6 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
 
     return sph_quad_list
 
-def gen_adaptive_quads_exact(params , rgrid):
-
-    sph_quad_list = [] #list of quadrature levels needed to achieve convergence quad_tol of the potential energy matrix elements (global)
-
-    lmax = params['bound_lmax']
-    quad_tol = params['sph_quad_tol']
-
-    print("Adaptive quadratures generator with exact numerical potential")
-
-    sphlist = MAPPING.GEN_SPHLIST(lmax)
-
-    val =  np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
-    val_prev = np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
-
-    spherical_schemes = []
-    for elem in list(quadpy.u3.schemes.keys()):
-        if 'lebedev' in elem:
-            spherical_schemes.append(elem)
-
-    xi = 0
-    for i in range(np.size( rgrid, axis=0 )): 
-        for n in range(np.size( rgrid, axis=1 )): 
-            #if i == np.size( rgrid, axis=0 ) - 1 and n == np.size( rgrid, axis=1 ) - 1: break
-                        
-            rin = rgrid[i,n]
-            print("i = " + str(i) + ", n = " + str(n+1) + ", xi = " + str(xi+1) + ", r = " + str(rin) )
-
-            for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-                ischeme = 0 #use enumerate()
-
-                #get grid
-                Gs = GRID.read_leb_quad(scheme, params['main_dir'] )
-
-                #pull potential at quadrature points
-                potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme
-
-                if os.path.isfile(params['job_directory'] + "esp/" + potfilename):
-                    print (potfilename + " file exist")
-
-
-                    filesize = os.path.getsize(params['job_directory']+ "esp/" + potfilename)
-
-                    if filesize == 0:
-                        print("The file is empty: " + str(filesize))
-                        os.remove(params['job_directory']+ "esp/" + potfilename)
-                        GRID.GEN_XYZ_GRID([Gs],np.array(rin),params['job_directory']+"esp/")
-
-                        V = GRID.CALC_ESP_PSI4(params['job_directory']+"esp/",params)
-                        V = np.asarray(V)
-
-                        fl = open(params['job_directory'] + "esp/" + potfilename,"w")
-                        np.savetxt(fl,V,fmt='%10.6f')
-
-                    else:
-                        print("The file is not empty: " + str(filesize))
-                        fl = open(params['job_directory'] + "esp/" + potfilename , 'r' )
-                        V = []
-                        for line in fl:
-                            words = line.split()
-                            potval = -1.0 * float(words[0])
-                            V.append(potval)
-                        V = np.asarray(V)
-    
-                else:
-                    print (potfilename + " file does not exist")
-
-                    #generate xyz grid
-                    GRID.GEN_XYZ_GRID([Gs], np.array(rin), params['job_directory']+"esp/")
-
-                    V = GRID.CALC_ESP_PSI4(params['job_directory']+"esp/",params)
-                    V = np.asarray(V)
-
-                    fl = open(params['job_directory'] + "esp/" + potfilename,"w")
-                    np.savetxt(fl, V, fmt='%10.6f')
-
-
-                for l1,m1 in sphlist:
-                    for l2,m2 in sphlist:
-
-                        val[ischeme] = calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 )
-
-                        #val[k] = calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant )
-
-                        print(  '%4d %4d %4d %4d'%(l1,m1,l2,m2) + '%12.6f' % val[ischeme] + \
-                                '%12.6f' % (val_prev[ischeme]) + \
-                                '%12.6f '%np.abs(val[ischeme]-val_prev[ischeme])  )
-                        ischeme += 1
-
-                diff = np.abs(val - val_prev)
-
-                if (np.any( diff > quad_tol )):
-                    print( str(scheme) + " convergence not reached" ) 
-                    for ischeme in range(len(val_prev)):
-                        val_prev[ischeme] = val[ischeme]
-                elif ( np.all( diff < quad_tol ) ):     
-                    print( str(scheme) + " convergence reached !!!")
-
-                    sph_quad_list.append([ i, n + 1, xi + 1, str(scheme)]) #new, natural ordering n = 1, 2, 3, ..., N-1, where N-1 is bridge
-                    xi += 1
-                    break
-
-                #if no convergence reached raise warning
-                if ( scheme == spherical_schemes[len(spherical_schemes)-1] and np.any( diff > quad_tol )):
-                    print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
-                    print( str(scheme) + " convergence reached !!!")
-
-                    sph_quad_list.append([ i, n + 1, xi + 1, str(scheme)])
-                    xi += 1
-
-    print("Converged quadrature levels: ")
-    print(sph_quad_list)
-    quadfilename = params['job_directory'] + params['file_quad_levels'] 
-    fl = open(quadfilename,'w')
-    print("saving quadrature levels to file: " + quadfilename )
-    for item in sph_quad_list:
-        fl.write( str('%4d '%item[0]) + str('%4d '%item[1]) + str('%4d '%item[2]) + str(item[3]) + "\n")
-
-    return sph_quad_list
 
 
 def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
@@ -1467,9 +1349,6 @@ if __name__ == "__main__":
 
 
     params = input.gen_input()
-
-
-
 
     BUILD_HMAT0(params)
 

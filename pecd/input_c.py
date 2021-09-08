@@ -52,7 +52,7 @@ def gen_input(jobtype):
     """==== basis set parameters for BOUND ===="""
 
     params['bound_nlobs']   = 10
-    params['bound_nbins']   = 30
+    params['bound_nbins']   = 50
     params['bound_binw']    = 1.65
     params['bound_rshift']  = 0.0
     params['bound_lmax']    = 2

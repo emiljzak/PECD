@@ -216,7 +216,7 @@ def legendre_expansion(params,grid,Wav,Lmax): #include params into this
     plt.legend()   
     plt.show()
     exit()
-
+ 
     #plot Legendre-reconstructed W_av on test grid 
     thetagridtest       = np.linspace(-np.pi,np.pi, nkpoints)
     kgridtest           = np.linspace(0.05, 1, nkpoints)
