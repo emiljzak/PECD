@@ -88,11 +88,6 @@ def setup_input(params_input, looparams):
 
 
     """ === molecule definition ==== """ 
-    params['mol_geometry']  = {"rc":0.0} #angstroms
-    params['mol_masses']    = {"c":12.0}
-    params['mol_embedding'] = "bisector" #TROVE's bisector embedding
-    params['N_euler'] 	    = 1 #number of euler grid points per dimension
-    params['N_batches'] 	= 1 #number of batches for orientation averaging
 
 
     """ === ro-vibrational part ==== """ 
@@ -109,19 +104,7 @@ def setup_input(params_input, looparams):
     params['hmat_format']   = "sparse_csr" # numpy_arr
     params['file_format']   = 'dat' #npz, hdf5
 
-    """==== basis set parameters for BOUND ===="""
-
-    params['bound_nlobs']   = 10
-    params['bound_nbins']   = 50
-    params['bound_binw']    = 1.65
-    params['bound_rshift']  = 0.0
-    params['bound_lmax']    = 2
     
-    params['save_ham0']     = True #save the calculated bound state Hamiltonian
-    params['save_psi0']     = True #save psi0
-    params['save_enr0']     = True #save eigenenergies for psi0
-
-    params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
 
     """ ARPACK eigensolver parameters """
     params['ARPACK_tol']        = 1e-3
