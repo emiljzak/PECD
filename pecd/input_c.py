@@ -42,7 +42,7 @@ def gen_input(jobtype):
 
     """====== Basis set parameters for BOUND ======"""
     """ 
-        Set up basis set parameters for the construction of the stationary Hamiltonian matrix. 
+        Set up basis set parameters for the calculation of the stationary Hamiltonian matrix. 
         Bound states are calculated with these parameters.
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
@@ -56,30 +56,28 @@ def gen_input(jobtype):
     params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
     params['N_batches'] 	= 1 #number of batches for orientation averaging
 
-    params['map_type']      = 'DVR' #DVR or SPECT
+    params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
 
-    params['file_format']   = 'dat' #npz, hdf5
 
     """==== Propagation parameters ===="""
 
-    params['time_units']         = "as"
+    params['ivec']          = 0 #ID of eigenstate to propagate
+                            #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
-    params['t0']        = 0.0 
-    params['tmax']      = 4.0 
-    params['dt']        = 1.5
+    params['time_units']    = "as"
 
-    params['ivec']      = 0 
+    params['t0']            = 0.0 
+    params['tmax']          = 4.0 
+    params['dt']            = 1.5
+
 
 
     """ ====== FIELD PARAMETERS ====== """
 
-    params['freq_units']    = "ev"      #nm or ev
-    params['omega']         = 53.6057   #23.128 = 54 eV, 60nm = 20 eV
-
+    params['freq_units']    = "ev"      # nm or ev
+    params['omega']         = 53.6057   # 23.128 nm = 54 eV, 60 nm = 20 eV
     params['intensity']     = 3.0e+16   # W/cm^2: peak intensity
 
-
-    """ ---- Pulse params----- """
     """ Available field types :
         1) field_RCPL    - right-circularly polarized field
         2) field_LCPL    - left-circularly polarized field
@@ -133,11 +131,8 @@ def gen_input(jobtype):
     params['hmat_format']   = "sparse_csr" # numpy_arr
     params['hmat_filter']   = 1e-2 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-    params['save_ham0']     = True #save the calculated bound state Hamiltonian
-    params['save_psi0']     = True #save psi0
-    params['save_enr0']     = True #save eigenenergies for psi0
-
     params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
+    params['file_format']   = 'dat' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
 
     """ ===== ARPACK eigensolver parameters ===== """
@@ -157,9 +152,20 @@ def gen_input(jobtype):
     params['rv_wavepacket_time']= 50
     params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
 
+    """====  SAVING ===="""
+    params['save_ham0']     = True #save the calculated bound state Hamiltonian
+    params['save_psi0']     = True #save psi0
+    params['save_enr0']     = True #save eigenenergies for psi0
+
+    params["save_snapthots"] = True
+    params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
+    params['save_psi_init']      = True
+    params['save_enr_init']      = True
+
+
 
     """==== POST-PROCESSING: PLOTS ===="""
-
+    params['plot_elfield']       = False
     params['plot_modes']    = { "snapshot":         True, 
                                 "animation":        False}
 
@@ -186,7 +192,7 @@ def gen_input(jobtype):
         animation_filename: name of the file into which animations will be saved
     """
 
-    params["save_snapthots"] = True
+
 
 
     """==== momentum-space distributions ===="""

@@ -1,6 +1,8 @@
 import numpy as np
 import os
 import subprocess
+import CONSTANTS
+
 
 def create_dirs(params):
 
@@ -176,16 +178,9 @@ def setup_input(params_input, looparams):
     params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
     params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
 
-
-
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
 
-    params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
-    params['save_psi_init']      = True
-    params['save_enr_init']      = True
 
-    
-    params['plot_elfield']       = False
 
     params['wavepacket_file']    = "wavepacket"
 
@@ -211,8 +206,6 @@ def setup_input(params_input, looparams):
                                     "_" + str(params['esp_method_name']) 
 
 
-
-
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
     elif freq_units == "ev":
@@ -221,33 +214,29 @@ def setup_input(params_input, looparams):
         raise ValueError("Incorrect units for frequency")
 
     opt_cycle                  = 1.0e18/params['omega']
-    suggested_no_pts_per_cycle = 50     # time-step can be estimated based on the carrier frequency of the pulse. Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). We can use much less. Demekhin used 50pts/cycle
-    # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
-    
+    suggested_no_pts_per_cycle = 50     # time-step can be estimated based on the carrier frequency of the pulse. 
+                                        # Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). 
+                                        # We can use much less. Demekhin used 50 pts/cycle.
+                                        # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
+                                        
     print( "Electric field carrier frequency = " + str("%10.3f"%( params['omega'] * 1.0e-12 )) + " THz" )
     print( "Electric field oscillation period (optical cycle) = " + str("%10.3f"%(1.0e15/params['omega'])) + " fs")
     print( "suggested time-step for field linear frequency = " + str("%12.3f"%(params['omega']/1e12)) + " THz is: " + str("%10.2f"%(opt_cycle/suggested_no_pts_per_cycle )) + " as")
 
     params['omega'] *= 2.0 * np.pi # linear to angular frequency
     params['omega'] *= CONSTANTS.freq_to_au['Hz'] #Hz to a.u.
+    params['opt_cycle'] = 2.0 * np.pi /params['omega'] #optical cycle
 
-    """ ---- field intensity ----- """
     
     #params['E0'] = 1.0e9 #V/cm
-    
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
-
-
-    field_units     = "V/cm" 
+    field_units     = "V/cm"
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
     params['E0']        = field_strength
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
-
-
-
 
 
     """==== field dictionaries ===="""
@@ -267,10 +256,10 @@ def setup_input(params_input, looparams):
                     "CEP0":             0.0}
 
 
-    # if gaussian width is given: e^-t^2/sigma^2
+    # if gaussian width is given as: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
 
-    params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
+
 
     env_gaussian = {"function_name": "envgaussian", 
                     "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
