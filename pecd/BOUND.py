@@ -545,6 +545,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
             sph_quad_list = read_adaptive_quads(params)
         elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
             print("using global quadrature scheme")
+            sph_quad_list = [params['sph_quad_global']]
 
     elif params['esp_mode'] == "exact":
         if  params['gen_adaptive_quads'] == True:

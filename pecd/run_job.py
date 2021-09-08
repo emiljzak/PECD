@@ -2,7 +2,7 @@ import numpy as np
 import os
 import subprocess
 
-def create_dirs(params,N_euler_3D):
+def create_dirs(params):
 
 	os.chdir(params['working_dir'])
 	path =  params['job_directory']
@@ -24,9 +24,9 @@ def create_dirs(params,N_euler_3D):
 
 
 
-def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
+def run_array_job(params):
 
-	if jobtype == "maxwell":
+	if jobtype == "slurm":
 		flag = []
 		print("Submitting SLURM job")
 		path = os.getcwd()
@@ -43,8 +43,6 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 			flag.append([ibatch,iflag])
 		print(flag)
 
-
-
 	elif jobtype == "local":
 		flag = []
 		print("Executing local job")
@@ -60,17 +58,37 @@ def run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir):
 
 def gen_inputs_list(jobtype,params_input):
 
-    lmin = 
-    lmax = 
+    params_list = {}
 
-    nlobmin = 
-    nlobmax = 
+    lmin = params_input['bound_lmax'][0]
+    lmax = params_input['bound_lmax'][1]
+    nl   = params_input['bound_lmax'][2]
 
-    rbinmin = 
-    rbinmax = 
 
-    for 
+    nlobmin = params_input['bound_nlobs'][0]
+    nlobmax  = params_input['bound_nlobs'][1]
+    nlobattos = params_input['bound_nlobs'][2]
 
+
+    rbinmin = params_input['bound_binw'][0]
+    rbinmax  = params_input['bound_binw'][1]
+    nrbin   = params_input['bound_binw'][2]
+
+    binrange = np.linspace(rbinmin,rbinmax,nrbin,endpoint=True)
+
+
+    for l in range(lmin,lmax+1,nl):
+        print(l)
+        params_input['lmax'] = l
+        for n in range(nlobmin,nlobmax,nlobattos):
+            params_input['nlobatto'] = n
+            for r in binrange:
+                print(r)
+                params_input['rbin'] = r
+
+                params_list.append(setup_input(params_input))
+               
+    exit()
     return params_list
 
 def setup_input(params_input, looparams):
@@ -87,59 +105,8 @@ def setup_input(params_input, looparams):
         params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/c/"
 
 
-    """ === molecule definition ==== """ 
-
-
-    """ === ro-vibrational part ==== """ 
-    params['density_averaging'] = False #use rotational proability density for orientation averageing. Otherwise uniform probability. 
     params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
-    params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
-    params['rv_wavepacket_time']= 50
-    params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
-
-
-    """==== BOUND ===="""
-    params['map_type']      = 'DVR' #DVR or SPECT
-    params['hmat_format']   = "sparse_csr" # numpy_arr
-    params['file_format']   = 'dat' #npz, hdf5
-
-    
-
-    """ ARPACK eigensolver parameters """
-    params['ARPACK_tol']        = 1e-3
-    params['ARPACK_maxiter']    = 60000
-    params['ARPACK_enr_guess']  = None # (eV)
-    params['ARPACK_which']      = 'LA'
-    params['ARPACK_mode']       = "normal"
-
-    """==== potential energy matrix ===="""
-    params['read_ham_init_file'] = False #if available read the prestored initial hamiltonian from file
-    params['gen_adaptive_quads'] = True
-    params['use_adaptive_quads'] = True
-    params['sph_quad_global']    = "lebedev_023" #global quadrature scheme in case we don't use adaptive quadratures.
-    params['sph_quad_tol']       = 1e-5
-    params['calc_method']        = 'jit' #jit, quadpy, vec
-    params['hmat_filter']        = 1e-4 #threshold value for keeping matrix elements of field-free Ham
-
-    """==== electrostatic potential ===="""
-    params['integrate_esp'] = False
-    params['esp_method_name']    = "uhf_631Gss"
-    params['esp_mode']           = "exact" #exact or interpolate
-    params['enable_cutoff']      = True #use cut-off for the ESP?
-    params['r_cutoff']           = 40.0    
-    params['plot_esp']           = False
-
-    params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
-    params['scf_basis']          = '6-31G**' #"cc-pDTZ" #"631G**"
-    params['scf_method']         = 'uhf'
-
-    params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
-
-    """ Note: r_cutoff can be infered from quad_levels file: 
-                                         when matrix elements of esp are nearly an overlap between spherical funcitons, it is good r_in for setting esp=0.
-                                         only in interpolation esp_mode. cut-off radius for the cation electrostatic potential. We are limited by the capabilities of psi4, memory.
-                                         Common sense says to cut-off the ESP at some range to avoid spurious operations"""
 
 
     """==== file paths and names ===="""
@@ -189,7 +156,7 @@ def setup_input(params_input, looparams):
                                 "_" + str(params['esp_method_name']) +"/"
 
 
-    """==== PROPAGATE ===="""
+
 
     #params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
 
@@ -205,17 +172,12 @@ def setup_input(params_input, looparams):
                                 [params['nbins'], params['nlobs'], params['binw']] ] 
 
 
-    params['t0']        = 0.0 
-    params['tmax']      = 4.0 
-    params['dt']        = 1.5
-    params['ivec']      = 0 
 
     params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
     params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
 
 
 
-    params['time_units']         = "as"
     time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
 
     params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
@@ -249,11 +211,7 @@ def setup_input(params_input, looparams):
                                     "_" + str(params['esp_method_name']) 
 
 
-    """ ====== FIELD PARAMETERS ====== """
 
-    """ ---- carrier frequency ----- """
-    params['omega']     = 53.6057 #23.128 = 54 eV, 60nm = 20 eV
-    freq_units          = "ev" #nm or ev
 
     if freq_units == "nm":
         params['omega']     = 10**9 *  CONSTANTS.vellgt / params['omega'] # from wavelength (nm) to frequency  (Hz)
@@ -276,116 +234,53 @@ def setup_input(params_input, looparams):
     """ ---- field intensity ----- """
     
     #params['E0'] = 1.0e9 #V/cm
-    field_units     = "V/cm"
+    
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
 
-    intensity       = 3.0e+16 #W/cm^2 #peak intensity
 
+    field_units     = "V/cm" 
     field_strength  = np.sqrt(intensity/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
     print("field strength = " + "  %8.2e"%field_strength)
 
     params['E0']        = field_strength
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
-    """ ---- field params----- """
-    params['tau']       = 1000.0 #as: pulse duration (sigma)
-    params['tc']        = 2000.0 #as: pulse centre
-    
+
+
+
 
     """==== field dictionaries ===="""
 
-    field_CPL   = { "function_name":    "fieldCPL", 
-                    "omega":            params['omega'], 
+    field_RCPL   = {"omega":            params['omega'], 
                     "E0":               params['E0'], 
                     "CEP0":             0.0, 
-                    "spherical":        True, 
-                    "typef":            "LCPL"}
+                    "spherical":        True}
+                    
+    field_LCPL   = {"omega":            params['omega'], 
+                    "E0":               params['E0'], 
+                    "CEP0":             0.0, 
+                    "spherical":        True}
 
-    field_LP    = { "function_name":    "fieldLP", 
-                    "omega":            params['omega'], 
+    field_LP    = { "omega":            params['omega'], 
                     "E0":               params['E0'], 
                     "CEP0":             0.0}
 
 
-
-    params['field_form'] = "analytic" #or numerical
-    params['field_type'] = field_LP 
-
-    """ Available field types :
-        1) field_CPL
-        2) field_LP
-        3) field_omega2omega
-    """
-
     # if gaussian width is given: e^-t^2/sigma^2
     # FWHM = 2.355 * sigma/sqrt(2)
+
+    params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
+
     env_gaussian = {"function_name": "envgaussian", 
                     "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
                     "t0": (time_to_au * params['tc'])  }
-
-    params['opt_cycle'] = 2.0 * np.pi /params['omega'] 
 
     env_sin2 = {"function_name": "envsin2", 
                     "Ncycles": 10 , 
                     "t0": (time_to_au * params['tc']),
                     "t_cycle": params['opt_cycle']  }
 
-
-    params['field_env'] = env_gaussian 
-
-    """ Available envelopes :
-        1) env_gaussian
-        2) env_flat
-    """
-
-    """==== POST-PROCESSING: PLOTS ===="""
-
-    params['plot_modes']    = { "snapshot":         True, 
-                                "animation":        False}
-
-    params['plot_types']    = { "radial":           False,
-                                "angular":          False,
-                                "r-radial_angular": True, 
-                                "k-radial_angular": False} 
-
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],3)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
-                                "save_snapshots":   True,
-                                "save_anim":        False,
-                                "show_snapshot":    False,
-                                "show_anim":        False, 
-                                "fname_snapshot":   "obs",
-                                "fname_animation":  "anim_obs"}
-
-    """ plotrate : rate of plotting observables in timestep units in animated plots
-        plottimes: times (in time_units) at which we plot selected observables in a static graph
-        save_static: save single shot plots to appropriate files (named separately for each plottime)
-        save_anim: save animation in a file
-        show_static: show single shot plots during the analysis
-        show_anim: show animation at the end of analysis
-        static_filename: name of the file into which the snapshots will be saved
-        animation_filename: name of the file into which animations will be saved
-    """
-
-    params["save_snapthots"] = True
-
-
-    """==== momentum-space distributions ===="""
-    """ PECD """
-    params['analyze_pecd']    = False
-    params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-    params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
-    
-    """ MPADs """
-    params['analyze_mpad']    = True
-    params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
-    params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
-    # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
-    
-    params['n_pes_pts']         = 1000 #numer of points for PES evaluation
-    params['max_pes_en']        = 3.0 #in a.u.
 
 
 
