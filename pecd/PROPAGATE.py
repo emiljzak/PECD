@@ -427,7 +427,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             exit()
 
         """ calculate POTMAT """
-        potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )      
+        potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
         for ielem, elem in enumerate(potmat):
             hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
 
@@ -775,7 +775,7 @@ def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
     coeff_thr = 1e-3
     ncontours = 20
 
-    nlobs   = params['nlobs']
+    nlobs   = params['bound_nlobs']
     nbins   = params['bound_nbins'] 
     npoints = 100
     rmax    = nbins * params['bound_binw']
@@ -1127,7 +1127,7 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
     coeff_thr = 1e-5
     ncontours = 100
 
-    nlobs   = params['nlobs']
+    nlobs   = params['bound_nlobs']
     nbins   = params['bound_nbins'] 
     npoints = 200
     rmax    = nbins * params['bound_binw']
@@ -1389,10 +1389,11 @@ if __name__ == "__main__":
         save_map(maparray_chi,params['job_directory'] + 'map_chi.dat')
     
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+
 		    #print(grid_euler[irun])
             """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
             ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
-            prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
+            #prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
 
 
     elif params['mode'] == 'analyze':

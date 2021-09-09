@@ -48,11 +48,11 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,12,1)
+    params['bound_nlobs_arr']   = (8,8,1)
     params['bound_lmax_arr']    = (2,2,1)
-    params['bound_binw_arr']    = (1.4,1.4,1)
+    params['bound_binw_arr']    = (1.5,1.5,1)
 
-    params['bound_nbins']   = 20
+    params['bound_nbins']   = 10
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -113,8 +113,8 @@ def read_input():
     """===== Potential energy matrix ====="""
     
     params['read_ham_init_file'] = False    # if available read the initial Hamiltonian from file
-    params['gen_adaptive_quads'] = False    # generate adaptive quadratures and save their parameters in a file?
-    params['sph_quad_tol']       = 1e-5     # tolerance (in a.u.) for the convergence of matrix elements
+    params['gen_adaptive_quads'] = False  # generate adaptive quadratures and save their parameters in a file?
+    params['sph_quad_tol']       = 1e-4     # tolerance (in a.u.) for the convergence of matrix elements
 
     params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
     params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
@@ -123,13 +123,13 @@ def read_input():
 
     """==== electrostatic potential ===="""
 
-    params['esp_method_name']    = "UHF_6-31Gss"
+    params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['esp_mode']           = "exact" #exact or interpolate
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
 
     params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
-    params['scf_basis']          = '6-31G**' #"cc-pDTZ" #"631G**"
+    params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
     params['scf_method']         = 'UHF'
 
     params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'

@@ -217,7 +217,7 @@ def setup_input(params_input):
 
     """ list defining the radial grid"""
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
-                                [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ] #to be used
+                                [0,0,0.0] ] #to be used
 
 
     """==== file paths and names ===="""
@@ -278,7 +278,7 @@ def setup_input(params_input):
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
-                                    "_" + str(params['bound_nbins']    + \
+                                    "_" + str(params['bound_nbins'])    + \
                                     "_" + str(params['esp_method_name'])  
 
     params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \

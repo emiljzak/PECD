@@ -92,6 +92,7 @@ def SH(l, m, theta, phi):
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
+
     for p1 in range(vlist.shape[0]):
         #print(vlist[p1,:])
         w = Gs[vlist[p1,0]-1][:,2]
@@ -104,6 +105,7 @@ def calc_potmat_jit( vlist, VG, Gs ):
 
         pot.append( [np.dot(w,f.T) * 4.0 * np.pi ] )
         potind.append( [ vlist[p1,5], vlist[p1,6] ] )
+
         #potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
     return pot, potind
 
@@ -258,7 +260,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     plt.show()
     """
     """ Build KD, KC matrices """
-    KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
+    KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw']) #### !!!! check
     KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
 
     #plot_mat(KD)
@@ -838,7 +840,7 @@ def rotate_mol_xyz(params, grid_euler, irun):
     return mol_xyz_rotated
 
 """ ============ POTMAT0 ROTATED ============ """
-def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
+def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
 
     mol_xyz = rotate_mol_xyz(params, grid_euler, irun)
@@ -879,7 +881,10 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun  ):
 
     if params['calc_method'] == 'jit':
         start_time = time.time()
+        print(np.shape(VG))
+        print(np.shape(Gs))
         potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
+        print(potind)
         end_time = time.time()
         print("First call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
