@@ -212,12 +212,12 @@ def setup_input(params_input):
         Later expand to general radial basis defined by FEMLIST + array of input parameters!!!"""
 
     #params['bound_nbins'], params['bound_nlobs'], params['bound_binw'] =  params_input['bound_nbins'], params_input['bound_nlobs'], params_input['bound_binw']
-    params['nbins'], params['nlobs'], params['binw'] = params_input['bound_nbins'], params_input['bound_nlobs'], params_input['bound_binw']
-    params['nbins_cont'] = 0
+    #params['nbins'], params['nlobs'], params['binw'] = params_input['bound_nbins'], params_input['bound_nlobs'], params_input['bound_binw']
+    #params['nbins_cont'] = 0
 
     """ list defining the radial grid"""
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
-                                [params['nbins'], params['nlobs'], params['binw']] ] #to be used
+                                [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ] #to be used
 
 
     """==== file paths and names ===="""
@@ -269,23 +269,23 @@ def setup_input(params_input):
 
     params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'] + params['nbins_cont'] * params['nlobs']) + \
+                                    "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
-                                    "_" + str(params['bound_nbins'] + params['nbins_cont'])   + \
+                                    "_" + str(params['bound_nbins'] )   + \
                                     "_" + str(params['esp_method_name'])  
 
     params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'] + params['nbins_cont'] * params['nlobs']) + \
+                                    "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
-                                    "_" + str(params['bound_nbins'] + params['nbins_cont'])   + \
+                                    "_" + str(params['bound_nbins']    + \
                                     "_" + str(params['esp_method_name'])  
 
     params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'] + params['nbins_cont'] * params['nlobs']) + \
+                                    "_" + str(params['bound_nlobs']) + \
                                     "_" + str(params['bound_binw'])    + \
-                                    "_" + str(params['bound_nbins'] + params['nbins_cont'])   + \
+                                    "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name']) 
 
 

@@ -149,11 +149,10 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     x       = np.array(x) # convert back to np arrays
     xgrid   = np.zeros( (nbins, nlobatto-1), dtype=float) 
     
-    bingrid = np.zeros(nbins)
-    bingrid = x[1:] * 0.5 * binwidth + 0.5 * binwidth
-    xgrid[:,] = bingrid
-
-    Translvec = np.zeros(nbins)
+    bingrid     = np.zeros(nbins)
+    bingrid     = x[1:] * 0.5 * binwidth + 0.5 * binwidth
+    xgrid[:,]   = bingrid
+    Translvec   = np.zeros(nbins)
 
     for i in range(len(Translvec)):
         Translvec[i] = float(i) * binwidth + rshift

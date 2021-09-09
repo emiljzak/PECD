@@ -58,7 +58,7 @@ def read_input():
     """ CONTINUUM PART"""
 
 
-    params['N_euler'] 	    = 2 #number of euler grid points per dimension for orientation averaging
+    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
     params['N_batches'] 	= 1 #number of batches for orientation averaging
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)

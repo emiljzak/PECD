@@ -190,7 +190,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         plot_times = calc_plot_times(params,tgrid,dt)
         #re-check this!
         maparray = np.asarray(maparray)
-        nbins = params['bound_nbins'] + params['nbins']
+        nbins = params['bound_nbins'] 
         
         Gr_all, Nr_all = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
@@ -776,7 +776,7 @@ def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
     ncontours = 20
 
     nlobs   = params['nlobs']
-    nbins   = params['bound_nbins'] + params['nbins'] 
+    nbins   = params['bound_nbins'] 
     npoints = 100
     rmax    = nbins * params['bound_binw']
     rmin    = 0.0
@@ -1128,7 +1128,7 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
     ncontours = 100
 
     nlobs   = params['nlobs']
-    nbins   = params['bound_nbins'] + params['nbins'] 
+    nbins   = params['bound_nbins'] 
     npoints = 200
     rmax    = nbins * params['bound_binw']
     rmin    = 25.0
@@ -1188,7 +1188,7 @@ def calc_grid_for_FT(params):
     """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
     """ The real-space grid determines the k-space grid returned by PyHank """
 
-    nbins   = params['bound_nbins'] + params['nbins'] 
+    nbins   = params['bound_nbins'] 
     rmax    = nbins * params['bound_binw']
     npts    = params['N_r_points']
     N_red   = npts 
@@ -1369,7 +1369,7 @@ if __name__ == "__main__":
     save_map(maparray_global,params['job_directory'] + 'map_global.dat')
 
     Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
-                                                            params['bound_nbins'] + params['nbins'], 
+                                                            params['bound_nbins'] , 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
@@ -1410,7 +1410,7 @@ if __name__ == "__main__":
             N_Euler = int(sys.argv[3])
             grid_euler, n_grid_euler = gen_euler_grid(N_Euler)            
 
-            nbins = params['bound_nbins'] + params['nbins']
+            nbins = params['bound_nbins'] 
 
             Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
 
