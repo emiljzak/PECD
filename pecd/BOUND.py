@@ -939,7 +939,7 @@ def read_adaptive_quads_rot(params,irun):
     #for grid calculations on rotated molecules
     levels = []
 
-    quadfilename = params['job_directory']  + params['file_quad_levels'] + "_"+str(irun)
+    quadfilename = params['job_directory'] + params['file_quad_levels'] + "_" + str(irun)
 
     fl = open( quadfilename , 'r' )
     for line in fl:

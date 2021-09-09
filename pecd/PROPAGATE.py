@@ -1326,7 +1326,7 @@ def gen_3j(lmax):
 def read_euler_grid():   
     with open( "grid_euler.dat" , 'r') as eulerfile:   
         grid_euler = np.loadtxt(eulerfile)
-    return grid_euler, grid_euler.shape
+    return grid_euler
 
 def save_map(map,file):
     fl = open(file,'w')
@@ -1376,11 +1376,16 @@ if __name__ == "__main__":
     if params['mode'] == 'propagate':
 
         """ Read grid of Euler angles"""
-        grid_euler, euler_grid_shape= read_euler_grid()
+        grid_euler  = read_euler_grid()
 
-        N_Euler = euler_grid_shape[0]
+        grid_euler = grid_euler.reshape(-1,3)
+
+        N_Euler = grid_euler.shape[0]
+        print(N_Euler)
 
         N_per_batch = int(N_Euler/params['N_batches'])
+
+        print(N_per_batch)
 
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
@@ -1393,7 +1398,7 @@ if __name__ == "__main__":
 		    #print(grid_euler[irun])
             """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
             ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
-            #prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
+            prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
 
 
     elif params['mode'] == 'analyze':

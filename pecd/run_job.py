@@ -53,49 +53,6 @@ def create_dirs(params):
     return path
 
 
-
-def run_array_job(params_list,grid_euler):
-
-    for iparams in params_list:
-
-        """ Create directories """
-        path = create_dirs(iparams)
-
-        """ Save input file and euler angles grid """
-        save_input_file(iparams)
-        save_euler_grid(grid_euler, path)
-
-        """ Run batches """
-
-        if iparams['jobtype'] == "slurm":
-            flag = []
-            print("Submitting a SLURM job")
-            path = os.getcwd()
-            print ("The current working directory is %s" % path)
-            START_FILES = os.listdir(path + "/slurm_run")
-            os.chdir(path+"/slurm_run")
-            
-            print ("Job directory is %s" % iparams['job_directory'])
-
-            for ibatch in range(iparams['N_batches']):
-                pecd_process = "./master_script.sh " + str(ibatch) + " " + str(iparams['job_directory'])
-                iflag = subprocess.call(pecd_process, shell=True)
-                flag.append([ibatch,iflag])
-            print(flag)
-
-        elif iparams['jobtype'] == "local":
-            flag = []
-            print("Executing local job")
-            path = os.getcwd()
-            print ("The current working directory is %s" % path)
-            print ("Job directory is %s" % iparams['job_directory'])
-            for ibatch in range(iparams['N_batches']):
-                pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
-                iflag = subprocess.call(pecd_process, shell=True) 
-                flag.append([ibatch,iflag])
-            print(flag)
-
-
 def gen_inputs_list(params_input):
 
     params_list = []
@@ -331,6 +288,53 @@ def setup_input(params_input):
 
 
     return params
+
+def run_array_job(params_list,grid_euler):
+
+    for iparams in params_list:
+
+        """ Create directories """
+        path = create_dirs(iparams)
+
+        """ Save input file and euler angles grid """
+        save_input_file(iparams)
+        save_euler_grid(grid_euler, path)
+
+        """ Run batches """
+
+        if iparams['jobtype'] == "slurm":
+            flag = []
+            print("Submitting a SLURM job")
+            path = os.getcwd()
+            print ("The current working directory is %s" % path)
+            START_FILES = os.listdir(path + "/slurm_run")
+            os.chdir(path+"/slurm_run")
+            
+            print ("Job directory is %s" % iparams['job_directory'])
+
+            for ibatch in range(iparams['N_batches']):
+                pecd_process = "./master_script.sh " + str(ibatch) + " " + str(iparams['job_directory'])
+                iflag = subprocess.call(pecd_process, shell=True)
+                flag.append([ibatch,iflag])
+            print(flag)
+
+        elif iparams['jobtype'] == "local":
+            flag = []
+            print("Executing local job")
+            
+            path = os.getcwd()
+            print ("The current working directory is %s" % path)
+            print ("Job directory is %s" % iparams['job_directory'])
+            print("Number of batches = " + str(iparams['N_batches']))
+            print("number of batchessss: " + str(iparams['N_batches']))
+            for ibatch in range(0,iparams['N_batches']):
+     
+                pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                iflag = subprocess.call(pecd_process, shell=True) 
+                flag.append([ibatch,iflag])
+            print(flag)
+
+
 
 
 if __name__ == "__main__":    

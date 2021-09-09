@@ -330,7 +330,7 @@ def plot_initial_orbitals(params,maparray,orbitals):
     maparray = np.asarray(maparray)
 
     nlobs = params['bound_nlobs']
-    nbins = params['bound_nbins'] + params['nbins']
+    nbins = params['bound_nbins'] 
     npoints = 360
     rmax    = nbins * params['bound_binw']
     rmin = 0.0
@@ -430,7 +430,7 @@ def plot_iorb(rmin,rmax,npoints,nlobs,nbins,psi,maparray,params,flist,iorb):
 def plot_snapshot(params,psi,maparray,Gr,t):
     #make it general
     nlobs = params['bound_nlobs']
-    nbins = params['bound_nbins'] + params['nbins']
+    nbins = params['bound_nbins'] 
     npoints = 60
     rmax    = nbins * params['bound_binw']
 
@@ -449,7 +449,7 @@ def plot_snapshot_int(params,psi,maparray,Gr,t,flist, irun):
     #plot snapshots using interpolation for the chi functions
     #make it general
     nlobs = params['bound_nlobs']
-    nbins = params['bound_nbins'] + params['nbins']
+    nbins = params['bound_nbins'] 
     npoints = 360
     rmax    = nbins * params['bound_binw']
 
@@ -813,7 +813,7 @@ def build_cube(params,Gr,wffile):
     print(params['job_directory'])
     for ivec in range(ivec_min,ivec_max+1):
 
-        wf = calc_wf_xyzgrid(params['nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
+        wf = calc_wf_xyzgrid(params['bound_nlobs'],params['bound_nbins'],ivec,Gr,wffile,[x,y,z])
 
         wf_cube = wf.reshape(npt,npt,npt)
     
@@ -946,7 +946,7 @@ if __name__ == "__main__":
     #    psi[ielem] = elem[5][ivec]
 
     
-    nbins = params['bound_nbins'] + params['nbins']
+    nbins = params['bound_nbins'] 
 
     #Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
     Gr, Nr = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )

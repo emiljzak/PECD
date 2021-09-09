@@ -48,9 +48,9 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (8,8,1)
+    params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
-    params['bound_binw_arr']    = (1.5,1.5,1)
+    params['bound_binw_arr']    = (1.6,1.6,1)
 
     params['bound_nbins']   = 10
     params['bound_rshift']  = 0.0
@@ -58,7 +58,7 @@ def read_input():
     """ CONTINUUM PART"""
 
 
-    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
+    params['N_euler'] 	    = 2 #number of euler grid points per dimension for orientation averaging
     params['N_batches'] 	= 1 #number of batches for orientation averaging
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -113,7 +113,7 @@ def read_input():
     """===== Potential energy matrix ====="""
     
     params['read_ham_init_file'] = False    # if available read the initial Hamiltonian from file
-    params['gen_adaptive_quads'] = False  # generate adaptive quadratures and save their parameters in a file?
+    params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
     params['sph_quad_tol']       = 1e-4     # tolerance (in a.u.) for the convergence of matrix elements
 
     params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
@@ -178,7 +178,7 @@ def read_input():
 
     """==== POST-PROCESSING: PLOTS ===="""
 
-    params['plot_elfield']  = False
+    params['plot_elfield']      = False
     params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
 
@@ -190,7 +190,7 @@ def read_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],3)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],1)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
