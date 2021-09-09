@@ -4,6 +4,7 @@ import subprocess
 import CONSTANTS
 
 
+
 def create_dirs(params):
 
 	os.chdir(params['working_dir'])
@@ -93,10 +94,64 @@ def gen_inputs_list(jobtype,params_input):
     exit()
     return params_list
 
-def setup_input(params_input, looparams):
+
+def field_params(field,envelope,params):
+    """ Define field parameters"""
+
+    time_to_au  = CONSTANTS.time_to_au[ params['time_units'] ]
+
+    """==== field dictionaries ===="""
+    field_dict = {}
+    env_dict = {}
+
+    if field == "RCPL":
+        field_dict   = {
+                        "function_name": "fieldRCPL",
+                        "omega":            params['omega'], 
+                        "E0":               params['E0'], 
+                        "CEP0":             params['CEP0'], 
+                        "spherical":        True}
+    elif field == "LCPL":         
+        field_dict  = { 
+                        "function_name": "fieldLCPL",
+                        "omega":            params['omega'], 
+                        "E0":               params['E0'], 
+                        "CEP0":             params['CEP0'], 
+                        "spherical":        True}
+    elif field == "LP":   
+        field_dict     = { 
+                            "function_name": "fieldLP",
+                            "omega":            params['omega'], 
+                            "E0":               params['E0'], 
+                            "CEP0":             params['CEP0']}
+    else:
+        raise ValueError("Incorrect field name")
+
+    # if gaussian width is given as: e^-t^2/sigma^2
+    # FWHM = 2.355 * sigma/sqrt(2)
+
+
+    if envelope == "gaussian":
+        env_dict = {
+                        "function_name": "envgaussian", 
+                        "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
+                        "t0": (time_to_au * params['t0'])  }
+
+    elif envelope == "sin2":
+        env_dict = {
+                        "function_name": "envsin2", 
+                        "Ncycles": params['sin2_ncycles'] , 
+                        "t0": (time_to_au * params['sin2_t0']),
+                        "t_cycle": params['opt_cycle']  }
+
+    return field_dict, env_dict
+
+def setup_input(params_input):
+    
+
+
 
     params = {}
-
 
     """ === molecule directory ==== """ 
     if params_input['jobtype'] == "slurm":
@@ -111,6 +166,17 @@ def setup_input(params_input, looparams):
     params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
 
 
+
+    """====== Basis set parameters  ======"""
+    params['nlobs']    = params_input['nlobatto']
+    params['lmax']     = params_input['lmax']
+    params['binw']     = params_input['rbin'] 
+
+    """ list defining the radial grid"""
+    params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
+                                [params['nbins'], params['nlobs'], params['binw']] ] #to be used
+
+    params['wavepacket_file']    = "wavepacket"
     """==== file paths and names ===="""
 
     params['file_psi0']         =   "psi0_" + params['molec_name']   + \
@@ -158,32 +224,6 @@ def setup_input(params_input, looparams):
                                 "_" + str(params['esp_method_name']) +"/"
 
 
-
-
-    #params['euler0'] = [0.0, np.pi/4.0, 0.0] #alpha, beta, gamma [radians]
-
-    # generate 3D grid of Euler angles
-    #params['n_euler']   = 2 # number of points per Euler angle. Total number of points is n_euler**3
-    
-
-    params['nlobs']     = params['bound_nlobs']
-    params['nbins']     = 0
-    params['binw']      = params['bound_binw']
-
-    params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
-                                [params['nbins'], params['nlobs'], params['binw']] ] 
-
-
-
-    params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
-    params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
-
-    time_to_au                   = CONSTANTS.time_to_au[ params['time_units'] ]
-
-
-
-    params['wavepacket_file']    = "wavepacket"
-
     params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_nbins'] + params['nbins'])   + \
                                     "_" + str(params['bound_nlobs'] + params['nbins'] * params['nlobs']) + \
@@ -227,7 +267,6 @@ def setup_input(params_input, looparams):
     params['omega'] *= CONSTANTS.freq_to_au['Hz'] #Hz to a.u.
     params['opt_cycle'] = 2.0 * np.pi /params['omega'] #optical cycle
 
-    
     #params['E0'] = 1.0e9 #V/cm
     #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
     #convert from W/cm^2 to V/cm
@@ -239,36 +278,6 @@ def setup_input(params_input, looparams):
     params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
 
-    """==== field dictionaries ===="""
-
-    field_RCPL   = {"omega":            params['omega'], 
-                    "E0":               params['E0'], 
-                    "CEP0":             0.0, 
-                    "spherical":        True}
-                    
-    field_LCPL   = {"omega":            params['omega'], 
-                    "E0":               params['E0'], 
-                    "CEP0":             0.0, 
-                    "spherical":        True}
-
-    field_LP    = { "omega":            params['omega'], 
-                    "E0":               params['E0'], 
-                    "CEP0":             0.0}
-
-
-    # if gaussian width is given as: e^-t^2/sigma^2
-    # FWHM = 2.355 * sigma/sqrt(2)
-
-
-
-    env_gaussian = {"function_name": "envgaussian", 
-                    "FWHM": 2.355 * (time_to_au * params['tau'])/np.sqrt(2.0), 
-                    "t0": (time_to_au * params['tc'])  }
-
-    env_sin2 = {"function_name": "envsin2", 
-                    "Ncycles": 10 , 
-                    "t0": (time_to_au * params['tc']),
-                    "t_cycle": params['opt_cycle']  }
 
 
 
@@ -278,19 +287,19 @@ if __name__ == "__main__":
 
     inputfile 	= "input_c" #input file name
 
-	import importlib
-	input_module = importlib.import_module(inputfile)
+    import importlib
+    input_module = importlib.import_module(inputfile)
 
-	print("jobtype: " + str(jobtype))
-	print("input file: " + str(inputfile))
-	
+
+    print("input file: " + str(inputfile))
+
     params_input = input_module.read_input()
+    print("jobtype: " + str(params_input['jobtype']))
+    exit()
+    params_list = gen_inputs_list(params_input)
 
 
-	params_list = gen_inputs_list(jobtype,params_input)
 
 
-
-
-	jobdir = create_dirs(params)
-	run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir)
+    jobdir = create_dirs(params)
+    run_propagate(N_euler,N_batches,jobtype,inputfile,jobdir)

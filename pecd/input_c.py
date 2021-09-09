@@ -2,7 +2,7 @@ import numpy as np
 import CONSTANTS
 import os
 import itertools
-def gen_input(jobtype):
+def read_input():
     """ Set up essential input parameters"""
 
     params = {}
@@ -22,7 +22,7 @@ def gen_input(jobtype):
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
     """
 
-    params['jobtype'] 	= "local" #maxwell
+    params['jobtype'] 	= "local" 
 
 
     """ ===== Molecule definition ====== """ 
@@ -79,26 +79,31 @@ def gen_input(jobtype):
     params['intensity']     = 3.0e+16   # W/cm^2: peak intensity
 
     """ Available field types :
-        1) field_RCPL    - right-circularly polarized field
-        2) field_LCPL    - left-circularly polarized field
-        2) field_LP      - linearly polarized field
-        3) field_omega2omega
+        1) RCPL   - right-circularly polarized field
+        2) LCPL    - left-circularly polarized field
+        3) LP      - linearly polarized field
     """
 
     """ Available envelopes :
-        1) env_gaussian
-        2) env_sin2 
-        2) env_flat
+        1) gaussian
+        2) sin2 
     """
     
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
 
-    params['field_type']    = field_LP
-    params['field_env']     = env_gaussian
+    params['field_type']    = "LP"
+    params['field_env']     = "gaussian" 
 
-    params['gauss_tau']       = 1000.0 #as: pulse duration (sigma)
-    params['gauss_tc']        = 2000.0 #as: pulse centre
-    
+    """ gaussian pulse """
+    params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)
+    params['gauss_t0']      = 2000.0 #as: pulse centre
+
+    """ sin2 pulse """
+    params['sin2_ncycles']  = 10
+    params['sin2_t0']       = 2000.0
+
+    params['CEP0']          = 0.0 #CEP phase of the field
+
 
     """===== Potential energy matrix ====="""
     
@@ -125,6 +130,10 @@ def gen_input(jobtype):
     params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
     params['plot_esp']           = False
     params['integrate_esp']      = False #integrate ESP?
+
+
+    params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
+
 
     """===== Hamiltonian parameters ====="""
     
@@ -156,16 +165,18 @@ def gen_input(jobtype):
     params['save_ham0']     = True #save the calculated bound state Hamiltonian
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
-
-    params["save_snapthots"] = True
-    params['save_ham_init']      = True #save initial hamiltonian in a file for later use?
-    params['save_psi_init']      = True
-    params['save_enr_init']      = True
-
+    """ merge them into one"""
+    params['save_ham_init']  = True #save initial hamiltonian in a file for later use?
+    params['save_psi_init']  = True
+    params['save_enr_init']  = True
 
 
     """==== POST-PROCESSING: PLOTS ===="""
-    params['plot_elfield']       = False
+
+    params['plot_elfield']  = False
+    params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
+
+
     params['plot_modes']    = { "snapshot":         True, 
                                 "animation":        False}
 
@@ -193,15 +204,13 @@ def gen_input(jobtype):
     """
 
 
-
-
     """==== momentum-space distributions ===="""
     """ PECD """
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
     params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
-    
+    params["save_snapthots"] = True
     """ MPADs """
     params['analyze_mpad']    = True
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
