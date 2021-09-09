@@ -2,8 +2,13 @@ import numpy as np
 import os
 import subprocess
 import CONSTANTS
-import pickle
+import json
 import itertools
+
+def convert(o):
+    if isinstance(o, np.generic): return o.item()  
+    raise TypeError
+
 
 def gen_euler_grid(n_euler):
     """ Cartesian product of 1D grids of Euler angles"""
@@ -22,9 +27,8 @@ def save_euler_grid(grid_euler, path):
         np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
 def save_input_file(params):
-    input_file = open("input", "wb")
-    pickle.dump(params, input_file)
-    input_file.close()
+    with open(params['job_directory']+"input", 'w') as input_file: 
+        json.dump(params, input_file,indent=4, default=convert)
 
 def create_dirs(params):
 
@@ -35,7 +39,7 @@ def create_dirs(params):
     if isdir:
         print("job directory exists: " + str(isdir) + ", " + path) 
     else:
-        print("creating job directory: " + str(isdir) + ", " + path) 
+        print("creating job directory: " + path) 
         os.mkdir(params['job_directory'])
         os.chdir(params['job_directory'])
         os.mkdir("esp")
@@ -62,7 +66,7 @@ def run_array_job(params_list,grid_euler):
         save_euler_grid(grid_euler, path)
 
         """ Run batches """
-
+        """
         if iparams['jobtype'] == "slurm":
             flag = []
             print("Submitting SLURM job")
@@ -91,7 +95,7 @@ def run_array_job(params_list,grid_euler):
                                 jobtype + " " + inputfile , shell=True) 
                 flag.append([ibatch,iflag])
             print(flag)
-
+        """
 
 def gen_inputs_list(params_input):
 
@@ -110,14 +114,13 @@ def gen_inputs_list(params_input):
     nlobmax  = params_input['bound_nlobs_arr'][1]
     nlobattos = params_input['bound_nlobs_arr'][2]
 
-
     rbinmin = params_input['bound_binw_arr'][0]
     rbinmax  = params_input['bound_binw_arr'][1]
     nrbin   = params_input['bound_binw_arr'][2]
 
-    binrange    = np.linspace(rbinmin,rbinmax,nrbin,endpoint=True)
-    lrange      = np.linspace(lmin,lmax,nl,endpoint=True)
-    nrange      = np.linspace(nlobmin,nlobmax,nlobattos,endpoint=True)
+    binrange    = np.linspace(rbinmin,rbinmax,nrbin,endpoint=True,dtype=float)
+    lrange      = np.linspace(lmin,lmax,nl,endpoint=True,dtype=int)
+    nrange      = np.linspace(nlobmin,nlobmax,nlobattos,endpoint=True,dtype=int)
 
     
     for l in lrange:
@@ -191,9 +194,6 @@ def setup_input(params_input):
 
     params = {}
     params.update(params_input)
-
-    """ === Euler angles ==="""
-    save_euler_grid(grid_euler,)
 
     """ === molecule directory ==== """ 
     if params_input['jobtype'] == "slurm":
@@ -348,6 +348,6 @@ if __name__ == "__main__":
     params_input = input_module.read_input()
     print("jobtype: " + str(params_input['jobtype']))
  
-    params_list = gen_inputs_list(params_input)
+    params_list, grid_euler = gen_inputs_list(params_input)
 
-    run_array_job(params_list)
+    run_array_job(params_list,grid_euler)
