@@ -17,6 +17,14 @@ def gen_euler_grid(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
+def save_euler_grid(grid_euler, path):   
+    with open( path + "grid_euler.dat" , 'w') as eulerfile:   
+        np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
+
+def save_input_file(params):
+    input_file = open("input", "wb")
+    pickle.dump(params, input_file)
+    input_file.close()
 
 def create_dirs(params):
 
@@ -32,11 +40,7 @@ def create_dirs(params):
         os.chdir(params['job_directory'])
         os.mkdir("esp")
         os.mkdir("animation")
-        
-        input_file = open("input", "wb")
-        pickle.dump(params, input_file)
-        input_file.close()
-
+    
         os.chdir("esp")
         for irun in range(params['N_batches']):
             os.mkdir(str(irun))
@@ -45,12 +49,17 @@ def create_dirs(params):
     return path
 
 
-def run_array_job(params_list):
+
+def run_array_job(params_list,grid_euler):
 
     for iparams in params_list:
+
         """ Create directories """
-        path = create_dirs(params)
-        """ Store input files """
+        path = create_dirs(iparams)
+
+        """ Save input file and euler angles grid """
+        save_input_file(iparams)
+        save_euler_grid(grid_euler, path)
 
         """ Run batches """
 
@@ -91,7 +100,7 @@ def gen_inputs_list(params_input):
 
     """ Generate grid of molecule's orientations parametrized with the Euler angles"""
     grid_euler, params_input['n_grid_euler_3d'] = gen_euler_grid(params_input['N_euler'])            
-    save_euler_grid(grid_euler)
+
 
     lmin = params_input['bound_lmax_arr'][0]
     lmax = params_input['bound_lmax_arr'][1]
@@ -124,7 +133,7 @@ def gen_inputs_list(params_input):
 
                 params_list.append(setup_input(params_input))
                
-    return params_list
+    return params_list, grid_euler
 
 def field_params(params):
     """ Define field parameters"""
@@ -182,6 +191,9 @@ def setup_input(params_input):
 
     params = {}
     params.update(params_input)
+
+    """ === Euler angles ==="""
+    save_euler_grid(grid_euler,)
 
     """ === molecule directory ==== """ 
     if params_input['jobtype'] == "slurm":
