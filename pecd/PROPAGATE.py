@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
+from textwrap import indent
 import numpy as np
 from scipy import sparse
 from scipy.fftpack import fftn
@@ -20,6 +21,7 @@ from sympy.physics.quantum.cg import CG
 from sympy import N
 
 import itertools
+import json
 
 from pyhank import qdht, iqdht, HankelTransform
 
@@ -1320,149 +1322,80 @@ def gen_3j(lmax):
     #print(tjmat)
     return tjmat
 
+
+def read_euler_grid():   
+    with open( "grid_euler.dat" , 'r') as eulerfile:   
+        grid_euler = np.loadtxt(eulerfile)
+    return grid_euler, grid_euler.shape
+
+def save_map(map,file):
+    fl = open(file,'w')
+    for elem in map:   
+        fl.write(" ".join('{:5d}'.format(elem[i]) for i in range(0,6)) + "\n")
+    fl.close()
+
+
 if __name__ == "__main__":   
 
-
+    start_time_total = time.time()
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
 
     print(" ")
-    print("---------------------- START --------------------")
+    print("---------------------- START PROPAGATE --------------------")
     print(" ")
-    start_time_total = time.time()
-    import importlib
-    input_module = importlib.import_module(str(sys.argv[5]))
-    print("importing input file module: " + str(sys.argv[5]))
-    jobtype = str(sys.argv[4])
-    print("jobtype: " + str(jobtype))
-    print(" ")
-    print("---------------------- INPUT ECHOs --------------------")
-    print(" ")
-    params = input_module.gen_input(jobtype) 
+    
+    ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
+    os.chdir(sys.argv[2])
+    
+    path = os.getcwd()
+    print("dir:" + path)
 
+    with open('input', 'r') as input_file:
+        params = json.load(input_file)
 
-    N_Euler = int(sys.argv[3])
-    path = create_dirs(params,N_Euler**3) #create appropriate directories
+    print(" ")
+    print("---------------------- INPUT ECHO --------------------")
+    print(" ")
+
+    for key, value in params.items():
+        print(key, ":", value)
+
 
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['job_directory'] )
 
-    fl = open(params['job_directory'] + 'map_global.dat','w')
-    for elem in maparray_global:   
-        fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+ "  %5d"%elem[3]+  " %5d"%elem[4]+" %5d"%elem[5]+"\n")
-    fl.close()
+    save_map(maparray_global,params['job_directory'] + 'map_global.dat')
 
     Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] + params['nbins'], 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
-    if params['mode'] == 'propagate_single':
+    if params['mode'] == 'propagate':
 
-        ham_init, psi_init = BUILD_HMAT(params, Gr, maparray_global, Nbas_global)
-        prop_wf(params, ham_init, psi_init[:,params['ivec']], maparray_global, Gr, params['euler0'], 0)
+        """ Read grid of Euler angles"""
+        grid_euler, euler_grid_shape= read_euler_grid()
 
-    elif params['mode'] == 'analyze_single':
+        N_Euler = euler_grid_shape[0]
 
-        itime = int( params['analyze_time'] / params['dt']) 
+        N_per_batch = int(N_Euler/params['N_batches'])
 
-        if params['analyze_mpad'] == True:
-            #read wavepacket from file
-            file_wavepacket      = params['job_directory']  +  params['wavepacket_file'] + helicity + "_" + ".dat"
-            psi =  read_wavepacket(file_wavepacket, itime, Nbas_global)
-
-            #print(np.shape(psi))
-            nbins = params['bound_nbins'] + params['nbins']
-            
-            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
-
-            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                        params['map_type'], params['job_directory']  )
-
-            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
-
-            #calc_ftpsi_2d(params, maparray_global, Gr, psi, chilist)
-
-            if params['FT_method']  == "FFT_cart":
-                calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
-
-            elif params['FT_method']  == "FFT_hankel":
-                
-                # PLOTS of W:
-                #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                #plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, 0.0)
-                plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
-                #plot_W_2D_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
-                #grid_theta, grid_r = calc_grid_for_FT(params)
-                #calc_fthankel_psi_3d( params['bound_lmax'], grid_theta, grid_r , maparray_chi, maparray_global, psi, chilist, phi=0.0)
-                #calc_W_analytic(params, maparray_chi, maparray_global, psi, chilist)
-                #calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist)
-
-
-    elif params['mode'] == 'propagate_grid':
-
-        ibatch  = int(sys.argv[1])
-        N_batch = int(sys.argv[2])
-        N_Euler = int(sys.argv[3])
-
-        N_per_batch = int(N_Euler**3/N_batch)
-        print("Total number of Euler grid points = " + str(N_Euler**3))
-        print("number of points per batch = " + str(N_per_batch))
-        print("batch ID = " + str(ibatch))
-
-        grid_euler, n_grid_euler = gen_euler_grid(N_Euler)
-
-
-
-        #save Euler grid in file
-        with open( path + "grid_euler.dat" , 'w') as eulerfile:   
-                np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                     params['map_type'], path )
 
-        fl = open(params['job_directory'] + 'map_chi.dat','w')
-        for elem in maparray_chi:   
-            fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+ "  %5d"%elem[3]+  " %5d"%elem[4]+" %5d"%elem[5]+"\n")
-        fl.close()
-
-
-        #generate and store wigner D_{mk}^J(Omega) for J=0,1,...,Jmax and Omega given by grid_euler
-        #WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
-   
-
-        """ TEST: eigenfunction of rotated potential vs. rotated wavefunction of unrotated potential """
-        ind_euler = 1
-        #irun = 0 means unrotated frame: MF = LF
-        """
-        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, 0 )
-        #unrotated wavefunction and Hamiltonian
-
-        
-        Nr = len(maparray_chi)
-        psi_init_rotated = rotate_coefficients( ind_euler,
-                                                maparray_global, 
-                                                psi_init[:,params['ivec']], 
-                                                WDMATS, 
-                                                params['bound_lmax'],
-                                                Nr)
-        
-        print("psi_init_rotated")
-        ham_init, psi_init_1 = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, ind_euler )
-
-        with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=20):
-            print(psi_init_rotated[:]-psi_init_1[:,params['ivec']])
-        exit()
-        """
-
+        save_map(maparray_chi,params['job_directory'] + 'map_chi.dat')
+    
         for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 		    #print(grid_euler[irun])
             """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
             ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
             prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
-            
-    elif params['mode'] == 'analyze_grid':
+
+
+    elif params['mode'] == 'analyze':
         itime = int( params['analyze_time'] / params['dt'])
 
         if params['analyze_mpad'] == True:
@@ -1505,8 +1438,7 @@ if __name__ == "__main__":
                                             WDMATS,
                                             params) 
 
-           
-     
+        
             #calculate density on a grid for plotting
             """
             grid_euler_2d, n_grid_euler_2d = gen_euler_grid_theta_chi(N_Euler)

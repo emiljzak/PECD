@@ -27,8 +27,8 @@ def save_euler_grid(grid_euler, path):
         np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
 def save_input_file(params):
-    with open(params['job_directory']+"input", 'w') as input_file: 
-        json.dump(params, input_file,indent=4, default=convert)
+    with open(params['job_directory']+ "input", 'w') as input_file: 
+        json.dump(params, input_file, indent=4, default=convert)
 
 def create_dirs(params):
 
@@ -66,21 +66,20 @@ def run_array_job(params_list,grid_euler):
         save_euler_grid(grid_euler, path)
 
         """ Run batches """
-        """
+
         if iparams['jobtype'] == "slurm":
             flag = []
-            print("Submitting SLURM job")
+            print("Submitting a SLURM job")
             path = os.getcwd()
             print ("The current working directory is %s" % path)
-            START_FILES = os.listdir(path+"/slurm_run")
+            START_FILES = os.listdir(path + "/slurm_run")
             os.chdir(path+"/slurm_run")
-            print ("Job directory is %s" % path)
-            for ibatch in range(N_batches):
-                pecd_process = "./master_script.sh " 	+ str(ibatch) 	+\
-                                " " + str(N_batches) + " " + str(N_euler) + " " +\
-                                jobtype + " " + inputfile + " " + jobdir
+            
+            print ("Job directory is %s" % iparams['job_directory'])
+
+            for ibatch in range(iparams['N_batches']):
+                pecd_process = "./master_script.sh " + str(ibatch) + " " + str(iparams['job_directory'])
                 iflag = subprocess.call(pecd_process, shell=True)
-        
                 flag.append([ibatch,iflag])
             print(flag)
 
@@ -89,13 +88,13 @@ def run_array_job(params_list,grid_euler):
             print("Executing local job")
             path = os.getcwd()
             print ("The current working directory is %s" % path)
-            for ibatch in range(N_batches):
-                iflag = subprocess.call("python3 PROPAGATE.py " 	+ str(ibatch) 	+\
-                                " " + str(N_batches) + " " + str(N_euler) + " "	+\
-                                jobtype + " " + inputfile , shell=True) 
+            print ("Job directory is %s" % iparams['job_directory'])
+            for ibatch in range(iparams['N_batches']):
+                pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                iflag = subprocess.call(pecd_process, shell=True) 
                 flag.append([ibatch,iflag])
             print(flag)
-        """
+
 
 def gen_inputs_list(params_input):
 

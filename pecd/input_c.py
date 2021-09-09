@@ -2,6 +2,7 @@ import numpy as np
 import CONSTANTS
 import os
 import itertools
+
 def read_input():
     """ Set up essential input parameters"""
 
@@ -47,8 +48,8 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,12,3)
-    params['bound_lmax_arr']    = (2,3,2)
+    params['bound_nlobs_arr']   = (10,12,1)
+    params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (1.4,1.4,1)
 
     params['bound_nbins']   = 20
@@ -57,9 +58,7 @@ def read_input():
     """ CONTINUUM PART"""
 
 
-
-
-    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
+    params['N_euler'] 	    = 2 #number of euler grid points per dimension for orientation averaging
     params['N_batches'] 	= 1 #number of batches for orientation averaging
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -114,7 +113,7 @@ def read_input():
     """===== Potential energy matrix ====="""
     
     params['read_ham_init_file'] = False    # if available read the initial Hamiltonian from file
-    params['gen_adaptive_quads'] = True     # generate adaptive quadratures and save their parameters in a file?
+    params['gen_adaptive_quads'] = False    # generate adaptive quadratures and save their parameters in a file?
     params['sph_quad_tol']       = 1e-5     # tolerance (in a.u.) for the convergence of matrix elements
 
     params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them

@@ -142,12 +142,12 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     """Note: this function must be generalized to account for FEMLIST
     Only constant bin size is possible at the moment"""
 
-    x = np.zeros(nlobatto)
-    w = np.zeros(nlobatto)
-    x, w = gauss_lobatto(nlobatto,14)
-    w = np.array(w)
-    x = np.array(x) # convert back to np arrays
-    xgrid = np.zeros( (nbins, nlobatto-1), dtype=float) 
+    x       = np.zeros(nlobatto)
+    w       = np.zeros(nlobatto)
+    x, w    = gauss_lobatto(nlobatto,14)
+    w       = np.array(w)
+    x       = np.array(x) # convert back to np arrays
+    xgrid   = np.zeros( (nbins, nlobatto-1), dtype=float) 
     
     bingrid = np.zeros(nbins)
     bingrid = x[1:] * 0.5 * binwidth + 0.5 * binwidth
@@ -161,7 +161,7 @@ def r_grid(nlobatto,nbins,binwidth,rshift):
     for ibin in range(nbins):    
         xgrid[ibin,:] += Translvec[ibin]
 
-    print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
+    #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
 
     return xgrid, (nlobatto-1) * nbins
 
