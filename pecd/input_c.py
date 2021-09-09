@@ -46,12 +46,18 @@ def read_input():
         Bound states are calculated with these parameters.
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
-    params['bound_nlobs']   = (10,10,1)
-    params['bound_lmax']    = (2,2,1)
-    params['bound_binw']    = (1.4,1.4,1)
+    """ BOUND PART"""
+    params['bound_nlobs_arr']   = (10,12,3)
+    params['bound_lmax_arr']    = (2,3,2)
+    params['bound_binw_arr']    = (1.4,1.4,1)
 
     params['bound_nbins']   = 20
     params['bound_rshift']  = 0.0
+
+    """ CONTINUUM PART"""
+
+
+
 
     params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
     params['N_batches'] 	= 1 #number of batches for orientation averaging
@@ -91,8 +97,8 @@ def read_input():
     
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
 
-    params['field_type']    = "LP"
-    params['field_env']     = "gaussian" 
+    params['field_func_name']    = "LP"
+    params['field_env_name']     = "gaussian" 
 
     """ gaussian pulse """
     params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)

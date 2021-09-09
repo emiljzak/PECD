@@ -1197,22 +1197,6 @@ def calc_grid_for_FT(params):
     return grid_theta, grid_r
 
 
-def gen_euler_grid(n_euler):
-    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
-    beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
-    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
-    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
-
-    #we can choose meshgrid instead
-    #euler_grid_3d_mesh = np.meshgrid(alpha_1d, beta_1d, gamma_1d)
-    #print(euler_grid_3d_mesh[0].shape)
-    #print(np.vstack(euler_grid_3d_mesh).reshape(3,-1).T)
-    #print(euler_grid_3d)
-    #exit()
-    n_euler_3d      = euler_grid_3d.shape[0]
-    print("\nTotal number of 3D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
-    #print(euler_grid_3d)
-    return euler_grid_3d, n_euler_3d
 
 
 def gen_euler_grid_theta_chi(n_euler):
