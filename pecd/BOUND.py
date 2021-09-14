@@ -113,7 +113,7 @@ def calc_potmat_jit( vlist, VG, Gs ):
     return pot, potind
 
 #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
-def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax ):
+def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax, rlmat ):
     pot = []
     potind = []
 
@@ -122,7 +122,7 @@ def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax ):
         v = 0.0
         for L in range(Lmax):
             for M in range(-L,L+1):
-                v += qlm[(L,M)] * tjmat[vlist[p,1], L, vlist[p,3], vlist[p,2], M+L] 
+                v += qlm[(L,M)] * tjmat[vlist[p,1], L, vlist[p,3], vlist[p,2], M+L] * rlmat[vlist[p,0]-1,L]
         pot.append( [v] )
         potind.append( [ vlist[p,5], vlist[p,6] ] )
 
@@ -968,8 +968,15 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     # 3. Build array of 3-j symbols
     tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
 
+    # 3a. Build array of '1/r**l' values on the radial grid
+
+    rlmat = np.zeros((Gr.shape[0]*Gr.shape[1],params['multi_lmax']), dtype=float)
+    for L in range(params['multi_lmax']):
+        rlmat[:,L] = 1.0 / Gr.ravel()**L
+
+
     # 4. Perform semi-vectorized summation
-    potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'] )
+    potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'], rlmat )
     # 5. Return final potential matrix
     return  potmat0, potind 
 

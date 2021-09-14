@@ -11,6 +11,7 @@ import GRID
 import os
 import time
 import json
+import pickle
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
@@ -86,7 +87,8 @@ def calc_multipoles(params):
 
 
     with open(params['job_directory']+ "multipoles.dat", 'w') as qlmfile: 
-        json.dump(qlm, qlmfile, indent=4, default=convert)
+        qlmfile.write( str(qlm) )
+        #json.dump(qlm, qlmfile, indent=4, default=convert)
 
 
     return qlm

@@ -440,7 +440,13 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         for ielem, elem in enumerate(potmat):
             hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
 
-            
+
+        #print("plot of hmat")
+        #BOUND.plot_mat(hmat)
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
+
         """ calculate KEO """
         start_time = time.time()
         keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
