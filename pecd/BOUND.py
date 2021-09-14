@@ -112,7 +112,7 @@ def calc_potmat_jit( vlist, VG, Gs ):
         #potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
     return pot, potind
 
-@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+#@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax ):
     pot = []
     potind = []

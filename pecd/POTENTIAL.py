@@ -10,11 +10,16 @@ import GRID
 
 import os
 import time
-
+import json
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
 from multipoles import MultipoleExpansion
+
+
+def convert(o):
+    if isinstance(o, np.generic): return o.item()  
+    raise TypeError
 
 def sph2cart(r,theta,phi):
     x=r*np.sin(theta)*np.cos(phi)
@@ -79,7 +84,9 @@ def calc_multipoles(params):
     value = Phi(x, y, z)
     print(value)
 
-    print(qlm)
+
+    with open(params['job_directory']+ "multipoles.dat", 'w') as qlmfile: 
+        json.dump(qlm, qlmfile, indent=4, default=convert)
 
 
     return qlm

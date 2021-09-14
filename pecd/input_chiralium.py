@@ -50,10 +50,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
-    params['bound_binw_arr']    = (1.6,1.6,1)
+    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_binw_arr']    = (1.0,1.0,1)
 
-    params['bound_nbins']   = 10
+    params['bound_nbins']   = 20
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -123,10 +123,10 @@ def read_input():
     params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
     """ **** parameters of the multipole moment expansion of the ESP **** """
-    params['multi_lmax'] = 2 #maximum l in the multipole expansion
+    params['multi_lmax']         = 2 #maximum l in the multipole expansion
     params['multi_ncube_points'] = 201
-    params['multi_box_edge'] = 20
-    
+    params['multi_box_edge']     = 40
+
     """==== electrostatic potential ===="""
 
     params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
