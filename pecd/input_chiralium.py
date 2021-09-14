@@ -35,7 +35,7 @@ def read_input():
             Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
     """
 
-    params['molec_name']    = "c"
+    params['molec_name']    = "chiralium"
     params['mol_geometry']  = {"rc":0.0} #angstroms
     params['mol_masses']    = {"c":12.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
@@ -124,7 +124,7 @@ def read_input():
     """==== electrostatic potential ===="""
 
     params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
-    params['esp_mode']           = "exact" #exact or multipoles. Exact -> use Psi4. multipoles -> perform multipole expansion of the potential from given charge distr.
+    params['esp_mode']           = "multipoles" #exact or multipoles. Exact -> use Psi4. multipoles -> perform multipole expansion of the potential from given charge distr.
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
 

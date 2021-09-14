@@ -156,8 +156,8 @@ def setup_input(params_input):
         params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" 
         params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/c/"
     elif params_input['jobtype'] == "local":
-        params['main_dir']      = "/Users/zakemil/Nextcloud/projects/PECD/pecd/"#
-        params['working_dir']   = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/c/"
+        params['main_dir']      = "/home/emil/Desktop/projects/PECD/pecd/"
+        params['working_dir']   = "/home/emil/Desktop/projects/PECD/tests/molecules/" + params['molec_name'] + "/"
 
 
     params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"

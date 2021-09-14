@@ -901,6 +901,15 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     return potmat0, potind
 
 
+""" ============ POTMAT0 ROTATED with Multipole expansion ============ """
+def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
+    """ Calculate potential matrix using multipole expansion representation of 
+    the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist.
+    
+    
+    
+    """
+
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""

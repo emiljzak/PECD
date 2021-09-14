@@ -427,9 +427,17 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             exit()
 
         """ calculate POTMAT """
-        potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
-        for ielem, elem in enumerate(potmat):
-            hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
+        if params['esp_mode'] == "exact":
+            """ Use Psi4 to generate values of the ESP at quadrature grid points. 
+                Use jit for fast calculation of the matrix elements """
+            potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
+
+            """ Put the indices and values back together in the Hamiltonian array"""
+            for ielem, elem in enumerate(potmat):
+                hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
+        elif params['esp_mode'] == "multipoles"
+        BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+
 
         """ calculate KEO """
         start_time = time.time()
