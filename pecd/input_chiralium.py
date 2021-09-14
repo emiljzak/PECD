@@ -121,6 +121,9 @@ def read_input():
 
     params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
+    """ **** parameters of the multipole moment expansion of the ESP **** """
+    params['multi_lmax'] = 2 #maximum l in the multipole expansion
+
     """==== electrostatic potential ===="""
 
     params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"

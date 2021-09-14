@@ -906,10 +906,25 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     """ Calculate potential matrix using multipole expansion representation of 
     the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist.
     
-    
-    
     """
 
+    # 1. Construct vlist
+    start_time = time.time()
+    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = np.asarray(vlist)
+    end_time = time.time()
+    print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+
+    # 2. Build array of multipole moments
+
+
+    # 3. Build array of 3-j symbols
+
+
+    # 4. Perform semi-vectorized summation
+
+    # 5. Return final potential matrix
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""

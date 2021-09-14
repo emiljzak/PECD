@@ -16,6 +16,14 @@ from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
 
 
+def calc_multipoles(params):
+
+    qlm = []
+    Lmax = params['multi_lmax']
+
+
+    return qlm
+
 def INTERP_POT(params):
     #interpolate potential on the grid
 
