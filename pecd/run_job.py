@@ -182,28 +182,28 @@ def setup_input(params_input):
     params['file_psi0']         =   "psi0_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw'])))    + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_hmat0']        =   "hmat0_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_enr0']         =   "enr0_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])   + ".dat"
 
     params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])  + \
                                     "_" + str(params['sph_quad_tol'])   + ".dat"
@@ -211,7 +211,7 @@ def setup_input(params_input):
     params['file_esp']          =   "esp_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])    + ".dat"
     
@@ -219,7 +219,7 @@ def setup_input(params_input):
     params['job_directory'] =  params['working_dir'] + params['molec_name']   + \
                                 "_" + str(params['bound_lmax'])    + \
                                 "_" + str(params['bound_nlobs'])   + \
-                                "_" + str(params['bound_binw'])    + \
+                                "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                 "_" + str(params['bound_nbins'])   + \
                                 "_" + str(params['esp_method_name']) +"/"
 
@@ -227,21 +227,21 @@ def setup_input(params_input):
     params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs']) + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
                                     "_" + str(params['bound_nbins'] )   + \
                                     "_" + str(params['esp_method_name'])  
 
     params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs']) + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                     "_" + str(params['bound_nbins'])    + \
                                     "_" + str(params['esp_method_name'])  
 
     params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs']) + \
-                                    "_" + str(params['bound_binw'])    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name']) 
 
@@ -326,7 +326,7 @@ def run_array_job(params_list,grid_euler):
             print ("The current working directory is %s" % path)
             print ("Job directory is %s" % iparams['job_directory'])
             print("Number of batches = " + str(iparams['N_batches']))
-            print("number of batchessss: " + str(iparams['N_batches']))
+
             for ibatch in range(0,iparams['N_batches']):
      
                 pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
