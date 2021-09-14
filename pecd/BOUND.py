@@ -21,6 +21,9 @@ import quadpy
 
 from sympy.functions.elementary.miscellaneous import sqrt
 
+import quaternionic
+import spherical
+
 import sys
 import os.path
 import time
@@ -108,6 +111,23 @@ def calc_potmat_jit( vlist, VG, Gs ):
 
         #potmat[vlist[p1,5],vlist[p1,6]] = np.dot(w,f.T) * 4.0 * np.pi
     return pot, potind
+
+@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax ):
+    pot = []
+    potind = []
+
+    for p in range(vlist.shape[0]):
+        #print(vlist[p1,:])
+        v = 0.0
+        for L in range(Lmax):
+            for M in range(-L,L+1):
+                v += qlm[(L,M)] * tjmat[vlist[p,1], L, vlist[p,3], vlist[p,2], M+L] 
+        pot.append( [v] )
+        potind.append( [ vlist[p,5], vlist[p,6] ] )
+
+    return pot, potind
+
 
 
 
@@ -901,6 +921,28 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     return potmat0, potind
 
 
+
+def gen_3j_multipoles(lmax_basis,lmax_multi):
+    """precompute all necessary 3-j symbols for the matrix elements of multipoles"""
+    #store in arrays:
+    # 2) tjmat[l,L,l',m,M] = [0,...lmax,0...lmax,0,...,m+l,...,2l]
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis +1, 2*lmax_basis+1, 2*lmax_multi +1), dtype = float)
+
+    for l1 in range(lmax_basis+1):
+        for l2 in range(lmax_basis+1):
+            for L in range(lmax_multi+1):
+                for m in range(-l1,l1+1):
+                    for M in range(-L,L+1):
+                    
+                        tjmat[l1,L,l2,l1+m,L+M] = spherical.Wigner3j(l1, L, l2, m, M, -(m+M)) * spherical.Wigner3j(l1, L, l2, 0, 0, 0)
+                        tjmat[l1,L,l2,l1+m,L+M] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi))
+
+    print("3j symbols in array:")
+    print(tjmat)
+    return tjmat
+
+
+
 """ ============ POTMAT0 ROTATED with Multipole expansion ============ """
 def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     """ Calculate potential matrix using multipole expansion representation of 
@@ -917,14 +959,19 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     
 
     # 2. Build array of multipole moments
-
+    start_time = time.time()
+    qlm = POTENTIAL.calc_multipoles(params)
+    end_time = time.time()
+    print("Time for the calculation of multipole moments: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
 
     # 3. Build array of 3-j symbols
-
+    tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
 
     # 4. Perform semi-vectorized summation
-
+    potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'] )
     # 5. Return final potential matrix
+    return  potmat0, potind 
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""

@@ -3,6 +3,7 @@ import CONSTANTS
 import os
 import itertools
 
+
 def read_input():
     """ Set up essential input parameters"""
 
@@ -123,7 +124,9 @@ def read_input():
 
     """ **** parameters of the multipole moment expansion of the ESP **** """
     params['multi_lmax'] = 2 #maximum l in the multipole expansion
-
+    params['multi_ncube_points'] = 201
+    params['multi_box_edge'] = 20
+    
     """==== electrostatic potential ===="""
 
     params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"

@@ -432,13 +432,15 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
                 Use jit for fast calculation of the matrix elements """
             potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
 
-            """ Put the indices and values back together in the Hamiltonian array"""
-            for ielem, elem in enumerate(potmat):
-                hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
+
         elif params['esp_mode'] == "multipoles":
-            hmat = BOUND.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+            potmat, potind = BOUND.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
+        """ Put the indices and values back together in the Hamiltonian array"""
+        for ielem, elem in enumerate(potmat):
+            hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
 
+            
         """ calculate KEO """
         start_time = time.time()
         keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
@@ -661,7 +663,7 @@ def calc_intmat(maparray,rgrid,Nbas):
 
     """precompute all necessary 3-j symbols"""
     #generate arrays of 3j symbols with 'spherical':
-    tjmat = gen_3j(params['bound_lmax'])
+    tjmat = gen_3j_dip(params['bound_lmax'])
   
 
     for i in range(Nbas):
@@ -1312,8 +1314,8 @@ def create_dirs(params,N_euler_3D):
             os.mkdir(str(irun))
     return path
 
-def gen_3j(lmax):
-    """precompute all necessary 3-j symbols"""
+def gen_3j_dip(lmax):
+    """precompute all necessary 3-j symbols for dipole matrix elements"""
     #store in arrays:
     # 2) tjmat[l,l',m,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
     tjmat = np.zeros( (lmax+1, lmax+1, 2*lmax+1, 3), dtype = float)

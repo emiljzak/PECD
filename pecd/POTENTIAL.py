@@ -14,12 +14,72 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
+from multipoles import MultipoleExpansion
 
+def sph2cart(r,theta,phi):
+    x=r*np.sin(theta)*np.cos(phi)
+    y=r*np.sin(theta)*np.sin(phi)
+    z=r*np.cos(theta)
+    return x,y,z
+
+def chiralium_charge_distr(npoints,edge):
+    """ Build charge distribution for the model chiralium molecule"""
+
+    # 1. Positions of the nuclei given in spherical coordinates
+
+    r_array     = np.array([4.0, 2.0, 2.0, 4.0, 0.0 ])
+    theta_array = np.array([0.0, np.pi/2.0, np.pi/2.0, 2.19, 0.0])
+    phi_array   = np.array([0.0, 0.0, np.pi/2.0, 3.93, 0.0])
+    Q_array     = np.array([0.5, 1.5, 1.0, 0.25, 2.0])
+    q_array     = np.array([-0.1, -1.0, -0.2, -0.45, -2.5])
+
+    x,y,z = sph2cart(r_array,theta_array,phi_array)
+
+    xyz_mol = np.vstack((x,y,z))
+
+
+
+    x, y, z = [np.linspace(-edge/2., edge/2., npoints)]*3
+    XYZ = np.meshgrid(x, y, z, indexing='ij')
+
+    def slater(XYZ, xyz_mol):
+        g = np.zeros_like(XYZ[0])
+        print(g.shape)
+        for iatom in range(5):
+            g += np.exp(-1.0 * np.sqrt( (XYZ[0] - xyz_mol[0,iatom])**2 +\
+                (XYZ[1] - xyz_mol[1,iatom])**2 +\
+                    (XYZ[2] - xyz_mol[2,iatom])**2 ) )
+        return g
+
+    # Initialize the charge density rho, which is a 3D numpy array:
+    rho = slater(XYZ, xyz_mol)
+
+    return rho, XYZ
 
 def calc_multipoles(params):
 
     qlm = []
     Lmax = params['multi_lmax']
+
+
+    npoints = params['multi_ncube_points']
+    edge    = params['multi_box_edge']
+
+    rho, XYZ = chiralium_charge_distr(npoints,edge)
+
+    charge_dist = {
+        'discrete': False,
+        'rho': rho,
+        'xyz': XYZ
+    }
+
+    Phi = MultipoleExpansion(charge_dist, Lmax)
+    qlm = Phi.multipole_moments
+    x, y, z = 2,2,2
+    value = Phi(x, y, z)
+    print(value)
+
+    print(qlm)
 
 
     return qlm

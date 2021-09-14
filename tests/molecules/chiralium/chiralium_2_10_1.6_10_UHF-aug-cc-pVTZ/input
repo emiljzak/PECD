@@ -1,7 +1,7 @@
 {
     "mode": "propagate",
     "jobtype": "local",
-    "molec_name": "c",
+    "molec_name": "chiralium",
     "mol_geometry": {
         "rc": 0.0
     },
@@ -51,8 +51,11 @@
     "use_adaptive_quads": true,
     "sph_quad_default": "lebedev_023",
     "calc_method": "jit",
+    "multi_lmax": 2,
+    "multi_ncube_points": 201,
+    "multi_box_edge": 20,
     "esp_method_name": "UHF-aug-cc-pVTZ",
-    "esp_mode": "exact",
+    "esp_mode": "multipoles",
     "enable_cutoff": true,
     "r_cutoff": 40.0,
     "scf_enr_conv": 1e-06,
@@ -130,9 +133,9 @@
     "bound_nlobs": 10,
     "bound_binw": 1.6,
     "main_dir": "/home/emil/Desktop/projects/PECD/pecd/",
-    "working_dir": "/home/emil/Desktop/projects/PECD/tests/molecules/c/",
-    "rot_wf_file": "/home/emil/Desktop/projects/PECD/tests/molecules/c/rv_wavepackets/wavepacket_J60.h5",
-    "rot_coeffs_file": "/home/emil/Desktop/projects/PECD/tests/molecules/c/rv_wavepackets/coefficients_j0_j60.rchm",
+    "working_dir": "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/",
+    "rot_wf_file": "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/rv_wavepackets/wavepacket_J60.h5",
+    "rot_coeffs_file": "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/rv_wavepackets/coefficients_j0_j60.rchm",
     "wavepacket_file": "wavepacket",
     "FEMLIST": [
         [
@@ -146,15 +149,15 @@
             0.0
         ]
     ],
-    "file_psi0": "psi0_c_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
-    "file_hmat0": "hmat0_c_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
-    "file_enr0": "enr0_c_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
-    "file_quad_levels": "quad_levels_c_2_10_1.6_10_UHF-aug-cc-pVTZ_0.0001.dat",
-    "file_esp": "esp_c_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
-    "job_directory": "/home/emil/Desktop/projects/PECD/tests/molecules/c/c_2_10_1.6_10_UHF-aug-cc-pVTZ/",
-    "file_hmat_init": "hmat_init_c_2_10_1.6_10_UHF-aug-cc-pVTZ",
-    "file_psi_init": "psi_init_c_2_10_1.6_10_UHF-aug-cc-pVTZ",
-    "file_enr_init": "enr_init_c_2_10_1.6_10_UHF-aug-cc-pVTZ",
+    "file_psi0": "psi0_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
+    "file_hmat0": "hmat0_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
+    "file_enr0": "enr0_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
+    "file_quad_levels": "quad_levels_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ_0.0001.dat",
+    "file_esp": "esp_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ.dat",
+    "job_directory": "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ/",
+    "file_hmat_init": "hmat_init_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ",
+    "file_psi_init": "psi_init_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ",
+    "file_enr_init": "enr_init_chiralium_2_10_1.6_10_UHF-aug-cc-pVTZ",
     "opt_cycle": 3.18628471123417,
     "E0": 0.6539267839910538,
     "field_type": {
