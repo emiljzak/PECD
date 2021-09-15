@@ -123,7 +123,7 @@ def read_input():
     params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
     """ **** parameters of the multipole moment expansion of the ESP **** """
-    params['multi_lmax']         = 2 #maximum l in the multipole expansion
+    params['multi_lmax']         = 4 #maximum l in the multipole expansion
     params['multi_ncube_points'] = 201
     params['multi_box_edge']     = 10
 

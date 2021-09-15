@@ -51,7 +51,7 @@
     "use_adaptive_quads": true,
     "sph_quad_default": "lebedev_023",
     "calc_method": "jit",
-    "multi_lmax": 2,
+    "multi_lmax": 8,
     "multi_ncube_points": 201,
     "multi_box_edge": 10,
     "esp_method_name": "UHF-aug-cc-pVTZ",
