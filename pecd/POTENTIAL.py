@@ -28,6 +28,47 @@ def sph2cart(r,theta,phi):
     z=r*np.cos(theta)
     return x,y,z
 
+
+def slater(XYZ, xyz_mol, q_array):
+        g = np.zeros_like(XYZ[0])
+        for iatom in range(5):
+            g += q_array[iatom] * np.exp(-1.0 * np.sqrt( (XYZ[0] - xyz_mol[0,iatom])**2 +\
+                (XYZ[1] - xyz_mol[1,iatom])**2 +\
+                (XYZ[2] - xyz_mol[2,iatom])**2 ) )
+        return g
+
+
+
+def delta_gaussian(XYZ, xyz_mol, Q_array):
+    epsilon = 0.2
+    g = np.zeros_like(XYZ[0])
+    for iatom in range(5):
+        g += Q_array[iatom] * np.exp(-1.0 * ( (XYZ[0] - xyz_mol[0,iatom])**2 +\
+            (XYZ[1] - xyz_mol[1,iatom])**2 +\
+                (XYZ[2] - xyz_mol[2,iatom])**2 ) / (2.0 * epsilon**2) )
+    return g/(epsilon * np.sqrt(2.0 * np.pi))
+
+
+def slater2D(XY, Z0, xyz_mol, q_array):
+        g = np.zeros_like(XY[0])
+        for iatom in range(5):
+            g += q_array[iatom] * np.exp(-1.0 * np.sqrt( (XY[0] - xyz_mol[0,iatom])**2 +\
+                (XY[1] - xyz_mol[1,iatom])**2 +\
+                (Z0 - xyz_mol[2,iatom])**2 ) )
+        return g
+
+
+
+def delta_gaussian2D(XY,Z0, xyz_mol, Q_array):
+    epsilon = 0.2
+    g = np.zeros_like(XY[0])
+    for iatom in range(5):
+        g += Q_array[iatom] * np.exp(-1.0 * ( (XY[0] - xyz_mol[0,iatom])**2 +\
+            (XY[1] - xyz_mol[1,iatom])**2 +\
+                (Z0 - xyz_mol[2,iatom])**2 ) / (2.0 * epsilon**2) )
+    return g/(epsilon * np.sqrt(2.0 * np.pi))
+
+
 def chiralium_charge_distr(npoints,edge):
     """ Build charge distribution for the model chiralium molecule"""
 
@@ -43,22 +84,25 @@ def chiralium_charge_distr(npoints,edge):
 
     xyz_mol = np.vstack((x,y,z))
 
-
-
     x, y, z = [np.linspace(-edge/2., edge/2., npoints)]*3
     XYZ = np.meshgrid(x, y, z, indexing='ij')
 
-    def slater(XYZ, xyz_mol):
-        g = np.zeros_like(XYZ[0])
-        print(g.shape)
-        for iatom in range(5):
-            g += np.exp(-1.0 * np.sqrt( (XYZ[0] - xyz_mol[0,iatom])**2 +\
-                (XYZ[1] - xyz_mol[1,iatom])**2 +\
-                    (XYZ[2] - xyz_mol[2,iatom])**2 ) )
-        return g
-
     # Initialize the charge density rho, which is a 3D numpy array:
-    rho = slater(XYZ, xyz_mol)
+    rho = slater(XYZ, xyz_mol,q_array) + delta_gaussian(XYZ, xyz_mol,Q_array)
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    Z0 = -0.0
+    XY = np.meshgrid(x,y, indexing='ij')
+    rho2D = slater2D(XY,Z0, xyz_mol,q_array) + delta_gaussian2D(XY,Z0, xyz_mol,Q_array)
+   # img = ax.contourf(XY[0], XY[1], rho2D)
+    
+    #fig.colorbar(img)
+    #plt.show()
+    #exit()
+
 
     return rho, XYZ
 
@@ -81,17 +125,37 @@ def calc_multipoles(params):
 
     Phi = MultipoleExpansion(charge_dist, Lmax)
     qlm = Phi.multipole_moments
-    x, y, z = 2,2,2
-    value = Phi(x, y, z)
-    print(value)
+
+    """ Plot potential"""
+    npoints2D = 500
+    x, y = [np.linspace(-edge/2., edge/2., npoints2D)]*2
+    XY = np.meshgrid(x,y, indexing='ij')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    Z0 = -4.0
+    rho2D = np.zeros((len(x),len(y)))
+    XY = np.meshgrid(x,y, indexing='ij')
+    for i in range(len(x)):
+        for j in range(len(x)):
+            rho2D[i,j] = Phi(x[i],y[j],Z0)
+    print(rho2D.shape)
+    print(rho2D)
+    img = ax.contourf(XY[0], XY[1], rho2D,ncontours=100)
+    #img = ax.scatter(x,y,rho2D)
+    fig.colorbar(img)
+    plt.show()
+    exit()
+
 
 
     with open(params['job_directory']+ "multipoles.dat", 'w') as qlmfile: 
         qlmfile.write( str(qlm) )
-        #json.dump(qlm, qlmfile, indent=4, default=convert)
-
+        #json.dump(qlm, qlmfile, indent=4, default=convert) #not suitable for tule keys
 
     return qlm
+
 
 def INTERP_POT(params):
     #interpolate potential on the grid

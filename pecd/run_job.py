@@ -182,7 +182,7 @@ def setup_input(params_input):
     params['file_psi0']         =   "psi0_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
                                     "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw'])))    + \
+                                    "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])   + ".dat"
 

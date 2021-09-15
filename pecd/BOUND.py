@@ -32,7 +32,7 @@ from numba import jit, prange
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
-from mayavi import mlab
+
 """ start of @jit section """
 jitcache = False
 

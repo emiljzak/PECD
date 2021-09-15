@@ -49,11 +49,11 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,12,3)
+    params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (4,4,1)
-    params['bound_binw_arr']    = (2.0,4.0,4)
+    params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 20
+    params['bound_nbins']   = 30
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -124,7 +124,7 @@ def read_input():
 
     """ **** parameters of the multipole moment expansion of the ESP **** """
     params['multi_lmax']         = 2 #maximum l in the multipole expansion
-    params['multi_ncube_points'] = 101
+    params['multi_ncube_points'] = 201
     params['multi_box_edge']     = 10
 
     """==== electrostatic potential ===="""
