@@ -40,7 +40,7 @@ def slater(XYZ, xyz_mol, q_array):
 
 
 def delta_gaussian(XYZ, xyz_mol, Q_array):
-    epsilon = 0.2
+    epsilon = 0.1
     g = np.zeros_like(XYZ[0])
     for iatom in range(5):
         g += Q_array[iatom] * np.exp(-1.0 * ( (XYZ[0] - xyz_mol[0,iatom])**2 +\
@@ -60,7 +60,7 @@ def slater2D(XY, Z0, xyz_mol, q_array):
 
 
 def delta_gaussian2D(XY,Z0, xyz_mol, Q_array):
-    epsilon = 0.2
+    epsilon = 0.1
     g = np.zeros_like(XY[0])
     for iatom in range(5):
         g += Q_array[iatom] * np.exp(-1.0 * ( (XY[0] - xyz_mol[0,iatom])**2 +\
@@ -90,17 +90,18 @@ def chiralium_charge_distr(npoints,edge):
     # Initialize the charge density rho, which is a 3D numpy array:
     rho = slater(XYZ, xyz_mol,q_array) + delta_gaussian(XYZ, xyz_mol,Q_array)
 
-
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     Z0 = -0.0
     XY = np.meshgrid(x,y, indexing='ij')
     rho2D = slater2D(XY,Z0, xyz_mol,q_array) + delta_gaussian2D(XY,Z0, xyz_mol,Q_array)
-   # img = ax.contourf(XY[0], XY[1], rho2D)
+    img = ax.contourf(XY[0], XY[1], rho2D)
     
-    #fig.colorbar(img)
-    #plt.show()
+    fig.colorbar(img)
+    plt.show()
+    """
     #exit()
 
 
@@ -127,14 +128,15 @@ def calc_multipoles(params):
     qlm = Phi.multipole_moments
 
     """ Plot potential"""
-    npoints2D = 500
+    npoints2D = 200
     x, y = [np.linspace(-edge/2., edge/2., npoints2D)]*2
     XY = np.meshgrid(x,y, indexing='ij')
 
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    Z0 = -4.0
+    Z0 = 0.0
     rho2D = np.zeros((len(x),len(y)))
     XY = np.meshgrid(x,y, indexing='ij')
     for i in range(len(x)):
@@ -142,12 +144,17 @@ def calc_multipoles(params):
             rho2D[i,j] = Phi(x[i],y[j],Z0)
     print(rho2D.shape)
     print(rho2D)
-    img = ax.contourf(XY[0], XY[1], rho2D,ncontours=100)
-    #img = ax.scatter(x,y,rho2D)
-    fig.colorbar(img)
-    plt.show()
-    exit()
 
+    plot_cont_1 = ax.contourf( XY[0], XY[1], rho2D, 
+                                20, 
+                                cmap = 'jet', 
+                                vmin = -20.0,
+                                vmax = 20.0)
+
+    fig.colorbar(plot_cont_1)
+    plt.show()
+    """
+    
 
 
     with open(params['job_directory']+ "multipoles.dat", 'w') as qlmfile: 

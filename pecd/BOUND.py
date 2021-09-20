@@ -119,7 +119,7 @@ def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax, rlmat ):
 
     for p in range(vlist.shape[0]):
         #print(vlist[p1,:])
-        v = 0.0
+        v = 0.0+1j*0.0
         for L in range(Lmax):
             for M in range(-L,L+1):
                 v += qlm[(L,M)] * tjmat[vlist[p,1], L, vlist[p,3], vlist[p,2], M+L] * rlmat[vlist[p,0]-1,L]
@@ -806,8 +806,9 @@ def rotate_mol_xyz(params, grid_euler, irun):
         mol_xyz = np.zeros( (3,1), dtype = float) #
         mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
     else:
-        print("Error: molecule name not found")
-        exit()
+        print("Warning: molecule name not found")
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) 
+        #exit()
 
     #veryfiy rotated geometry by plots
     """
@@ -955,7 +956,7 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist)
     end_time = time.time()
-    print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
 
     # 2. Build array of multipole moments

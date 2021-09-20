@@ -278,7 +278,28 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
                     mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1],
                     mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
         )
-        
+    
+    if params['molec_name'] == "cmethane":
+        mol = psi4.geometry("""
+        1 2
+        units au
+        C
+        H  1 CH1
+        H  1 CH2  2 HCH
+        H  1 CH3  2 HCH    3  120.0
+        H  1 CH4  2 HCH    3  240.0
+
+        CH1    = {0}
+        CH2    = {1}
+        CH3    = {2}
+        CH4    = {3}
+        HCH    = 109.471209
+        """.format( params['mol_geometry']['r1'], params['mol_geometry']['r1'],
+                    params['mol_geometry']['r3'], params['mol_geometry']['r4'])
+        )
+    
+
+
     elif params['molec_name'] == "n2":
         mol = psi4.geometry("""
         1 2
