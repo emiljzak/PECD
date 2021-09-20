@@ -37,7 +37,7 @@ def read_input():
     """
 
     params['molec_name']    = "cmethane"
-    params['mol_geometry']  = {"r1":2.0, "r2": 2.2, "r3": 2.5, "r4": 3.0} #atomic units
+    params['mol_geometry']  = {"r1":2.076, "r2": 2.076, "r3": 2.076, "r4": 2.076} #atomic units
     params['mol_masses']    = {"c":12.0, "h":1.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
@@ -51,9 +51,9 @@ def read_input():
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (4,4,1)
-    params['bound_binw_arr']    = (3.0,3.0,1)
+    params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 10
+    params['bound_nbins']   = 30
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -73,7 +73,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 1000.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 1.5
 
 
@@ -102,7 +102,7 @@ def read_input():
 
     """ gaussian pulse """
     params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)
-    params['gauss_t0']      = 1000.0 #as: pulse centre
+    params['gauss_t0']      = 2000.0 #as: pulse centre
 
     """ sin2 pulse """
     params['sin2_ncycles']  = 10
@@ -113,8 +113,8 @@ def read_input():
 
     """===== Potential energy matrix ====="""
     
-    params['read_ham_init_file'] = True    # if available read the initial Hamiltonian from file
-    params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
+    params['read_ham_init_file'] = False    # if available read the initial Hamiltonian from file
+    params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
     params['sph_quad_tol']       = 1e-3     # tolerance (in a.u.) for the convergence of matrix elements
 
     params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them

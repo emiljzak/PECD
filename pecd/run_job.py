@@ -153,8 +153,8 @@ def setup_input(params_input):
 
     """ === molecule directory ==== """ 
     if params_input['jobtype'] == "slurm":
-        params['main_dir']      = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/pecd/" 
-        params['working_dir']   = "/gpfs/cfel/cmi/scratch/user/zakemil/PECD/tests/molecules/c/"
+        params['main_dir']      = "/beegfs/desy/group/cfel/cmi/zakemil/PECD/pecd/" 
+        params['working_dir']   = "/beegfs/desy/group/cfel/cmi/zakemil/PECD/tests/molecules/" + params['molec_name'] + "/"
     elif params_input['jobtype'] == "local":
         params['main_dir']      = "/home/emil/Desktop/projects/PECD/pecd/"
         params['working_dir']   = "/home/emil/Desktop/projects/PECD/tests/molecules/" + params['molec_name'] + "/"
