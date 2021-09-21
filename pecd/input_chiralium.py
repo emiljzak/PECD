@@ -49,7 +49,7 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (9,9,1)
+    params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
@@ -134,6 +134,8 @@ def read_input():
                                     # exact -> use Psi4. 
                                     # multipoles -> perform multipole expansion of the potential from given charge distr.
                                     # anton -> partial wave representation of the potential from A. Artemyev
+                                    # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 9, Lmax = 8. 1800 grid points. 160k basis size.
+
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
 

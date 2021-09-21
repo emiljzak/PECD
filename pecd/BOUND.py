@@ -128,6 +128,24 @@ def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax, rlmat ):
 
     return pot, potind
 
+@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+def calc_potmat_anton_jit( vLM, vlist, tjmat):
+    pot = []
+    potind = []
+
+    Lmax = vLM.shape[1]
+    print("Lmax = " + str(Lmax))
+
+    for p in range(vlist.shape[0]):
+        #print(vlist[p1,:])
+        v = 0.0+1j*0.0
+        for L in range(Lmax):
+            for M in range(-L,L+1):
+                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L+M, vlist[p,4]]
+        pot.append( [v] )
+        potind.append( [ vlist[p,5], vlist[p,6] ] )
+
+    return pot, potind
 
 
 
@@ -927,7 +945,7 @@ def gen_3j_multipoles(lmax_basis,lmax_multi):
     """precompute all necessary 3-j symbols for the matrix elements of multipoles"""
     #store in arrays:
     # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
-    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_basis+1, 2*lmax_multi +1), dtype = float)
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1), dtype = float)
     
     #l1 - ket, l2 - bra
 
@@ -995,7 +1013,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 1. Construct vlist
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    #vlist = np.asarray(vlist)
+    vlist = np.asarray(vlist)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -1011,12 +1029,21 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
 
     # 3a. Build array of '1/r**l' values on the radial grid
-    print(rgrid_anton-Gr.ravel())
+   
+    """ Testing of grid compatibility"""
+    """
+    print(Gr.ravel().shape)
+    print(rgrid_anton.shape) #the two grids agree
+    if !np.allclose(Gr.ravel(), rgrid_anton, rtol=1e-6, atol=1e-6):
+        raise:
+    print(max(abs(rgrid_anton-Gr.ravel())))
     exit()
-
+    """
 
     # 4. sum-up partial waves
-    potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'], rlmat )
+    potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
+    print(potmat0)
+    exit()
     # 5. Return final potential matrix
 
     #check if the potential is real. Convert to float. Plot array

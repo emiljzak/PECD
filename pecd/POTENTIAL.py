@@ -168,7 +168,7 @@ def read_potential(params):
     #read the partial waves representation of the electrostatic potential. A. Artemyev's potential.
     #vLM[xi, L, M]
 
-    vLM = np.zeros((    params['bound_nlobs'] * params['bound_nbins'],
+    vLM = np.zeros((    (params['bound_nlobs']-1) * params['bound_nbins'],
                         params['multi_lmax'] + 1, 
                         2 * params['multi_lmax'] + 1), 
                         dtype=complex)
