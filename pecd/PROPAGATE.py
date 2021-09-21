@@ -422,7 +422,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             hmat =  np.zeros((Nbas, Nbas), dtype=float)
         elif params['hmat_format'] == 'sparse_csr':
             if params['esp_mode']  == 'anton':
-                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #complex potential in Demekhin's work
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float) #complex potential in Demekhin's work
             else:
                 hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float) #if
         else:

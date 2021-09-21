@@ -135,15 +135,26 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
 
     Lmax = vLM.shape[1]
    #print("Lmax = " + str(Lmax-1))
-
+    """
     for p in range(vlist.shape[0]):
         #print(vlist[p1,:])
         v = 0.0+1j*0.0
         for L in range(Lmax):
             for M in range(-L,L+1):
-                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L+M, vlist[p,3]+ vlist[p,4]]
+                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
         pot.append( [v] )
         potind.append( [ vlist[p,5], vlist[p,6] ] )
+    """
+    #pre-derived expression using only positive M's and real part of vLM:
+    for p in range(vlist.shape[0]):
+        v = 0.0#+1j*0.0
+        for L in range(Lmax):
+            v = vLM[vlist[p,0]-1,L,L] * tjmat[vlist[p,1], L, vlist[p,3], L , vlist[p,3] + vlist[p,4]]
+            for M in range(1,L+1):
+                v += 2.0 * vLM[vlist[p,0]-1,L,L+M].real * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
+        pot.append( [v] )
+        potind.append( [ vlist[p,5], vlist[p,6] ] )
+
 
     return pot, potind
 
@@ -1004,6 +1015,24 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     return  potmat0, potind 
 
 
+def test_vlm_symmetry(vLM):
+    #function to test if vLM obeys derived symmetry rules
+    Lmax = vLM.shape[1]
+    nxi = vLM.shape[0]
+
+    S = np.zeros((nxi,Lmax+1,Lmax+1),dtype = complex)
+
+    for L in range(Lmax):
+        for M in range(0,L+1):
+            S[:,L,M] = vLM[:,L,L+M]-(-1)**M * vLM[:,L,L-M].conj()
+            #print(S[:,L,M])
+
+            if np.allclose(S[:,L,M],0e0+1j*0e0, 1e-8, 1e-8):
+                print("L = " + str(L) + ", M = " + str(M) + ": All have zero difference")
+    exit()
+
+
+
 """ ============ POTMAT0 ROTATED with Anton's potential ============ """
 def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     """ Calculate potential matrix using projection onto spherical harmonics representation of 
@@ -1027,6 +1056,13 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
 
+    #test_vlm_symmetry(vLM)
+
+    #print("Maximum imaginary part of the potential:")
+    #print(vLM.imag.max())
+    #print(vLM.imag.min())
+    #exit()
+
     # 3. Build array of 3-j symbols
     tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
 
@@ -1044,9 +1080,9 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     # 4. sum-up partial waves
     potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
-    potmat0 = np.asarray(potmat0)
-    print(potmat0[:100].imag)
-    print(np.max(np.abs(potmat0.imag)))
+    #potmat0 = np.asarray(potmat0)
+    #print(potmat0[:100].imag)
+    #print(np.max(np.abs(potmat0.imag)))
     #exit()
     # 5. Return final potential matrix
     return potmat0,potind
