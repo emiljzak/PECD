@@ -926,17 +926,19 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 def gen_3j_multipoles(lmax_basis,lmax_multi):
     """precompute all necessary 3-j symbols for the matrix elements of multipoles"""
     #store in arrays:
-    # 2) tjmat[l,L,l',m,M] = [0,...lmax,0...lmax,0,...,m+l,...,2l]
-    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis +1, 2*lmax_basis+1, 2*lmax_multi +1), dtype = float)
+    # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_basis+1, 2*lmax_multi +1), dtype = float)
+    
+    #l1 - ket, l2 - bra
 
     for l1 in range(lmax_basis+1):
         for l2 in range(lmax_basis+1):
             for L in range(lmax_multi+1):
-                for m in range(-l1,l1+1):
-                    for M in range(-L,L+1):
-                    
-                        tjmat[l1,L,l2,l1+m,L+M] = spherical.Wigner3j(l1, L, l2, m, M, -(m+M)) * spherical.Wigner3j(l1, L, l2, 0, 0, 0)
-                        tjmat[l1,L,l2,l1+m,L+M] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi))
+                for M in range(-L,L+1):
+                    for m2 in range(-l2,l2+1):
+
+                        tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -(m2+M)) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
+                        tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt((2*float(l1)+1) * (2.0*float(L)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(M+m2)
 
     print("3j symbols in array:")
     print(tjmat)

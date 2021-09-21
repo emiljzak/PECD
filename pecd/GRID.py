@@ -294,7 +294,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         CH3    = {2}
         CH4    = {3}
         HCH    = 109.471209
-        """.format( params['mol_geometry']['r1'], params['mol_geometry']['r1'],
+        """.format( params['mol_geometry']['r1'], params['mol_geometry']['r2'],
                     params['mol_geometry']['r3'], params['mol_geometry']['r4'])
         )
     

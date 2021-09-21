@@ -1397,12 +1397,8 @@ if __name__ == "__main__":
         grid_euler = grid_euler.reshape(-1,3)
 
         N_Euler = grid_euler.shape[0]
-        print(N_Euler)
 
         N_per_batch = int(N_Euler/params['N_batches'])
-
-        print(N_per_batch)
-
 
         maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
                                     params['map_type'], path )

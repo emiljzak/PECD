@@ -49,11 +49,11 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
-    params['bound_binw_arr']    = (2.0,2.0,1)
+    params['bound_nlobs_arr']   = (12,12,1)
+    params['bound_lmax_arr']    = (6,6,1)
+    params['bound_binw_arr']    = (2.5,2.5,1)
 
-    params['bound_nbins']   = 30
+    params['bound_nbins']   = 80
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -196,7 +196,7 @@ def read_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],30)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,
