@@ -49,11 +49,11 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
-    params['bound_binw_arr']    = (3.0,3.0,1)
+    params['bound_nlobs_arr']   = (9,9,1)
+    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 10
+    params['bound_nbins']   = 200
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -123,14 +123,17 @@ def read_input():
     params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
     """ **** parameters of the multipole moment expansion of the ESP **** """
-    params['multi_lmax']         = 10 #maximum l in the multipole expansion
+    params['multi_lmax']         = 8 #maximum l in the multipole expansion
     params['multi_ncube_points'] = 201
     params['multi_box_edge']     = 20
 
     """==== electrostatic potential ===="""
 
     params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
-    params['esp_mode']           = "multipoles" #exact or multipoles. Exact -> use Psi4. multipoles -> perform multipole expansion of the potential from given charge distr.
+    params['esp_mode']           = "anton" #exact or multipoles or anton. 
+                                    # exact -> use Psi4. 
+                                    # multipoles -> perform multipole expansion of the potential from given charge distr.
+                                    # anton -> partial wave representation of the potential from A. Artemyev
     params['enable_cutoff']      = True #use cut-off for the ESP?
     params['r_cutoff']           = 40.0    
 

@@ -995,14 +995,14 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 1. Construct vlist
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist)
+    #vlist = np.asarray(vlist)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
 
     # 2. Read the potential partial waves on the grid
     start_time = time.time()
-    vLM = POTENTIAL.read_potential(params)
+    vLM,rgrid_anton = POTENTIAL.read_potential(params)
     end_time = time.time()
     print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -1011,7 +1011,8 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
 
     # 3a. Build array of '1/r**l' values on the radial grid
-
+    print(rgrid_anton-Gr.ravel())
+    exit()
 
 
     # 4. sum-up partial waves

@@ -167,9 +167,42 @@ def calc_multipoles(params):
 def read_potential(params):
     #read the partial waves representation of the electrostatic potential. A. Artemyev's potential.
     #vLM[xi, L, M]
-    
-    vLM = np.zeros((params['bound_nlobs'] * params['bound_nbins'] , ))
 
+    vLM = np.zeros((    params['bound_nlobs'] * params['bound_nbins'],
+                        params['multi_lmax'] + 1, 
+                        2 * params['multi_lmax'] + 1), 
+                        dtype=complex)
+
+    for L in range(params['multi_lmax'] +1):
+        for M in range(-L,L+1):
+            if M == 0:
+                suffix = ""
+            elif M > 0:
+                suffix = "_pos"
+            elif M < 0:
+                suffix = "_neg"
+
+            vlmfile = open(params['main_dir'] + "potential/potential_L" + str(L) + "_M" + str(abs(M))+suffix + ".dat" , 'r' )
+            v = []
+
+            for _ in range(3):
+                next(vlmfile) #skip header
+            
+            for line in vlmfile:
+                words =  line.split()
+                r     =  float(words[0])
+                v_re  =  float(words[1])
+                v_im  =  float(words[2])
+            
+                v.append([r, v_re + 1j * v_im])
+            
+            v.append([400.0,0.0+1j*0.0])
+            v = np.asarray(v)
+            vLM[:,L,L+M] = v[:,1] #assuming our grid matches the one for the potential!!!
+
+    rgrid = v[:,0]
+
+    return vLM,rgrid
 
 def INTERP_POT(params):
     #interpolate potential on the grid

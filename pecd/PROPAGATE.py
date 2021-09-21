@@ -435,6 +435,9 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         elif params['esp_mode'] == "multipoles":
             potmat, potind = BOUND.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+        
+        elif params['esp_mode'] == "anton":
+            potmat, potind = BOUND.BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
         """ Put the indices and values back together in the Hamiltonian array"""
         for ielem, elem in enumerate(potmat):
