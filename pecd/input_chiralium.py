@@ -50,10 +50,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (8,8,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 200
+    params['bound_nbins']   = 50
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -67,22 +67,22 @@ def read_input():
 
     """==== Propagation parameters ===="""
 
-    params['ivec']          = 0 #ID of eigenstate to propagate
+    params['ivec']          = 2 #ID of eigenstate to propagate
                             #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4.0 
-    params['dt']            = 1.5
+    params['tmax']          = 2000.0 
+    params['dt']            = 1.5 #add here calculated number for N points per cycle
 
 
 
     """ ====== FIELD PARAMETERS ====== """
 
     params['freq_units']    = "ev"      # nm or ev
-    params['omega']         = 53.6057   # 23.128 nm = 54 eV, 60 nm = 20 eV
-    params['intensity']     = 3.0e+16   # W/cm^2: peak intensity
+    params['omega']         = 40.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
+    params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
 
     """ Available field types :
         1) RCPL   - right-circularly polarized field
@@ -102,7 +102,7 @@ def read_input():
 
     """ gaussian pulse """
     params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)
-    params['gauss_t0']      = 2000.0 #as: pulse centre
+    params['gauss_t0']      = 1000.0 #as: pulse centre
 
     """ sin2 pulse """
     params['sin2_ncycles']  = 10
@@ -201,7 +201,7 @@ def read_input():
                                 "r-radial_angular": True, 
                                 "k-radial_angular": False} 
 
-    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],1)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
+    params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
                                 "save_snapshots":   True,
                                 "save_anim":        False,
                                 "show_snapshot":    False,

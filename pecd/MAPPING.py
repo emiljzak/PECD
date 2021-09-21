@@ -4,6 +4,8 @@
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
 import numpy as np
+from numba import jit, prange
+jitcache = False
 
 def GENMAP_FEMLIST(femlist,lmax,maptype,working_dir):
     #generate mapping for general FEMLIST
@@ -197,9 +199,13 @@ def GEN_SPHLIST(lmax):
             sphlist.append([l,m])
     return sphlist
 
+
+#@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def GEN_VLIST(maparray, Nbas, map_type):
     #create list of indices for matrix elements of the potential
     vlist = []
+
+    #needs speed-up: convert maparray to numpy array and vectorize, add numpy
 
     if map_type == 'DVR':
         for p1 in range(Nbas):

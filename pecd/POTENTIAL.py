@@ -173,7 +173,7 @@ def read_potential(params):
                         2 * params['multi_lmax'] + 1), 
                         dtype=complex)
 
-    for L in range(params['multi_lmax'] +1):
+    for L in range(params['multi_lmax'] + 1):
         for M in range(-L,L+1):
             if M == 0:
                 suffix = ""
@@ -198,7 +198,7 @@ def read_potential(params):
             
             v.append([400.0,0.0+1j*0.0])
             v = np.asarray(v)
-            vLM[:,L,L+M] = v[:,1] #assuming our grid matches the one for the potential!!!
+            vLM[:,L,L+M] = v[:(params['bound_nlobs']-1) * params['bound_nbins'],1] #assuming our grid matches the one for the potential!!!
 
     rgrid = v[:,0]
 

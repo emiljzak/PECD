@@ -421,7 +421,10 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         if params['hmat_format'] == 'numpy_arr':    
             hmat =  np.zeros((Nbas, Nbas), dtype=float)
         elif params['hmat_format'] == 'sparse_csr':
-            hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
+            if params['esp_mode']  == 'anton':
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #complex potential in Demekhin's work
+            else:
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float) #if
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
             exit()
@@ -445,10 +448,12 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
 
         #print("plot of hmat")
-        #BOUND.plot_mat(hmat)
-        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        #plt.legend()
-        #plt.show()
+
+        BOUND.plot_mat(hmat.todense())
+        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        plt.legend()
+        plt.show()
+        exit()
 
         """ calculate KEO """
         start_time = time.time()
@@ -1335,7 +1340,7 @@ def gen_3j_dip(lmax):
                 for m in range(-l1,l1+1):
                     
                     tjmat[l1,l2,l1+m,mu] = spherical.Wigner3j(l1, 1, l2, m, mu-1, -(m+mu-1)) * spherical.Wigner3j(l1, 1, l2, 0, 0, 0)
-                    tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi))
+                    tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m+mu-1)
 
     #print("3j symbols in array:")
     #print(tjmat)

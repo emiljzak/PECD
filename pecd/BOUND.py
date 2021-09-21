@@ -134,14 +134,14 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
     potind = []
 
     Lmax = vLM.shape[1]
-    print("Lmax = " + str(Lmax))
+    print("Lmax = " + str(Lmax-1))
 
     for p in range(vlist.shape[0]):
         #print(vlist[p1,:])
         v = 0.0+1j*0.0
         for L in range(Lmax):
             for M in range(-L,L+1):
-                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L+M, vlist[p,4]]
+                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L+M, vlist[p,3]+ vlist[p,4]]
         pot.append( [v] )
         potind.append( [ vlist[p,5], vlist[p,6] ] )
 
@@ -949,6 +949,8 @@ def gen_3j_multipoles(lmax_basis,lmax_multi):
     
     #l1 - ket, l2 - bra
 
+    #to do: impose triangularity by creating index list for gaunt coefficients
+
     for l1 in range(lmax_basis+1):
         for l2 in range(lmax_basis+1):
             for L in range(lmax_multi+1):
@@ -1042,11 +1044,12 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     # 4. sum-up partial waves
     potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
-    print(potmat0)
-    exit()
+    potmat0 = np.asarray(potmat0)
+    print(potmat0[:100].imag)
+    print(np.max(np.abs(potmat0.imag)))
+    #exit()
     # 5. Return final potential matrix
-
-    #check if the potential is real. Convert to float. Plot array
+    return potmat0,potind
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""
