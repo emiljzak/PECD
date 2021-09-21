@@ -50,10 +50,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (3,3,1)
+    params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 50
+    params['bound_nbins']   = 30
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""

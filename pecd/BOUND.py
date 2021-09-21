@@ -149,7 +149,7 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
     for p in range(vlist.shape[0]):
         v = 0.0#+1j*0.0
         for L in range(Lmax):
-            v = vLM[vlist[p,0]-1,L,L] * tjmat[vlist[p,1], L, vlist[p,3], L , vlist[p,3] + vlist[p,4]]
+            v += vLM[vlist[p,0]-1,L,L].real * tjmat[vlist[p,1], L, vlist[p,3], L , vlist[p,3] + vlist[p,4]]
             for M in range(1,L+1):
                 v += 2.0 * vLM[vlist[p,0]-1,L,L+M].real * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
         pot.append( [v] )
