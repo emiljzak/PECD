@@ -164,6 +164,13 @@ def calc_multipoles(params):
     return qlm
 
 
+def read_potential(params):
+    #read the partial waves representation of the electrostatic potential. A. Artemyev's potential.
+    #vLM[xi, L, M]
+    
+    vLM = np.zeros((params['bound_nlobs'] * params['bound_nbins'] , ))
+
+
 def INTERP_POT(params):
     #interpolate potential on the grid
 

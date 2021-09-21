@@ -940,8 +940,8 @@ def gen_3j_multipoles(lmax_basis,lmax_multi):
                         tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -(m2+M)) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
                         tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt((2*float(l1)+1) * (2.0*float(L)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(M+m2)
 
-    print("3j symbols in array:")
-    print(tjmat)
+    #print("3j symbols in array:")
+    #print(tjmat)
     return tjmat
 
 
@@ -982,6 +982,43 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'], rlmat )
     # 5. Return final potential matrix
     return  potmat0, potind 
+
+
+""" ============ POTMAT0 ROTATED with Anton's potential ============ """
+def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
+    """ Calculate potential matrix using projection onto spherical harmonics representation of 
+    the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
+    Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
+    
+    """
+
+    # 1. Construct vlist
+    start_time = time.time()
+    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = np.asarray(vlist)
+    end_time = time.time()
+    print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+
+    # 2. Read the potential partial waves on the grid
+    start_time = time.time()
+    vLM = POTENTIAL.read_potential(params)
+    end_time = time.time()
+    print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+
+    # 3. Build array of 3-j symbols
+    tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
+
+    # 3a. Build array of '1/r**l' values on the radial grid
+
+
+
+    # 4. sum-up partial waves
+    potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'], rlmat )
+    # 5. Return final potential matrix
+
+    #check if the potential is real. Convert to float. Plot array
 
 def calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant ):
     """calculate single element of the potential matrix on an interpolated potential"""
