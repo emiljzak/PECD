@@ -134,7 +134,7 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
     potind = []
 
     Lmax = vLM.shape[1]
-    print("Lmax = " + str(Lmax-1))
+   #print("Lmax = " + str(Lmax-1))
 
     for p in range(vlist.shape[0]):
         #print(vlist[p1,:])

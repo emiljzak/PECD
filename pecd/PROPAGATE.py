@@ -449,11 +449,11 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         #print("plot of hmat")
 
-        BOUND.plot_mat(hmat.todense())
-        plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        plt.legend()
-        plt.show()
-        exit()
+        #BOUND.plot_mat(hmat.todense())
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
+        #exit()
 
         """ calculate KEO """
         start_time = time.time()
