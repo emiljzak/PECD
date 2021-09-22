@@ -168,7 +168,9 @@ def read_potential(params):
     #read the partial waves representation of the electrostatic potential. A. Artemyev's potential.
     #vLM[xi, L, M]
 
-    vLM = np.zeros((    (params['bound_nlobs']-1) * params['bound_nbins'],
+    Nr = (params['bound_nlobs']-1) * params['bound_nbins']
+
+    vLM = np.zeros((    Nr,
                         params['multi_lmax'] + 1, 
                         2 * params['multi_lmax'] + 1), 
                         dtype=complex)
@@ -195,12 +197,13 @@ def read_potential(params):
                 v_im  =  float(words[2])
             
                 v.append([r, v_re + 1j * v_im])
-            
+            vlmfile.close()
+
             v.append([400.0,0.0+1j*0.0])
             v = np.asarray(v)
-            vLM[:,L,L+M] = v[:(params['bound_nlobs']-1) * params['bound_nbins'],1] #assuming our grid matches the one for the potential!!!
+            vLM[:,L,L+M] = v[:Nr,1] #assuming our grid matches the one for the potential!!!
 
-    rgrid = v[:,0]
+    rgrid = v[:Nr,0]
 
     return vLM,rgrid
 

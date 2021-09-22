@@ -128,14 +128,14 @@ def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax, rlmat ):
 
     return pot, potind
 
-@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+#@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmat_anton_jit( vLM, vlist, tjmat):
     pot = []
     potind = []
 
     Lmax = vLM.shape[1]
    #print("Lmax = " + str(Lmax-1))
-    """
+
     for p in range(vlist.shape[0]):
         #print(vlist[p1,:])
         v = 0.0+1j*0.0
@@ -147,6 +147,7 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
     """
     #pre-derived expression using only positive M's and real part of vLM:
     for p in range(vlist.shape[0]):
+        #print(vlist[p,:])
         v = 0.0#+1j*0.0
         for L in range(Lmax):
             v += vLM[vlist[p,0]-1,L,L].real * tjmat[vlist[p,1], L, vlist[p,3], L , vlist[p,3] + vlist[p,4]]
@@ -154,8 +155,7 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
                 v += 2.0 * vLM[vlist[p,0]-1,L,L+M].real * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
         pot.append( [v] )
         potind.append( [ vlist[p,5], vlist[p,6] ] )
-
-
+    """
     return pot, potind
 
 
@@ -1066,14 +1066,12 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 3. Build array of 3-j symbols
     tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
 
-    # 3a. Build array of '1/r**l' values on the radial grid
-   
     """ Testing of grid compatibility"""
     """
     print(Gr.ravel().shape)
     print(rgrid_anton.shape) #the two grids agree
-    if !np.allclose(Gr.ravel(), rgrid_anton, rtol=1e-6, atol=1e-6):
-        raise:
+    if np.allclose(Gr.ravel(), rgrid_anton, rtol=1e-6, atol=1e-6)==False:
+        raise ValueError('the radial grid does not match the grid of the potential')
     print(max(abs(rgrid_anton-Gr.ravel())))
     exit()
     """
@@ -1081,8 +1079,9 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 4. sum-up partial waves
     potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
     #potmat0 = np.asarray(potmat0)
-    #print(potmat0[:100].imag)
-    #print(np.max(np.abs(potmat0.imag)))
+    #print(potmat0[:100])
+    #print("Maximum real part of the potential matrix = " + str(np.max(np.abs(potmat0.real))))
+    #print("Maximum imaginary part of the potential matrix = " + str(np.max(np.abs(potmat0.imag))))
     #exit()
     # 5. Return final potential matrix
     return potmat0,potind

@@ -115,7 +115,7 @@ def MAP_SPECT_FEMLIST(femlist,lmax):
                         else:
                             xi += 1
                             imap += 1
-                            print(l,m,ibincount,n,xi,imap)
+                            #print(l,m,ibincount,n,xi,imap)
                             maparray.append([l,m,ibincount,n,xi,imap])
 
     return maparray, imap

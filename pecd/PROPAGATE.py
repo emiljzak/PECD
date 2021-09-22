@@ -422,7 +422,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             hmat =  np.zeros((Nbas, Nbas), dtype=float)
         elif params['hmat_format'] == 'sparse_csr':
             if params['esp_mode']  == 'anton':
-                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float) #complex potential in Demekhin's work
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #complex potential in Demekhin's work
             else:
                 hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float) #if
         else:
@@ -507,15 +507,9 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             ham0[rows, cols] = 0
             ham_filtered = ham0.copy()
 
-
-
-        #BOUND.plot_wf_rad(  0.0, params['bound_binw']* ( params['bound_nbins'] + params['nbins']), 1000, \
-        #                    coeffs, maparray, Gr, params['bound_nlobs'], \
-        #                    params['bound_nbins'] + params['nbins'])
+        #print("Maximum real part of the hamiltonian matrix = " + str(np.max(ham_filtered.real)))
+        #print("Maximum imaginary part of the hamiltonian matrix = " + str(np.max(ham_filtered.imag)))
         #exit()
-        
-        #PLOTS.plot_chi( 0.0, params['bound_binw'] * params['bound_nbins'],
-        #                1000, Gr, params['bound_nlobs'], params['bound_nbins'])
 
         if params['save_ham_init'] == True:
             if params['hmat_format'] == 'sparse_csr':
@@ -567,6 +561,12 @@ def call_eigensolver(A,params):
 
     if params['ARPACK_which'] == 'LA':
         print("using which = LA option in ARPACK: changing sign of the Hamiltonian")
+        
+        #B = A.copy()
+        #B = B-A.getH()
+        #print(B.count_nonzero())
+        #if not B.count_nonzero()==0:
+        #    raise ValueError('expected symmetric or Hermitian matrix!')
 
         enr, coeffs = eigsh(    -1.0 * A, k = params['num_ini_vec'], 
                                 which=params['ARPACK_which'] , 
