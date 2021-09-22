@@ -962,18 +962,19 @@ def gen_3j_multipoles(lmax_basis,lmax_multi):
 
     #to do: impose triangularity by creating index list for gaunt coefficients
 
-    for l1 in range(lmax_basis+1):
-        for l2 in range(lmax_basis+1):
-            for L in range(lmax_multi+1):
+    for l1 in range(0,lmax_basis+1):
+        for l2 in range(0,lmax_basis+1):
+            for L in range(0,lmax_multi+1):
                 for M in range(-L,L+1):
                     for m2 in range(-l2,l2+1):
 
-                        tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -(m2+M)) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
-                        tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt((2*float(l1)+1) * (2.0*float(L)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(M+m2)
+                        tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -m2-M) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
+                        tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt((2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1)/(4.0*np.pi)) * (-1)**(M+m2)
 
     #print("3j symbols in array:")
     #print(tjmat)
-    return tjmat
+
+    return tjmat/2.0
 
 
 
