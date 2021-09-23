@@ -6,6 +6,8 @@ from scipy import interpolate
 
 import os
 
+import json
+
 import input
 import GRID
 import MAPPING
@@ -18,6 +20,8 @@ from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.ticker as ticker
+
+
 
 def spharm(l,m,theta,phi):
     return sph_harm(m, l, phi, theta)
@@ -48,7 +52,7 @@ def read_coeffs(filename,nvecs):
         m       = int(words[4])
         c       = []
         for ivec in range(nvecs):
-            c.append(float(words[5+ivec]))
+            c.append(complex(words[5+ivec]))
         coeffs.append([i,n,xi,l,m,np.asarray(c)])
     return coeffs
 
@@ -248,7 +252,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
                            chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
-                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        ncontours, cmap = 'jet', vmin=0.0, vmax=1.0) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
@@ -307,7 +311,7 @@ def plot_wf_angrad_int_XY(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
                            chir #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
 
     line_angrad_r = axradang_r.contourf(thetamesh, rmesh, np.abs(y)/np.max(np.abs(y)), 
-                                        ncontours, cmap = 'jet', vmin=0.0, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                                        ncontours, cmap = 'jet', vmin=0.0, vmax=1.0) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
@@ -924,13 +928,18 @@ if __name__ == "__main__":
     print("---------------------- PLOTS --------------------")
     print(" ")
 
-    import importlib
-    input_module = importlib.import_module("input_co")
-    jobtype = "local"
-    print("jobtype: " + str(jobtype))
-    print(" ")
+    os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
 
-    params = input_module.gen_input(jobtype) 
+    
+    directory = "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/chiralium_2_10_2.00_34_UHF-aug-cc-pVTZ"
+    os.chdir(directory)
+    
+    path = os.getcwd()
+    print("dir:" + path)
+
+    with open('input', 'r') as input_file:
+        params = json.load(input_file)
+
     
     #plot_pad_polar(params['k_list_pad'],0)
 
@@ -945,11 +954,8 @@ if __name__ == "__main__":
     #for ielem,elem in enumerate(coeffs):
     #    psi[ielem] = elem[5][ivec]
 
-    
-    nbins = params['bound_nbins'] 
-
     #Gr, Nr = GRID.r_grid( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
-    Gr, Nr = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+    Gr, Nr = GRID.r_grid_prim( params['bound_nlobs'], params['bound_nbins']  , params['bound_binw'],  params['bound_rshift'] )
     #maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
     #                                 params['map_type'], params['working_dir'] )
 
@@ -982,7 +988,7 @@ if __name__ == "__main__":
     #plot_wf_angrad(rmin,rmax,npoints,nlobs,nbins,psi,maparray,rgrid,params,t)
 
     """ plot 3D isosurface of the wavefunction amplitude (density)"""
-    #plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'], Gr, wffile)
+    plot_wf_isosurf(params['bound_nlobs'], params['bound_nbins'], Gr, wffile)
 
 
     """ plot 4D volume of the wavefunction amplitude (density)"""
@@ -990,6 +996,6 @@ if __name__ == "__main__":
 
 
     """ generate cube file"""
-    build_cube(params,Gr,wffile)
+    #build_cube(params,Gr,wffile)
     exit()
 

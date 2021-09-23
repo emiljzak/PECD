@@ -73,7 +73,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 2000.0 
+    params['tmax']          = 50.0 
     params['dt']            = 1.5 #add here calculated number for N points per cycle
 
 
