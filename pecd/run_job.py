@@ -358,13 +358,7 @@ if __name__ == "__main__":
 
     params_input = input_module.read_input()
     print("jobtype: " + str(params_input['jobtype']))
- 
 
-    if params_input['mode'] == "propagate":
+    params_list, grid_euler = gen_inputs_list(params_input)
 
-        params_list, grid_euler = gen_inputs_list(params_input)
-    elif params_input['mode'] == "analyze":
-        print(".... analyze mode selected ....")
-    else:
-        raise ValueError("incorrect mode")
     run_array_job(params_list,grid_euler)

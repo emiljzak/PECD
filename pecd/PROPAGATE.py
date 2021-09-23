@@ -688,7 +688,7 @@ def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
     plt.show()  
 
 
-def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi):
+def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi, rcutoff):
     """
     returns: list of numpy arrays. List is labelled by l,m.
     """
@@ -1327,9 +1327,7 @@ if __name__ == "__main__":
                     print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
        
                 #read wavepacket from file
-                file_wavepacket      =  params['job_directory'] +\  
-                                        params['wavepacket_file'] +\
-                                        helicity + "_" + str(irun) + ".dat"
+                file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
 
                 psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
 
@@ -1364,7 +1362,7 @@ if __name__ == "__main__":
 
             with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
-                
+
             PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100,params)
             PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
 

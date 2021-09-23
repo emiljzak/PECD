@@ -140,7 +140,7 @@ def read_input():
                                     # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 9, Lmax = 8. 1800 grid points. 160k basis size.
 
     params['enable_cutoff']      = True #use cut-off for the ESP?
-    params['r_cutoff']           = 40.0    
+    #params['r_cutoff']           = 40.0    
 
     params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
     params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
@@ -224,23 +224,25 @@ def read_input():
 
 
     """==== ANALYSIS ===="""
-    """ PECD """
+
+    """ *** MPADs *** """
+
+    params['analyze_mpad']    = True
+    params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
+    params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
+    params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
+    params['rcutoff']         = 70.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
+  
+    """ *** PES *** """
+    params['n_pes_pts']       = 1000 #numer of points for PES evaluation
+    params['max_pes_en']      = 3.0 #in a.u.
+
+
+    """ *** PECD *** """
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
     params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
     params["save_snapthots"] = True
-    """ MPADs """
-    params['analyze_mpad']    = True
-    params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
-    params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
-    # [15.0,50.0]
-    params['k_list_pad']      =  list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
-    
-    params['n_pes_pts']         = 1000 #numer of points for PES evaluation
-    params['max_pes_en']        = 3.0 #in a.u.
-
-
-
 
     return params
