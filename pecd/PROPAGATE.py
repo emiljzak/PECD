@@ -873,7 +873,7 @@ def plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, phi0
 def calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     """calculate numerically average of W over the phi angle"""
 
-    Nphi = 36
+    Nphi = params['nphi_pts']
     phigrid = np.linspace(0, 2.0 * np.pi, Nphi, endpoint=False)
     grid_theta, grid_r = calc_grid_for_FT(params)
    
@@ -1347,20 +1347,25 @@ if __name__ == "__main__":
 
                     #calculate Hankel transforms on appropriate k-vector grid
                     Flm, kgrid  = calc_hankel_transforms(Plm, grid_r)
+                    #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
+                    params['analyze_mode']    = "2D-average" #3D, 2D-average
+                    params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
+                    if params['analyze_mode'] == "2D-average":
+                        Wav, kgrid = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
 
-                    FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
+                    else:
+                        FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
                                                         grid_theta, grid_r, maparray_chi, 
                                                         maparray_global, psi, chilist, gamma )
                     
+                        if params['density_averaging'] == True:
+                            #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                            Wav += float(rho[irun]) * np.abs(FT)**2
+                            #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
 
-                    if params['density_averaging'] == True:
-                        #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                        Wav += float(rho[irun]) * np.abs(FT)**2
-                        #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-
-                    else:
-                        print("proceeding with uniform rotational density")
-                        Wav += np.abs(FT)**2
+                        else:
+                            print("proceeding with uniform rotational density")
+                            Wav += np.abs(FT)**2
 
             with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')

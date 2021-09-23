@@ -228,11 +228,15 @@ def read_input():
     """ *** MPADs *** """
 
     params['analyze_mpad']    = True
+    params['analyze_mode']    = "2D-average" #3D, 2D-average
     params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
     params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
     params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
-    params['rcutoff']         = 70.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
-  
+    params['rcutoff']         = 40.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
+    params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
+    
+    
+    
     """ *** PES *** """
     params['n_pes_pts']       = 1000 #numer of points for PES evaluation
     params['max_pes_en']      = 3.0 #in a.u.
