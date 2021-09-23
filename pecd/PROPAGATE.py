@@ -688,7 +688,7 @@ def calc_fftcart_psi_3d(params, maparray, Gr, psi, chilist):
     plt.show()  
 
 
-def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi, rcutoff):
+def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi, ipoint_cutoff):
     """
     returns: list of numpy arrays. List is labelled by l,m.
     """
@@ -704,7 +704,6 @@ def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi
     #    plt.plot(grid_r,chilist[i](grid_r))
     #plt.show()
 
-
     val = np.zeros(npts, dtype = complex)
 
     coeffs = np.zeros(Nbas, dtype = complex)
@@ -716,10 +715,10 @@ def calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi
     indang = 0
     for l in range(0,lmax+1):
         for m in range(-l,l+1):
-            print(l,m)
+            print("P_lm: " + str(l) + " " + str(m))
         
             for ielem, elem in enumerate(maparray_chi):
-                if elem[0] > 5: #cut-out bound-state electron density
+                if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
 
                     val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](grid_r)
 
@@ -769,7 +768,7 @@ def plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.
     grid_theta, grid_r = calc_grid_for_FT(params)
 
     #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi,  ipoint_cutoff)
 
     #calculate Hankel transforms on appropriate k-vector grid
     Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
@@ -817,7 +816,7 @@ def calc_W_3D_analytic(lmax, grid_theta, grid_r, maparray_chi, maparray_global, 
     #plt.show()
 
     #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi)
+    Plm = calc_partial_waves(chilist, grid_r, lmax, psi, maparray_global, maparray_chi,  ipoint_cutoff)
 
     #calculate Hankel transforms on appropriate k-vector grid
     Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
@@ -881,7 +880,7 @@ def calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     W_arr = []
 
     #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi,  ipoint_cutoff)
 
     #calculate Hankel transforms on appropriate k-vector grid
     Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
@@ -932,7 +931,7 @@ def calc_W_av_phi_analytic(params, maparray_chi, maparray_global, psi, chilist):
     npts      = grid_r.size
 
     #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi,  ipoint_cutoff)
 
     #calculate Hankel transforms on appropriate k-vector grid
     Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
@@ -1263,6 +1262,13 @@ if __name__ == "__main__":
 
         itime = int( params['analyze_time'] / params['dt'])
 
+
+        #which grid point corresponds to the radial cut-off?
+        Gr_1D = Gr.ravel()
+        params['rcutoff']         = 70.0
+        ipoint_cutoff = np.argmin(np.abs(Gr_1D - params['rcutoff']))
+        print("ipoint_cutoff = " + str(ipoint_cutoff))
+
         if params['analyze_mpad'] == True:
 
             if params['field_type']['function_name'] == "fieldRCPL":
@@ -1274,17 +1280,16 @@ if __name__ == "__main__":
             else:
                 raise ValueError("Incorect field name")
 
-            nbins = params['bound_nbins'] 
-
             Gr_prim, Nr_prim = GRID.r_grid_prim(    params['bound_nlobs'], 
-                                                    nbins , 
+                                                    params['bound_nbins'], 
                                                     params['bound_binw'], 
                                                     params['bound_rshift'] )
 
 
             chilist = PLOTS.interpolate_chi(    Gr_prim, 
                                                 params['bound_nlobs'], 
-                                                nbins, params['bound_binw'], 
+                                                params['bound_nbins'], 
+                                                params['bound_binw'], 
                                                 maparray_chi)
 
             grid_theta, grid_r = calc_grid_for_FT(params)
@@ -1338,7 +1343,7 @@ if __name__ == "__main__":
                 elif params['FT_method']  == "FFT_hankel":
 
                     #calculate partial waves on radial grid
-                    Plm         = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi)
+                    Plm         = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi, ipoint_cutoff)
 
                     #calculate Hankel transforms on appropriate k-vector grid
                     Flm, kgrid  = calc_hankel_transforms(Plm, grid_r)
