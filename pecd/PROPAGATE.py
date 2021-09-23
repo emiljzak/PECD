@@ -84,13 +84,14 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
     print("Allocating wavepacket")
 
-    if params['field_type']['function_name'] == "fieldCPL":
-        if params['field_type']['typef'] == "LCPL":
-            helicity = "L"
-        elif params['field_type']['typef'] == "RCPL":
-            helicity = "R"
-    else:
+    if params['field_type']['function_name'] == "fieldRCPL":
+        helicity = "R"
+    elif params['field_type']['function_name'] == "fieldLCPL":
+        helicity = "L"  
+    elif params['field_type']['function_name'] == "fieldLP":
         helicity = "0"
+    else:
+        raise ValueError("Incorect field name")
 
 
     """ Plot initial orbitals """
@@ -1228,19 +1229,20 @@ if __name__ == "__main__":
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
+    """ Read grid of Euler angles"""
+    grid_euler  = read_euler_grid()
+
+    grid_euler = grid_euler.reshape(-1,3)
+
+    N_Euler = grid_euler.shape[0]
+
+    N_per_batch = int(N_Euler/params['N_batches'])
+
+    maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                params['map_type'], path )
+
+
     if params['mode'] == 'propagate':
-
-        """ Read grid of Euler angles"""
-        grid_euler  = read_euler_grid()
-
-        grid_euler = grid_euler.reshape(-1,3)
-
-        N_Euler = grid_euler.shape[0]
-
-        N_per_batch = int(N_Euler/params['N_batches'])
-
-        maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                    params['map_type'], path )
 
         save_map(maparray_chi,params['job_directory'] + 'map_chi.dat')
     
@@ -1258,9 +1260,7 @@ if __name__ == "__main__":
         print("---------------------- START ANALYZE --------------------")
         print(" ")
         
-        ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
-        os.chdir(sys.argv[2])
-        
+
         itime = int( params['analyze_time'] / params['dt'])
 
         if params['analyze_mpad'] == True:
@@ -1276,46 +1276,45 @@ if __name__ == "__main__":
 
             nbins = params['bound_nbins'] 
 
-            Gr_prim, Nr_prim = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
+            Gr_prim, Nr_prim = GRID.r_grid_prim(    params['bound_nlobs'], 
+                                                    nbins , 
+                                                    params['bound_binw'], 
+                                                    params['bound_rshift'] )
 
-            maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                        params['map_type'], params['job_directory']  )
 
-            chilist = PLOTS.interpolate_chi(Gr_prim, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
+            chilist = PLOTS.interpolate_chi(    Gr_prim, 
+                                                params['bound_nlobs'], 
+                                                nbins, params['bound_binw'], 
+                                                maparray_chi)
 
             grid_theta, grid_r = calc_grid_for_FT(params)
 
             Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
 
-            ibatch  = int(sys.argv[1])
-            N_batch = int(sys.argv[2])
-            print(ibatch, N_batch, N_Euler)
-            N_per_batch = int(N_Euler**3/N_batch)
-            print("number of points per batch = " + str(N_per_batch))  
-
-
+        
             if params['density_averaging'] == True:
-                WDMATS  = gen_wigner_dmats(n_grid_euler, params['Jmax'] , grid_euler)
+                WDMATS  = gen_wigner_dmats( N_Euler, 
+                                            params['Jmax'], 
+                                            grid_euler)
 
                 #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-                grid_rho, rho = ROTDENS.calc_rotdens( grid_euler,
+                grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
+                                                        WDMATS,
+                                                        params) 
+
+                #calculate density on a grid for plotting
+                """
+                grid_euler_2d, n_grid_euler_2d = gen_euler_grid_theta_chi(N_Euler)
+                print(grid_euler_2d.shape)
+                print(n_grid_euler_2d)
+                grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
                                             WDMATS,
                                             params) 
-
-        
-            #calculate density on a grid for plotting
-            """
-            grid_euler_2d, n_grid_euler_2d = gen_euler_grid_theta_chi(N_Euler)
-            print(grid_euler_2d.shape)
-            print(n_grid_euler_2d)
-            grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
-                                        WDMATS,
-                                        params) 
-            print("shape of rho")
-            print(np.shape(rho))
-            #print(rho.shape)
-            #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
-            """
+                print("shape of rho")
+                print(np.shape(rho))
+                #print(rho.shape)
+                #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
+                """
 
             for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
                 print(grid_euler[irun])
@@ -1328,11 +1327,16 @@ if __name__ == "__main__":
                     print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
        
                 #read wavepacket from file
-                file_wavepacket      = params['job_directory'] +  params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
-                psi                  =  read_wavepacket(file_wavepacket, itime, Nbas_global)
+                file_wavepacket      =  params['job_directory'] +\  
+                                        params['wavepacket_file'] +\
+                                        helicity + "_" + str(irun) + ".dat"
+
+                psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
+
 
                 if params['FT_method']    == "FFT_cart":
                     calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+
                 elif params['FT_method']  == "FFT_hankel":
 
                     #calculate partial waves on radial grid
@@ -1351,14 +1355,16 @@ if __name__ == "__main__":
                         Wav += float(rho[irun]) * np.abs(FT)**2
                         #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
 
-                    elif params['density_averaging'] == False:
+                    else:
                         print("proceeding with uniform rotational density")
                         Wav += np.abs(FT)**2
 
             with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
                 np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+
             with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
                 np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
+                
             PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100,params)
             PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
 
