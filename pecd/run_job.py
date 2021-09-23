@@ -296,9 +296,16 @@ def run_array_job(params_list,grid_euler):
         """ Create directories """
         path = create_dirs(iparams)
 
-        """ Save input file and euler angles grid """
-        save_input_file(iparams)
-        save_euler_grid(grid_euler, path)
+        if iparams['mode'] == 'propagate':
+            """ Save input file and euler angles grid """
+            save_input_file(iparams)
+            save_euler_grid(grid_euler, path)
+
+        elif iparams['mode'] == 'analyze':
+            print("mode = analyze")
+        else:
+            raise ValueError("incorrect mode")
+
 
         """ Run batches """
 
@@ -332,6 +339,7 @@ def run_array_job(params_list,grid_euler):
                 pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
                 iflag = subprocess.call(pecd_process, shell=True) 
                 flag.append([ibatch,iflag])
+            print("Termination flags for euler grid array job: [ibatch,flag]")
             print(flag)
 
 
@@ -351,6 +359,12 @@ if __name__ == "__main__":
     params_input = input_module.read_input()
     print("jobtype: " + str(params_input['jobtype']))
  
-    params_list, grid_euler = gen_inputs_list(params_input)
 
+    if params_input['mode'] == "propagate":
+
+        params_list, grid_euler = gen_inputs_list(params_input)
+    elif params_input['mode'] == "analyze":
+        print(".... analyze mode selected ....")
+    else:
+        raise ValueError("incorrect mode")
     run_array_job(params_list,grid_euler)

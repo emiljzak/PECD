@@ -334,10 +334,10 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             ham_filtered = ham0.copy()
 
 
-        plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        plt.legend()
-        plt.show()
-        exit()
+        #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
+        #exit()
         #print("Maximum real part of the hamiltonian matrix = " + str(np.max(ham_filtered.real)))
         #print("Maximum imaginary part of the hamiltonian matrix = " + str(np.max(ham_filtered.imag)))
         #exit()
@@ -1193,7 +1193,8 @@ def save_map(map,file):
 if __name__ == "__main__":   
 
     start_time_total = time.time()
-    os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
+
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
     print(" ")
     print("---------------------- START PROPAGATE --------------------")
@@ -1201,9 +1202,8 @@ if __name__ == "__main__":
     
     ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
     os.chdir(sys.argv[2])
-    
     path = os.getcwd()
-    print("dir:" + path)
+    print("dir: " + path)
 
     with open('input', 'r') as input_file:
         params = json.load(input_file)
@@ -1253,19 +1253,26 @@ if __name__ == "__main__":
 
 
     elif params['mode'] == 'analyze':
+
+        print(" ")
+        print("---------------------- START ANALYZE --------------------")
+        print(" ")
+        
+        ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
+        os.chdir(sys.argv[2])
+        
         itime = int( params['analyze_time'] / params['dt'])
 
         if params['analyze_mpad'] == True:
 
-            if params['field_type']['function_name'] == "fieldCPL":
-                if params['field_type']['typef'] == "LCPL":
-                    helicity = "L"
-                elif params['field_type']['typef'] == "RCPL":
-                    helicity = "R"
-            else:
+            if params['field_type']['function_name'] == "fieldRCPL":
+                helicity = "R"
+            elif params['field_type']['function_name'] == "fieldLCPL":
+                helicity = "L"  
+            elif params['field_type']['function_name'] == "fieldLP":
                 helicity = "0"
-            N_Euler = int(sys.argv[3])
-            grid_euler, n_grid_euler = gen_euler_grid(N_Euler)            
+            else:
+                raise ValueError("Incorect field name")
 
             nbins = params['bound_nbins'] 
 

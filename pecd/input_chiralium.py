@@ -15,8 +15,11 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
-    
+    params['mode']      = 'analyze'
+    """
+        In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
+        All other parameters are read from respective input files.
+    """
     
     """ ===== type of job ===== """ 
     """
@@ -53,7 +56,7 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 34
+    params['bound_nbins']   = 150
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -73,8 +76,8 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 50.0 
-    params['dt']            = 1.5 #add here calculated number for N points per cycle
+    params['tmax']          = 4000.0 
+    params['dt']            = 3.0 #add here calculated number for N points per cycle
 
 
 
@@ -129,7 +132,7 @@ def read_input():
 
     """==== electrostatic potential ===="""
 
-    params['esp_method_name']    = "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['esp_method_name']    = "R"#"UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['esp_mode']           = "anton" #exact or multipoles or anton. 
                                     # exact -> use Psi4. 
                                     # multipoles -> perform multipole expansion of the potential from given charge distr.
@@ -220,7 +223,7 @@ def read_input():
     """
 
 
-    """==== momentum-space distributions ===="""
+    """==== ANALYSIS ===="""
     """ PECD """
     params['analyze_pecd']    = False
     params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
