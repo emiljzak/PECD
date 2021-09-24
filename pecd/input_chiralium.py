@@ -30,45 +30,6 @@ def read_input():
 
     params['jobtype'] 	= "local" 
 
-    """ __________________________ COMMON BLOCK __________________________"""
-
-    """ ===== Molecule definition ====== """ 
-    """
-        Set up properties of the molecule, including atomic masses, geometry, MF embedding
-        *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
-            Extend later to the option of the cartesian input. 
-        *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
-            Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
-    """
-
-    params['molec_name']    = "chiralium"
-    params['mol_geometry']  = {"rc":0.0} #angstroms
-    params['mol_masses']    = {"c":12.0}
-    params['mol_embedding'] = "bisector" #TROVE's bisector embedding
-
-
-    """====== Basis set parameters for BOUND ======"""
-    """ 
-        Set up basis set parameters for the calculation of the stationary Hamiltonian matrix. 
-        Bound states are calculated with these parameters.
-        Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
-    """
-    """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
-    params['bound_binw_arr']    = (2.0,2.0,1)
-
-    params['bound_nbins']   = 150
-    params['bound_rshift']  = 0.0
-
-    """ CONTINUUM PART"""
-
-
-    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
-    params['N_batches'] 	= 1 #number of batches for orientation averaging
-
-    params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
-
 
     """==== time-grid parameters ===="""
 
@@ -81,9 +42,53 @@ def read_input():
 
     params['esp_method_name']    = "R"#"UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
-    """ __________________________ PROPAGATE BLOCK __________________________"""
+
 
     if params['mode'] == "propagate":
+
+        """ __________________________ PROPAGATE BLOCK __________________________"""
+
+        """ ===== Molecule definition ====== """ 
+        """
+            Set up properties of the molecule, including atomic masses, geometry, MF embedding
+            *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
+                Extend later to the option of the cartesian input. 
+            *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
+                Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
+        """
+
+        params['molec_name']    = "chiralium"
+        params['mol_geometry']  = {"rc":0.0} #angstroms
+        params['mol_masses']    = {"c":12.0}
+        params['mol_embedding'] = "bisector" #TROVE's bisector embedding
+
+
+        """====== Basis set parameters for BOUND ======"""
+        """ 
+            Set up basis set parameters for the calculation of the stationary Hamiltonian matrix. 
+            Bound states are calculated with these parameters.
+            Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
+        """
+        """ BOUND PART"""
+        params['bound_nlobs_arr']   = (10,10,1)
+        params['bound_lmax_arr']    = (4,4,1)
+        params['bound_binw_arr']    = (2.0,2.0,1)
+
+        params['bound_nbins']   = 150
+        params['bound_rshift']  = 0.0
+
+        """ CONTINUUM PART"""
+
+
+        params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
+        params['N_batches'] 	= 1 #number of batches for orientation averaging
+
+        params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
+
+
+
+
+
 
         """ ====== Initial wavefunction ====="""
 
@@ -235,14 +240,11 @@ def read_input():
     elif params['mode'] == "analyze":
 
         """ __________________________ ANALYZE BLOCK __________________________"""
-
-        """ ====== stationary state ====="""
-
-        params['ivec']          = 2 #ID of eigenstate to propagate
-                                #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
-
         
         """ *** MPADs *** """
+
+        params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
+
         params['analyze_mpad']    = True
         params['analyze_mode']    = "2D-average" #3D, 2D-average
         params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures

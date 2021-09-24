@@ -199,13 +199,7 @@ def setup_input(params_input):
                                     "_" + str(params['bound_nbins'])   + \
                                     "_" + str(params['esp_method_name'])   + ".dat"
 
-    params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                    "_" + str(params['bound_nbins'])   + \
-                                    "_" + str(params['esp_method_name'])  + \
-                                    "_" + str(params['sph_quad_tol'])   + ".dat"
+
 
     params['file_esp']          =   "esp_" + params['molec_name']   + \
                                     "_" + str(params['bound_lmax'])    + \
@@ -246,9 +240,14 @@ def setup_input(params_input):
 
 
 
-
     if params_input['mode'] == "propagate":
-
+        params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs'])   + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
+                                        "_" + str(params['bound_nbins'])   + \
+                                        "_" + str(params['esp_method_name'])  + \
+                                        "_" + str(params['sph_quad_tol'])   + ".dat"
         """ ******** Field frequency *********"""
         if params['freq_units'] == "nm":
             params['omega']     = 10**9 *  CONSTANTS.vellgt / params_input['omega'] # from wavelength (nm) to frequency  (Hz)
@@ -284,9 +283,9 @@ def setup_input(params_input):
         params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
 
+
         """ ******** Create field dictionaries *********"""
         params['field_type'], params['field_env'] = field_params(params)  
-
 
 
     return params

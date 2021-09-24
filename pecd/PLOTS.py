@@ -785,11 +785,11 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     #print(X.shape)
     val = np.zeros((X.shape[0] * X.shape[0] * X.shape[0]), dtype = complex)
 
-    chilist = PLOTS.interpolate_chi(    Gr_prim, 
-                                        params['bound_nlobs'], 
-                                        params['bound_nbins'], 
-                                        params['bound_binw'], 
-                                        maparray_chi)
+   # chilist = PLOTS.interpolate_chi(    Gr_prim, 
+   #                                     params['bound_nlobs'], 
+   #                                     params['bound_nbins'], 
+   #                                     params['bound_binw'], 
+    #                                    maparray_chi)
 
 
     rx,thetax,phix  = cart2sph(X,Y,Z)
