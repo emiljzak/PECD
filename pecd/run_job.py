@@ -26,8 +26,8 @@ def save_euler_grid(grid_euler, path):
     with open( path + "grid_euler.dat" , 'w') as eulerfile:   
         np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
-def save_input_file(params):
-    with open(params['job_directory']+ "input", 'w') as input_file: 
+def save_input_file(params,filename):
+    with open(params['job_directory']+ "input_"+filename, 'w') as input_file: 
         json.dump(params, input_file, indent=4, default=convert)
 
 def create_dirs(params):
@@ -159,7 +159,6 @@ def setup_input(params_input):
         params['main_dir']      = "/home/emil/Desktop/projects/PECD/pecd/"
         params['working_dir']   = "/home/emil/Desktop/projects/PECD/tests/molecules/" + params['molec_name'] + "/"
 
-
     params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
     params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
 
@@ -246,44 +245,47 @@ def setup_input(params_input):
                                     "_" + str(params['esp_method_name']) 
 
 
-    """ ******** Field frequency *********"""
-
-    if params['freq_units'] == "nm":
-        params['omega']     = 10**9 *  CONSTANTS.vellgt / params_input['omega'] # from wavelength (nm) to frequency  (Hz)
-    elif params['freq_units'] == "ev":
-        params['omega']     = CONSTANTS.ev_to_hz * params_input['omega']  # from ev to frequency  (Hz)
-    else:
-        raise ValueError("Incorrect units for frequency")
-
-    opt_cycle_as                 = 1.0e18/params['omega'] #in as
-    suggested_no_pts_per_cycle = 50     # time-step can be estimated based on the carrier frequency of the pulse. 
-                                        # Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). 
-                                        # We can use much less. Demekhin used 50 pts/cycle.
-                                        # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
-                                        
-    print( "Electric field carrier frequency = " + str("%10.3f"%( params['omega'] * 1.0e-12 )) + " THz" )
-    print( "Electric field oscillation period (optical cycle) = " + str("%10.3f"%(1.0e15/params['omega'])) + " fs")
-    print( "Suggested time-step (" + str(suggested_no_pts_per_cycle) + "pts/cycle) for field linear frequency = " + str("%12.3f"%(params['omega']/1e12)) + " THz is: " + str("%10.2f"%(opt_cycle_as/suggested_no_pts_per_cycle )) + " as")
-
-    params['omega']     *= 2.0 * np.pi                      # linear to angular frequency
-    params['omega']     *= CONSTANTS.freq_to_au['Hz']       # Hz to a.u.
-    params['opt_cycle'] = 2.0 * np.pi /params['omega']  # optical cycle (a.u.)
-
-    #params['E0'] = 1.0e9 #V/cm
-    #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
-    #convert from W/cm^2 to V/cm
-
-    """ ******** Field strength *********"""
-    field_units     = "V/cm"
-    field_strength  = np.sqrt(params_input['intensity']/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
-    print("field strength = " + "  %8.2e"%field_strength + " " + field_units)
-
-    params['E0']        = field_strength
-    params['E0']        *= CONSTANTS.field_to_au[field_units] 
 
 
-    """ ******** Create field dictionaries *********"""
-    params['field_type'], params['field_env'] = field_params(params)  
+    if params_input['mode'] == "propagate":
+
+        """ ******** Field frequency *********"""
+        if params['freq_units'] == "nm":
+            params['omega']     = 10**9 *  CONSTANTS.vellgt / params_input['omega'] # from wavelength (nm) to frequency  (Hz)
+        elif params['freq_units'] == "ev":
+            params['omega']     = CONSTANTS.ev_to_hz * params_input['omega']  # from ev to frequency  (Hz)
+        else:
+            raise ValueError("Incorrect units for frequency")
+
+        opt_cycle_as                 = 1.0e18/params['omega'] #in as
+        suggested_no_pts_per_cycle = 50     # time-step can be estimated based on the carrier frequency of the pulse. 
+                                            # Guan et al. use 1000 time-steps per optical cycle (in small Krylov basis). 
+                                            # We can use much less. Demekhin used 50 pts/cycle.
+                                            # 1050 nm = 1.179 eV = 285 THz -> 1 optical cycle = 3.5 fs
+                                            
+        print( "Electric field carrier frequency = " + str("%10.3f"%( params['omega'] * 1.0e-12 )) + " THz" )
+        print( "Electric field oscillation period (optical cycle) = " + str("%10.3f"%(1.0e15/params['omega'])) + " fs")
+        print( "Suggested time-step (" + str(suggested_no_pts_per_cycle) + "pts/cycle) for field linear frequency = " + str("%12.3f"%(params['omega']/1e12)) + " THz is: " + str("%10.2f"%(opt_cycle_as/suggested_no_pts_per_cycle )) + " as")
+
+        params['omega']     *= 2.0 * np.pi                      # linear to angular frequency
+        params['omega']     *= CONSTANTS.freq_to_au['Hz']       # Hz to a.u.
+        params['opt_cycle'] = 2.0 * np.pi /params['omega']  # optical cycle (a.u.)
+
+        #params['E0'] = 1.0e9 #V/cm
+        #field strength in a.u. (1a.u. = 5.1422e9 V/cm). For instance: 5e8 V/cm = 3.3e14 W/cm^2
+        #convert from W/cm^2 to V/cm
+
+        """ ******** Field strength *********"""
+        field_units     = "V/cm"
+        field_strength  = np.sqrt(params_input['intensity']/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
+        print("field strength = " + "  %8.2e"%field_strength + " " + field_units)
+
+        params['E0']        = field_strength
+        params['E0']        *= CONSTANTS.field_to_au[field_units] 
+
+
+        """ ******** Create field dictionaries *********"""
+        params['field_type'], params['field_env'] = field_params(params)  
 
 
 
@@ -298,11 +300,13 @@ def run_array_job(params_list,grid_euler):
 
         if iparams['mode'] == 'propagate':
             """ Save input file and euler angles grid """
-            save_input_file(iparams)
+            print("mode = propagate")
+            save_input_file(iparams,"prop")
             save_euler_grid(grid_euler, path)
 
         elif iparams['mode'] == 'analyze':
             print("mode = analyze")
+            save_input_file(iparams,"analyze")
         else:
             raise ValueError("incorrect mode")
 
@@ -320,9 +324,21 @@ def run_array_job(params_list,grid_euler):
             print ("Job directory is %s" % iparams['job_directory'])
 
             for ibatch in range(iparams['N_batches']):
-                pecd_process = "./master_script.sh " + str(ibatch) + " " + str(iparams['job_directory'])
-                iflag = subprocess.call(pecd_process, shell=True)
-                flag.append([ibatch,iflag])
+                if iparams['mode'] == "propagate":
+                    pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                    " " + str(iparams['job_directory']) +\
+                                    str("PROPAGATE.py")
+                    iflag = subprocess.call(pecd_process, shell=True)
+                    flag.append([ibatch,iflag])
+
+                elif iparams['mode'] == "analyze":
+                    pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                    " " + str(iparams['job_directory']) +\
+                                    str("ANALYZE.py")
+                    iflag = subprocess.call(pecd_process, shell=True)
+                    flag.append([ibatch,iflag])
+
+            print("Termination flags for euler grid array job: [ibatch,flag]")        
             print(flag)
 
         elif iparams['jobtype'] == "local":
@@ -335,10 +351,16 @@ def run_array_job(params_list,grid_euler):
             print("Number of batches = " + str(iparams['N_batches']))
 
             for ibatch in range(0,iparams['N_batches']):
-     
-                pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
-                iflag = subprocess.call(pecd_process, shell=True) 
-                flag.append([ibatch,iflag])
+                if iparams['mode'] == "propagate":
+                    pecd_process = "python3 PROPAGATE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                    iflag = subprocess.call(pecd_process, shell=True) 
+                    flag.append([ibatch,iflag])
+
+                elif iparams['mode'] == "analyze":
+                    pecd_process = "python3 ANALYZE.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                    iflag = subprocess.call(pecd_process, shell=True) 
+                    flag.append([ibatch,iflag])
+
             print("Termination flags for euler grid array job: [ibatch,flag]")
             print(flag)
 

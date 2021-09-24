@@ -79,6 +79,8 @@ def read_input():
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
 
 
+    params['esp_method_name']    = "R"#"UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+
     """ __________________________ PROPAGATE BLOCK __________________________"""
 
     if params['mode'] == "propagate":
@@ -140,7 +142,7 @@ def read_input():
 
         """==== electrostatic potential ===="""
 
-        params['esp_method_name']    = "R"#"UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+
         params['esp_mode']           = "anton" #exact or multipoles or anton. 
                                         # exact -> use Psi4. 
                                         # multipoles -> perform multipole expansion of the potential from given charge distr.
