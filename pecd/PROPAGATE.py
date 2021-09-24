@@ -1203,6 +1203,7 @@ if __name__ == "__main__":
     ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
     os.chdir(sys.argv[2])
     path = os.getcwd()
+
     print("dir: " + path)
 
     with open('input', 'r') as input_file:
@@ -1265,7 +1266,7 @@ if __name__ == "__main__":
 
         #which grid point corresponds to the radial cut-off?
         Gr_1D = Gr.ravel()
-        params['rcutoff']         = 70.0
+        params['rcutoff']         = 20.0
         ipoint_cutoff = np.argmin(np.abs(Gr_1D - params['rcutoff']))
         print("ipoint_cutoff = " + str(ipoint_cutoff))
 

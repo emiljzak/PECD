@@ -1,4 +1,4 @@
-#from mayavi import mlab
+from mayavi import mlab
 
 import numpy as np
 from scipy.special import sph_harm
@@ -643,76 +643,6 @@ def plot_rotdens(rotdens, grid):
 
 
 
-def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
-    
-    ivec = 1
-    mlab.clf()
-    fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
-    mlab.view(azimuth=180, elevation=70, focalpoint=[ 0.0 , 0.0, 0.0], distance=20.0, figure=fig)
-
-    plot_molecule = False
-
-    if plot_molecule == True:
-        # The position of the atoms
-        scale = 1.0#40.0 / 5.5
-        trans = np.array([0.0, 0.0, 0.0])
-        atoms_O = np.array([0.0, -0.02, 0.21]) * scale + trans
-        atoms_H1 = np.array([0.0, -1.83,   -1.53,  ]) * scale + trans
-        atoms_H2 = np.array([ 0.0,    2.15,    -1.89]) * scale + trans
-
-
-
-        O = mlab.points3d(atoms_O[0], atoms_O[1], atoms_O[2],
-                        scale_factor=3,
-                        resolution=20,
-                        color=(1, 1, 0.2),
-                        scale_mode='none',
-                        figure=fig,
-                        mode='sphere')
-
-        H1 = mlab.points3d(atoms_H1[0], atoms_H1[1], atoms_H1[2],
-                        scale_factor=2,
-                        resolution=20,
-                        color=(1, 1, 1),
-                        scale_mode='none',
-                        figure=fig,
-                        mode='sphere')
-
-        H2 = mlab.points3d(atoms_H2[0], atoms_H2[1], atoms_H2[2],
-                        scale_factor=2,
-                        resolution=20,
-                        color=(1, 1, 1),
-                        scale_mode='none',
-                        figure=fig,
-                        mode='sphere')
-
-    npts = 50j
-    grange = 5.0
-    
-    xmax = grange
-    xmin = -1.0 * grange
-    
-    zmax = grange
-    zmin = -1.0 * grange
-    
-    ymax = grange
-    ymin = -1.0 * grange
-    
-
-    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
-    #wf = np.sin(x**2 + y**2 + 2. * z**2)
-    wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
-    fmin = wf.min()
-    fmax = wf.max()
-    #print(wf)
-    wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
-
-    #plot isosurface
-    mywf = mlab.contour3d(wf2, contours=[0.2,0.3,0.5,0.9], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
-    mlab.view(132, 54, 45, [21, 20, 21.5])  
-    mlab.show()
-
-
 def plot_wf_volume(nlobs,nbins,Gr,wffile):
     mlab.clf()
     fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1200, 1200))
@@ -843,6 +773,7 @@ def build_cube(params,Gr,wffile):
     return wf_cube
 
 def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
+
     coeffs = read_coeffs(wffile,ivec+1)
 
     xl      =   np.zeros(nlobs)
@@ -853,6 +784,12 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     X, Y, Z = grid[0], grid[1], grid[2]
     #print(X.shape)
     val = np.zeros((X.shape[0] * X.shape[0] * X.shape[0]), dtype = complex)
+
+    chilist = PLOTS.interpolate_chi(    Gr_prim, 
+                                        params['bound_nlobs'], 
+                                        params['bound_nbins'], 
+                                        params['bound_binw'], 
+                                        maparray_chi)
 
 
     rx,thetax,phix  = cart2sph(X,Y,Z)
@@ -868,13 +805,57 @@ def calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,grid):
     for icount, ipoint in enumerate(coeffs):
         print(icount)
         #print(ipoint[5][ivec])
-        if np.abs(ipoint[5][ivec]) > 1e-2:
+        if np.abs(ipoint[5][ivec]) > 1e-3:
             val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
 
     #val *= np.sin(theta) 
     #val.real/(np.max(val))#
     return  np.abs(val)**2/ (np.max(np.abs(val)**2))
 
+
+def calc_wf_xyzgrid_int(params,ivec,Gr,wffile,grid):
+
+    nlobs = params['bound_nlobs']
+    nbins = params['bound_nbins']
+    binw = params['bound_binw']
+    
+    coeffs = read_coeffs(wffile,ivec+1)
+
+    xl      =   np.zeros(nlobs)
+    w       =   np.zeros(nlobs)
+    xl,w    =   GRID.gauss_lobatto(nlobs,14)
+    w       =   np.array(w)
+
+    X, Y, Z = grid[0], grid[1], grid[2]
+    #print(X.shape)
+    val = np.zeros((X.shape[0] * X.shape[0] * X.shape[0]), dtype = complex)
+
+    chilist = PLOTS.interpolate_chi(    Gr_prim, 
+                                        params['bound_nlobs'], 
+                                        params['bound_nbins'], 
+                                        params['bound_binw'], 
+                                        maparray_chi)
+
+
+    rx,thetax,phix  = cart2sph(X,Y,Z)
+    r               = rx.flatten()
+    theta           = thetax.flatten()
+    phi             = phix.flatten()
+
+    #print(theta.shape)
+    #print(np.shape(coeffs))
+    #print(type(coeffs))
+
+
+    for icount, ipoint in enumerate(coeffs):
+        print(icount)
+        #print(ipoint[5][ivec])
+        if np.abs(ipoint[5][ivec]) > 1e-3:
+            val +=  ipoint[5][ivec] * chi(ipoint[0], ipoint[1],r,Gr,w,nlobs,nbins) * spharm(ipoint[3], ipoint[4], theta, phi)
+
+    #val *= np.sin(theta) 
+    #val.real/(np.max(val))#
+    return  np.abs(val)**2/ (np.max(np.abs(val)**2))
 
 def find_nearest(array, value):
     array   = np.asarray(array)
@@ -918,6 +899,80 @@ def plot_pad_polar(params,klist,helicity):
     #plt.show()  
     plt.close()
 
+
+
+
+def plot_wf_isosurf(nlobs,nbins,Gr,wffile):
+    
+    ivec = 2
+    mlab.clf()
+    fig = mlab.figure(1, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(600, 600))
+
+    plot_molecule = False
+
+    if plot_molecule == True:
+        # The position of the atoms
+        scale = 1.0#40.0 / 5.5
+        trans = np.array([0.0, 0.0, 0.0])
+        atoms_O = np.array([0.0, -0.02, 0.21]) * scale + trans
+        atoms_H1 = np.array([0.0, -1.83,   -1.53,  ]) * scale + trans
+        atoms_H2 = np.array([ 0.0,    2.15,    -1.89]) * scale + trans
+
+
+
+        O = mlab.points3d(atoms_O[0], atoms_O[1], atoms_O[2],
+                        scale_factor=3,
+                        resolution=20,
+                        color=(1, 1, 0.2),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
+
+        H1 = mlab.points3d(atoms_H1[0], atoms_H1[1], atoms_H1[2],
+                        scale_factor=2,
+                        resolution=20,
+                        color=(1, 1, 1),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
+
+        H2 = mlab.points3d(atoms_H2[0], atoms_H2[1], atoms_H2[2],
+                        scale_factor=2,
+                        resolution=20,
+                        color=(1, 1, 1),
+                        scale_mode='none',
+                        figure=fig,
+                        mode='sphere')
+
+    npts = 50j
+    grange = 15.0
+    
+    xmax = grange
+    xmin = -1.0 * grange
+    
+    zmax = grange
+    zmin = -1.0 * grange
+    
+    ymax = grange
+    ymin = -1.0 * grange
+    
+
+    x, y, z = np.mgrid[xmin:xmax:npts, ymin:ymax:npts, zmin:zmax:npts]
+    #wf = np.sin(x**2 + y**2 + 2. * z**2)
+    wf = calc_wf_xyzgrid(nlobs,nbins,ivec,Gr,wffile,[x,y,z])
+    fmin = wf.min()
+    fmax = wf.max()
+    #print(wf)
+    wf2 = wf.reshape(int(np.abs(npts)),int(np.abs(npts)),int(np.abs(npts)))
+
+    #plot isosurface
+    mywf = mlab.contour3d(wf2, contours=[0.1,0.2,0.3,0.5,0.9], colormap='gnuplot',opacity=0.5) #[0.9,0.7,0.5,0.4]
+
+    mlab.show()
+
+
+
+
 if __name__ == "__main__":      
 
     # preparation of parameters
@@ -931,7 +986,7 @@ if __name__ == "__main__":
     os.environ['KMP_DUPLICATE_LIB_OK']= 'True'
 
     
-    directory = "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/chiralium_2_10_2.00_34_UHF-aug-cc-pVTZ"
+    directory = "/home/emil/Desktop/projects/PECD/tests/molecules/chiralium/chiralium_4_10_2.00_150_R"
     os.chdir(directory)
     
     path = os.getcwd()
