@@ -1,5 +1,6 @@
 import numpy as np
 import json
+from scipy.special import sph_harm
 
 import time
 import os
@@ -11,6 +12,11 @@ import GRID
 import CONSTANTS
 import PLOTS
 
+
+
+def spharm(l,m,theta,phi):
+    return sph_harm(m, l, phi, theta)
+    
 
 def read_wavepacket(filename, itime, Nbas):
 
@@ -88,26 +94,82 @@ class analysis:
         return plot_index
 
 
-    def rho2D(self,pars):
+    def calc_rho2D(self,maparray, polargrid, funcpar):
+
+        plane       = funcpar['plane']
+        coeff_thr   = funcpar['coeff_thr']
+
+        rho = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+
+        for elem in plane:
+            if elem == "XY":
+                print("Evaluation plane for rho2D: " + elem)
+                theta0 = np.pi / 2.0
+            elif elem == "XZ":
+                print("Evaluation plane for rho2D: " + elem)
+                phi0 =  0.0
+                for ielem, elem in enumerate(maparray):
+                    if np.abs(psi[ielem]) > coeff_thr:
+                    #print(str(elem) + str(psi[ielem]))
+                        chi_rgrid = chilist[elem[2]-1](polargrid[0]) #labelled by xi. WASTEFUL!
+
+                        for i in range(len(rang)):
+                            rho[i,:]    +=  psi[ielem]  *\
+                                        spharm(elem[3], elem[4], polargrid[1], phi0) * \
+                                        chi_rgrid  
+
+            elif elem == "YZ":
+                print("Evaluation plane for rho2D: " + elem)
+                phi0 =  np.pi/2
+                for ielem, elem in enumerate(maparray):
+                    if np.abs(psi[ielem]) > coeff_thr:
+                    #print(str(elem) + str(psi[ielem]))
+                        chi_rgrid = chilist[elem[2]-1](polargrid[0]) #labelled by xi. WASTEFUL!
+
+                        for i in range(len(rang)):
+                            rho[i,:]    +=  psi[ielem]  *\
+                                        spharm(elem[3], elem[4], polargrid[1], phi0) * \
+                                        chi_rgrid  
+
+            elif len(elem) == 3:
+                print("Evaluation plane defined by normal vector: " + str(elem))
+                #to implement
+                exit()
+            else:
+                raise ValueError("incorrect evaluation plane for rho2D")
+
+        
+
+        return np.abs(rho)**2/np.max(abs(rho)**2)
+
+    def rho2D(self,funcpars):
         print("Calculating 2D electron density")
         
-        if pars['r_grid']['type'] == "manual":
-            rgrid = (pars['r_grid']['rmin'], pars['r_grid']['rmax'], pars['r_grid']['npts'])
-        elif pars['r_grid']['type'] == "automatic":
+        """ set up 1D grids """
+
+        if funcpars['r_grid']['type'] == "manual":
+            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
+        elif funcpars['r_grid']['type'] == "automatic":
             rmax = 0.0
             for elem in self.params['FEMLIST']:
                 rmax += elem[0] * elem[2]
-            rgrid = (0.0, rmax, pars['r_grid']['npts'] )
+            rtuple = (0.0, rmax, funcpars['r_grid']['npts'] )
         else:
             raise ValueError("incorrect radial grid type")
         
-        th_grid = pars['th_grid']
+        thtuple     = funcpars['th_grid']
 
+        rgrid       = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+        unity_vec   = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
+        thgrid      = thtuple[1] * unity_vec
+
+        """ generate 2D meshgrid for storing rho2D """
+        rmesh, thetamesh = np.meshgrid(rgrid, thgrid,indexing='ij')
+
+        """ set up time grids for evaluating rho2D """
         tgrid,dt = self.calc_tgrid()
 
-        print(pars['plot_times'])
-
-        plot_index = self.calc_plot_times(tgrid,dt,pars['plot_times']) #plot time indices
+        plot_index = self.calc_plot_times(tgrid,dt,funcpars['plot_times']) #plot time indices
 
         tgrid_plot = tgrid[plot_index]
 
@@ -118,18 +180,18 @@ class analysis:
                     " " + str( self.params['time_units']) + " ----- " +\
                     "time index = " + str(itime) )
 
-            #psi = self.wavepacket[itime,:]
+            psi = self.wavepacket[itime,:]
 
 
-            """rho = calc_rho2D(self,psi, rgrid,
+            rho = calc_rho2D(self,psi, rgrid,
                                     th_grid,
                                     psi, 
                                     maparray, 
                                     Gr_all, t, 
                                     chilist, 
                                     ieuler)
-
-            if pars['plot'] == True:
+            """
+            if funcpars['plot'] == True:
 
 
                 PLOTS.plot_2D_polar_map(rho,100,params)
@@ -137,7 +199,7 @@ class analysis:
 
                 PLOTS.plot_rho2D(   self.params,  )
 
-            if pars['save'] == True:
+            if funcpars['save'] == True:
 
                 with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho2D, fmt = '%10.4e')
