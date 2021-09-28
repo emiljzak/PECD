@@ -213,7 +213,7 @@ def read_input():
         """ __________________________ ANALYZE BLOCK __________________________"""
 
         rho2D = {   'name':         'rho2D',
-                    'plane':        ['XY','XZ'], #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ['XZ'], #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         False,
                     'save':         False,
                     'r_grid':       {   'type':'automatic', #manual or automatic grid type. 
