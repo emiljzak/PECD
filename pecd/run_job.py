@@ -4,6 +4,7 @@ import subprocess
 import CONSTANTS
 import json
 import itertools
+import importlib
 
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
@@ -57,22 +58,21 @@ def gen_inputs_list(params_input):
 
     params_list = []
 
-
-    """ Generate grid of molecule's orientations parametrized with the Euler angles"""
+    """ Generate a grid of molecular orientations parametrized with the Euler angles"""
     grid_euler, params_input['n_grid_euler_3d'] = gen_euler_grid(params_input['N_euler'])            
 
 
-    lmin = params_input['bound_lmax_arr'][0]
-    lmax = params_input['bound_lmax_arr'][1]
-    nl   = params_input['bound_lmax_arr'][2]
+    lmin        = params_input['bound_lmax_arr'][0]
+    lmax        = params_input['bound_lmax_arr'][1]
+    nl          = params_input['bound_lmax_arr'][2]
 
-    nlobmin = params_input['bound_nlobs_arr'][0]
-    nlobmax  = params_input['bound_nlobs_arr'][1]
-    nlobattos = params_input['bound_nlobs_arr'][2]
+    nlobmin     = params_input['bound_nlobs_arr'][0]
+    nlobmax     = params_input['bound_nlobs_arr'][1]
+    nlobattos   = params_input['bound_nlobs_arr'][2]
 
-    rbinmin = params_input['bound_binw_arr'][0]
-    rbinmax  = params_input['bound_binw_arr'][1]
-    nrbin   = params_input['bound_binw_arr'][2]
+    rbinmin     = params_input['bound_binw_arr'][0]
+    rbinmax     = params_input['bound_binw_arr'][1]
+    nrbin       = params_input['bound_binw_arr'][2]
 
     binrange    = np.linspace(rbinmin,rbinmax,nrbin,endpoint=True,dtype=float)
     lrange      = np.linspace(lmin,lmax,nl,endpoint=True,dtype=int)
@@ -159,11 +159,6 @@ def setup_input(params_input):
         params['main_dir']      = "/home/emil/Desktop/projects/PECD/pecd/"
         params['working_dir']   = "/home/emil/Desktop/projects/PECD/tests/molecules/" + params['molec_name'] + "/"
 
-    params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
-    params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
-
-    params['wavepacket_file']    = "wavepacket"
-
     """ !!!In this version we are using uniform sized bins, allowing for an array of jobs
         Later expand to general radial basis defined by FEMLIST + array of input parameters!!!"""
 
@@ -175,79 +170,90 @@ def setup_input(params_input):
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
                                 [0,0,0.0] ] #to be used
 
-
-    """==== file paths and names ===="""
-
-    params['file_psi0']         =   "psi0_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
-                                    "_" + str(params['bound_nbins'])   + \
-                                    "_" + str(params['esp_method_name'])   + ".dat"
-
-    params['file_hmat0']        =   "hmat0_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                    "_" + str(params['bound_nbins'])   + \
-                                    "_" + str(params['esp_method_name'])   + ".dat"
-
-    params['file_enr0']         =   "enr0_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
-                                    "_" + str(params['bound_nbins'])   + \
-                                    "_" + str(params['esp_method_name'])   + ".dat"
-
-
-
-    params['file_esp']          =   "esp_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs'])   + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                    "_" + str(params['bound_nbins'])   + \
-                                    "_" + str(params['esp_method_name'])    + ".dat"
-    
-
     params['job_directory'] =  params['working_dir'] + params['molec_name']   + \
                                 "_" + str(params['bound_lmax'])    + \
                                 "_" + str(params['bound_nlobs'])   + \
                                 "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                 "_" + str(params['bound_nbins'])   + \
-                                "_" + str(params['esp_method_name']) +"/"
+                                "_" + str(params['job_label']) +"/"
 
 
-    params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs']) + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
-                                    "_" + str(params['bound_nbins'] )   + \
-                                    "_" + str(params['esp_method_name'])  
+    if params['mode'] == 'propagate':
 
-    params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs']) + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                    "_" + str(params['bound_nbins'])    + \
-                                    "_" + str(params['esp_method_name'])  
 
-    params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
-                                    "_" + str(params['bound_lmax'])    + \
-                                    "_" + str(params['bound_nlobs']) + \
-                                    "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                    "_" + str(params['bound_nbins'])   + \
-                                    "_" + str(params['esp_method_name']) 
+        params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
+        params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
+
+        params['wavepacket_file']    = "wavepacket"
+
+        #place IF here analyze vs propagate
 
 
 
-    if params_input['mode'] == "propagate":
+        """==== file paths and names ===="""
+
+
+        params['file_psi0']         =   "psi0_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs'])   + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
+                                        "_" + str(params['bound_nbins'])   + \
+                                        "_" + str(params['job_label'])   + ".dat"
+
+        params['file_hmat0']        =   "hmat0_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs'])   + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
+                                        "_" + str(params['bound_nbins'])   + \
+                                        "_" + str(params['job_label'])   + ".dat"
+
+        params['file_enr0']         =   "enr0_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs'])   + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
+                                        "_" + str(params['bound_nbins'])   + \
+                                        "_" + str(params['job_label'])   + ".dat"
+
+
+
+        params['file_esp']          =   "esp_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs'])   + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
+                                        "_" + str(params['bound_nbins'])   + \
+                                        "_" + str(params['job_label'])    + ".dat"
+
+
+
+        params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs']) + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
+                                        "_" + str(params['bound_nbins'] )   + \
+                                        "_" + str(params['job_label'])  
+
+        params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs']) + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
+                                        "_" + str(params['bound_nbins'])    + \
+                                        "_" + str(params['job_label'])  
+
+        params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
+                                        "_" + str(params['bound_lmax'])    + \
+                                        "_" + str(params['bound_nlobs']) + \
+                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
+                                        "_" + str(params['bound_nbins'])   + \
+                                        "_" + str(params['job_label']) 
+
         params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
                                         "_" + str(params['bound_lmax'])    + \
                                         "_" + str(params['bound_nlobs'])   + \
                                         "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                         "_" + str(params['bound_nbins'])   + \
-                                        "_" + str(params['esp_method_name'])  + \
+                                        "_" + str(params['job_label'])  + \
                                         "_" + str(params['sph_quad_tol'])   + ".dat"
+        
         """ ******** Field frequency *********"""
         if params['freq_units'] == "nm":
             params['omega']     = 10**9 *  CONSTANTS.vellgt / params_input['omega'] # from wavelength (nm) to frequency  (Hz)
@@ -370,10 +376,7 @@ if __name__ == "__main__":
 
 
     inputfile 	= "input_chiralium" #input file name
-
-    import importlib
     input_module = importlib.import_module(inputfile)
-
 
     print("input file: " + str(inputfile))
 

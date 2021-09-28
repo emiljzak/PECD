@@ -163,41 +163,6 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
 
-    print("=====================================")
-    print("==post-processing of the wavepacket==")
-    print("====================================="+"\n")
-
-    """ for post-processing choose analyze mode """
-
-    print("==================================")
-    print("== Momentum space wavefunctions ==")
-    print("==================================")
-
-
-    print("=========")
-    print("==Plots==")
-    print("=========")
-        
-    if params['plot_modes']['snapshot'] == True:
-        plot_times = calc_plot_times(params,tgrid,dt)
-        #re-check this!
-        maparray = np.asarray(maparray)
-        nbins = params['bound_nbins'] 
-        
-        Gr_all, Nr_all = GRID.r_grid_prim( params['bound_nlobs'], nbins , params['bound_binw'],  params['bound_rshift'] )
-
-        maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                     params['map_type'], params['job_directory'] )
-
-        flist = PLOTS.interpolate_chi(Gr_all, params['bound_nlobs'], nbins, params['bound_binw'], maparray_chi)
-
-        for itime, t in enumerate(tgrid): 
-            for ielem in plot_times:
-                if itime == ielem:
-                    print("Generating plot at time = " + str(t))
-                    psi[:] = wavepacket[itime,:] 
-                    PLOTS.plot_snapshot_int(params, psi, maparray, Gr_all, t, flist, ieuler)
-
 
 
 def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
@@ -561,53 +526,7 @@ def check_symmetric(a, rtol=1e-05, atol=1e-08):
     return np.allclose(a, a.conj(), rtol=rtol, atol=atol)
 
 
-def calc_plot_times(params,tgrid,dt):
-    time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
-    plot_times = []
-    for index,item in enumerate(params['plot_controls']["plottimes"]):
-        if int( item * time_to_au / dt ) > len(tgrid):
-            print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
-        else:
-            plot_times.append( int(item * time_to_au / dt) )
-    print("Final list of plottime indices in tgrid:")
-    print(plot_times)
-    return plot_times
 
-
-def read_wavepacket(filename, itime, Nbas):
-
-    coeffs = []
-    #print(itime)
-    
-    with open(filename, 'r', ) as f:
-        for _ in range(itime):
-            next(f)
-        for line in f:
-            words   = line.split()
-            for ivec in range(2*Nbas):
-                coeffs.append(float(words[1+ivec]))
-
-        """
-        #print(float(record[0][1]))
-        for line in itertools.islice(f, itime-1, None):
-            print(np.shape(line))
-            print(type(line))
-            #print(line)
-        """
-    """
-    for line in fl:
-
-        i       = int(words[0])
-        n       = int(words[1])
-        xi      = int(words[2])
-        l       = int(words[3])
-        m       = int(words[4])
-        c       = []
-        for ivec in range(nvecs):
-            c.append(float(words[5+ivec]))
-        coeffs.append([i,n,xi,l,m,np.asarray(c)])
-    """
-    return coeffs
 
 def cart2sph(x,y,z):
     r=np.sqrt(x**2+y**2+z**2)
@@ -1206,7 +1125,7 @@ if __name__ == "__main__":
 
     print("dir: " + path)
 
-    with open('input', 'r') as input_file:
+    with open('input_prop', 'r') as input_file:
         params = json.load(input_file)
 
     print(" ")

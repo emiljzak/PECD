@@ -8,7 +8,44 @@ import sys
 
 import MAPPING
 import GRID
+import CONSTANTS
+import PLOTS
 
+
+def read_wavepacket(filename, itime, Nbas):
+
+    coeffs = []
+    #print(itime)
+    
+    with open(filename, 'r', ) as f:
+        for _ in range(itime):
+            next(f)
+        for line in f:
+            words   = line.split()
+            for ivec in range(2*Nbas):
+                coeffs.append(float(words[1+ivec]))
+
+        """
+        #print(float(record[0][1]))
+        for line in itertools.islice(f, itime-1, None):
+            print(np.shape(line))
+            print(type(line))
+            #print(line)
+        """
+    """
+    for line in fl:
+
+        i       = int(words[0])
+        n       = int(words[1])
+        xi      = int(words[2])
+        l       = int(words[3])
+        m       = int(words[4])
+        c       = []
+        for ivec in range(nvecs):
+            c.append(float(words[5+ivec]))
+        coeffs.append([i,n,xi,l,m,np.asarray(c)])
+    """
+    return coeffs
 
 def pull_helicity(params):
     if params['field_type']['function_name'] == "fieldRCPL":
@@ -20,6 +57,94 @@ def pull_helicity(params):
     else:
         raise ValueError("Incorect field name")
     return helicity
+
+class analysis:
+    def __init__(self,wavepacket,params):
+        self.wavepacket = wavepacket
+        self.params = params
+
+    def calc_tgrid(self):
+        print("Setting up time-grid")
+
+        tgrid = np.linspace(    self.params['t0'] * time_to_au, 
+                                self.params['tmax'] * time_to_au, 
+                                int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
+                                endpoint = True )
+        dt = self.params['dt'] * time_to_au
+        return tgrid, dt
+
+
+    def calc_plot_times(self,tgrid,dt,plot_times):
+
+        plot_index = []
+        for index,item in enumerate(plot_times):
+            if int( item * time_to_au / dt ) > len(tgrid):
+                print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
+            else:
+                plot_index.append( int(item * time_to_au / dt) )
+        print("Final list of plottime indices in tgrid:")
+        print(plot_index)
+
+        return plot_index
+
+
+    def rho2D(self,pars):
+        print("Calculating 2D electron density")
+        
+        if pars['r_grid']['type'] == "manual":
+            rgrid = (pars['r_grid']['rmin'], pars['r_grid']['rmax'], pars['r_grid']['npts'])
+        elif pars['r_grid']['type'] == "automatic":
+            rmax = 0.0
+            for elem in self.params['FEMLIST']:
+                rmax += elem[0] * elem[2]
+            rgrid = (0.0, rmax, pars['r_grid']['npts'] )
+        else:
+            raise ValueError("incorrect radial grid type")
+        
+        th_grid = pars['th_grid']
+
+        tgrid,dt = self.calc_tgrid()
+
+        print(pars['plot_times'])
+
+        plot_index = self.calc_plot_times(tgrid,dt,pars['plot_times']) #plot time indices
+
+        tgrid_plot = tgrid[plot_index]
+
+
+        for itime, t in zip(plot_index,list(tgrid_plot)):
+
+            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                    " " + str( self.params['time_units']) + " ----- " +\
+                    "time index = " + str(itime) )
+
+            #psi = self.wavepacket[itime,:]
+
+
+            """rho = calc_rho2D(self,psi, rgrid,
+                                    th_grid,
+                                    psi, 
+                                    maparray, 
+                                    Gr_all, t, 
+                                    chilist, 
+                                    ieuler)
+
+            if pars['plot'] == True:
+
+
+                PLOTS.plot_2D_polar_map(rho,100,params)
+
+
+                PLOTS.plot_rho2D(   self.params,  )
+
+            if pars['save'] == True:
+
+                with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, rho2D, fmt = '%10.4e')
+
+            """
+
+
 
 if __name__ == "__main__":   
 
@@ -60,7 +185,9 @@ if __name__ == "__main__":
     for key, value in params.items():
         print(key, ":", value)
 
-    exit()
+
+
+    time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
     itime = int(params['analyze_time'] / params['dt'])
 
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
@@ -96,13 +223,14 @@ if __name__ == "__main__":
 
 
 
-    exit()
+
     chilist = PLOTS.interpolate_chi(    Gr_prim, 
                                         params['bound_nlobs'], 
                                         params['bound_nbins'], 
                                         params['bound_binw'], 
                                         maparray_chi)
 
+    """
     grid_theta, grid_r = calc_grid_for_FT(params)
 
     Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
@@ -123,10 +251,8 @@ if __name__ == "__main__":
                                                 WDMATS,
                                                 params) 
 
-        #calculate density on a grid for plotting
-        """
-        grid_euler_2d, n_grid_euler_2d = gen_euler_grid_theta_chi(N_Euler)
-        print(grid_euler_2d.shape)
+
+          
         print(n_grid_euler_2d)
         grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
                                     WDMATS,
@@ -137,9 +263,14 @@ if __name__ == "__main__":
         #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
         """
 
+
+    print("=====================================")
+    print("==post-processing of the wavepacket==")
+    print("====================================="+"\n")
+
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
-        print(grid_euler[irun])
-        print(irun)
+        print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )
+
         alpha   = grid_euler[irun][0]
         beta    = grid_euler[irun][1]
         gamma   = grid_euler[irun][2]
@@ -151,6 +282,26 @@ if __name__ == "__main__":
         file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
 
         psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
+
+
+        print("=========")
+        print("==Plots==")
+        print("=========")
+        
+        analysis_obj = analysis(psi,params)
+        
+        for elem in params['analyze_functions']:
+
+            #call function by name given in the dictionary
+            func = getattr(analysis_obj,elem['name'])
+            print("Calling analysis function: " + str(elem['name']))
+            func(elem)
+        
+        exit()
+
+
+
+
 
 
         if params['FT_method']    == "FFT_cart":
@@ -189,5 +340,4 @@ if __name__ == "__main__":
     with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
         np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
 
-    PLOTS.plot_2D_polar_map(Wav,grid_theta,kgrid,100,params)
     PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)

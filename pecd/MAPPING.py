@@ -157,7 +157,7 @@ def MAP_DVR(nlobs,nbins,lmax):
                     for m in range(-l,l+1):
 
                         imap += 1
-                        print(i,n,xi,l,m,imap)
+                        #print(i,n,xi,l,m,imap)
                         maparray.append([i,n,xi,l,m,imap])
             
 
@@ -181,7 +181,7 @@ def MAP_SPECT(nlobs,nbins,lmax):
                     else:
                         xi += 1
                         imap += 1
-                        print(l,m,i,n,xi,imap)
+                        #print(l,m,i,n,xi,imap)
                         maparray.append([l,m,i,n,xi,imap])
             
 

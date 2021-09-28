@@ -31,6 +31,32 @@ def read_input():
     params['jobtype'] 	= "local" 
 
 
+
+    params['job_label']    = "R" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+
+
+    """====== Basis set parameters for BOUND ======"""
+    """ 
+        Set up basis set parameters for the calculation of the stationary Hamiltonian matrix. 
+        Bound states are calculated with these parameters.
+        Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
+    """
+    """ BOUND PART"""
+    params['bound_nlobs_arr']   = (10,10,1)
+    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_binw_arr']    = (2.0,2.0,1)
+
+    params['bound_nbins']   = 150
+    params['bound_rshift']  = 0.0
+
+    """ CONTINUUM PART"""
+
+
+    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
+    params['N_batches'] 	= 1 #number of batches for orientation averaging
+
+    params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
+
     """==== time-grid parameters ===="""
 
     params['time_units']    = "as"
@@ -40,54 +66,27 @@ def read_input():
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
 
 
-    params['esp_method_name']    = "R"#"UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+
+    """ ===== Molecule definition ====== """ 
+    """
+        Set up properties of the molecule, including atomic masses, geometry, MF embedding
+        *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
+            Extend later to the option of the cartesian input. 
+        *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
+            Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
+    """
+
+    params['molec_name']    = "chiralium"
+    params['mol_geometry']  = {"rc":0.0} #angstroms
+    params['mol_masses']    = {"c":12.0}
+    params['mol_embedding'] = "bisector" #TROVE's bisector embedding
+
+    params['sph_quad_tol']       = 1e-4     # tolerance (in a.u.) for the convergence of matrix elements
 
 
+    """ __________________________ PROPAGATE BLOCK __________________________"""
 
     if params['mode'] == "propagate":
-
-        """ __________________________ PROPAGATE BLOCK __________________________"""
-
-        """ ===== Molecule definition ====== """ 
-        """
-            Set up properties of the molecule, including atomic masses, geometry, MF embedding
-            *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
-                Extend later to the option of the cartesian input. 
-            *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
-                Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
-        """
-
-        params['molec_name']    = "chiralium"
-        params['mol_geometry']  = {"rc":0.0} #angstroms
-        params['mol_masses']    = {"c":12.0}
-        params['mol_embedding'] = "bisector" #TROVE's bisector embedding
-
-
-        """====== Basis set parameters for BOUND ======"""
-        """ 
-            Set up basis set parameters for the calculation of the stationary Hamiltonian matrix. 
-            Bound states are calculated with these parameters.
-            Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
-        """
-        """ BOUND PART"""
-        params['bound_nlobs_arr']   = (10,10,1)
-        params['bound_lmax_arr']    = (4,4,1)
-        params['bound_binw_arr']    = (2.0,2.0,1)
-
-        params['bound_nbins']   = 150
-        params['bound_rshift']  = 0.0
-
-        """ CONTINUUM PART"""
-
-
-        params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
-        params['N_batches'] 	= 1 #number of batches for orientation averaging
-
-        params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
-
-
-
-
 
 
         """ ====== Initial wavefunction ====="""
@@ -133,7 +132,6 @@ def read_input():
         
         params['read_ham_init_file'] = False    # if available read the initial Hamiltonian from file
         params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
-        params['sph_quad_tol']       = 1e-4     # tolerance (in a.u.) for the convergence of matrix elements
 
         params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
         params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
@@ -199,53 +197,53 @@ def read_input():
         params['save_ham0']     = True #save the calculated bound state Hamiltonian
         params['save_psi0']     = True #save psi0
         params['save_enr0']     = True #save eigenenergies for psi0
-        """ merge them into one"""
+
         params['save_ham_init']  = True #save initial hamiltonian in a file for later use?
         params['save_psi_init']  = True
         params['save_enr_init']  = True
 
-
-        """==== POST-PROCESSING: PLOTS ===="""
-
+    
         params['plot_elfield']      = False
         params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
+    
 
-        params['plot_modes']    = { "snapshot":         True, 
-                                    "animation":        False}
-
-        params['plot_types']    = { "radial":           False,
-                                    "angular":          False,
-                                    "r-radial_angular": True, 
-                                    "k-radial_angular": False} 
-
-        params['plot_controls'] = { "plottimes":        list(np.linspace(0.0,params['tmax'],40)),#list(np.linspace(0.0,params['tmax'],150)),#200.0,300.0,600.0,700.0,800.0,900.0,1000.0],
-                                    "save_snapshots":   True,
-                                    "save_anim":        False,
-                                    "show_snapshot":    False,
-                                    "show_anim":        False, 
-                                    "fname_snapshot":   "obs",
-                                    "fname_animation":  "anim_obs"}
-
-        """ plotrate : rate of plotting observables in timestep units in animated plots
-            plottimes: times (in time_units) at which we plot selected observables in a static graph
-            save_static: save single shot plots to appropriate files (named separately for each plottime)
-            save_anim: save animation in a file
-            show_static: show single shot plots during the analysis
-            show_anim: show animation at the end of analysis
-            static_filename: name of the file into which the snapshots will be saved
-            animation_filename: name of the file into which animations will be saved
-        """
 
     elif params['mode'] == "analyze":
-
         """ __________________________ ANALYZE BLOCK __________________________"""
-        
+
+        rho2D = {   'name':         'rho2D',
+                    'plane':        'XY,XZ', #in which Cartesian planes do we want to plot rho2D?
+                    'plot':         False,
+                    'save':         False,
+                    'r_grid':       {   'type':'automatic', #manual or automatic grid type. 
+                                        'npts': 100,    #common for manual and automatic
+                                        'rmin': 0.0,    #ignored when automatic
+                                        'rmax': 200.0  #ignored when automatic
+                                        #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                    },                   
+                    'th_grid':      (0.0,2.0*np.pi,360),
+                    'plot_times':   list(np.linspace(0.0, params['tmax'], 4 )),
+                    }
+
+
+        params['analyze_functions'] = [rho2D]
+        """
+                Available functions:
+                    1) rho1Dr:  rho(r,theta0,t)     - radial density for fixed angle
+                    2) rho1Dth: rho(r0,theta,t)     - angular density for fixed distance
+                    3) rho2D:   rho(r,theta,phi0,t) - polar 2D map, fixed phi0
+                    4) rho2Dav: rho_av(r,theta,t)   - polar 2D map, averaged over phi
+        """
+
+
         """ *** MPADs *** """
+
+        params['calc_FT']    = True
 
         params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
 
-        params['analyze_mpad']    = True
+
         params['analyze_mode']    = "2D-average" #3D, 2D-average
         params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
         params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.

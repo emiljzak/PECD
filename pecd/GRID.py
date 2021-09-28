@@ -190,7 +190,7 @@ def r_grid_prim(nlobatto,nbins,binwidth,rshift):
     for ibin in range(nbins):    
         xgrid[ibin,:] += Translvec[ibin]
 
-    print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
+    #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
 
     return xgrid, nlobatto * nbins
 

@@ -18,9 +18,6 @@ def calc_repulsion_energy():
     phi_array   = np.array([0.0, 0.0, np.pi/2.0, 3.93, 0.0])
     Q_array     = np.array([0.5, 1.5, 1.0, 0.25, 2.0])
 
-    x,y,z = sph2cart(r_array,theta_array,phi_array)
-
-    xyz_mol = np.vstack((x,y,z))
 
     Nnuc = r_array.shape[0]
     Vnn = 0.0
