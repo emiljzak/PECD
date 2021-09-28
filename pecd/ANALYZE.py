@@ -12,6 +12,9 @@ import GRID
 import CONSTANTS
 import PLOTS
 
+import matplotlib.gridspec as gridspec
+
+import matplotlib.pyplot as plt
 
 
 def spharm(l,m,theta,phi):
@@ -95,7 +98,7 @@ class analysis:
         return plot_index
 
 
-    def calc_rho2D(self,psi, polargrid, funcpar, Nbas_chi, lmax):
+    def calc_rho2D(self, psi, polargrid, funcpar, Nbas_chi, lmax):
 
         plane       = funcpar['plane']
         coeff_thr   = funcpar['coeff_thr']
@@ -112,35 +115,35 @@ class analysis:
                 phi0 =  0.0
 
                 #calculate spherical harmonics on the angular grid for all quantum numbers
-                Ymat = np.zeros((lmax,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]))
+                Ymat = np.zeros((lmax+1,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]),dtype=complex)
                 
                 for l in range(lmax+1):
                     for m in range(-l,l+1):
                         Ymat[l,l+m,:,:] =  spharm(l, m, polargrid[1], phi0) 
-
+                #print(Ymat)
+                #exit()
                 icoeff = 0
+                
                 for xi in range(Nbas_chi):
-                    chi_rgrid = chilist[xi](polargrid[0])
+                    chi_rgrid = chilist[xi](polargrid[0].ravel())
+                    chi_rgrid = chi_rgrid.reshape(polargrid[0].shape[0],polargrid[1].shape[1])
+                    #print(chi_rgrid)
                     for l in range(lmax+1):
                         for m in range(-l,l+1):
                             #if np.abs(psi[ielem]) > coeff_thr:
+                            #print(psi[icoeff])
                             rho += psi[icoeff] * Ymat[l,l+m,:,:]
-                    rho *= chi_rgrid
+                            icoeff += 1
+                    rho += chi_rgrid * rho
 
-              
-                
+                #print("icoeff = " + str(icoeff))
+                #exit()
+
+     
             elif elem == "YZ":
                 print("Evaluation plane for rho2D: " + elem)
                 phi0 =  np.pi/2
-                for ielem, elem in enumerate(maparray):
-                    if np.abs(psi[ielem]) > coeff_thr:
-                    #print(str(elem) + str(psi[ielem]))
-                        chi_rgrid = chilist[elem[2]-1](polargrid[0]) #labelled by xi. WASTEFUL!
-
-                        for i in range(len(rang)):
-                            rho[i,:]    +=  psi[ielem]  *\
-                                        spharm(elem[3], elem[4], polargrid[1], phi0) * \
-                                        chi_rgrid  
+             
 
             elif len(elem) == 3:
                 print("Evaluation plane defined by normal vector: " + str(elem))
@@ -151,7 +154,7 @@ class analysis:
 
         
 
-        return np.abs(rho)**2/np.max(abs(rho)**2)
+        return np.abs(rho)**2/np.max(np.abs(rho)**2)
 
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
@@ -200,14 +203,24 @@ class analysis:
                                     funcpars,  
                                     self.params['Nbas_chi'], 
                                     self.params['bound_lmax'])
-                            
+            #print(rho)
+            #exit()
             if funcpars['plot'] == True:
 
+                fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
+                line_angrad_r = axradang_r.contourf(polargrid[1],polargrid[0], rho, 
+                                                        100, cmap = 'jet', vmin=0.0, vmax=1.0) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+                    #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
+                axradang_r.set_rlabel_position(100)
+                    #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
+                    #plt.legend()   
+                plt.show()  
+                #PLOTS.plot_2D_polar_map(rho,polargrid[1],polargrid[0],100,self.params)
 
-                PLOTS.plot_2D_polar_map(rho,100,params)
 
-
-                PLOTS.plot_rho2D(   self.params,  )
+                #PLOTS.plot_rho2D(   self.params,  )
 
             if funcpars['save'] == True:
 

@@ -214,16 +214,16 @@ def read_input():
 
         rho2D = {   'name':         'rho2D',
                     'plane':        ['XZ'], #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
-                    'plot':         False,
+                    'plot':         True,
                     'save':         False,
                     'r_grid':       {   'type':'automatic', #manual or automatic grid type. 
-                                        'npts': 100,    #common for manual and automatic
+                                        'npts': 200,    #common for manual and automatic
                                         'rmin': 0.0,    #ignored when automatic
                                         'rmax': 200.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
-                    'th_grid':      (0.0,2.0*np.pi,360),
-                    'plot_times':   list(np.linspace(0.0, params['tmax'], 4 )),
+                    'th_grid':      (0.0,2.0*np.pi,200),
+                    'plot_times':   list(np.linspace(0.0, params['tmax'], 3 )),
                     'coeff_thr':    1e-3 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 

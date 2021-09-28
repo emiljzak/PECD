@@ -516,9 +516,9 @@ def plot_2D_polar_map(func,grid_theta,kgrid,ncontours,params):
                             ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
     plt.colorbar(line_ft, ax=axft, aspect=30)
     plt.legend()   
-    fig.savefig( params['job_directory']  + "/MF-MPAD.png",bbox_inches='tight')
+    #fig.savefig( params['job_directory']  + "/MF-MPAD.png",bbox_inches='tight')
 
-    #plt.show()  
+    plt.show()  
 
 
 
