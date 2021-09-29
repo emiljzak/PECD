@@ -68,20 +68,17 @@ def pull_helicity(params):
     return helicity
 
 class analysis:
-    def __init__(self,params,maparray,chilist):
-        #self.wavepacket = wavepacket
+    def __init__(self,params):
         self.params = params
-        self.maparray = maparray
-        self.chilist = chilist
 
     def calc_tgrid(self):
         print("Setting up time-grid")
 
-        tgrid = np.linspace(    self.params['t0'] * time_to_au, 
-                                self.params['tmax'] * time_to_au, 
-                                int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
-                                endpoint = True )
-        dt = self.params['dt'] * time_to_au
+        tgrid   = np.linspace(    self.params['t0'] * time_to_au, 
+                                    self.params['tmax'] * time_to_au, 
+                                    int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
+                                    endpoint = True )
+        dt      = self.params['dt'] * time_to_au
         return tgrid, dt
 
 
@@ -98,6 +95,91 @@ class analysis:
 
         return plot_index
 
+    def rho2D(self,funcpars):
+        print("Calculating 2D electron density")
+        
+        irun = self.params['irun']
+        helicity = self.params['helicity'] 
+
+        """ set up 1D grids """
+
+        if funcpars['r_grid']['type'] == "manual":
+            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
+        elif funcpars['r_grid']['type'] == "automatic":
+            rmax = 0.0
+            for elem in self.params['FEMLIST']:
+                rmax += elem[0] * elem[2]
+            rtuple = (0.0, rmax, 2*int(rmax) )
+        else:
+            raise ValueError("incorrect radial grid type")
+        
+        thtuple     = funcpars['th_grid']
+
+        rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+        unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
+        thgrid1D        = thtuple[1] * unity_vec
+
+        
+        #for xi in range(self.params['Nbas_chi']):
+
+        #    plt.plot(rgrid1D,chilist[xi](rgrid1D))
+
+        #plt.show()
+        #exit()
+        
+        """ generate 2D meshgrid for storing rho2D """
+        polargrid = np.meshgrid(rgrid1D, thgrid1D)
+
+        """ set up time grids for evaluating rho2D """
+        tgrid,dt = self.calc_tgrid()
+
+        plot_index = self.calc_plot_times(tgrid,dt,funcpars['plot_times']) #plot time indices
+
+        tgrid_plot = tgrid[plot_index]
+
+        #read wavepacket from file
+        file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+
+        for itime, t in zip(plot_index,list(tgrid_plot)):
+
+            psi                  = read_wavepacket(file_wavepacket, itime, params['Nbas_global'])
+
+            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                    " " + str( self.params['time_units']) + " ----- " +\
+                    "time index = " + str(itime) )
+       
+            rhodir = self.calc_rho2D(   psi, 
+                                        polargrid, 
+                                        self.chilist,
+                                        funcpars,  
+                                        self.params['Nbas_chi'], 
+                                        self.params['bound_lmax'])
+
+            if funcpars['plot'] == True:
+
+                for elem in rhodir.items():
+
+                    plane       = elem[0]
+                    rho         = elem[1]
+
+
+                    # call plotting function
+                    self.rho2D_plot(polargrid,rho)
+
+                    fig         = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                    spec        = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                    rho2D_ax    = fig.add_subplot(spec[0, 0], projection='polar')
+                    plot_rho_ax = rho2D_ax.contourf(    polargrid[1], 
+                                                        polargrid[0], rho, 
+                                                            200, cmap = 'jet', vmin=0.0, vmax=0.05) 
+                    plt.show()  
+            
+            if funcpars['save'] == True:
+
+                with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, rho2D, fmt = '%10.4e')
+
+    def plot    
 
     def calc_rho2D(self, psi, polargrid, chilist, funcpar, Nbas_chi,  lmax):
 
@@ -199,83 +281,6 @@ class analysis:
 
         return rhodir
 
-    def rho2D(self,funcpars):
-        print("Calculating 2D electron density")
-        
-        """ set up 1D grids """
-
-        if funcpars['r_grid']['type'] == "manual":
-            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
-        elif funcpars['r_grid']['type'] == "automatic":
-            rmax = 0.0
-            for elem in self.params['FEMLIST']:
-                rmax += elem[0] * elem[2]
-            rtuple = (0.0, rmax, funcpars['r_grid']['npts'] )
-        else:
-            raise ValueError("incorrect radial grid type")
-        
-        thtuple     = funcpars['th_grid']
-
-        rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
-        unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
-        thgrid1D        = thtuple[1] * unity_vec
-
-        
-        #for xi in range(self.params['Nbas_chi']):
-
-        #    plt.plot(rgrid1D,chilist[xi](rgrid1D))
-
-        #plt.show()
-        #exit()
-        
-        """ generate 2D meshgrid for storing rho2D """
-        polargrid = np.meshgrid(rgrid1D, thgrid1D)
-
-        """ set up time grids for evaluating rho2D """
-        tgrid,dt = self.calc_tgrid()
-
-        plot_index = self.calc_plot_times(tgrid,dt,funcpars['plot_times']) #plot time indices
-
-        tgrid_plot = tgrid[plot_index]
-
-        #read wavepacket from file
-        file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
-
-        for itime, t in zip(plot_index,list(tgrid_plot)):
-
-            psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
-            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
-                    " " + str( self.params['time_units']) + " ----- " +\
-                    "time index = " + str(itime) )
-       
-            rhodir = self.calc_rho2D(   psi, 
-                                        polargrid, 
-                                        self.chilist,
-                                        funcpars,  
-                                        self.params['Nbas_chi'], 
-                                        self.params['bound_lmax'])
-
-            if funcpars['plot'] == True:
-
-                for elem in rhodir.items():
-
-                    plane       = elem[0]
-                    rho         = elem[1]
-
-                    fig         = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-                    spec        = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-                    rho2D_ax    = fig.add_subplot(spec[0, 0], projection='polar')
-                    plot_rho_ax = rho2D_ax.contourf(    polargrid[1], 
-                                                        polargrid[0], rho, 
-                                                            200, cmap = 'jet', vmin=0.0, vmax=0.05) 
-                    plt.show()  
-            
-            if funcpars['save'] == True:
-
-                with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
-                    np.savetxt(rhofile, rho2D, fmt = '%10.4e')
-
-            
 
 
 
@@ -318,24 +323,34 @@ if __name__ == "__main__":
     for key, value in params.items():
         print(key, ":", value)
 
-
-
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
 
+    """ generate maps and grids """
+    params['maparray_global'], params['Nbas_global']    = MAPPING.GENMAP_FEMLIST(   params['FEMLIST'],
+                                                                                    params['bound_lmax'],
+                                                                                    params['map_type'],
+                                                                                    params['job_directory'] )
 
-    maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
-                                                            params['bound_lmax'],
-                                                            params['map_type'],
-                                                            params['job_directory'] )
-                                                            
-    maparray_chi, params['Nbas_chi'] = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                params['map_type'], path )
+    params['maparray_chi'], params['Nbas_chi']          = MAPPING.GENMAP_FEMLIST(   params['FEMLIST'],  
+                                                                                    0,
+                                                                                    params['map_type'], 
+                                                                                    path )
 
+    params['Gr'], params['Nr ']                         = GRID.r_grid(              params['bound_nlobs'], 
+                                                                                    params['bound_nbins'] , 
+                                                                                    params['bound_binw'],  
+                                                                                    params['bound_rshift'] )
 
-    Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
-                                                            params['bound_nbins'] , 
-                                                            params['bound_binw'],  
-                                                            params['bound_rshift'] )
+    params['Gr_prim'], params['Nr_prim']                = GRID.r_grid_prim(         params['bound_nlobs'], 
+                                                                                    params['bound_nbins'], 
+                                                                                    params['bound_binw'], 
+                                                                                    params['bound_rshift'] )
+
+    params['chilist']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
+                                                                                    params['bound_nlobs'], 
+                                                                                    params['bound_nbins'], 
+                                                                                    params['bound_binw'], 
+                                                                                    params['maparray_chi'])
 
     """ Read grid of Euler angles"""
     with open( "grid_euler.dat" , 'r') as eulerfile:   
@@ -348,22 +363,8 @@ if __name__ == "__main__":
     N_per_batch = int(N_Euler/params['N_batches'])
 
 
+    params['helicity'] = pull_helicity(params)
 
-    helicity = pull_helicity(params)
-
-
-    Gr_prim, Nr_prim = GRID.r_grid_prim(    params['bound_nlobs'], 
-                                            params['bound_nbins'], 
-                                            params['bound_binw'], 
-                                            params['bound_rshift'] )
-
-
-
-    chilist = PLOTS.interpolate_chi(    Gr_prim, 
-                                        params['bound_nlobs'], 
-                                        params['bound_nbins'], 
-                                        params['bound_binw'], 
-                                        maparray_chi)
 
 
 
@@ -413,20 +414,12 @@ if __name__ == "__main__":
         beta    = grid_euler[irun][1]
         gamma   = grid_euler[irun][2]
 
-        if params['density_averaging'] == True:
-            print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
+        #if params['density_averaging'] == True:
+        #    print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
 
-        #read wavepacket from file
-        #file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        params['irun'] = irun 
 
-        #psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
-
-
-        print("=========")
-        print("==Plots==")
-        print("=========")
-        
-        analysis_obj = analysis(params,maparray_global,chilist)
+        analysis_obj = analysis(params)
         
         for elem in params['analyze_functions']:
 
@@ -435,13 +428,12 @@ if __name__ == "__main__":
             print("Calling analysis function: " + str(elem['name']))
             func(elem)
         
-        exit()
+            """ calculate contribution to averaged quantities"""
 
 
 
 
-
-
+        """
         if params['FT_method']    == "FFT_cart":
             calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
 
@@ -479,3 +471,4 @@ if __name__ == "__main__":
         np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
 
     PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
+    """
