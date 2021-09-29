@@ -21,8 +21,6 @@ def gparams_rho2D_polar():
     vmax    = 1.0
     ncont   = 100
 
-    cmap = matplotlib.cm.jet #jet, cool, etc
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
 
     cont2D_params = {       "xrange":   xrange,
                             "yrange":   yrange,
@@ -57,7 +55,7 @@ def gparams_rho2D_polar():
                             "yticks":           list(np.linspace(yrange[0],yrange[1],8)), 
                                                 
                             ### COLORBAR ###: see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
-                            "cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                            #"cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                             "cbar_orientation":   'horizontal', #vertical #note that orientation overrides panchor
                             "cbar_label":         "Some units",   
                             "cbar_fraction":      1.0, #fraction of the original axes to be displayed in the colorbar

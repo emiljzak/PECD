@@ -13,9 +13,9 @@ import CONSTANTS
 import PLOTS
 
 import matplotlib.gridspec as gridspec
-
 import matplotlib.pyplot as plt
-
+import matplotlib
+from matplotlib.ticker import FormatStrFormatter
 
 def spharm(l,m,theta,phi):
     return sph_harm(m, l, phi, theta)
@@ -150,7 +150,7 @@ class analysis:
        
             rhodir = self.rho2D_calc(   psi, 
                                         polargrid, 
-                                        self.chilist,
+                                        self.params['chilist'],
                                         funcpars,  
                                         self.params['Nbas_chi'], 
                                         self.params['bound_lmax'])
@@ -173,15 +173,92 @@ class analysis:
                     np.savetxt(rhofile, rho2D, fmt = '%10.4e')
 
     def rho2D_plot(self,plot_params,polargrid,rho):    
+        """ Produces contour plot for an analytic function of type v = f(x,y) """
 
-        fig         = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-        spec        = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-        rho2D_ax    = fig.add_subplot(spec[0, 0], projection='polar')
-        plot_rho_ax = rho2D_ax.contourf(    polargrid[1], 
-                                            polargrid[0], rho, 
-                                                200, cmap = 'jet', vmin=0.0, vmax=0.05) 
-        plt.show()  
-            
+        """
+        Args:
+            x2d: np.array of size (nptsx,nptsy): x-coordinates of each point in the rectangular grid
+            y2d: np.array of size (nptsx,nptsy): y-coordinates of each point in the rectangular grid
+            v2d: array of size (nptsx,nptsy): function values at each point of the rectangular grid
+        Comments:
+            1)
+
+        """
+        figsizex = plot_params['figsize_x'] #size of the figure on screen
+        figsizey = plot_params['figsize_y']  #size of the figure on screen
+        resolution = plot_params['resolution']  #resolution in dpi
+
+        fig = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
+                        constrained_layout=True)
+        grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1 = fig.add_subplot(grid_fig[0, 0], projection='polar')
+
+        cmap = matplotlib.cm.jet #jet, cool, etc
+        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
+
+
+        plot_cont_1 = ax1.contourf(   polargrid[1], 
+                                            polargrid[0], rho,  
+                                    plot_params['ncont'], 
+                                    cmap = 'jet', 
+                                    vmin = plot_params['vmin'],
+                                    vmax = plot_params['vmax'])
+        
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+        ax1.set_xlabel( xlabel              = plot_params['xlabel'],
+                        fontsize            = plot_params['xlabel_size'],
+                        color               = plot_params['label_color'],
+                        loc                 = plot_params['xlabel_loc'],
+                        labelpad            = plot_params['xlabel_pad'] )
+
+        ax1.set_ylabel(plot_params['ylabel'])
+
+    
+        ax1.set_xticks(plot_params['xticks']) #positions of x-ticks
+        ax1.set_yticks(plot_params['yticks']) #positions of y-ticks
+
+        ax1.set_xticklabels(plot_params['xticks'],fontsize=8) #x-ticks labels
+        ax1.set_yticklabels(plot_params['yticks']) #y-ticks labels
+
+        ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        """fig.colorbar(   mappable            = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                        ax                  = ax1, 
+                        orientation         = plot_params['cbar_orientation'],
+                        label               = plot_params['cbar_label'],
+                        fraction            = plot_params['cbar_fraction'],
+                        aspect              = plot_params['cbar_aspect'],
+                        shrink              = plot_params['cbar_shrink'],
+                        pad                 = plot_params['cbar_pad'],
+                        panchor             = plot_params['cbar_panchor'],
+                        extend              = plot_params['cbar_extend'],
+                        ticks               = plot_params['cbar_ticks'],
+                        drawedges           = plot_params['cbar_drawedges'],
+                        format              = plot_params['cbar_format'])
+        """
+        if plot_params['save'] == True:
+            fig.savefig(    fname       = plot_params['save_name'],
+                            dpi         = plot_params['save_dpi'],
+                            orientation = plot_params['save_orientation'],
+                            bbox_inches = plot_params['save_bbox_inches'],
+                            pad_inches  = plot_params['save_pad_inches']
+                            )
+
+        #ax1.legend() #show legends
+        plt.show()
+        plt.close()
 
 
 
