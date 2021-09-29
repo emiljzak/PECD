@@ -1,7 +1,30 @@
 import numpy as np
+import matplotlib
+import matplotlib.cm
+import matplotlib.colors
 
 def gparams_rho2D_polar():
-    cont2D_params = {   "xrange":   xrange,
+
+    """" ===== Plot parameters ====="""
+    #xrange,yrange: tuple (xmin,xmax): x,y-range for the plot
+    #vmin,vmax: float : value range for the plot
+    #ncont:      int: number of contours
+    nptsx = 200
+    nptsy = 200
+
+    xmax    = 5.0
+    ymax    = 5.0
+    xrange  = (-xmax, xmax)
+    yrange  = (-ymax, ymax)
+
+    vmin    = -1.0
+    vmax    = 1.0
+    ncont   = 100
+
+    cmap = matplotlib.cm.jet #jet, cool, etc
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+
+    cont2D_params = {       "xrange":   xrange,
                             "yrange":   yrange,
                             "vmin":     vmin,
                             "vmax":     vmax,
@@ -63,3 +86,4 @@ def gparams_rho2D_polar():
                             "figsize_y":        3.5,
                             "resolution":       200
                             }
+    return cont2D_params

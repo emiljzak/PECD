@@ -148,14 +148,14 @@ class analysis:
                     " " + str( self.params['time_units']) + " ----- " +\
                     "time index = " + str(itime) )
        
-            rhodir = self.calc_rho2D(   psi, 
+            rhodir = self.rho2D_calc(   psi, 
                                         polargrid, 
                                         self.chilist,
                                         funcpars,  
                                         self.params['Nbas_chi'], 
                                         self.params['bound_lmax'])
 
-            if funcpars['plot'] == True:
+            if funcpars['plot'][0] == True:
 
                 for elem in rhodir.items():
 
@@ -164,24 +164,28 @@ class analysis:
 
 
                     # call plotting function
-                    self.rho2D_plot(polargrid,rho)
+                    self.rho2D_plot(funcpars['plot'][1],polargrid,rho)
 
-                    fig         = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-                    spec        = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-                    rho2D_ax    = fig.add_subplot(spec[0, 0], projection='polar')
-                    plot_rho_ax = rho2D_ax.contourf(    polargrid[1], 
-                                                        polargrid[0], rho, 
-                                                            200, cmap = 'jet', vmin=0.0, vmax=0.05) 
-                    plt.show()  
-            
+
             if funcpars['save'] == True:
 
                 with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho2D, fmt = '%10.4e')
 
-    def plot    
+    def rho2D_plot(self,plot_params,polargrid,rho):    
 
-    def calc_rho2D(self, psi, polargrid, chilist, funcpar, Nbas_chi,  lmax):
+        fig         = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+        spec        = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+        rho2D_ax    = fig.add_subplot(spec[0, 0], projection='polar')
+        plot_rho_ax = rho2D_ax.contourf(    polargrid[1], 
+                                            polargrid[0], rho, 
+                                                200, cmap = 'jet', vmin=0.0, vmax=0.05) 
+        plt.show()  
+            
+
+
+
+    def rho2D_calc(self, psi, polargrid, chilist, funcpar, Nbas_chi,  lmax):
 
         plane       = funcpar['plane']
         coeff_thr   = funcpar['coeff_thr']

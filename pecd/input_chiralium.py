@@ -214,7 +214,7 @@ def read_input():
 
         rho2D = {   'name':         'rho2D',
                     'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
-                    'plot':         (True, graphics.gparams_rho2D_polar
+                    'plot':         (True, GRAPHICS.gparams_rho2D_polar()),
                     'save':         False,
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 300,    #ignored when automatic (2*rmax)
