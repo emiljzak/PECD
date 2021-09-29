@@ -68,10 +68,11 @@ def pull_helicity(params):
     return helicity
 
 class analysis:
-    def __init__(self,wavepacket,params,maparray):
-        self.wavepacket = wavepacket
+    def __init__(self,params,maparray,chilist):
+        #self.wavepacket = wavepacket
         self.params = params
         self.maparray = maparray
+        self.chilist = chilist
 
     def calc_tgrid(self):
         print("Setting up time-grid")
@@ -98,18 +99,42 @@ class analysis:
         return plot_index
 
 
-    def calc_rho2D(self, psi, polargrid, funcpar, Nbas_chi, lmax):
+    def calc_rho2D(self, psi, polargrid, chilist, funcpar, Nbas_chi,  lmax):
 
         plane       = funcpar['plane']
         coeff_thr   = funcpar['coeff_thr']
 
-    
-        rho = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+
+        rhodir = {} #dictionary containing numpy arrays representing the electron density in (r,theta) meshgrid
 
         for elem in plane:
+    
+            wfn = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+            aux = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+
             if elem == "XY":
                 print("Evaluation plane for rho2D: " + elem)
                 theta0 = np.pi / 2.0
+                #calculate spherical harmonics on the angular grid for all quantum numbers
+                Ymat = np.zeros((lmax+1,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]),dtype=complex)
+                
+                for l in range(lmax+1):
+                    for m in range(-l,l+1):
+                        Ymat[l,l+m,:,:] =  spharm(l, m, theta0, polargrid[1]) 
+                
+                icoeff = 0
+                
+                for xi in range(Nbas_chi):
+                    chi_rgrid = chilist[xi](polargrid[0])
+                    aux = 0.0
+                    for l in range(lmax+1):
+                        for m in range(-l,l+1):
+                            if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
+                                aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
+                            icoeff += 1
+                    wfn += chi_rgrid * aux
+                rhodir['XY'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
+
             elif elem == "XZ":
                 print("Evaluation plane for rho2D: " + elem)
                 phi0 =  0.0
@@ -120,41 +145,59 @@ class analysis:
                 for l in range(lmax+1):
                     for m in range(-l,l+1):
                         Ymat[l,l+m,:,:] =  spharm(l, m, polargrid[1], phi0) 
-                #print(Ymat)
-                #exit()
+
                 icoeff = 0
                 
                 for xi in range(Nbas_chi):
-                    chi_rgrid = chilist[xi](polargrid[0].ravel())
-                    chi_rgrid = chi_rgrid.reshape(polargrid[0].shape[0],polargrid[1].shape[1])
-                    #print(chi_rgrid)
+                    chi_rgrid = chilist[xi](polargrid[0])
+                    aux = 0.0
                     for l in range(lmax+1):
                         for m in range(-l,l+1):
-                            #if np.abs(psi[ielem]) > coeff_thr:
-                            #print(psi[icoeff])
-                            rho += psi[icoeff] * Ymat[l,l+m,:,:]
+                            if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
+                                aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
                             icoeff += 1
-                    rho += chi_rgrid * rho
+                    wfn += chi_rgrid * aux
+                
 
-                #print("icoeff = " + str(icoeff))
-                #exit()
+                rhodir['XZ'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
 
-     
+
             elif elem == "YZ":
                 print("Evaluation plane for rho2D: " + elem)
                 phi0 =  np.pi/2
              
+                #calculate spherical harmonics on the angular grid for all quantum numbers
+                Ymat = np.zeros((lmax+1,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]),dtype=complex)
+                
+                for l in range(lmax+1):
+                    for m in range(-l,l+1):
+                        Ymat[l,l+m,:,:] =  spharm(l, m, polargrid[1], phi0) 
+
+                icoeff = 0
+                
+                for xi in range(Nbas_chi):
+                    chi_rgrid = chilist[xi](polargrid[0])
+                    aux = 0.0
+                    for l in range(lmax+1):
+                        for m in range(-l,l+1):
+                            if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
+                                aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
+                            icoeff += 1
+                    wfn += chi_rgrid * aux
+                
+
+                rhodir['YZ'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
 
             elif len(elem) == 3:
                 print("Evaluation plane defined by normal vector: " + str(elem))
-                #to implement
-                exit()
+                raise NotImplementedError("Feature not yet implemented")
+
             else:
                 raise ValueError("incorrect evaluation plane for rho2D")
 
         
 
-        return np.abs(rho)**2/np.max(np.abs(rho)**2)
+        return rhodir
 
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
@@ -177,9 +220,16 @@ class analysis:
         unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D        = thtuple[1] * unity_vec
 
+        
+        #for xi in range(self.params['Nbas_chi']):
 
+        #    plt.plot(rgrid1D,chilist[xi](rgrid1D))
+
+        #plt.show()
+        #exit()
+        
         """ generate 2D meshgrid for storing rho2D """
-        polargrid = np.meshgrid(rgrid1D, thgrid1D, indexing='ij')
+        polargrid = np.meshgrid(rgrid1D, thgrid1D)
 
         """ set up time grids for evaluating rho2D """
         tgrid,dt = self.calc_tgrid()
@@ -188,40 +238,38 @@ class analysis:
 
         tgrid_plot = tgrid[plot_index]
 
+        #read wavepacket from file
+        file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
 
         for itime, t in zip(plot_index,list(tgrid_plot)):
 
+            psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
             print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                     " " + str( self.params['time_units']) + " ----- " +\
                     "time index = " + str(itime) )
+       
+            rhodir = self.calc_rho2D(   psi, 
+                                        polargrid, 
+                                        self.chilist,
+                                        funcpars,  
+                                        self.params['Nbas_chi'], 
+                                        self.params['bound_lmax'])
 
-            #psi = self.wavepacket[itime,:]
-
-            
-            rho = self.calc_rho2D(  psi, 
-                                    polargrid, 
-                                    funcpars,  
-                                    self.params['Nbas_chi'], 
-                                    self.params['bound_lmax'])
-            #print(rho)
-            #exit()
             if funcpars['plot'] == True:
 
-                fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-                spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-                axradang_r = fig.add_subplot(spec[0, 0], projection='polar')
-                line_angrad_r = axradang_r.contourf(polargrid[1],polargrid[0], rho, 
-                                                        100, cmap = 'jet', vmin=0.0, vmax=1.0) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-                    #plt.colorbar(line_angrad_r, ax=axradang_r, aspect=30)
-                axradang_r.set_rlabel_position(100)
-                    #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
-                    #plt.legend()   
-                plt.show()  
-                #PLOTS.plot_2D_polar_map(rho,polargrid[1],polargrid[0],100,self.params)
+                for elem in rhodir.items():
 
+                    plane       = elem[0]
+                    rho         = elem[1]
 
-                #PLOTS.plot_rho2D(   self.params,  )
-
+                    fig         = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                    spec        = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                    rho2D_ax    = fig.add_subplot(spec[0, 0], projection='polar')
+                    plot_rho_ax = rho2D_ax.contourf(    polargrid[1], 
+                                                        polargrid[0], rho, 
+                                                            200, cmap = 'jet', vmin=0.0, vmax=0.05) 
+                    plt.show()  
+            
             if funcpars['save'] == True:
 
                 with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
@@ -273,12 +321,16 @@ if __name__ == "__main__":
 
 
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
-    itime = int(params['analyze_time'] / params['dt'])
+
 
     maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['job_directory'] )
+                                                            
+    maparray_chi, params['Nbas_chi'] = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
+                                params['map_type'], path )
+
 
     Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] , 
@@ -295,8 +347,7 @@ if __name__ == "__main__":
 
     N_per_batch = int(N_Euler/params['N_batches'])
 
-    maparray_chi, params['Nbas_chi'] = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                params['map_type'], path )
+
 
     helicity = pull_helicity(params)
 
@@ -308,12 +359,14 @@ if __name__ == "__main__":
 
 
 
-
     chilist = PLOTS.interpolate_chi(    Gr_prim, 
                                         params['bound_nlobs'], 
                                         params['bound_nbins'], 
                                         params['bound_binw'], 
                                         maparray_chi)
+
+
+
 
     """
     grid_theta, grid_r = calc_grid_for_FT(params)
@@ -364,16 +417,16 @@ if __name__ == "__main__":
             print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
 
         #read wavepacket from file
-        file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        #file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
 
-        psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
+        #psi                  = read_wavepacket(file_wavepacket, itime, Nbas_global)
 
 
         print("=========")
         print("==Plots==")
         print("=========")
         
-        analysis_obj = analysis(psi,params,maparray_global)
+        analysis_obj = analysis(params,maparray_global,chilist)
         
         for elem in params['analyze_functions']:
 

@@ -167,8 +167,16 @@ def setup_input(params_input):
     #params['nbins_cont'] = 0
 
     """ list defining the radial grid"""
+
+    params['nlobs']     = params['bound_nlobs']
+    params['nbins']     = 0
+    params['binw']      = params['bound_binw']
+
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
-                                [0,0,0.0] ] #to be used
+                                [params['nbins'], params['nlobs'], params['binw']] ] 
+
+    #params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
+    #                            [0,0,0.0] ] #to be used
 
     params['job_directory'] =  params['working_dir'] + params['molec_name']   + \
                                 "_" + str(params['bound_lmax'])    + \

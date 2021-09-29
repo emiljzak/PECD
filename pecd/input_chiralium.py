@@ -213,18 +213,18 @@ def read_input():
         """ __________________________ ANALYZE BLOCK __________________________"""
 
         rho2D = {   'name':         'rho2D',
-                    'plane':        ['XZ'], #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ['XY','XZ','YZ'], #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         True,
                     'save':         False,
-                    'r_grid':       {   'type':'automatic', #manual or automatic grid type. 
-                                        'npts': 200,    #common for manual and automatic
+                    'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                        'npts': 300,    #common for manual and automatic
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 200.0  #ignored when automatic
+                                        'rmax': 100.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
-                    'th_grid':      (0.0,2.0*np.pi,200),
+                    'th_grid':      (0.0,2.0*np.pi,760),
                     'plot_times':   list(np.linspace(0.0, params['tmax'], 3 )),
-                    'coeff_thr':    1e-3 #threshold for the wavefunction coefficients in the calculation of rho
+                    'coeff_thr':    1e-6 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 
 
@@ -242,7 +242,7 @@ def read_input():
 
         params['calc_FT']    = True
 
-        params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
+        params['analyze_time']    = 0.0#params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
 
 
         params['analyze_mode']    = "2D-average" #3D, 2D-average

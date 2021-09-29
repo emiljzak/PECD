@@ -68,19 +68,17 @@ def chi(i,n,r,Gr,w,nlobs,nbins):
     if n == nlobs-1: #bridge functions
         #print("bridge: ", n,i)
 
-
         val = ( f(i,nlobs-1,r,Gr,nlobs,nbins) + f(i+1,0,r,Gr,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) + float( w[0] ) )**(-1)
     #print(type(val),np.shape(val))
         return val
 
-    elif n < nlobs-1:
+    else:
 
         val = f(i,n,r,Gr,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
         #print(type(val),np.shape(val))
         return val
 
-    else:
-        return val
+
 
 def f(i,n,r,Gr,nlobs,nbins): 
     """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
@@ -109,6 +107,54 @@ def f(i,n,r,Gr,nlobs,nbins):
             else:
                 prod[j] = 0.0
     return prod
+
+
+def plot_snapshot_int(params,psi,maparray,Gr,t,flist, irun):
+    #plot snapshots using interpolation for the chi functions
+    #make it general
+    nlobs = params['bound_nlobs']
+    nbins = params['bound_nbins'] 
+    npoints = 360
+    rmax    = nbins * params['bound_binw']
+
+    #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
+    #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+    #ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
+    #if params['plot_types']['r-radial_angular'] == True:
+    """================ radial-angular in real space ==============="""
+    width = 0.0
+    for elem in params['FEMLIST']:
+        width += elem[0] * elem[2]
+
+    plot_wf_angrad_int_XZ(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
+    plot_wf_angrad_int_XY(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
+
+    
+def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
+
+    w       =  np.zeros(nlobs)
+    xx,w    =  GRID.gauss_lobatto(nlobs,14)
+    w       =  np.array(w)
+
+    interpolation_step = binw/200.0
+    x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
+
+    chilist  = []
+
+    print(maparray)
+
+    for i, elem in enumerate(maparray):
+        chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
+
+    #xnew  = np.arange(0.02, nbins * binw, 0.01)
+    #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
+    #for s in range((nlobs-1) * nbins - 1):
+    #    ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
+    #    plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
+    #plt.show()
+    
+    return chilist
+
 
 def plot_chi(rmin,rmax,npoints,rgrid,nlobs,nbins):
     """plot the selected radial basis functions"""
@@ -257,7 +303,7 @@ def plot_wf_angrad_int_XZ(rmin,rmax,npoints,nlobs,nbins,psi,maparray,Gr,params,t
     axradang_r.set_rlabel_position(100)
     #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
     #plt.legend()   
-    #plt.show()  
+    plt.show()  
     if params["save_snapthots"] == True:
 
         if params['field_type']['function_name'] == "fieldCPL":
@@ -449,51 +495,6 @@ def plot_snapshot(params,psi,maparray,Gr,t):
 
         plot_wf_angrad(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t)
 
-def plot_snapshot_int(params,psi,maparray,Gr,t,flist, irun):
-    #plot snapshots using interpolation for the chi functions
-    #make it general
-    nlobs = params['bound_nlobs']
-    nbins = params['bound_nbins'] 
-    npoints = 360
-    rmax    = nbins * params['bound_binw']
-
-    #fig = plt.figure(figsize = (3.,3.), dpi=200, constrained_layout=True)
-    #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-    #ax_radang_r = fig.add_subplot(spec[0, 0],projection='polar')
-    if params['plot_types']['r-radial_angular'] == True:
-        """================ radial-angular in real space ==============="""
-        width = 0.0
-        for elem in params['FEMLIST']:
-            width += elem[0] * elem[2]
-
-        plot_wf_angrad_int_XZ(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
-        plot_wf_angrad_int_XY(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
-    
-    
-def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
-
-    w       =  np.zeros(nlobs)
-    xx,w    =  GRID.gauss_lobatto(nlobs,14)
-    w       =  np.array(w)
-
-    interpolation_step = 0.05
-    x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
-
-    chilist  = []
-
-    print(maparray)
-
-    for i, elem in enumerate(maparray):
-        chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
-
-    #xnew  = np.arange(0.02, nbins * binw, 0.01)
-    #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
-    #for s in range((nlobs-1) * nbins - 1):
-    #    ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
-    #    plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
-    #plt.show()
-    
-    return chilist
 
 def plot_elfield(Fvec,tgrid,time_to_au):
     fig = plt.figure()
