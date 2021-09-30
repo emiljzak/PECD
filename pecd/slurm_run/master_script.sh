@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export exec="python3 /beegfs/desy/group/cfel/cmi/zakemil/PECD/pecd/"+$3
-export jobname="pecd_"+$3
+export exec="python3 /beegfs/desy/group/cfel/cmi/zakemil/PECD/pecd/$3"
+export jobname="pecd_$3"
 export pwd=`pwd`
 
 export jobtype="cfel-cmi,all"

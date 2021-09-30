@@ -343,14 +343,14 @@ def run_array_job(params_list,grid_euler):
             for ibatch in range(iparams['N_batches']):
                 if iparams['mode'] == "propagate":
                     pecd_process =  "./master_script.sh " + str(ibatch) +\
-                                    " " + str(iparams['job_directory']) +\
+                                    " " + str(iparams['job_directory']) + " " +\
                                     str("PROPAGATE.py")
                     iflag = subprocess.call(pecd_process, shell=True)
                     flag.append([ibatch,iflag])
 
                 elif iparams['mode'] == "analyze":
                     pecd_process =  "./master_script.sh " + str(ibatch) +\
-                                    " " + str(iparams['job_directory']) +\
+                                    " " + str(iparams['job_directory']) + " " +\
                                     str("ANALYZE.py")
                     iflag = subprocess.call(pecd_process, shell=True)
                     flag.append([ibatch,iflag])
