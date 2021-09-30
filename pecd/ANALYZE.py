@@ -31,12 +31,13 @@ def read_wavepacket(filename, plot_index, tgrid_plot, Nbas):
         start_time = time.time()
 
         with open(filename, 'r', ) as f:
-            for _ in range(itime):
-                next(f)
-            for line in f:
-                words   = line.split()
-                for ivec in range(2*Nbas):
-                    coeffs.append(float(words[1+ivec]))
+            for elem in plot_index:
+                for _ in range(elem):
+                    next(f)
+                for line in f:
+                    words   = line.split()
+                    for ivec in range(2*Nbas):
+                        coeffs.append(float(words[1+ivec]))
         warnings.warn(".dat format has been deprecated. Errors are likely to follow.")
 
         end_time = time.time()
@@ -49,10 +50,8 @@ def read_wavepacket(filename, plot_index, tgrid_plot, Nbas):
         wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
         print(wavepacket.shape)
         with h5py.File(filename, 'r') as h5:
-            i=0
-            for itime, t in zip(plot_index,list(tgrid_plot)):
+            for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
                 wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
-                i+=1 
         end_time = time.time()
         print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
@@ -169,8 +168,6 @@ class spacefuncs(analysis):
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
         wavepacket           = read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
-
-
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
@@ -357,8 +354,10 @@ class spacefuncs(analysis):
                     aux = 0.0
                     for l in range(lmax+1):
                         for m in range(-l,l+1):
-                            if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
-                                aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
+                            if np.abs((psi[icoeff])) > coeff_thr:               
+                            #if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
+                                aux += (psi[icoeff])  * Ymat[l,l+m,:,:]
+                                #aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
                             icoeff += 1
                     wfn += chi_rgrid * aux
                 rhodir['XY'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)

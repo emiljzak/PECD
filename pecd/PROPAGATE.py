@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
 from textwrap import indent
+from h5py._hl import datatype
 import numpy as np
 from scipy import sparse
 from scipy.fftpack import fftn
@@ -117,8 +118,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
   
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
-    #psi               = np.zeros( Nbas, dtype=complex ) 
-    psi               =  psi_init[:,params['ivec']]
+    psi               = psi_init[:,params['ivec']]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
     if params['calc_free_energy'] == True:
@@ -182,10 +182,11 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
                                      "\n")
 
             elif params['wavepacket_format'] == "h5":
-                
+
                 flwavepacket.create_dataset(    name        = str('{:10.3f}'.format(t)), 
                                                 data        = psi,
-                                                compression = 'gzip' 
+                                                dtype       = complex,
+                                                compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
                                             )
 
     end_time_global = time.time()
