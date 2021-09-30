@@ -23,51 +23,6 @@ def spharm(l,m,theta,phi):
     return sph_harm(m, l, phi, theta)
     
 
-def read_wavepacket(filename, plot_index, tgrid_plot, Nbas):
-
-
-    if params['wavepacket_format'] == "dat":
-        coeffs = []
-        start_time = time.time()
-
-        with open(filename, 'r', ) as f:
-            for elem in plot_index:
-                for _ in range(elem):
-                    next(f)
-                for line in f:
-                    words   = line.split()
-                    for ivec in range(2*Nbas):
-                        coeffs.append(float(words[1+ivec]))
-        warnings.warn(".dat format has been deprecated. Errors are likely to follow.")
-
-        end_time = time.time()
-
-        print("time for reading .dat wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
-
-    elif params['wavepacket_format'] == "h5":
-        start_time = time.time()
-
-        wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
-        print(wavepacket.shape)
-        with h5py.File(filename, 'r') as h5:
-            for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
-                wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
-        end_time = time.time()
-        print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
-
-    return wavepacket
-
-def pull_helicity(params):
-    if params['field_type']['function_name'] == "fieldRCPL":
-        helicity = "R"
-    elif params['field_type']['function_name'] == "fieldLCPL":
-        helicity = "L"  
-    elif params['field_type']['function_name'] == "fieldLP":
-        helicity = "0"
-    else:
-        raise ValueError("Incorect field name")
-    return helicity
-
 
 
 class analysis:
@@ -103,7 +58,51 @@ class analysis:
     def split_word(self,word):
         return [char for char in word]
       
-      
+  
+    def read_wavepacket(self, filename, plot_index, tgrid_plot, Nbas):
+
+        if self.params['wavepacket_format'] == "dat":
+            coeffs = []
+            start_time = time.time()
+
+            with open(filename, 'r', ) as f:
+                for elem in plot_index:
+                    for _ in range(elem):
+                        next(f)
+                    for line in f:
+                        words   = line.split()
+                        for ivec in range(2*Nbas):
+                            coeffs.append(float(words[1+ivec]))
+            warnings.warn(".dat format has been deprecated. Errors are likely to follow.")
+
+            end_time = time.time()
+
+            print("time for reading .dat wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
+
+        elif self.params['wavepacket_format'] == "h5":
+            start_time = time.time()
+
+            wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
+            print(wavepacket.shape)
+            with h5py.File(filename, 'r') as h5:
+                for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
+                    wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
+            end_time = time.time()
+            print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
+
+        return wavepacket
+
+    def pull_helicity(self):
+        if self.params['field_type']['function_name'] == "fieldRCPL":
+            helicity = "R"
+        elif self.params['field_type']['function_name'] == "fieldLCPL":
+            helicity = "L"  
+        elif self.params['field_type']['function_name'] == "fieldLP":
+            helicity = "0"
+        else:
+            raise ValueError("Incorect field name")
+        return helicity
+        
 
  
 
@@ -118,7 +117,9 @@ class spacefuncs(analysis):
         print("Calculating 2D electron density")
         
         irun = self.params['irun']
-        helicity = self.params['helicity'] 
+
+        helicity  = self.pull_helicity()
+        params['helicity'] = helicity
 
         """ set up 1D grids """
 
@@ -167,7 +168,7 @@ class spacefuncs(analysis):
             file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
@@ -591,7 +592,7 @@ if __name__ == "__main__":
     N_per_batch = int(N_Euler/params['N_batches'])
 
 
-    params['helicity'] = pull_helicity(params)
+
 
     print("=====================================")
     print("==post-processing of the wavepacket==")
