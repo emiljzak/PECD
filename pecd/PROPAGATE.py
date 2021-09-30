@@ -22,6 +22,7 @@ from sympy import N
 
 import itertools
 import json
+import h5py
 
 from pyhank import qdht, iqdht, HankelTransform
 
@@ -54,7 +55,7 @@ import matplotlib.ticker as ticker
 def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
 
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
-
+    wfn_saverate = params['wfn_saverate']
  
     #rho =  sparse.csc_matrix(ham_init).getnnz() / np.prod(sparse.csc_matrix(ham_init).shape)
     #print("density of the sparse hamiltonian matrix = " + str(rho) )
@@ -99,10 +100,18 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         PLOTS.plot_initial_orbitals(params,maparray,psi_init)
 
     if params['wavepacket_format'] == "dat":
-        flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(ieuler) + ".dat", 'w' )
-    elif params['wavepacket_format'] == "dat":
-        with h5py.File('SO_61487687.h5', mode='a') as h5f:
-        h5f.create_dataset('array1',  data=arr, maxshape=(None, 5) )
+        flwavepacket      = open(   params['job_directory'] + 
+                                    params['wavepacket_file'] +
+                                    helicity + "_" + str(ieuler) 
+                                    + ".dat", 'w' )
+
+    elif params['wavepacket_format'] == "h5":
+
+        flwavepacket =  h5py.File(  params['job_directory'] +
+                                    params['wavepacket_file'] + 
+                                    helicity + "_" + str(ieuler) + ".h5",
+                                    mode='w')
+
     else:
         raise ValueError("incorrect/not implemented format")
 
@@ -164,9 +173,20 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
-        flwavepacket.write( '{:10.3f}'.format(t) + 
-                            " ".join('{:15.5e}'.format(psi[i].real) + '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +\
-                                '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2)))  + "\n")
+        if itime%wfn_saverate == 0:
+            if params['wavepacket_format'] == "dat":
+                flwavepacket.write( '{:10.3f}'.format(t) + 
+                                    " ".join('{:15.5e}'.format(psi[i].real) + 
+                                    '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +
+                                    '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
+                                     "\n")
+
+            elif params['wavepacket_format'] == "h5":
+                
+                flwavepacket.create_dataset(    name        = str('{:10.3f}'.format(t)), 
+                                                data        = psi,
+                                                compression = 'gzip' 
+                                            )
 
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")

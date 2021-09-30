@@ -46,13 +46,14 @@ def read_wavepacket(filename, itime, Nbas):
         print("time for reading .dat file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
     elif params['wavepacket_format'] == "h5":
-      
-            with h5py.File(filename, 'r') as h5:
+        start_time = time.time()
+        with h5py.File(filename, 'r') as h5:
 
-                pmap    = h5['wavepacket'][:]
-           
-            print("Shape of the pmap array = " + str(np.shape(pmap)))
-
+            wavepacket = h5['wavepacket'][:]
+            print("Shape wavepacket array = " + str(np.shape(wavepacket)))
+        
+        end_time = time.time()
+        print("time for reading .dat file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
     return coeffs
 

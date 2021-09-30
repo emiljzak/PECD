@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'analyze'
+    params['mode']      = 'propagate'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -43,10 +43,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 150
+    params['bound_nbins']   = 40
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -62,9 +62,9 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4000.0 
+    params['tmax']          = 400.0 
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
-
+    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """ ===== Molecule definition ====== """ 
@@ -118,8 +118,8 @@ def read_input():
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
-        params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)
-        params['gauss_t0']      = 1000.0 #as: pulse centre
+        params['gauss_tau']     = 100.0 #as: pulse duration (sigma)
+        params['gauss_t0']      = 200.0 #as: pulse centre
 
         """ sin2 pulse """
         params['sin2_ncycles']  = 10
@@ -130,7 +130,7 @@ def read_input():
 
         """===== Potential energy matrix ====="""
         
-        params['read_ham_init_file'] = False    # if available read the initial Hamiltonian from file
+      
         params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
 
         params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
@@ -168,12 +168,12 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        
-        params['hmat_format']   = "sparse_csr" # numpy_arr
-        params['hmat_filter']   = 1e-2 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['read_ham_init_file']    = True    # if available read the initial Hamiltonian from file
+        params['hmat_format']           = "sparse_csr" # numpy_arr
+        params['hmat_filter']           = 1e-2 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']   = 20 # number of initial wavefunctions (orbitals) stored in file
-        params['file_format']   = 'dat' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
+        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
+        params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
 
         """ ===== ARPACK eigensolver parameters ===== """
