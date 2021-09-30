@@ -46,6 +46,10 @@ def create_dirs(params):
         os.mkdir("esp")
         os.mkdir("graphics")
     
+        os.chdir("graphics")
+        os.mkdir("space")
+        os.mkdir("momentum")
+        os.chdir("../")
         os.chdir("esp")
         for irun in range(params['N_batches']):
             os.mkdir(str(irun))

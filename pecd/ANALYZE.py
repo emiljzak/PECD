@@ -1,6 +1,8 @@
+from logging import warning
 import numpy as np
 import json
 from scipy.special import sph_harm
+import h5py
 
 import time
 import os
@@ -25,35 +27,50 @@ def read_wavepacket(filename, itime, Nbas):
 
     coeffs = []
     #print(itime)
-    
-    with open(filename, 'r', ) as f:
-        for _ in range(itime):
-            next(f)
-        for line in f:
-            words   = line.split()
-            for ivec in range(2*Nbas):
-                coeffs.append(float(words[1+ivec]))
 
-        """
-        #print(float(record[0][1]))
-        for line in itertools.islice(f, itime-1, None):
-            print(np.shape(line))
-            print(type(line))
-            #print(line)
-        """
-    """
-    for line in fl:
+    if params['wavepacket_format'] == "dat":
+        
+        start_time = time.time()
 
-        i       = int(words[0])
-        n       = int(words[1])
-        xi      = int(words[2])
-        l       = int(words[3])
-        m       = int(words[4])
-        c       = []
-        for ivec in range(nvecs):
-            c.append(float(words[5+ivec]))
-        coeffs.append([i,n,xi,l,m,np.asarray(c)])
-    """
+        with open(filename, 'r', ) as f:
+            for _ in range(itime):
+                next(f)
+            for line in f:
+                words   = line.split()
+                for ivec in range(2*Nbas):
+                    coeffs.append(float(words[1+ivec]))
+        raise Warning(".dat format has been deprecated. Errors are likely to follow.")
+
+        end_time = time.time()
+
+        print("time for reading .dat file =  " + str("%10.3f"%(end_time - start_time)) + "s")
+
+    elif params['wavepacket_format'] == "h5":
+      
+        with h5py.File('SO_61487687.h5', mode='a') as h5f:
+            h5f.create_dataset('array1',  data=arr, maxshape=(None, 5) )
+            with h5py.File(filename, 'r') as h5:
+
+                Ntra    = h5.attrs['number of trajectories'] 
+                N_U     = h5.attrs['number of energy samples'] 
+                N_th    = h5.attrs['number of polar angle samples'] 
+                N_ph    = h5.attrs['number of azimuth angle samples']
+                ext_x   = h5['px coordinates'][:]
+                ext_y   = h5['py coordinates'][:]
+                ext_z   = h5['pz coordinates'][:]
+                pmap    = h5['momentum map'][:]
+            print(np.shape(pmap[:]))
+            print("Numer of trajectories = " + str(Ntra))
+            print("Numer of energy samples = " + str(N_U))
+            print("Numer of polar angles= " + str(N_th))
+            print("Numer of azimuthal angules " + str(N_ph))
+            print("Shape of the pmap array = " + str(np.shape(pmap)))
+
+            pgrid = [ext_x, ext_y, ext_z]
+            print("size of transverse cartesian momentum grid = " + str(len(ext_x)))
+            print("size of longitudinal cartesian momentum grid = " + str(len(ext_z)))
+            print("Total size of the momentum map grid = " + str(len(ext_x)*len(ext_z)))
+
     return coeffs
 
 def pull_helicity(params):
@@ -192,8 +209,8 @@ class spacefuncs(analysis):
 
             if funcpars['save'] == True:
 
-                with open( params['job_directory'] +  "rho2D" + "_" + str('{:.2f}'.format(t/time_to_au) ) +\
-                    + "_" +  str(helicity) + ".dat" , 'w') as rhofile:   
+                with open( params['job_directory'] +  "rho2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    "_" + helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho, fmt = '%10.4e')
 
 
@@ -297,19 +314,19 @@ class spacefuncs(analysis):
         
         if plot_params['save'] == True:
 
-            fig.savefig(    fname       =   params['job_directory']  + "/graphics/"+
+            fig.savefig(    fname       =   params['job_directory']  + "/graphics/space/"+
                                             plot_params['save_name'] + "_" +
                                             funcpars['plane_split'][1]+
                                             funcpars['plane_split'][0]+ "_" +
-                                            str('{:.2f}'.format(funcpars['t']/time_to_au) ) +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             params['helicity'] +
                                             ".pdf",
                                             
-                            dpi         = plot_params['save_dpi'],
-                            orientation = plot_params['save_orientation'],
-                            bbox_inches = plot_params['save_bbox_inches'],
-                            pad_inches  = plot_params['save_pad_inches']
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
                             )
 
         plt.show()

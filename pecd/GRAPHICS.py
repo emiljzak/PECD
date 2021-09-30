@@ -50,11 +50,10 @@ def gparams_rho2D_polar():
                             ### COLORBAR ###: see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
                             #"cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                             "cbar_orientation":   'horizontal', #vertical #note that orientation overrides panchor
-                            "cbar_label":         "Some units",   
                             "cbar_fraction":      0.7, #fraction of the original axes to be displayed in the colorbar
                             "cbar_aspect":        40, #ratio of long to short dimensions
                             "cbar_shrink":        0.70, #shrink the colorbar
-                            "cbar_pad":           0.05, #distance of colorbar from the adjacent plot axis
+                            "cbar_pad":           -0.05, #distance of colorbar from the adjacent plot axis
                             "cbar_panchor":       (0.3,0.2), #TThe anchor point of the colorbar parent axes. If False, the parent axes' anchor will be unchanged. Defaults to (1.0, 0.5) if vertical; (0.5, 0.0) if horizontal.
                             
                             "cbar_ticks":         None, #or list of custom ticks: list(np.linspace(vmin,vmax,10))
