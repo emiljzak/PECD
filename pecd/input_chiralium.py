@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -202,7 +202,7 @@ def read_input():
         params['save_psi_init']  = True
         params['save_enr_init']  = True
 
-        params['wavepacket_format'] = "dat" #dat or h5
+        params['wavepacket_format'] = "h5" #dat or h5
 
         params['plot_elfield']      = False
         params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1

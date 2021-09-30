@@ -23,13 +23,11 @@ def spharm(l,m,theta,phi):
     return sph_harm(m, l, phi, theta)
     
 
-def read_wavepacket(filename, itime, Nbas):
+def read_wavepacket(filename, plot_index, tgrid_plot, Nbas):
 
-    coeffs = []
-    #print(itime)
 
     if params['wavepacket_format'] == "dat":
-        
+        coeffs = []
         start_time = time.time()
 
         with open(filename, 'r', ) as f:
@@ -43,19 +41,22 @@ def read_wavepacket(filename, itime, Nbas):
 
         end_time = time.time()
 
-        print("time for reading .dat file =  " + str("%10.3f"%(end_time - start_time)) + "s")
+        print("time for reading .dat wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
     elif params['wavepacket_format'] == "h5":
         start_time = time.time()
+
+        wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
+        print(wavepacket.shape)
         with h5py.File(filename, 'r') as h5:
-
-            wavepacket = h5['wavepacket'][:]
-            print("Shape wavepacket array = " + str(np.shape(wavepacket)))
-        
+            i=0
+            for itime, t in zip(plot_index,list(tgrid_plot)):
+                wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
+                i+=1 
         end_time = time.time()
-        print("time for reading .dat file =  " + str("%10.3f"%(end_time - start_time)) + "s")
+        print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
-    return coeffs
+    return wavepacket
 
 def pull_helicity(params):
     if params['field_type']['function_name'] == "fieldRCPL":
@@ -159,19 +160,27 @@ class spacefuncs(analysis):
         tgrid_plot = tgrid[plot_index]
 
         #read wavepacket from file
-        file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
 
-        for itime, t in zip(plot_index,list(tgrid_plot)):
-            #do we need this every time?
+        if params['wavepacket_format'] == "dat":
+            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        
+        elif params['wavepacket_format'] == "h5":
+            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
-            psi                  = read_wavepacket(file_wavepacket, itime, params['Nbas_global'])
+        #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
+        wavepacket           = read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
+
+
+
+        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+  
+            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                " " + str( self.params['time_units']) + " ----- " +\
+                "time index = " + str(itime) )
 
             funcpars['t'] = t
-            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
-                    " " + str( self.params['time_units']) + " ----- " +\
-                    "time index = " + str(itime) )
-       
-            rhodir = self.rho2D_calc(   psi, 
+
+            rhodir = self.rho2D_calc(   wavepacket[i,:], 
                                         polargrid, 
                                         self.params['chilist'],
                                         funcpars,  
