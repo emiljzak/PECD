@@ -25,7 +25,7 @@ def gparams_rho2D_polar():
                             ### TITLE ###
                             "title_text":       "electron density",
                             "title_color":      "black",
-                            "title_size":       12,
+                            "title_size":       10,
                             "title_vertical":   "baseline", #vertical alignment of the title: {'center', 'top', 'bottom', 'baseline', 'center_baseline'}
                             "title_horizontal": "center", #{'center', 'left', 'right'},
                             #"title_position":   (pos_x,pos_y), #manual setting of title position
@@ -38,9 +38,9 @@ def gparams_rho2D_polar():
                             "xlabel_format":    '%.0f',
                             "ylabel_format":    '%.0f',
                             "label_color":      'yellow',
-                            "xlabel_size":       12,
-                            "ylabel_size":       12,   
-                            "xlabel_pad":       -5.0,     
+                            "xlabel_size":       10,
+                            "ylabel_size":       10,   
+                            "xlabel_pad":       -10.0,     
                             "ylabel_pad":       -5.0,
                             "xlabel_loc":       "center",  #left, right      
                             "ylabel_loc":       "center",  #left, right        
@@ -51,16 +51,16 @@ def gparams_rho2D_polar():
                             #"cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                             "cbar_orientation":   'horizontal', #vertical #note that orientation overrides panchor
                             "cbar_label":         "Some units",   
-                            "cbar_fraction":      1.0, #fraction of the original axes to be displayed in the colorbar
-                            "cbar_aspect":        20, #ratio of long to short dimensions
-                            "cbar_shrink":        1.00, #shrink the colorbar
+                            "cbar_fraction":      0.7, #fraction of the original axes to be displayed in the colorbar
+                            "cbar_aspect":        40, #ratio of long to short dimensions
+                            "cbar_shrink":        0.70, #shrink the colorbar
                             "cbar_pad":           0.05, #distance of colorbar from the adjacent plot axis
                             "cbar_panchor":       (0.3,0.2), #TThe anchor point of the colorbar parent axes. If False, the parent axes' anchor will be unchanged. Defaults to (1.0, 0.5) if vertical; (0.5, 0.0) if horizontal.
                             
                             "cbar_ticks":         None, #or list of custom ticks: list(np.linspace(vmin,vmax,10))
                             "cbar_drawedges":     False, #draw edges of colorbar
-                            "cbar_label":         "some title", #title on long axis of colorbar
-                            "cbar_format":        '%.1f', #format of tick labels
+                            "cbar_label":         None,#"some title", #title on long axis of colorbar
+                            "cbar_format":        '%.2f', #format of tick labels
                             "cbar_extend":        "neither", #{'neither', 'both', 'min', 'max'} If not 'neither', make pointed end(s) for out-of- range values. These are set for a given colormap using the colormap set_under and set_over methods.
 
                             ### SAVE PROPERTIES ###       

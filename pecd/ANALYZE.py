@@ -253,10 +253,9 @@ class analysis:
                         rotation            = 0)
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
-        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8',visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8',     visible=True)
 
-
-
+        #custom ticks and labels:
         #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
         #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
 
@@ -266,26 +265,21 @@ class analysis:
         #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
         #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
 
-        #pc = ax1.pcolormesh(polargrid[1], polargrid[0], rho)
-
-
-
-        #matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
-        fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax1)
-        """ fig.colorbar(   mappable            = plot_rho2D,
+        fig.colorbar( mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                         ax                  = ax1, 
-                        orientation         = plot_params['cbar_orientation'],
+                         orientation         = plot_params['cbar_orientation'],
                         label               = plot_params['cbar_label'],
                         fraction            = plot_params['cbar_fraction'],
                         aspect              = plot_params['cbar_aspect'],
                         shrink              = plot_params['cbar_shrink'],
                         pad                 = plot_params['cbar_pad'],
-                        panchor             = plot_params['cbar_panchor'],
+
                         extend              = plot_params['cbar_extend'],
                         ticks               = plot_params['cbar_ticks'],
                         drawedges           = plot_params['cbar_drawedges'],
-                        format              = plot_params['cbar_format'])
-        """
+                        format              = plot_params['cbar_format']
+                       )
+        
         if plot_params['save'] == True:
             fig.savefig(    fname       = plot_params['save_name']+funcpars['plane_split'][1]+funcpars['plane_split'][0]+".pdf",
                             dpi         = plot_params['save_dpi'],
@@ -294,7 +288,6 @@ class analysis:
                             pad_inches  = plot_params['save_pad_inches']
                             )
 
-        #ax1.legend() #show legends
         plt.show()
         plt.close()
 
