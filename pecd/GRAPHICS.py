@@ -6,54 +6,43 @@ import matplotlib.colors
 def gparams_rho2D_polar():
 
     """" ===== Plot parameters ====="""
-    #xrange,yrange: tuple (xmin,xmax): x,y-range for the plot
     #vmin,vmax: float : value range for the plot
     #ncont:      int: number of contours
-    nptsx = 200
-    nptsy = 200
 
-    xmax    = 5.0
-    ymax    = 5.0
-    xrange  = (-xmax, xmax)
-    yrange  = (-ymax, ymax)
-
-    vmin    = -1.0
-    vmax    = 1.0
-    ncont   = 100
+    vmin    = 0.0
+    vmax    = 0.1
+    ncont   = 200
 
 
-    cont2D_params = {       "xrange":   xrange,
-                            "yrange":   yrange,
+    cont2D_params = {      
                             "vmin":     vmin,
                             "vmax":     vmax,
                             "ncont":    ncont,
 
                             ### TITLE ###
-                            "title_text":       "Title",
-                            "title_color":      "blue",
-                            "title_size":       15,
+                            "title_text":       "electron density",
+                            "title_color":      "black",
+                            "title_size":       12,
                             "title_vertical":   "baseline", #vertical alignment of the title: {'center', 'top', 'bottom', 'baseline', 'center_baseline'}
                             "title_horizontal": "center", #{'center', 'left', 'right'},
                             #"title_position":   (pos_x,pos_y), #manual setting of title position
                             "title_pad":        None, #offset from the top of the axes given in points 
                             "title_fontstyle":  'normal', #{'normal', 'italic', 'oblique'}
-                            "title_fontname":   'Helvetica', #'Sans' | 'Courier' | '
+                            "title_fontname":   'Sans', #'Sans' | 'Courier' | '
                             "title_background": "None",   
 
                             ### LABELS ###
-                            "xlabel":           "x",
-                            "ylabel":           "y",
-                            "xlabel_format":    '%.2f',
-                            "ylabel_format":    '%.1f',
-                            "label_color":      'red',
+                            "xlabel_format":    '%.0f',
+                            "ylabel_format":    '%.0f',
+                            "label_color":      'yellow',
                             "xlabel_size":       12,
                             "ylabel_size":       12,   
-                            "xlabel_pad":       None,     
-                            "ylabel_pad":       None,
+                            "xlabel_pad":       20.0,     
+                            "ylabel_pad":       -5.0,
                             "xlabel_loc":       "center",  #left, right         
-                            "xticks":           list(np.linspace(xrange[0],xrange[1],4)),
-                            "yticks":           list(np.linspace(yrange[0],yrange[1],8)), 
-                                                
+                            "nticks_rad":        12,
+                            "nticks_th":         12,
+
                             ### COLORBAR ###: see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
                             #"cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                             "cbar_orientation":   'horizontal', #vertical #note that orientation overrides panchor

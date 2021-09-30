@@ -95,6 +95,12 @@ class analysis:
 
         return plot_index
 
+
+    def split_word(self,word):
+        return [char for char in word]
+      
+      
+
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
         
@@ -119,6 +125,8 @@ class analysis:
         unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D        = thtuple[1] * unity_vec
 
+        funcpars['rtulpe'] = rtuple
+        funcpars['thtuple'] = thtuple
         
         #for xi in range(self.params['Nbas_chi']):
 
@@ -162,9 +170,10 @@ class analysis:
                     plane       = elem[0]
                     rho         = elem[1]
 
+                    funcpars['plane_split'] = self.split_word(plane)
 
                     # call plotting function
-                    self.rho2D_plot(funcpars['plot'][1],polargrid,rho)
+                    self.rho2D_plot(funcpars,polargrid,rho)
 
 
             if funcpars['save'] == True:
@@ -172,39 +181,49 @@ class analysis:
                 with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho2D, fmt = '%10.4e')
 
-    def rho2D_plot(self,plot_params,polargrid,rho):    
-        """ Produces contour plot for an analytic function of type v = f(x,y) """
+    def rho2D_plot(self,funcpars,polargrid,rho): 
+        """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
+
+        plot_params = funcpars['plot'][1] #all plot params
+        rtuple      = funcpars['rtulpe'] #range for r
+        thtuple     = funcpars['thtuple'] #range for theta
 
         """
         Args:
-            x2d: np.array of size (nptsx,nptsy): x-coordinates of each point in the rectangular grid
-            y2d: np.array of size (nptsx,nptsy): y-coordinates of each point in the rectangular grid
-            v2d: array of size (nptsx,nptsy): function values at each point of the rectangular grid
-        Comments:
-            1)
-
+            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
+            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
+            plot_params: parameters of the plot loaded from GRAPHICS.py
         """
-        figsizex = plot_params['figsize_x'] #size of the figure on screen
-        figsizey = plot_params['figsize_y']  #size of the figure on screen
-        resolution = plot_params['resolution']  #resolution in dpi
 
-        fig = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
+        figsizex    = plot_params['figsize_x'] #size of the figure on screen
+        figsizey    = plot_params['figsize_y']  #size of the figure on screen
+        resolution  = plot_params['resolution']  #resolution in dpi
+
+        fig         = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
                         constrained_layout=True)
-        grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
-        ax1 = fig.add_subplot(grid_fig[0, 0], projection='polar')
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
 
         cmap = matplotlib.cm.jet #jet, cool, etc
         norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
 
+        ax1.set_xlim(thtuple[0],thtuple[1]) #theta scale
+        ax1.set_ylim(rtuple[0],rtuple[1]) #radial scale
 
-        plot_cont_1 = ax1.contourf(   polargrid[1], 
-                                            polargrid[0], rho,  
+        plot_params['thticks']   = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
+        plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 
+                            
+
+        plot_rho2D  = ax1.contourf( polargrid[1], 
+                                    polargrid[0], 
+                                    rho,  
                                     plot_params['ncont'], 
                                     cmap = 'jet', 
                                     vmin = plot_params['vmin'],
                                     vmax = plot_params['vmax'])
         
+
         ax1.set_title(  label               = plot_params['title_text'],
                         fontsize            = plot_params['title_size'],
                         color               = plot_params['title_color'],
@@ -216,23 +235,29 @@ class analysis:
                         fontname            = plot_params['title_fontname'],
                         fontstyle           = plot_params['title_fontstyle'])
 
-        ax1.set_xlabel( xlabel              = plot_params['xlabel'],
+        ax1.set_xlabel( xlabel              = funcpars['plane_split'][0],
                         fontsize            = plot_params['xlabel_size'],
                         color               = plot_params['label_color'],
                         loc                 = plot_params['xlabel_loc'],
                         labelpad            = plot_params['xlabel_pad'] )
 
-        ax1.set_ylabel(plot_params['ylabel'])
+        ax1.set_ylabel( ylabel              = funcpars['plane_split'][1],
+                        labelpad            = plot_params['ylabel_pad'],
+                        loc                 = 'center',
+                        rotation            = 0)
 
-    
-        ax1.set_xticks(plot_params['xticks']) #positions of x-ticks
-        ax1.set_yticks(plot_params['yticks']) #positions of y-ticks
+        ax1.yaxis.grid(linewidth=0.5,alpha=0.7,color = '0.8',visible=True)
+        ax1.xaxis.grid(linewidth=0.5,alpha=0.7, color = '0.8',visible=True)
 
-        ax1.set_xticklabels(plot_params['xticks'],fontsize=8) #x-ticks labels
-        ax1.set_yticklabels(plot_params['yticks']) #y-ticks labels
 
-        ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
-        ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
 
         """fig.colorbar(   mappable            = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                         ax                  = ax1, 
@@ -271,7 +296,7 @@ class analysis:
         rhodir = {} #dictionary containing numpy arrays representing the electron density in (r,theta) meshgrid
 
         for elem in plane:
-    
+
             wfn = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
             aux = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
 
