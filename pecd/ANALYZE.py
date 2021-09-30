@@ -208,8 +208,11 @@ class analysis:
         cmap = matplotlib.cm.jet #jet, cool, etc
         norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
 
-        ax1.set_xlim(thtuple[0],thtuple[1]) #theta scale
+
         ax1.set_ylim(rtuple[0],rtuple[1]) #radial scale
+        ax1.set_thetamin(thtuple[0]*180.0/np.pi)
+        ax1.set_thetamax(thtuple[1]*180.0/np.pi)
+
 
         plot_params['thticks']   = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
         plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 
@@ -235,19 +238,23 @@ class analysis:
                         fontname            = plot_params['title_fontname'],
                         fontstyle           = plot_params['title_fontstyle'])
 
-        ax1.set_xlabel( xlabel              = funcpars['plane_split'][0],
+        ax1.xaxis.set_label_position('top') 
+    
+        ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
                         fontsize            = plot_params['xlabel_size'],
                         color               = plot_params['label_color'],
                         loc                 = plot_params['xlabel_loc'],
                         labelpad            = plot_params['xlabel_pad'] )
 
-        ax1.set_ylabel( ylabel              = funcpars['plane_split'][1],
+        ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
+                        color               = plot_params['label_color'],
                         labelpad            = plot_params['ylabel_pad'],
-                        loc                 = 'center',
+                        loc                 = plot_params['ylabel_loc'],
                         rotation            = 0)
 
-        ax1.yaxis.grid(linewidth=0.5,alpha=0.7,color = '0.8',visible=True)
-        ax1.xaxis.grid(linewidth=0.5,alpha=0.7, color = '0.8',visible=True)
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8',visible=True)
+
 
 
         #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
@@ -259,7 +266,13 @@ class analysis:
         #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
         #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
 
-        """fig.colorbar(   mappable            = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+        #pc = ax1.pcolormesh(polargrid[1], polargrid[0], rho)
+
+
+
+        #matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+        fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax1)
+        """ fig.colorbar(   mappable            = plot_rho2D,
                         ax                  = ax1, 
                         orientation         = plot_params['cbar_orientation'],
                         label               = plot_params['cbar_label'],
@@ -274,7 +287,7 @@ class analysis:
                         format              = plot_params['cbar_format'])
         """
         if plot_params['save'] == True:
-            fig.savefig(    fname       = plot_params['save_name'],
+            fig.savefig(    fname       = plot_params['save_name']+funcpars['plane_split'][1]+funcpars['plane_split'][0]+".pdf",
                             dpi         = plot_params['save_dpi'],
                             orientation = plot_params['save_orientation'],
                             bbox_inches = plot_params['save_bbox_inches'],

@@ -12,6 +12,9 @@ def gparams_rho2D_polar():
     vmin    = 0.0
     vmax    = 0.1
     ncont   = 200
+    resolution = 200
+    fig_size_x = 3.5
+    fig_size_y = 3.5
 
 
     cont2D_params = {      
@@ -37,9 +40,10 @@ def gparams_rho2D_polar():
                             "label_color":      'yellow',
                             "xlabel_size":       12,
                             "ylabel_size":       12,   
-                            "xlabel_pad":       20.0,     
+                            "xlabel_pad":       -5.0,     
                             "ylabel_pad":       -5.0,
-                            "xlabel_loc":       "center",  #left, right         
+                            "xlabel_loc":       "center",  #left, right      
+                            "ylabel_loc":       "center",  #left, right        
                             "nticks_rad":        12,
                             "nticks_th":         12,
 
@@ -61,7 +65,7 @@ def gparams_rho2D_polar():
 
                             ### SAVE PROPERTIES ###       
                             "save":             True,
-                            "save_name":        "cont2D.pdf",
+                            "save_name":        "rho2D_",
                             "save_dpi":         'figure', #float or 'figure' for same resolution as figure
                             "save_orientation": 'landscape', #portrait
                             "save_bbox_inches": 'tight', #or float in inches - which portion of the figure to save?
@@ -69,8 +73,8 @@ def gparams_rho2D_polar():
 
 
                             ### FIGURE PROPERTIES ###    
-                            "figsize_x":        3.5,
-                            "figsize_y":        3.5,
-                            "resolution":       200
+                            "figsize_x":        fig_size_x,
+                            "figsize_y":        fig_size_y,
+                            "resolution":       resolution
                             }
     return cont2D_params

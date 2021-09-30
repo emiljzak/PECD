@@ -219,7 +219,7 @@ def read_input():
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 100,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 40.0  #ignored when automatic
+                                        'rmax': 30.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
