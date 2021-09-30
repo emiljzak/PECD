@@ -67,7 +67,10 @@ def pull_helicity(params):
         raise ValueError("Incorect field name")
     return helicity
 
+
+
 class analysis:
+
     def __init__(self,params):
         self.params = params
 
@@ -100,6 +103,15 @@ class analysis:
         return [char for char in word]
       
       
+
+ 
+
+class spacefuncs(analysis):
+    
+    """ Class of real space functions"""
+
+    def __init__(self):
+        pass
 
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
@@ -181,6 +193,7 @@ class analysis:
                 with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho2D, fmt = '%10.4e')
 
+
     def rho2D_plot(self,funcpars,polargrid,rho): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
@@ -214,7 +227,7 @@ class analysis:
         ax1.set_thetamax(thtuple[1]*180.0/np.pi)
 
 
-        plot_params['thticks']   = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
+        plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
         plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 
                             
 
@@ -396,6 +409,50 @@ class analysis:
 
 
 
+class momentumfuncs(analysis):
+
+    def __init__(self):
+        pass
+
+
+class averagedobs:
+    def __init__(self):
+        pass
+
+
+    """
+    grid_theta, grid_r = calc_grid_for_FT(params)
+
+    Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
+
+
+    #which grid point corresponds to the radial cut-off?
+    ipoint_cutoff = np.argmin(np.abs(Gr.ravel()- params['rcutoff']))
+    print("ipoint_cutoff = " + str(ipoint_cutoff))
+
+
+    if params['density_averaging'] == True:
+        WDMATS  = gen_wigner_dmats( N_Euler, 
+                                    params['Jmax'], 
+                                    grid_euler)
+
+        #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
+        grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
+                                                WDMATS,
+                                                params) 
+
+
+          
+        print(n_grid_euler_2d)
+        grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
+                                    WDMATS,
+                                    params) 
+        print("shape of rho")
+        print(np.shape(rho))
+        #print(rho.shape)
+        #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
+        """
+
 if __name__ == "__main__":   
 
     start_time_total = time.time()
@@ -477,44 +534,6 @@ if __name__ == "__main__":
 
     params['helicity'] = pull_helicity(params)
 
-
-
-
-
-    """
-    grid_theta, grid_r = calc_grid_for_FT(params)
-
-    Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
-
-
-    #which grid point corresponds to the radial cut-off?
-    ipoint_cutoff = np.argmin(np.abs(Gr.ravel()- params['rcutoff']))
-    print("ipoint_cutoff = " + str(ipoint_cutoff))
-
-
-    if params['density_averaging'] == True:
-        WDMATS  = gen_wigner_dmats( N_Euler, 
-                                    params['Jmax'], 
-                                    grid_euler)
-
-        #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-        grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
-                                                WDMATS,
-                                                params) 
-
-
-          
-        print(n_grid_euler_2d)
-        grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
-                                    WDMATS,
-                                    params) 
-        print("shape of rho")
-        print(np.shape(rho))
-        #print(rho.shape)
-        #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
-        """
-
-
     print("=====================================")
     print("==post-processing of the wavepacket==")
     print("====================================="+"\n")
@@ -533,12 +552,17 @@ if __name__ == "__main__":
 
         analysis_obj = analysis(params)
         
-        for elem in params['analyze_functions']:
+        spaceobs = spacefuncs(params)
+
+        for elem in params['analyze_space']:
 
             #call function by name given in the dictionary
-            func = getattr(analysis_obj,elem['name'])
-            print("Calling analysis function: " + str(elem['name']))
+            func = getattr(spaceobs,elem['name'])
+            print("Calling space function: " + str(elem['name']))
             func(elem)
+        
+
+
         
             """ calculate contribution to averaged quantities"""
 

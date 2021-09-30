@@ -212,6 +212,23 @@ def read_input():
     elif params['mode'] == "analyze":
         """ __________________________ ANALYZE BLOCK __________________________"""
 
+        """
+                Available functions:
+
+                    1) rho1Dr:  rho(r,theta0,t)     - radial density for fixed angle
+                    2) rho1Dth: rho(r0,theta,t)     - angular density for fixed distance
+                    3) rho2D:   rho(r,theta,phi0,t) - polar 2D map, fixed phi0
+                    4) rho2Dav: rho_av(r,theta,t)   - polar 2D map, averaged over phi
+                    5) rho3Dcart: rho3D(x,y,z,t)    - 4D plot with Mayavi
+
+
+                    1) W1Dth:  W(k0,theta,t)     - 1D momentum probability density in theta 
+                    2) W1Dk: W(k,theta0,t)      -   
+                    3) W2D:  W(k,theta,phi0,t)     - 2D momentum probability density in k,theta
+                    4) W2Dav: W(k,theta,t)     - 2D momentum probability density in k,theta, phi-averaged
+        """
+        
+        
         rho2D = {   'name':         'rho2D',
                     'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
@@ -227,16 +244,25 @@ def read_input():
                     'coeff_thr':    1e-6 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 
+        W2D = {     'name':         'W2D',
+                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
+                    'save':         False,
+                    'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                        'npts': 100,    #ignored when automatic (2*rmax)
+                                        'rmin': 0.0,    #ignored when automatic
+                                        'rmax': 30.0  #ignored when automatic
+                                        #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                    },                   
+                    'th_grid':      (0.0,2.0*np.pi,360),
+                    'plot_times':   list(np.linspace(0.0, params['tmax'], 3 )),
+                    'coeff_thr':    1e-6 #threshold for the wavefunction coefficients in the calculation of rho
+                    }
 
-        params['analyze_functions'] = [rho2D]
-        """
-                Available functions:
-                    1) rho1Dr:  rho(r,theta0,t)     - radial density for fixed angle
-                    2) rho1Dth: rho(r0,theta,t)     - angular density for fixed distance
-                    3) rho2D:   rho(r,theta,phi0,t) - polar 2D map, fixed phi0
-                    4) rho2Dav: rho_av(r,theta,t)   - polar 2D map, averaged over phi
-        """
 
+        params['analyze_space']     = [rho2D]
+        params['analyze_momentum']  = [W2D]
+        
 
         """ *** MPADs *** """
 
