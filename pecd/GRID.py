@@ -203,7 +203,7 @@ def sph2cart(r,theta,phi):
 def GEN_XYZ_GRID(Gs,Gr,working_dir):
     grid = []
     r_array = Gr.flatten()
-    print(r_array)
+    #print(r_array)
     print("working dir: " + working_dir )
     gridfile = open(working_dir + "grid.dat", 'w')
 

@@ -141,8 +141,6 @@ def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
 
     chilist  = []
 
-    print(maparray)
-
     for i, elem in enumerate(maparray):
         chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
 

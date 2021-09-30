@@ -44,7 +44,7 @@ def create_dirs(params):
         os.mkdir(params['job_directory'])
         os.chdir(params['job_directory'])
         os.mkdir("esp")
-        os.mkdir("animation")
+        os.mkdir("graphics")
     
         os.chdir("esp")
         for irun in range(params['N_batches']):

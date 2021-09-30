@@ -110,8 +110,8 @@ class spacefuncs(analysis):
     
     """ Class of real space functions"""
 
-    def __init__(self):
-        pass
+    def __init__(self,params):
+        self.params = params
 
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
@@ -161,9 +161,11 @@ class spacefuncs(analysis):
         file_wavepacket      =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
 
         for itime, t in zip(plot_index,list(tgrid_plot)):
+            #do we need this every time?
 
             psi                  = read_wavepacket(file_wavepacket, itime, params['Nbas_global'])
 
+            funcpars['t'] = t
             print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                     " " + str( self.params['time_units']) + " ----- " +\
                     "time index = " + str(itime) )
@@ -190,8 +192,9 @@ class spacefuncs(analysis):
 
             if funcpars['save'] == True:
 
-                with open( params['job_directory'] +  "rho2D" + "_"+ helicity + ".dat" , 'w') as rhofile:   
-                    np.savetxt(rhofile, rho2D, fmt = '%10.4e')
+                with open( params['job_directory'] +  "rho2D" + "_" + str('{:.2f}'.format(t/time_to_au) ) +\
+                    + "_" +  str(helicity) + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, rho, fmt = '%10.4e')
 
 
     def rho2D_plot(self,funcpars,polargrid,rho): 
@@ -278,15 +281,14 @@ class spacefuncs(analysis):
         #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
         #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
 
-        fig.colorbar( mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                         ax                  = ax1, 
-                         orientation         = plot_params['cbar_orientation'],
+                        orientation         = plot_params['cbar_orientation'],
                         label               = plot_params['cbar_label'],
                         fraction            = plot_params['cbar_fraction'],
                         aspect              = plot_params['cbar_aspect'],
                         shrink              = plot_params['cbar_shrink'],
                         pad                 = plot_params['cbar_pad'],
-
                         extend              = plot_params['cbar_extend'],
                         ticks               = plot_params['cbar_ticks'],
                         drawedges           = plot_params['cbar_drawedges'],
@@ -294,7 +296,16 @@ class spacefuncs(analysis):
                        )
         
         if plot_params['save'] == True:
-            fig.savefig(    fname       = plot_params['save_name']+funcpars['plane_split'][1]+funcpars['plane_split'][0]+".pdf",
+
+            fig.savefig(    fname       =   params['job_directory']  + "/graphics/"+
+                                            plot_params['save_name'] + "_" +
+                                            funcpars['plane_split'][1]+
+                                            funcpars['plane_split'][0]+ "_" +
+                                            str('{:.2f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            params['helicity'] +
+                                            ".pdf",
+                                            
                             dpi         = plot_params['save_dpi'],
                             orientation = plot_params['save_orientation'],
                             bbox_inches = plot_params['save_bbox_inches'],
@@ -414,6 +425,45 @@ class momentumfuncs(analysis):
     def __init__(self):
         pass
 
+        """
+        if params['FT_method']    == "FFT_cart":
+            calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+
+        elif params['FT_method']  == "FFT_hankel":
+
+            #calculate partial waves on radial grid
+            Plm         = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi, ipoint_cutoff)
+
+            #calculate Hankel transforms on appropriate k-vector grid
+            Flm, kgrid  = calc_hankel_transforms(Plm, grid_r)
+            #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
+            params['analyze_mode']    = "2D-average" #3D, 2D-average
+            params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
+            if params['analyze_mode'] == "2D-average":
+                Wav, kgrid = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+
+            else:
+                FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
+                                                grid_theta, grid_r, maparray_chi, 
+                                                maparray_global, psi, chilist, gamma )
+            
+                if params['density_averaging'] == True:
+                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                    Wav += float(rho[irun]) * np.abs(FT)**2
+                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+
+                else:
+                    print("proceeding with uniform rotational density")
+                    Wav += np.abs(FT)**2
+
+    with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
+        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+
+    with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
+        np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
+
+    PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
+    """
 
 class averagedobs:
     def __init__(self):
@@ -563,48 +613,7 @@ if __name__ == "__main__":
         
 
 
-        
+
             """ calculate contribution to averaged quantities"""
 
 
-
-
-        """
-        if params['FT_method']    == "FFT_cart":
-            calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
-
-        elif params['FT_method']  == "FFT_hankel":
-
-            #calculate partial waves on radial grid
-            Plm         = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi, ipoint_cutoff)
-
-            #calculate Hankel transforms on appropriate k-vector grid
-            Flm, kgrid  = calc_hankel_transforms(Plm, grid_r)
-            #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
-            params['analyze_mode']    = "2D-average" #3D, 2D-average
-            params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
-            if params['analyze_mode'] == "2D-average":
-                Wav, kgrid = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
-
-            else:
-                FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
-                                                grid_theta, grid_r, maparray_chi, 
-                                                maparray_global, psi, chilist, gamma )
-            
-                if params['density_averaging'] == True:
-                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += float(rho[irun]) * np.abs(FT)**2
-                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-
-                else:
-                    print("proceeding with uniform rotational density")
-                    Wav += np.abs(FT)**2
-
-    with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
-        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
-
-    with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
-        np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
-
-    PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
-    """
