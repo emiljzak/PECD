@@ -202,7 +202,8 @@ def read_input():
         params['save_psi_init']  = True
         params['save_enr_init']  = True
 
-    
+        params['wavepacket_format'] = "dat" #dat or h5
+
         params['plot_elfield']      = False
         params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 

@@ -7,7 +7,7 @@ import h5py
 import time
 import os
 import sys
-
+import warnings
 
 import MAPPING
 import GRID
@@ -39,7 +39,7 @@ def read_wavepacket(filename, itime, Nbas):
                 words   = line.split()
                 for ivec in range(2*Nbas):
                     coeffs.append(float(words[1+ivec]))
-        raise Warning(".dat format has been deprecated. Errors are likely to follow.")
+        warnings.warn(".dat format has been deprecated. Errors are likely to follow.")
 
         end_time = time.time()
 
@@ -47,29 +47,12 @@ def read_wavepacket(filename, itime, Nbas):
 
     elif params['wavepacket_format'] == "h5":
       
-        with h5py.File('SO_61487687.h5', mode='a') as h5f:
-            h5f.create_dataset('array1',  data=arr, maxshape=(None, 5) )
             with h5py.File(filename, 'r') as h5:
 
-                Ntra    = h5.attrs['number of trajectories'] 
-                N_U     = h5.attrs['number of energy samples'] 
-                N_th    = h5.attrs['number of polar angle samples'] 
-                N_ph    = h5.attrs['number of azimuth angle samples']
-                ext_x   = h5['px coordinates'][:]
-                ext_y   = h5['py coordinates'][:]
-                ext_z   = h5['pz coordinates'][:]
-                pmap    = h5['momentum map'][:]
-            print(np.shape(pmap[:]))
-            print("Numer of trajectories = " + str(Ntra))
-            print("Numer of energy samples = " + str(N_U))
-            print("Numer of polar angles= " + str(N_th))
-            print("Numer of azimuthal angules " + str(N_ph))
+                pmap    = h5['wavepacket'][:]
+           
             print("Shape of the pmap array = " + str(np.shape(pmap)))
 
-            pgrid = [ext_x, ext_y, ext_z]
-            print("size of transverse cartesian momentum grid = " + str(len(ext_x)))
-            print("size of longitudinal cartesian momentum grid = " + str(len(ext_z)))
-            print("Total size of the momentum map grid = " + str(len(ext_x)*len(ext_z)))
 
     return coeffs
 

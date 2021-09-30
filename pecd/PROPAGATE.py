@@ -98,7 +98,15 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     if params['plot_ini_orb'] == True:
         PLOTS.plot_initial_orbitals(params,maparray,psi_init)
 
-    flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(ieuler) + ".dat", 'w' )
+    if params['wavepacket_format'] == "dat":
+        flwavepacket      = open( params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(ieuler) + ".dat", 'w' )
+    elif params['wavepacket_format'] == "dat":
+        with h5py.File('SO_61487687.h5', mode='a') as h5f:
+        h5f.create_dataset('array1',  data=arr, maxshape=(None, 5) )
+    else:
+        raise ValueError("incorrect/not implemented format")
+
+  
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     #psi               = np.zeros( Nbas, dtype=complex ) 
     psi               =  psi_init[:,params['ivec']]
