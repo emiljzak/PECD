@@ -271,7 +271,8 @@ def read_input():
 
         params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
         params['npts_r_ft']       = 500 #number of radial points at which Hankel Transform is evaluated.
-        params['plot_Plm']        = False #plot and save photoelectron partial waves?
+        params['plot_Plm']        = True #plot and save photoelectron partial waves?
+        params['plot_Flm']        = True #plot and save individual Hankel transforms?
         params['rcutoff']         = 20.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
         params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
 

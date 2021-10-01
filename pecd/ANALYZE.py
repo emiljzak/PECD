@@ -450,10 +450,9 @@ class momentumfuncs(analysis):
 
     def calc_wfnft(self):
 
-        irun                = self.params['irun']
-        helicity            = self.pull_helicity()
-        self.params['helicity']  = helicity
-
+        irun                    = self.params['irun']
+        helicity                = self.pull_helicity()
+        self.params['helicity'] = helicity
 
         #which grid point corresponds to the radial cut-off?
         self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel()- self.params['rcutoff']))
@@ -461,11 +460,11 @@ class momentumfuncs(analysis):
 
 
         """ set up time grids for evaluating wfn """
-        tgrid,dt = self.calc_tgrid()
+        tgrid,dt    = self.calc_tgrid()
 
-        plot_index = self.calc_plot_times(tgrid,dt,self.params['momentum_analyze_times']) #plot time indices
+        plot_index  = self.calc_plot_times(tgrid,dt,self.params['momentum_analyze_times']) #plot time indices
 
-        tgrid_plot = tgrid[plot_index]
+        tgrid_plot  = tgrid[plot_index]
 
         #read wavepacket from file
 
@@ -478,14 +477,6 @@ class momentumfuncs(analysis):
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
         wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
 
-
-        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
-  
-            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
-                " " + str( self.params['time_units']) + " ----- " +\
-                "time index = " + str(itime) )
-
-            self.params['t'] = t
 
 
         if self.params['FT_method']    == "FFT_cart":
@@ -502,25 +493,22 @@ class momentumfuncs(analysis):
 
 
             #calculate partial waves on radial grid
-            Plm         = self.calc_partial_waves(  self.params['chilist'], 
-                                                    grid_r,
-                                                    self.params['bound_lmax'],
-                                                    wavepacket, 
-                                                    self.params['maparray_global'], 
-                                                    self.params['maparray_chi'], 
-                                                    self.params['ipoint_cutoff'])
+            Plm         = self.calc_partial_waves(      grid_r,
+                                                        wavepacket)
 
             #return Hankel transforms on the appropriate k-vector grid identical to grid_r
-            Flm, kgrid  = self.calc_hankel_transforms(Plm, grid_r)
-            print("type and shape of Flm")
-            print(type(Flm))
-            print(np.shape(Flm))
-            print("Comparison of grid_r and kgrid from pyhank:")
-            print(grid_r)
-            print(kgrid)
-            exit()
+            Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
+                                                        grid_r)
+           
+            #print("type and shape of Flm")
+            #print(type(Flm))
+            #print(np.shape(Flm))
+            #print("Comparison of grid_r and kgrid from pyhank:")
+            #print(grid_r)
+            #print(kgrid)
+            #exit()
 
-
+        return Flm, kgrid
     
 
 
@@ -539,9 +527,94 @@ class momentumfuncs(analysis):
         return FT, kgrid
 
 
+    def calc_partial_waves(self, grid_r, wavepacket):
+        """
+        returns: list of numpy arrays. List is labelled by l,m and t_i from 'momentum_analyze_time'
+        """
+
+        Plm = []
+        lmax            = self.params['bound_lmax']
+        maparray_global = self.params['maparray_global']
+        maparray_chi    = self.params['maparray_chi']
+        chilist         = self.params['chilist']
+        ipoint_cutoff   = self.params['ipoint_cutoff']
+        
+        Nt              = wavepacket.shape[0] #number of evaluation times
+        Nbas            = len(maparray_global)
+        Nr              = len(maparray_chi)
+        npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
+        
+
+        val = np.zeros((npts,Nt), dtype = complex)
+
+
+        for itime in range(Nt):
+            psi = wavepacket[itime,:]
+            c_arr = psi.reshape(len(maparray_chi),-1)
+            print("time-point: " + str(itime))
+
+            indang = 0
+            for l in range(0,lmax+1):
+                for m in range(-l,l+1):
+                    print("P_lm: " + str(l) + " " + str(m))
+                
+                    for ielem, elem in enumerate(maparray_chi):
+                        if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
+
+                            val[:,itime] +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
+
+                    indang += 1
+                    Plm.append([itime,l,m,val])
+                    val = 0.0 + 1j * 0.0
+
+            if self.params['plot_Plm'] == True:
+
+
+                #for i in range(Nr):
+                #    plt.plot(grid_r,chilist[i](grid_r))
+                #plt.show()
+                #only for itime =0:
+                for s in range((lmax+1)**2):
+                    plt.plot(grid_r,np.abs(Plm[s][2]),marker='.',label="P_"+str(s))
+                    plt.legend()
+                plt.show()
+        
+        return Plm
+
+
+    def calc_hankel_transforms(self, Plm, grid_r):
+        Flm = [] #list of output Hankel transforms
+    
+        for ielem, elem in enumerate(Plm):
+            print("Calculating Hankel transform for time =  " + str(elem[0]) + " for partial wave Plm: " + str(elem[1]) + " " + str(elem[2]))
+
+            Hank_obj = HankelTransform(elem[1], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
+            #Hank.append(Hank_obj) 
+            Plm_resampled = Hank_obj.to_transform_r(elem[3])
+            F = Hank_obj.qdht(Plm_resampled)
+            Flm.append([elem[0],elem[1],elem[2],F])
+            if  params['plot_Flm']  == True:
+                plt.plot(Hank_obj.kr,np.abs(F))
+        
+        if  params['plot_Flm']  == True:   
+            plt.show()
+            plt.close()
+            
+        return Flm, Hank_obj.kr
+
+
+
     def W2D(self,funcpars):
         print("Calculating 2D electron momentum probability density")
         
+
+        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+  
+            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                " " + str( self.params['time_units']) + " ----- " +\
+                "time index = " + str(itime) )
+
+            self.params['t'] = t
 
         #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
         params['analyze_mode']    = "2D-average" #3D, 2D-average
@@ -570,77 +643,6 @@ class momentumfuncs(analysis):
             np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
 
         PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
-
-
-
-
-
-    def calc_partial_waves(self,chilist, grid_r, lmax, psi, maparray_global, maparray_chi, ipoint_cutoff):
-        """
-        returns: list of numpy arrays. List is labelled by l,m.
-        """
-        Plm = []
-
-        Nbas = len(maparray_global)
-        Nr = len(maparray_chi)
-
-        print("number of radial basis points/functions: " + str(len(maparray_chi)))
-
-        npts = grid_r.size
-
-        val = np.zeros(npts, dtype = complex)
-
-        #coeffs = np.zeros(Nbas, dtype = complex)
-        #for ielem in range(Nbas):
-        #    coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] #obsolete way of representing the wf
-
-        c_arr = psi.reshape(len(maparray_chi),-1)
-
-        indang = 0
-        for l in range(0,lmax+1):
-            for m in range(-l,l+1):
-                print("P_lm: " + str(l) + " " + str(m))
-            
-                for ielem, elem in enumerate(maparray_chi):
-                    if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
-
-                        val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](grid_r)
-
-                indang += 1
-                Plm.append([l,m,val])
-                val = 0.0 + 1j * 0.0
-
-        if self.params['plot_Plm'] == True:
-
-
-            #for i in range(Nr):
-            #    plt.plot(grid_r,chilist[i](grid_r))
-            #plt.show()
-
-            for s in range((lmax+1)**2):
-                plt.scatter(grid_r,np.abs(Plm[s][2]),marker='.',label="P_"+str(s))
-                plt.legend()
-            plt.show()
-        
-        return Plm
-
-
-    def calc_hankel_transforms(self, Plm, grid_r):
-        Flm = [] #list of output Hankel transforms
-    
-        for ielem, elem in enumerate(Plm):
-            print("Calculating Hankel transform for partial wave Plm: " + str(elem[0]) + " " + str(elem[1]))
-
-            Hank_obj = HankelTransform(elem[0], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
-            #Hank.append(Hank_obj) 
-            Plm_resampled = Hank_obj.to_transform_r(elem[2])
-            F = Hank_obj.qdht(Plm_resampled)
-            Flm.append([elem[0],elem[1],F])
-
-            #plt.plot(Hank_obj.kr,np.abs(F))
-        #plt.show()
-        return Flm, Hank_obj.kr
-
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
         coeff_thr = 1e-3
