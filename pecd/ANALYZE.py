@@ -500,14 +500,6 @@ class momentumfuncs(analysis):
             Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
                                                         grid_r)
            
-            #print("type and shape of Flm")
-            #print(type(Flm))
-            #print(np.shape(Flm))
-            #print("Comparison of grid_r and kgrid from pyhank:")
-            #print(grid_r)
-            #print(kgrid)
-            #exit()
-
         return Flm, kgrid
     
 

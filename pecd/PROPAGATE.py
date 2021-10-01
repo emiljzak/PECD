@@ -25,7 +25,7 @@ import itertools
 import json
 import h5py
 
-from pyhank import qdht, iqdht, HankelTransform
+
 
 import MAPPING
 import GRID

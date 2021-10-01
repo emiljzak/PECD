@@ -229,8 +229,7 @@ def read_input():
                     4) W2Dav: W(k,theta,t)     - 2D momentum probability density in k,theta, phi-averaged
         """
         
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
-        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 3 ))
+
         
         rho2D = {   'name':         'rho2D',
                     'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
@@ -262,6 +261,9 @@ def read_input():
                     }
 
 
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
+        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
+
         params['analyze_space']     = []
         params['analyze_momentum']  = [W2D]
         
@@ -271,10 +273,10 @@ def read_input():
 
         params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
         params['npts_r_ft']       = 500 #number of radial points at which Hankel Transform is evaluated.
-        params['plot_Plm']        = True #plot and save photoelectron partial waves?
-        params['plot_Flm']        = True #plot and save individual Hankel transforms?
+        params['plot_Plm']        = False #plot and save photoelectron partial waves?
+        params['plot_Flm']        = False #plot and save individual Hankel transforms?
         params['rcutoff']         = 20.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
-        params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
+       
 
 
 
