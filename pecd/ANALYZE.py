@@ -183,7 +183,7 @@ class spacefuncs(analysis):
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
-            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+            print(  "Generating rho2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                 " " + str( self.params['time_units']) + " ----- " +\
                 "time index = " + str(itime) )
 
@@ -464,10 +464,10 @@ class momentumfuncs(analysis):
         self.params['helicity'] = helicity
 
         #which grid point corresponds to the radial cut-off?
-        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel()- self.params['rcutoff']))
+        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel() - self.params['rcutoff']))
         print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
-
+        tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
         #read wavepacket from file
 
         if params['wavepacket_format'] == "dat":
@@ -601,13 +601,64 @@ class momentumfuncs(analysis):
         print("Calculating 2D electron momentum probability density")
         
 
+        irun = self.params['irun']
+        helicity  = self.pull_helicity()
+        params['helicity'] = helicity
+
+        """ set up 1D grids """
+
+        if funcpars['k_grid']['type'] == "manual":
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe'] = ktuple
+            kgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+        elif funcpars['k_grid']['type'] == "automatic":
+            kgrid1D = kgrid
+
+
+        thtuple             = funcpars['th_grid']
+        funcpars['thtuple'] = thtuple
+        unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
+        thgrid1D            = thtuple[1] * unity_vec
+        
+
+        """ generate 2D meshgrid for storing W2D """
+        polargrid = np.meshgrid(kgrid1D, thgrid1D)
+
+        tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
+
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
-            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+            print(  "Generating W2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                 " " + str( self.params['time_units']) + " ----- " +\
                 "time index = " + str(itime) )
 
             self.params['t'] = t
+
+
+            W2Ddir = self.W2D_calc(
+
+
+                                )
+             
+        
+            if funcpars['plot'][0] == True:
+
+                for elem in W2Ddir.items():
+
+                    plane       = elem[0]
+                    W           = elem[1]
+
+                    funcpars['plane_split'] = self.split_word(plane)
+
+                    # call plotting function
+                    self.W2D_plot(funcpars,polargrid,W)
+
+
+            if funcpars['save'] == True:
+
+                with open( params['job_directory'] +  "W2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, rho, fmt = '%10.4e')
 
         #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
         params['analyze_mode']    = "2D-average" #3D, 2D-average
@@ -620,14 +671,6 @@ class momentumfuncs(analysis):
                                             grid_theta, grid_r, maparray_chi, 
                                             maparray_global, psi, chilist, gamma )
         
-            if params['density_averaging'] == True:
-                #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                Wav += float(rho[irun]) * np.abs(FT)**2
-                #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-
-            else:
-                print("proceeding with uniform rotational density")
-                Wav += np.abs(FT)**2
 
         with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
             np.savetxt(Wavfile, Wav, fmt = '%10.4e')
@@ -636,6 +679,9 @@ class momentumfuncs(analysis):
             np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
 
         PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
+
+
+
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
         coeff_thr = 1e-3
@@ -868,4 +914,15 @@ if __name__ == "__main__":
 
             """ calculate contribution to averaged quantities"""
 
+            """
+                        if params['density_averaging'] == True:
+                #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                Wav += float(rho[irun]) * np.abs(FT)**2
+                #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
 
+            else:
+                print("proceeding with uniform rotational density")
+                Wav += np.abs(FT)**2
+
+            
+            """
