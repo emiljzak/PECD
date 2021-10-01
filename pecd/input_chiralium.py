@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "A" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "R" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -261,20 +261,17 @@ def read_input():
                     }
 
 
-        params['analyze_space']     = [rho2D]
+        params['analyze_space']     = []
         params['analyze_momentum']  = [W2D]
         
 
-        """ *** MPADs *** """
-
-        params['calc_FT']    = True
-
-        params['analyze_time']    = 0.0#params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
+        """ *** Momentum-space wavefunction *** """
 
 
-        params['analyze_mode']    = "2D-average" #3D, 2D-average
         params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
         params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
+        params['plot_Plm']        = True #plot and save photoelectron partial waves?
+        
         params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
         params['rcutoff']         = 40.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
         params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.

@@ -19,16 +19,18 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.ticker import FormatStrFormatter
 
-def spharm(l,m,theta,phi):
-    return sph_harm(m, l, phi, theta)
-    
-
 
 
 class analysis:
 
     def __init__(self,params):
         self.params = params
+
+
+    def spharm(self,l,m,theta,phi):
+        return sph_harm(m, l, phi, theta)
+        
+
 
     def calc_tgrid(self):
         print("Setting up time-grid")
@@ -323,106 +325,101 @@ class spacefuncs(analysis):
         plt.show()
         plt.close()
 
+    def calc_spharm_array(self,lmax,plane,grid):
+        """
+            Returns array of spherical harmonics in range 0,...,l and m = -l, ..., l and on 
+            the grid, which can be 2D or 3D meshgrid, depending on the plane chosen.
+            grid[0] = r
+            grid[1] = theta
+            grid[2] = phi
+            in the form of meshgrid
+        """
 
+        if plane == "XY":
+            theta0 = np.pi / 2.0
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, theta0, grid[1]) 
+
+            return Ymat
+
+        elif plane == "XZ":
+
+            phi0 =  0.0
+
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
+
+            return Ymat
+
+        elif plane == "YZ":
+            phi0 =  np.pi/2
+            
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
+
+            return Ymat
+
+        elif len(plane) == 3:
+            print("Evaluation plane defined by normal vector: " + str(plane))
+            raise NotImplementedError("Feature not yet implemented")
+
+        elif plane == "XYZ":
+            #calculating Ylm on full 3D (r,theta,phi) meshgrid
+            
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1],grid[2].shape[2]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:,:] =  self.spharm(l, m, grid[1], grid[2]) 
+
+            return Ymat
+
+    def calc_wfn_array(self,lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi):
+                            
+        wfn = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+        aux = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+
+        icoeff = 0
+        for xi in range(Nbas_chi):
+            chi_rgrid = chilist[xi](polargrid[0])
+            aux = 0.0
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    if np.abs((psi[icoeff])) > coeff_thr:               
+                    #if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
+                        aux += (psi[icoeff])  * Ymat[l,l+m,:,:]
+                        #aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
+                    icoeff += 1
+            wfn += chi_rgrid * aux
+        return wfn
 
     def rho2D_calc(self, psi, polargrid, chilist, funcpar, Nbas_chi,  lmax):
 
         plane       = funcpar['plane']
         coeff_thr   = funcpar['coeff_thr']
 
-
         rhodir = {} #dictionary containing numpy arrays representing the electron density in (r,theta) meshgrid
 
         for elem in plane:
 
-            wfn = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
-            aux = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+            print("Evaluation plane for rho2D: " + elem)
 
-            if elem == "XY":
-                print("Evaluation plane for rho2D: " + elem)
-                theta0 = np.pi / 2.0
-                #calculate spherical harmonics on the angular grid for all quantum numbers
-                Ymat = np.zeros((lmax+1,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]),dtype=complex)
-                
-                for l in range(lmax+1):
-                    for m in range(-l,l+1):
-                        Ymat[l,l+m,:,:] =  spharm(l, m, theta0, polargrid[1]) 
-                
-                icoeff = 0
-                
-                for xi in range(Nbas_chi):
-                    chi_rgrid = chilist[xi](polargrid[0])
-                    aux = 0.0
-                    for l in range(lmax+1):
-                        for m in range(-l,l+1):
-                            if np.abs((psi[icoeff])) > coeff_thr:               
-                            #if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
-                                aux += (psi[icoeff])  * Ymat[l,l+m,:,:]
-                                #aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
-                            icoeff += 1
-                    wfn += chi_rgrid * aux
-                rhodir['XY'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
-
-            elif elem == "XZ":
-                print("Evaluation plane for rho2D: " + elem)
-                phi0 =  0.0
-
-                #calculate spherical harmonics on the angular grid for all quantum numbers
-                Ymat = np.zeros((lmax+1,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]),dtype=complex)
-                
-                for l in range(lmax+1):
-                    for m in range(-l,l+1):
-                        Ymat[l,l+m,:,:] =  spharm(l, m, polargrid[1], phi0) 
-
-                icoeff = 0
-                
-                for xi in range(Nbas_chi):
-                    chi_rgrid = chilist[xi](polargrid[0])
-                    aux = 0.0
-                    for l in range(lmax+1):
-                        for m in range(-l,l+1):
-                            if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
-                                aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
-                            icoeff += 1
-                    wfn += chi_rgrid * aux
-                
-
-                rhodir['XZ'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
-
-
-            elif elem == "YZ":
-                print("Evaluation plane for rho2D: " + elem)
-                phi0 =  np.pi/2
-             
-                #calculate spherical harmonics on the angular grid for all quantum numbers
-                Ymat = np.zeros((lmax+1,2*lmax+1,polargrid[0].shape[0],polargrid[1].shape[1]),dtype=complex)
-                
-                for l in range(lmax+1):
-                    for m in range(-l,l+1):
-                        Ymat[l,l+m,:,:] =  spharm(l, m, polargrid[1], phi0) 
-
-                icoeff = 0
-                
-                for xi in range(Nbas_chi):
-                    chi_rgrid = chilist[xi](polargrid[0])
-                    aux = 0.0
-                    for l in range(lmax+1):
-                        for m in range(-l,l+1):
-                            if np.abs((psi[2*icoeff] + 1j*psi[2*icoeff+1])) > coeff_thr:
-                                aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
-                            icoeff += 1
-                    wfn += chi_rgrid * aux
-                
-
-                rhodir['YZ'] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
-
-            elif len(elem) == 3:
-                print("Evaluation plane defined by normal vector: " + str(elem))
-                raise NotImplementedError("Feature not yet implemented")
-
-            else:
-                raise ValueError("incorrect evaluation plane for rho2D")
-
+            Ymat    = self.calc_spharm_array(lmax,elem,polargrid)
+            wfn     = self.calc_wfn_array(lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi)
+            rhodir[elem] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
         
 
         return rhodir
@@ -432,20 +429,30 @@ class spacefuncs(analysis):
 
 class momentumfuncs(analysis):
 
-    def __init__(self):
-        pass
+    def __init__(self,params):
+        self.params = params
 
-        """
-        if params['FT_method']    == "FFT_cart":
-            calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
 
-        elif params['FT_method']  == "FFT_hankel":
+    def calc_wfnft(self,wfn):
+
+        
+        if self.params['FT_method']    == "FFT_cart":
+            self.calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+
+        elif self.params['FT_method']  == "FFT_hankel":
+
 
             #calculate partial waves on radial grid
-            Plm         = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi, ipoint_cutoff)
+            Plm         = self.calc_partial_waves(  self.params['chilist'], 
+                                                    grid_r,
+                                                    self.params['bound_lmax'],
+                                                    wfn, 
+                                                    maparray_global, 
+                                                    maparray_chi, 
+                                                    ipoint_cutoff)
 
             #calculate Hankel transforms on appropriate k-vector grid
-            Flm, kgrid  = calc_hankel_transforms(Plm, grid_r)
+            Flm, kgrid  = self.calc_hankel_transforms(Plm, grid_r)
             #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
             params['analyze_mode']    = "2D-average" #3D, 2D-average
             params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
@@ -473,7 +480,230 @@ class momentumfuncs(analysis):
         np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
 
     PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
-    """
+    
+
+    def W2D(self,funcpars):
+        print("Calculating 2D electron momentum probability density")
+        
+        irun = self.params['irun']
+
+        helicity  = self.pull_helicity()
+        params['helicity'] = helicity
+
+        """ set up 1D grids """
+
+        if funcpars['r_grid']['type'] == "manual":
+            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
+        elif funcpars['r_grid']['type'] == "automatic":
+            rmax = 0.0
+            for elem in self.params['FEMLIST']:
+                rmax += elem[0] * elem[2]
+            rtuple = (0.0, rmax, 2*int(rmax) )
+        else:
+            raise ValueError("incorrect radial grid type")
+        
+        thtuple     = funcpars['th_grid']
+
+        rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+        unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
+        thgrid1D        = thtuple[1] * unity_vec
+
+        funcpars['rtulpe'] = rtuple
+        funcpars['thtuple'] = thtuple
+        
+        #for xi in range(self.params['Nbas_chi']):
+
+        #    plt.plot(rgrid1D,chilist[xi](rgrid1D))
+
+        #plt.show()
+        #exit()
+        
+        """ generate 2D meshgrid for storing rho2D """
+        polargrid = np.meshgrid(rgrid1D, thgrid1D)
+
+        """ set up time grids for evaluating rho2D """
+        tgrid,dt = self.calc_tgrid()
+
+        plot_index = self.calc_plot_times(tgrid,dt,funcpars['plot_times']) #plot time indices
+
+        tgrid_plot = tgrid[plot_index]
+
+        #read wavepacket from file
+
+        if params['wavepacket_format'] == "dat":
+            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        
+        elif params['wavepacket_format'] == "h5":
+            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
+
+        #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
+
+        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+  
+            print(  "Generating plot at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                " " + str( self.params['time_units']) + " ----- " +\
+                "time index = " + str(itime) )
+
+            funcpars['t'] = t
+
+            rhodir = self.rho2D_calc(   wavepacket[i,:], 
+                                        polargrid, 
+                                        self.params['chilist'],
+                                        funcpars,  
+                                        self.params['Nbas_chi'], 
+                                        self.params['bound_lmax'])
+
+            if funcpars['plot'][0] == True:
+
+                for elem in rhodir.items():
+
+                    plane       = elem[0]
+                    rho         = elem[1]
+
+                    funcpars['plane_split'] = self.split_word(plane)
+
+                    # call plotting function
+                    self.rho2D_plot(funcpars,polargrid,rho)
+
+
+            if funcpars['save'] == True:
+
+                with open( params['job_directory'] +  "rho2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, rho, fmt = '%10.4e')
+
+
+
+
+
+
+
+
+    def calc_partial_waves(self,chilist, grid_r, lmax, psi, maparray_global, maparray_chi, ipoint_cutoff):
+        """
+        returns: list of numpy arrays. List is labelled by l,m.
+        """
+        Plm = []
+
+        Nbas = len(maparray_global)
+        Nr = len(maparray_chi)
+        print("number of radial basis points/functions: " + str(len(maparray_chi)))
+
+        npts = grid_r.size
+
+        #for i in range(359):
+        #    plt.plot(grid_r,chilist[i](grid_r))
+        #plt.show()
+
+        val = np.zeros(npts, dtype = complex)
+
+        coeffs = np.zeros(Nbas, dtype = complex)
+        for ielem in range(Nbas):
+            coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] 
+
+        c_arr = coeffs.reshape(len(maparray_chi),-1)
+
+        indang = 0
+        for l in range(0,lmax+1):
+            for m in range(-l,l+1):
+                print("P_lm: " + str(l) + " " + str(m))
+            
+                for ielem, elem in enumerate(maparray_chi):
+                    if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
+
+                        val +=  c_arr[ielem][indang] *  chilist[elem[2]-1](grid_r)
+
+                indang += 1
+                Plm.append([l,m,val])
+                val = 0.0 + 1j * 0.0
+
+        if self.params['plot_Plm'] == True:
+            for s in range(16):
+                plt.scatter(grid_r,np.abs(Plm[s][2]),marker='.',label="P_"+str(s))
+                plt.legend()
+            plt.show()
+        
+        return Plm
+
+
+    def calc_hankel_transforms(self,Plm, grid_r):
+        Flm = [] #list of output Hankel transforms
+    
+        for ielem, elem in enumerate(Plm):
+            print("Calculating Hankel transform for partial wave Plm: " + str(elem[0]) + " " + str(elem[1]))
+
+            Hank_obj = HankelTransform(elem[0], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
+            #Hank.append(Hank_obj) 
+            Plm_resampled = Hank_obj.to_transform_r(elem[2])
+            F = Hank_obj.qdht(Plm_resampled)
+            Flm.append([elem[0],elem[1],F])
+
+            #plt.plot(Hank_obj.kr,np.abs(F))
+        #plt.show()
+        return Flm, Hank_obj.kr
+
+
+    def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
+        coeff_thr = 1e-3
+        ncontours = 20
+
+        nlobs   = params['bound_nlobs']
+        nbins   = params['bound_nbins'] 
+        npoints = 100
+        rmax    = nbins * params['bound_binw']
+        rmin    = 0.0
+
+        fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+        spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+        axft = fig.add_subplot(spec[0, 0])
+
+        cart_grid = np.linspace(-1.0 * rmax/np.sqrt(3), rmax/np.sqrt(3), npoints, endpoint=True, dtype=float)
+
+        x3d, y3d, z3d = np.meshgrid(cart_grid, cart_grid, cart_grid)
+
+
+        x   =  np.zeros(nlobs)
+        w   =  np.zeros(nlobs)
+        x,w =  GRID.gauss_lobatto(nlobs,14)
+        w   =  np.array(w)
+        x   =  np.array(x) # convert back to np arrays
+
+        val = np.zeros((len(x3d),len(y3d),len(z3d)), dtype = complex)
+        
+        start_time = time.time()
+        for ielem, elem in enumerate(maparray):
+            if np.abs(psi[2*ielem]+1j*psi[2*ielem + 1]) > coeff_thr:
+                print(str(elem) + str(psi[ielem]))
+
+                for i in range(len(cart_grid)):
+                    for j in range(len(cart_grid)):
+                        val[i,j,:] +=  ( psi[2*ielem] + 1j * psi[2*ielem + 1] ) * spharmcart(elem[3], elem[4], x3d[i,j,:], y3d[i,j,:], z3d[i,j,:]) * \
+                                        chilist[elem[2]-1](np.sqrt(x3d[i,j,:]**2 + y3d[i,j,:]**2 + z3d[i,j,:]**2)) #
+
+
+        end_time = time.time()
+        print("The time calculation of wavefunction on 3-D cubic grid: " + str("%10.3f"%(end_time-start_time)) + "s")
+
+        start_time = time.time()
+        ftval = fftn(val)
+        end_time = time.time()
+        print("The time calculation 3D Fourier transform: " + str("%10.3f"%(end_time-start_time)) + "s")
+
+        print(np.shape(ftval))
+
+        ft_grid = np.linspace(-1.0/(rmax), 1.0/(rmax), npoints, endpoint=True, dtype=float)
+
+        yftgrid, zftgrid = np.meshgrid(ft_grid,ft_grid)
+
+        line_ft = axft.contourf(yftgrid, zftgrid , ftval[50,:npoints,:npoints].real/np.max(np.abs(ftval)), 
+                                            ncontours, cmap = 'jet', vmin=-0.2, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
+        plt.colorbar(line_ft, ax=axft, aspect=30)
+        
+        #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
+        plt.legend()   
+        plt.show()  
+
 
 class averagedobs:
     def __init__(self):
@@ -610,11 +840,15 @@ if __name__ == "__main__":
 
         params['irun'] = irun 
 
-        analysis_obj = analysis(params)
+        analysis_obj    = analysis(params)
         
-        spaceobs = spacefuncs(params)
+        spaceobs        = spacefuncs(params)
+
+        momentumobs     = momentumfuncs(params)
 
         for elem in params['analyze_space']:
+            # Future note: we may want to pull out the wavefunction calculation into a general routine
+            # independent of the called function. This is going to save some time.
 
             #call function by name given in the dictionary
             func = getattr(spaceobs,elem['name'])
@@ -622,6 +856,14 @@ if __name__ == "__main__":
             func(elem)
         
 
+        momentumobs.calc_wfnft(wfn)
+
+        for elem in params['analyze_momentum']:
+
+            func = getattr(momentumobs,elem['name'])
+            print("Calling momentum function: " + str(elem['name']))
+            func(elem)
+        
 
 
             """ calculate contribution to averaged quantities"""

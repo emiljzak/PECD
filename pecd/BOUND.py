@@ -974,7 +974,7 @@ def gen_3j_multipoles(lmax_basis,lmax_multi):
     #print("3j symbols in array:")
     #print(tjmat)
 
-    return tjmat/np.sqrt(4.0*np.pi)
+    return tjmat#/np.sqrt(4.0*np.pi)
 
 
 
