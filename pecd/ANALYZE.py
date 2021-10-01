@@ -57,6 +57,15 @@ class analysis:
         return plot_index
 
 
+    def setup_timegrids(self, momentum_analyze_times):
+        tgrid,dt            = self.calc_tgrid()
+
+        tgrid_plot_index    =  self.calc_plot_times(tgrid,dt,momentum_analyze_times) #plot time indices
+
+        tgrid_plot          = tgrid[tgrid_plot_index]
+
+        return tgrid_plot, tgrid_plot_index
+
     def split_word(self,word):
         return [char for char in word]
       
@@ -459,13 +468,6 @@ class momentumfuncs(analysis):
         print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
 
-        """ set up time grids for evaluating wfn """
-        tgrid,dt    = self.calc_tgrid()
-
-        plot_index  = self.calc_plot_times(tgrid,dt,self.params['momentum_analyze_times']) #plot time indices
-
-        tgrid_plot  = tgrid[plot_index]
-
         #read wavepacket from file
 
         if params['wavepacket_format'] == "dat":
@@ -595,7 +597,7 @@ class momentumfuncs(analysis):
         return Flm, Hank_obj.kr
 
 
-    def W2D(self,funcpars):
+    def W2D(self,funcpars,Flm,kgrid):
         print("Calculating 2D electron momentum probability density")
         
 
@@ -830,9 +832,12 @@ if __name__ == "__main__":
 
         analysis_obj    = analysis(params)
         
+
+        params['tgrid_plot_space'], params['tgrid_plot_index_space'] = analysis_obj.setup_timegrids(params['space_analyze_times'])
+
+
         spaceobs        = spacefuncs(params)
 
-        momentumobs     = momentumfuncs(params)
 
         for elem in params['analyze_space']:
             # Future note: we may want to pull out the wavefunction calculation into a general routine
@@ -843,13 +848,21 @@ if __name__ == "__main__":
             print("Calling space function: " + str(elem['name']))
             func(elem)
         
-        wfnft = momentumobs.calc_wfnft()
+
+
+        """ set up time grids for evaluating wfn """
+
+        params['tgrid_plot_momentum'], params['tgrid_plot_index_momentum'] = analysis_obj.setup_timegrids(params['momentum_analyze_times'])
+
+        momentumobs     = momentumfuncs(params)
+
+        Flm, kgrid = momentumobs.calc_wfnft()
 
         for elem in params['analyze_momentum']:
 
             func = getattr(momentumobs,elem['name'])
             print("Calling momentum function: " + str(elem['name']))
-            func(elem,wfnft)
+            func(elem, Flm, kgrid)
         
 
 
