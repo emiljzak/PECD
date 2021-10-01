@@ -511,7 +511,7 @@ class momentumfuncs(analysis):
 
         npts      = grid_r.size
 
-        FT = np.zeros((npts  ,npts  ), dtype = complex)
+        FT = np.zeros((npts, npts), dtype = complex)
 
         for i in range(npts ):
             #print(i)
@@ -610,7 +610,7 @@ class momentumfuncs(analysis):
         if funcpars['k_grid']['type'] == "manual":
             ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktulpe'] = ktuple
-            kgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+            kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
         elif funcpars['k_grid']['type'] == "automatic":
             kgrid1D = kgrid
 
@@ -634,13 +634,13 @@ class momentumfuncs(analysis):
 
             self.params['t'] = t
 
+            Flm_t = Flm[i*(self.params['bound_lmax']+1)**2:(i+1)*(self.params['bound_lmax']+1)**2 ]
+            print(Flm_t)
 
-            W2Ddir = self.W2D_calc(
+
+            W2Ddir = self.W2D_calc(funcpars,Flm,kgrid1D,thgrid1D)
 
 
-                                )
-             
-        
             if funcpars['plot'][0] == True:
 
                 for elem in W2Ddir.items():
@@ -660,28 +660,28 @@ class momentumfuncs(analysis):
                     "_" + helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho, fmt = '%10.4e')
 
-        #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
-        params['analyze_mode']    = "2D-average" #3D, 2D-average
-        params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
-        if params['analyze_mode'] == "2D-average":
-            Wav, kgrid = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
 
-        else:
-            FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
-                                            grid_theta, grid_r, maparray_chi, 
-                                            maparray_global, psi, chilist, gamma )
         
+    def W2D_calc(self,funcpar, Flm, kgrid, thgrid):
+        """calculate numerically W2D for fixed phi angle"""
 
-        with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
-            np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+        plane       = funcpar['plane']
 
-        with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
-            np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
+        W2Ddir = {} #dictionary containing numpy arrays representing the electron's momentum density in (r,theta) meshgrid
 
-        PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
+        for elem in plane:
+
+            print("Evaluation plane for W2D: " + elem)
+
+            Ymat    = self.calc_spharm_array(lmax,elem,polargrid)
+            wfn     = self.calc_wfn_array(lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi)
+
+            W2D, kgrid = self.calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phigrid[iphi] )
+
+:           W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
 
-
+        return 
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
         coeff_thr = 1e-3

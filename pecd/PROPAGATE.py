@@ -554,9 +554,6 @@ def calc_intmat(maparray,rgrid,Nbas):
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
     return np.allclose(a, a.conj(), rtol=rtol, atol=atol)
 
-
-
-
 def cart2sph(x,y,z):
     r=np.sqrt(x**2+y**2+z**2)
     theta=np.arctan(np.sqrt(x**2+y**2)/z)
@@ -574,6 +571,14 @@ def spharmcart(l,m,x,y,z):
         theta   = 0.0
         phi     = 0.0
     return sph_harm(m, l, phi, theta)
+
+def precompute_spharm(grid_theta,lmax, phi0):
+    SP = {}
+
+    for l in range(0,2*lmax+1):
+        for m in range(-l,l+1):
+            SP[ str(l) + ',' + str(m) ] = PLOTS.spharm(l, m, grid_theta , phi0) 
+    return SP
 
 
 
@@ -609,16 +614,6 @@ def plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.
     plt.show()  
 
 
-
-def precompute_spharm(grid_theta,lmax, phi0):
-    SP = {}
-
-    for l in range(0,2*lmax+1):
-        for m in range(-l,l+1):
-            SP[ str(l) + ',' + str(m) ] = PLOTS.spharm(l, m, grid_theta , phi0) 
-
-
-    return SP
 
 
 
@@ -685,35 +680,6 @@ def plot_W_3D_analytic(params, maparray_chi, maparray_global, psi, chilist, phi0
 
 
 
-
-def calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
-    """calculate numerically average of W over the phi angle"""
-
-    Nphi = params['nphi_pts']
-    phigrid = np.linspace(0, 2.0 * np.pi, Nphi, endpoint=False)
-    grid_theta, grid_r = calc_grid_for_FT(params)
-   
-    W_arr = []
-
-    #calculate partial waves on radial grid
-    Plm = calc_partial_waves(chilist, grid_r, params['bound_lmax'], psi, maparray_global, maparray_chi,  ipoint_cutoff)
-
-    #calculate Hankel transforms on appropriate k-vector grid
-    Flm, kgrid = calc_hankel_transforms(Plm, grid_r)
-
-
-    for iphi in range(Nphi):
-        FT, kgrid = calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phigrid[iphi] )
-        W_arr.append( np.abs(FT)**2 ) 
-
-
-    Wav = np.copy(W_arr[0])
-    Wav = 0.0
-
-    for elem in W_arr:
-        Wav += elem
-
-    return Wav / float(Nphi), kgrid
 
 def plot_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist):
     ncontours = 100
@@ -942,24 +908,6 @@ def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
         WDMATS.append(WDM)  
     return WDMATS
 
-def create_dirs(params,N_euler_3D):
-
-    os.chdir(params['working_dir'])
-    path =  params['job_directory']
-
-    isdir = os.path.isdir(path) 
-    if isdir:
-        print("job directory exists: " + str(isdir) + ", " + path) 
-    else:
-        print("creating job directory: " + str(isdir) + ", " + path) 
-        os.mkdir(params['job_directory'])
-        os.chdir(params['job_directory'])
-        os.mkdir("esp")
-        os.mkdir("animation")
-        os.chdir("esp")
-        for irun in range(N_euler_3D):
-            os.mkdir(str(irun))
-    return path
 
 def gen_3j_dip(lmax):
     """precompute all necessary 3-j symbols for dipole matrix elements"""
