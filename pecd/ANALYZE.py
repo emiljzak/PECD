@@ -545,14 +545,14 @@ class momentumfuncs(analysis):
         npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
         
 
-        val = np.zeros((npts,Nt), dtype = complex)
+        val = np.zeros(npts, dtype = complex)
 
 
         for itime in range(Nt):
             psi = wavepacket[itime,:]
             c_arr = psi.reshape(len(maparray_chi),-1)
             print("time-point: " + str(itime))
-
+            val = 0.0 + 1j * 0.0
             indang = 0
             for l in range(0,lmax+1):
                 for m in range(-l,l+1):
@@ -561,7 +561,7 @@ class momentumfuncs(analysis):
                     for ielem, elem in enumerate(maparray_chi):
                         if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
 
-                            val[:,itime] +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
+                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
 
                     indang += 1
                     Plm.append([itime,l,m,val])
@@ -575,10 +575,10 @@ class momentumfuncs(analysis):
                 #plt.show()
                 #only for itime =0:
                 for s in range((lmax+1)**2):
-                    plt.plot(grid_r,np.abs(Plm[s][2]),marker='.',label="P_"+str(s))
+                    plt.plot(grid_r,np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
                     plt.legend()
                 plt.show()
-        
+                plt.close()
         return Plm
 
 
@@ -586,7 +586,7 @@ class momentumfuncs(analysis):
         Flm = [] #list of output Hankel transforms
     
         for ielem, elem in enumerate(Plm):
-            print("Calculating Hankel transform for time =  " + str(elem[0]) + " for partial wave Plm: " + str(elem[1]) + " " + str(elem[2]))
+            print("Calculating Hankel transform for time-point =  " + str(elem[0]) + " for partial wave Plm: " + str(elem[1]) + " " + str(elem[2]))
 
             Hank_obj = HankelTransform(elem[1], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
             #Hank.append(Hank_obj) 
@@ -599,7 +599,7 @@ class momentumfuncs(analysis):
         if  params['plot_Flm']  == True:   
             plt.show()
             plt.close()
-            
+
         return Flm, Hank_obj.kr
 
 
