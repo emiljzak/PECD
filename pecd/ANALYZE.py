@@ -470,10 +470,10 @@ class momentumfuncs(analysis):
         tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
         #read wavepacket from file
 
-        if params['wavepacket_format'] == "dat":
+        if self.params['wavepacket_format'] == "dat":
             file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
         
-        elif params['wavepacket_format'] == "h5":
+        elif self.params['wavepacket_format'] == "h5":
             file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
@@ -483,7 +483,7 @@ class momentumfuncs(analysis):
 
         if self.params['FT_method']    == "FFT_cart":
 
-            self.calc_fftcart_psi_3d(   params, 
+            self.calc_fftcart_psi_3d(   self.params, 
                                         self.params['maparray_global'], 
                                         self.params['Gr'], 
                                         wavepacket,
@@ -502,21 +502,28 @@ class momentumfuncs(analysis):
             Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
                                                         grid_r)
            
-        return Flm, kgrid
+        return Flm, kgrid, grid_r
     
-
 
     def calc_FT_3D_hankel(self, Flm, kgrid, grid_theta, grid_r, phi0 = 0.0 ):
         """ returns: fourier transform inside a ball grid (r,theta,phi) """
 
+
         npts      = grid_r.size
+        nptsth      = grid_theta.size
+        print("size of grid_r = " + str(npts))
+        print("size of kgrid = " + str(kgrid.size))
+
+
+        print(grid_r)
+        print(kgrid)
 
         FT = np.zeros((npts, npts), dtype = complex)
 
-        for i in range(npts ):
+        for i in range(nptsth ):
             #print(i)
             for elem in Flm:
-                FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:npts] * PLOTS.spharm(elem[0], elem[1], grid_theta[i] , phi0) 
+                FT[i,:] +=   ((-1.0 * 1j)**elem[1]) * elem[3][:npts] * PLOTS.spharm(elem[1], elem[2], grid_theta[i] , phi0) 
 
         return FT, kgrid
 
@@ -597,13 +604,13 @@ class momentumfuncs(analysis):
         return Flm, Hank_obj.kr
 
 
-    def W2D(self,funcpars,Flm,kgrid):
+    def W2D(self,funcpars,Flm,kgrid,grid_r):
         print("Calculating 2D electron momentum probability density")
         
 
         irun = self.params['irun']
         helicity  = self.pull_helicity()
-        params['helicity'] = helicity
+        self.params['helicity'] = helicity
 
         """ set up 1D grids """
 
@@ -638,7 +645,7 @@ class momentumfuncs(analysis):
             print(Flm_t)
 
 
-            W2Ddir = self.W2D_calc(funcpars,Flm,kgrid1D,thgrid1D)
+            W2Ddir = self.W2D_calc(funcpars,Flm,kgrid1D,thgrid1D,grid_r)
 
 
             if funcpars['plot'][0] == True:
@@ -662,7 +669,7 @@ class momentumfuncs(analysis):
 
 
         
-    def W2D_calc(self,funcpar, Flm, kgrid, thgrid):
+    def W2D_calc(self,funcpar, Flm, kgrid, thgrid,grid_r):
         """calculate numerically W2D for fixed phi angle"""
 
         plane       = funcpar['plane']
@@ -673,15 +680,14 @@ class momentumfuncs(analysis):
 
             print("Evaluation plane for W2D: " + elem)
 
-            Ymat    = self.calc_spharm_array(lmax,elem,polargrid)
-            wfn     = self.calc_wfn_array(lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi)
 
-            W2D, kgrid = self.calc_FT_3D_hankel(Plm, Flm, kgrid, params['bound_lmax'], grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phigrid[iphi] )
+            """ TO BE FIXED HERE"""
+            phi0 = 0.0
+            W2D, kgrid = self.calc_FT_3D_hankel(Flm, kgrid, thgrid, grid_r, phi0 )
+            W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
-:           W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
-
-        return 
+        return 0
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
         coeff_thr = 1e-3
@@ -902,13 +908,13 @@ if __name__ == "__main__":
 
         momentumobs     = momentumfuncs(params)
 
-        Flm, kgrid = momentumobs.calc_wfnft()
+        Flm, kgrid, grid_r = momentumobs.calc_wfnft()
 
         for elem in params['analyze_momentum']:
 
             func = getattr(momentumobs,elem['name'])
             print("Calling momentum function: " + str(elem['name']))
-            func(elem, Flm, kgrid)
+            func(elem, Flm, kgrid, grid_r)
         
 
 
