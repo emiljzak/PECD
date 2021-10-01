@@ -603,7 +603,6 @@ class momentumfuncs(analysis):
         return Flm, Hank_obj.kr
 
 
-
     def W2D(self,funcpars):
         print("Calculating 2D electron momentum probability density")
         
