@@ -578,19 +578,6 @@ def spharmcart(l,m,x,y,z):
 
 
 
-def calc_FT_3D_hankel(Plm, Flm, kgrid, lmax, grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0 ):
-    """ returns: fourier transform inside a ball grid (r,theta,phi) """
-
-    npts      = grid_r.size
-
-    FT = np.zeros((npts  ,npts  ), dtype = complex)
-
-    for i in range(npts ):
-        #print(i)
-        for elem in Flm:
-            FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:npts] * PLOTS.spharm(elem[0], elem[1], grid_theta[i] , phi0) 
-
-    return FT, kgrid
 
 def plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0):
     ncontours = 100
@@ -867,20 +854,6 @@ def calc_ftpsi_2d(params, maparray, Gr, psi, chilist):
 
     return fty, yftgrid, zftgrid 
 
-
-def calc_grid_for_FT(params):
-    """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
-    """ The real-space grid determines the k-space grid returned by PyHank """
-
-    nbins   = params['bound_nbins'] 
-    rmax    = nbins * params['bound_binw']
-    npts    = params['N_r_points']
-    N_red   = npts 
-
-    grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
-    grid_r      = np.linspace(0.0, rmax, npts, endpoint = False)
-
-    return grid_theta, grid_r
 
 
 

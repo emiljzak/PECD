@@ -229,6 +229,8 @@ def read_input():
                     4) W2Dav: W(k,theta,t)     - 2D momentum probability density in k,theta, phi-averaged
         """
         
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
+        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 3 ))
         
         rho2D = {   'name':         'rho2D',
                     'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
@@ -241,7 +243,6 @@ def read_input():
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
-                    'plot_times':   list(np.linspace(0.0, params['tmax'], 3 )),
                     'coeff_thr':    1e-6 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 
@@ -269,15 +270,17 @@ def read_input():
 
 
         params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
-        params['N_r_points']      = 500 #number of radial points at which Hankel Transform is evaluated.
-        params['plot_Plm']        = True #plot and save photoelectron partial waves?
-        
+        params['npts_r_ft']       = 500 #number of radial points at which Hankel Transform is evaluated.
+        params['plot_Plm']        = False #plot and save photoelectron partial waves?
+        params['rcutoff']         = 20.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
+        params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
+
+
+
+
         params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
-        params['rcutoff']         = 40.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
         params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
-        
-        
-        
+            
         """ *** PES *** """
         params['n_pes_pts']       = 1000 #numer of points for PES evaluation
         params['max_pes_en']      = 3.0 #in a.u.
@@ -287,7 +290,6 @@ def read_input():
         params['analyze_pecd']    = False
         params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
         params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-        params['analyze_time']    = params['tmax']  #at what time(s) (in as) do we want to calculate PECD and other observables?
         params["save_snapthots"] = True
 
     return params

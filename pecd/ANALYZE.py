@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.ticker import FormatStrFormatter
 
-
+from pyhank import qdht, iqdht, HankelTransform
 
 class analysis:
 
@@ -157,20 +157,20 @@ class spacefuncs(analysis):
         """ set up time grids for evaluating rho2D """
         tgrid,dt = self.calc_tgrid()
 
-        plot_index = self.calc_plot_times(tgrid,dt,funcpars['plot_times']) #plot time indices
+        plot_index = self.calc_plot_times(tgrid,dt,self.params['space_analyze_times']) #plot time indices
 
         tgrid_plot = tgrid[plot_index]
 
         #read wavepacket from file
 
         if params['wavepacket_format'] == "dat":
-            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
         
         elif params['wavepacket_format'] == "h5":
-            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
@@ -432,112 +432,52 @@ class momentumfuncs(analysis):
     def __init__(self,params):
         self.params = params
 
+    def calc_grid_for_FT(self):
+        """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
+        """ The real-space grid determines the k-space grid returned by PyHank """
 
-    def calc_wfnft(self,wfn):
+        nbins   = self.params['bound_nbins'] 
+        rmax    = nbins * self.params['bound_binw']
+        npts    = self.params['npts_r_ft'] 
+        N_red   = npts 
 
-        
-        if self.params['FT_method']    == "FFT_cart":
-            self.calc_fftcart_psi_3d(params, maparray_global, Gr, psi, chilist)
+        grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
+        grid_r      = np.linspace(0.0, rmax, npts, endpoint = False)
 
-        elif self.params['FT_method']  == "FFT_hankel":
+        return grid_theta, grid_r
 
 
-            #calculate partial waves on radial grid
-            Plm         = self.calc_partial_waves(  self.params['chilist'], 
-                                                    grid_r,
-                                                    self.params['bound_lmax'],
-                                                    wfn, 
-                                                    maparray_global, 
-                                                    maparray_chi, 
-                                                    ipoint_cutoff)
 
-            #calculate Hankel transforms on appropriate k-vector grid
-            Flm, kgrid  = self.calc_hankel_transforms(Plm, grid_r)
-            #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
-            params['analyze_mode']    = "2D-average" #3D, 2D-average
-            params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
-            if params['analyze_mode'] == "2D-average":
-                Wav, kgrid = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+    def calc_wfnft(self):
 
-            else:
-                FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
-                                                grid_theta, grid_r, maparray_chi, 
-                                                maparray_global, psi, chilist, gamma )
-            
-                if params['density_averaging'] == True:
-                    #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-                    Wav += float(rho[irun]) * np.abs(FT)**2
-                    #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+        irun                = self.params['irun']
+        helicity            = self.pull_helicity()
+        self.params['helicity']  = helicity
 
-                else:
-                    print("proceeding with uniform rotational density")
-                    Wav += np.abs(FT)**2
 
-    with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
-        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+        #which grid point corresponds to the radial cut-off?
+        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel()- self.params['rcutoff']))
+        print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
-    with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
-        np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
 
-    PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
-    
-
-    def W2D(self,funcpars):
-        print("Calculating 2D electron momentum probability density")
-        
-        irun = self.params['irun']
-
-        helicity  = self.pull_helicity()
-        params['helicity'] = helicity
-
-        """ set up 1D grids """
-
-        if funcpars['r_grid']['type'] == "manual":
-            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
-        elif funcpars['r_grid']['type'] == "automatic":
-            rmax = 0.0
-            for elem in self.params['FEMLIST']:
-                rmax += elem[0] * elem[2]
-            rtuple = (0.0, rmax, 2*int(rmax) )
-        else:
-            raise ValueError("incorrect radial grid type")
-        
-        thtuple     = funcpars['th_grid']
-
-        rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
-        unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
-        thgrid1D        = thtuple[1] * unity_vec
-
-        funcpars['rtulpe'] = rtuple
-        funcpars['thtuple'] = thtuple
-        
-        #for xi in range(self.params['Nbas_chi']):
-
-        #    plt.plot(rgrid1D,chilist[xi](rgrid1D))
-
-        #plt.show()
-        #exit()
-        
-        """ generate 2D meshgrid for storing rho2D """
-        polargrid = np.meshgrid(rgrid1D, thgrid1D)
-
-        """ set up time grids for evaluating rho2D """
+        """ set up time grids for evaluating wfn """
         tgrid,dt = self.calc_tgrid()
 
-        plot_index = self.calc_plot_times(tgrid,dt,funcpars['plot_times']) #plot time indices
+        plot_index = self.calc_plot_times(tgrid,dt,self.params['momentum_analyze_times']) #plot time indices
 
         tgrid_plot = tgrid[plot_index]
 
         #read wavepacket from file
 
         if params['wavepacket_format'] == "dat":
-            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
         
         elif params['wavepacket_format'] == "h5":
-            file_wavepacket  =  params['job_directory'] + params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, params['Nbas_global'])
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
+
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
@@ -545,36 +485,91 @@ class momentumfuncs(analysis):
                 " " + str( self.params['time_units']) + " ----- " +\
                 "time index = " + str(itime) )
 
-            funcpars['t'] = t
-
-            rhodir = self.rho2D_calc(   wavepacket[i,:], 
-                                        polargrid, 
-                                        self.params['chilist'],
-                                        funcpars,  
-                                        self.params['Nbas_chi'], 
-                                        self.params['bound_lmax'])
-
-            if funcpars['plot'][0] == True:
-
-                for elem in rhodir.items():
-
-                    plane       = elem[0]
-                    rho         = elem[1]
-
-                    funcpars['plane_split'] = self.split_word(plane)
-
-                    # call plotting function
-                    self.rho2D_plot(funcpars,polargrid,rho)
+            self.params['t'] = t
 
 
-            if funcpars['save'] == True:
+        if self.params['FT_method']    == "FFT_cart":
 
-                with open( params['job_directory'] +  "rho2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + helicity + ".dat" , 'w') as rhofile:   
-                    np.savetxt(rhofile, rho, fmt = '%10.4e')
+            self.calc_fftcart_psi_3d(   params, 
+                                        self.params['maparray_global'], 
+                                        self.params['Gr'], 
+                                        wavepacket,
+                                        self.params['chilist'])
+
+        elif self.params['FT_method']  == "FFT_hankel":
+
+            grid_theta, grid_r = self.calc_grid_for_FT()
 
 
+            #calculate partial waves on radial grid
+            Plm         = self.calc_partial_waves(  self.params['chilist'], 
+                                                    grid_r,
+                                                    self.params['bound_lmax'],
+                                                    wavepacket, 
+                                                    self.params['maparray_global'], 
+                                                    self.params['maparray_chi'], 
+                                                    self.params['ipoint_cutoff'])
 
+            #return Hankel transforms on the appropriate k-vector grid identical to grid_r
+            Flm, kgrid  = self.calc_hankel_transforms(Plm, grid_r)
+            print("type and shape of Flm")
+            print(type(Flm))
+            print(np.shape(Flm))
+            print("Comparison of grid_r and kgrid from pyhank:")
+            print(grid_r)
+            print(kgrid)
+            exit()
+
+
+    
+
+
+    def calc_FT_3D_hankel(self, Flm, kgrid, grid_theta, grid_r, phi0 = 0.0 ):
+        """ returns: fourier transform inside a ball grid (r,theta,phi) """
+
+        npts      = grid_r.size
+
+        FT = np.zeros((npts  ,npts  ), dtype = complex)
+
+        for i in range(npts ):
+            #print(i)
+            for elem in Flm:
+                FT[i,:] +=   ((-1.0 * 1j)**elem[0]) * elem[2][:npts] * PLOTS.spharm(elem[0], elem[1], grid_theta[i] , phi0) 
+
+        return FT, kgrid
+
+
+    def W2D(self,funcpars):
+        print("Calculating 2D electron momentum probability density")
+        
+
+        #gamma = 5.0*np.pi/8.0  #- to set fixed phi0 for FT
+        params['analyze_mode']    = "2D-average" #3D, 2D-average
+        params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
+        if params['analyze_mode'] == "2D-average":
+            Wav, kgrid = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
+
+        else:
+            FT, kgrid   = calc_FT_3D_hankel(    Plm, Flm, kgrid, params['bound_lmax'], 
+                                            grid_theta, grid_r, maparray_chi, 
+                                            maparray_global, psi, chilist, gamma )
+        
+            if params['density_averaging'] == True:
+                #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
+                Wav += float(rho[irun]) * np.abs(FT)**2
+                #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
+
+            else:
+                print("proceeding with uniform rotational density")
+                Wav += np.abs(FT)**2
+
+        with open( params['job_directory'] +  "W" + "_"+ helicity + "_av_3D_"+ str(ibatch) , 'w') as Wavfile:   
+            np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+
+        with open( params['job_directory'] + "grid_W_av", 'w') as gridfile:   
+            np.savetxt(gridfile, np.stack((kgrid.T,grid_theta.T)), fmt = '%10.4e')
+
+        PLOTS.plot_pad_polar(params,params['k_list_pad'],helicity)
 
 
 
@@ -588,21 +583,18 @@ class momentumfuncs(analysis):
 
         Nbas = len(maparray_global)
         Nr = len(maparray_chi)
+
         print("number of radial basis points/functions: " + str(len(maparray_chi)))
 
         npts = grid_r.size
 
-        #for i in range(359):
-        #    plt.plot(grid_r,chilist[i](grid_r))
-        #plt.show()
-
         val = np.zeros(npts, dtype = complex)
 
-        coeffs = np.zeros(Nbas, dtype = complex)
-        for ielem in range(Nbas):
-            coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] 
+        #coeffs = np.zeros(Nbas, dtype = complex)
+        #for ielem in range(Nbas):
+        #    coeffs[ielem] =  psi[2*ielem] + 1j * psi[2*ielem + 1] #obsolete way of representing the wf
 
-        c_arr = coeffs.reshape(len(maparray_chi),-1)
+        c_arr = psi.reshape(len(maparray_chi),-1)
 
         indang = 0
         for l in range(0,lmax+1):
@@ -619,7 +611,13 @@ class momentumfuncs(analysis):
                 val = 0.0 + 1j * 0.0
 
         if self.params['plot_Plm'] == True:
-            for s in range(16):
+
+
+            #for i in range(Nr):
+            #    plt.plot(grid_r,chilist[i](grid_r))
+            #plt.show()
+
+            for s in range((lmax+1)**2):
                 plt.scatter(grid_r,np.abs(Plm[s][2]),marker='.',label="P_"+str(s))
                 plt.legend()
             plt.show()
@@ -627,7 +625,7 @@ class momentumfuncs(analysis):
         return Plm
 
 
-    def calc_hankel_transforms(self,Plm, grid_r):
+    def calc_hankel_transforms(self, Plm, grid_r):
         Flm = [] #list of output Hankel transforms
     
         for ielem, elem in enumerate(Plm):
@@ -711,14 +709,11 @@ class averagedobs:
 
 
     """
-    grid_theta, grid_r = calc_grid_for_FT(params)
+
 
     Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
 
 
-    #which grid point corresponds to the radial cut-off?
-    ipoint_cutoff = np.argmin(np.abs(Gr.ravel()- params['rcutoff']))
-    print("ipoint_cutoff = " + str(ipoint_cutoff))
 
 
     if params['density_averaging'] == True:
@@ -855,14 +850,13 @@ if __name__ == "__main__":
             print("Calling space function: " + str(elem['name']))
             func(elem)
         
-
-        momentumobs.calc_wfnft(wfn)
+        wfnft = momentumobs.calc_wfnft()
 
         for elem in params['analyze_momentum']:
 
             func = getattr(momentumobs,elem['name'])
             print("Calling momentum function: " + str(elem['name']))
-            func(elem)
+            func(elem,wfnft)
         
 
 
