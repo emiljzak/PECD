@@ -680,14 +680,139 @@ class momentumfuncs(analysis):
 
             print("Evaluation plane for W2D: " + elem)
 
-
+            print(type(W2Ddir))
             """ TO BE FIXED HERE"""
             phi0 = 0.0
             W2D, kgrid = self.calc_FT_3D_hankel(Flm, kgrid, thgrid, grid_r, phi0 )
             W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
 
-        return 0
+        return W2Ddir
+
+
+
+    def W2D_plot(self,funcpars,polargrid,rho): 
+        """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
+
+        plot_params = funcpars['plot'][1] #all plot params
+        rtuple      = funcpars['ktulpe'] #range for r
+        thtuple     = funcpars['thtuple'] #range for theta
+
+        """
+        Args:
+            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
+            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
+            plot_params: parameters of the plot loaded from GRAPHICS.py
+        """
+
+        figsizex    = plot_params['figsize_x'] #size of the figure on screen
+        figsizey    = plot_params['figsize_y']  #size of the figure on screen
+        resolution  = plot_params['resolution']  #resolution in dpi
+
+        fig         = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
+                        constrained_layout=True)
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
+
+        cmap = matplotlib.cm.jet #jet, cool, etc
+        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
+
+
+        ax1.set_ylim(rtuple[0],rtuple[1]) #radial scale
+        ax1.set_thetamin(thtuple[0]*180.0/np.pi)
+        ax1.set_thetamax(thtuple[1]*180.0/np.pi)
+
+
+        plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
+        plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 
+                            
+
+        plot_rho2D  = ax1.contourf( polargrid[1], 
+                                    polargrid[0], 
+                                    rho,  
+                                    plot_params['ncont'], 
+                                    cmap = 'jet', 
+                                    vmin = plot_params['vmin'],
+                                    vmax = plot_params['vmax'])
+        
+
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+        ax1.xaxis.set_label_position('top') 
+    
+        ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
+                        fontsize            = plot_params['xlabel_size'],
+                        color               = plot_params['label_color'],
+                        loc                 = plot_params['xlabel_loc'],
+                        labelpad            = plot_params['xlabel_pad'] )
+
+        ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
+                        color               = plot_params['label_color'],
+                        labelpad            = plot_params['ylabel_pad'],
+                        loc                 = plot_params['ylabel_loc'],
+                        rotation            = 0)
+
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8',     visible=True)
+
+        #custom ticks and labels:
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                        ax                  = ax1, 
+                        orientation         = plot_params['cbar_orientation'],
+                        label               = plot_params['cbar_label'],
+                        fraction            = plot_params['cbar_fraction'],
+                        aspect              = plot_params['cbar_aspect'],
+                        shrink              = plot_params['cbar_shrink'],
+                        pad                 = plot_params['cbar_pad'],
+                        extend              = plot_params['cbar_extend'],
+                        ticks               = plot_params['cbar_ticks'],
+                        drawedges           = plot_params['cbar_drawedges'],
+                        format              = plot_params['cbar_format']
+                       )
+        
+        if plot_params['save'] == True:
+
+            fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
+                                            plot_params['save_name'] + "_" +
+                                            funcpars['plane_split'][1]+
+                                            funcpars['plane_split'][0]+ "_" +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            params['helicity'] +
+                                            ".pdf",
+                                            
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
+                            )
+
+        plt.show()
+        plt.close()
+
+
+
+
+
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
         coeff_thr = 1e-3
