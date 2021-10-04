@@ -502,28 +502,21 @@ class momentumfuncs(analysis):
             Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
                                                         grid_r)
            
-        return Flm, kgrid, grid_r
+        return Flm, kgrid
     
 
-    def calc_FT_3D_hankel(self, Flm, kgrid, grid_theta, grid_r, phi0 = 0.0 ):
-        """ returns: fourier transform inside a ball grid (r,theta,phi) """
+    def calc_FT_3D_hankel(self, Flm, polargrid, Ymat):
+        """ returns: fourier transform inside a ball grid (r,theta,phi), or disk (r,theta,phi0) or disk (r,theta0,phi)  """
 
+        npts_k       = polargrid[0].shape[0]
+        npts_th      = polargrid[1].shape[1]
 
-        npts        = grid_r.size
-        nptsth      = grid_theta.size
-        print("size of grid_r = " + str(npts))
-        print("size of kgrid = " + str(kgrid.size))
+        print("size of kgrid = " + str(npts_k))
 
+        FT = np.zeros((npts_th, npts_k), dtype = complex)
 
-        print(grid_r)
-        print(kgrid)
-
-        FT = np.zeros((nptsth, npts), dtype = complex)
-
-        for i in range(nptsth ):
-            #print(i)
-            for elem in Flm:
-                FT[i,:] +=   ((-1.0 * 1j)**elem[1]) * elem[3][:npts] * PLOTS.spharm(elem[1], elem[2], grid_theta[i] , phi0) 
+        for elem in Flm:
+            FT +=   ((-1.0 * 1j)**elem[1]) * elem[3][:npts_k] *Ymat[elem[1], elem[1]+elem[2], polargrid[1]]
 
         return FT
 
@@ -604,7 +597,7 @@ class momentumfuncs(analysis):
         return Flm, Hank_obj.kr
 
 
-    def W2D(self,funcpars,Flm,kgrid,grid_r):
+    def W2D(self,funcpars,Flm,kgrid):
         print("Calculating 2D electron momentum probability density")
         
 
@@ -615,11 +608,15 @@ class momentumfuncs(analysis):
         """ set up 1D grids """
 
         if funcpars['k_grid']['type'] == "manual":
+            # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
             ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktulpe'] = ktuple
             kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
+
         elif funcpars['k_grid']['type'] == "automatic":
+            # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D = kgrid
+            # parameters of k_grid determine only the plotting range
             ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktulpe'] = ktuple
 
@@ -647,10 +644,10 @@ class momentumfuncs(analysis):
             funcpars['t'] = t
 
             Flm_t = Flm[i*(self.params['bound_lmax']+1)**2:(i+1)*(self.params['bound_lmax']+1)**2 ]
-            print(Flm_t)
 
-
-            W2Ddir = self.W2D_calc(funcpars,Flm_t,kgrid1D,thgrid1D, grid_r)
+            W2Ddir = self.W2D_calc( funcpars,
+                                    Flm_t,
+                                    polargrid)
 
 
             if funcpars['plot'][0] == True:
@@ -675,7 +672,7 @@ class momentumfuncs(analysis):
 
 
         
-    def W2D_calc(self,funcpar, Flm, kgrid, thgrid, grid_r):
+    def W2D_calc(self,funcpar, Flm, polargrid):
         """calculate numerically W2D for fixed phi angle"""
 
         plane       = funcpar['plane']
@@ -686,9 +683,8 @@ class momentumfuncs(analysis):
 
             print("Evaluation plane for W2D: " + elem)
 
-            print(type(W2Ddir))
-            phi0 = 0.0
-            W2D = self.calc_FT_3D_hankel(Flm, kgrid, thgrid, grid_r, phi0 )
+            Ymat    = self.calc_spharm_array(self.params['bound_lmax'],elem,polargrid)
+            W2D = self.calc_FT_3D_hankel(Flm, polargrid, Ymat)
             W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
 
@@ -714,8 +710,10 @@ class momentumfuncs(analysis):
         figsizey    = plot_params['figsize_y']  #size of the figure on screen
         resolution  = plot_params['resolution']  #resolution in dpi
 
-        fig         = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
-                        constrained_layout=True)
+        fig         = plt.figure(   figsize=(figsizex, figsizey), 
+                                    dpi=resolution,
+                                    constrained_layout=True)
+                                    
         grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
@@ -1039,13 +1037,13 @@ if __name__ == "__main__":
 
         momentumobs     = momentumfuncs(params)
 
-        Flm, kgrid, grid_r = momentumobs.calc_wfnft()
+        Flm, kgrid = momentumobs.calc_wfnft()
 
         for elem in params['analyze_momentum']:
 
             func = getattr(momentumobs,elem['name'])
             print("Calling momentum function: " + str(elem['name']))
-            func(elem, Flm, kgrid, grid_r)
+            func(elem, Flm, kgrid)
         
 
 

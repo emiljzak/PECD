@@ -25,7 +25,7 @@ def gparams_rho2D_polar():
                             ### TITLE ###
                             "title_text":       "electron density",
                             "title_color":      "black",
-                            "title_size":       10,
+                            "title_size":       8,
                             "title_vertical":   "baseline", #vertical alignment of the title: {'center', 'top', 'bottom', 'baseline', 'center_baseline'}
                             "title_horizontal": "center", #{'center', 'left', 'right'},
                             #"title_position":   (pos_x,pos_y), #manual setting of title position
