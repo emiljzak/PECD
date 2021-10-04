@@ -47,6 +47,10 @@ def gparams_rho2D_polar():
                             "nticks_rad":        12,
                             "nticks_th":         12,
 
+                            ### TIME TEXT LABEL ###
+
+                            "time_size":        8,
+                            "time_colour":      'red',
 
                             ### COLORBAR ###: see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
                             #"cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),

@@ -1,8 +1,14 @@
 from logging import warning
 import numpy as np
 import json
+
 from numpy.core.fromnumeric import size
 from scipy.special import sph_harm
+from scipy.special import eval_legendre
+from scipy import integrate
+from scipy import interpolate   
+
+
 import h5py
 
 import time
@@ -179,6 +185,102 @@ class analysis:
             return Ymat
  
 
+
+    def legendre_expansion(self,grid,f): 
+        """ Calculate the Legendre expansion coefficients as a function of the photo-electron momentum """
+
+        kgrid       = grid[0]
+        thetagrid   = grid[1]
+
+        """ Interpolate f(k,theta)"""
+        W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
+
+        if self.params['Leg_plot_reconst'] == True:
+            fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+            spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+            ax = fig.add_subplot(spec[0, 0], projection='polar')
+            ax.set_ylim(0,1) #radial extent
+
+            #plot W_av on the original grid
+            W_interp_mesh = W_interp(kgrid, thetagrid)
+            kmesh,thetamesh  = np.meshgrid(kgrid, thetagrid)
+            line_W_original = ax.contourf(thetamesh, kmesh, W_interp_mesh, 
+                                    100, cmap = 'jet') 
+            plt.show()
+
+            #plot W_av on test grid 
+            thetagridtest       = np.linspace(-np.pi, np.pi, 200)
+            kgridtest           = np.linspace(0, 1, 200)
+            kgridtestmesh ,thetatestmesh    = np.meshgrid(kgridtest, thetagridtest )
+            W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
+            line_test = ax.contourf(thetatestmesh, kgridtestmesh  , W_interp_testmesh , 
+                                    100, cmap = 'jet') 
+            plt.show()
+            plt.close()
+
+        # Define function and interval
+        Lmax    = self.params['Leg_lmax'] 
+        deg     = Lmax + 10
+        nleg    = deg
+        x, w    = np.polynomial.legendre.leggauss(deg)
+        w       = w.reshape(nleg,-1)
+
+        nkpoints    = params['n_pes_pts'] 
+        bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
+        spectrum    = np.zeros(nkpoints, dtype = float)
+        kgrid       = np.linspace(0.05,params['max_pes_en'] ,nkpoints)
+
+        """ calculating Legendre moments """
+        for n in range(0,Lmax+1):
+            Pn = eval_legendre(n, x).reshape(nleg,-1)
+            for ipoint,k in enumerate(list(kgrid)):
+                W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
+                print(k)
+                bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+            #plt.plot(kgrid,bcoeff[:,n],label=n)
+            #plt.legend()   
+        #plt.show()
+    
+        """ calculating photo-electron spectrum """
+        for ipoint,k in enumerate(list(kgrid)):   
+            W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+            spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) #*k (see Demekhin 2013)
+        #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
+        plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,np.log(kgrid * spectrum), label = r"$\sigma(k)$", marker = '.', color = 'r')
+        plt.xlabel("Energy (eV)") #/spectrum.max()
+        plt.xlim([0,120]) 
+    #plt.xlabel("momentum (a.u.)")
+        plt.ylabel("cross section")
+        plt.legend()   
+        plt.show()
+        exit()
+    
+        #plot Legendre-reconstructed W_av on test grid 
+        thetagridtest       = np.linspace(-np.pi,np.pi, nkpoints)
+        kgridtest           = np.linspace(0.05, 1, nkpoints)
+        kgridtestmesh, thetatestmesh    = np.meshgrid(kgridtest, thetagridtest )
+
+        #W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
+
+        W_legendre = np.zeros((kgridtest.shape[0],thetagridtest.shape[0]), dtype = float)
+
+        for ipoint in range(nkpoints):
+
+            for n in range(0,Lmax+1):
+                Pn = eval_legendre(n, np.cos(thetagridtest)).reshape(thetagridtest.shape[0],1)
+                W_legendre[ipoint,:] += bcoeff[ipoint,n] * Pn[:,0] 
+
+        
+        fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+        spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+        ax = fig.add_subplot(spec[0, 0], projection='polar')
+        ax.set_ylim(0,1) #radial extent
+        line_legendre = ax.contourf(   thetatestmesh ,kgridtestmesh, W_legendre.T / W_legendre.max(), 100, cmap = 'jet') 
+        plt.colorbar(line_legendre, ax=ax, aspect=30) 
+        #plt.show()
+
+        return bcoeff, kgrid, spectrum/spectrum.max()
+
 class spacefuncs(analysis):
     
     """ Class of real space functions"""
@@ -351,6 +453,12 @@ class spacefuncs(analysis):
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
         ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+
+
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
+                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
+                    alpha = 0.5,
+                    transform = ax1.transAxes)
 
         #custom ticks and labels:
         #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks

@@ -234,6 +234,7 @@ def read_input():
         rho2D = {   'name':         'rho2D',
                     'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
+                    'show':         True, # show image on screen                    
                     'save':         True,
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 100,    #ignored when automatic (2*rmax)
@@ -246,7 +247,7 @@ def read_input():
                     }
 
         W2D = {     'name':         'W2D',
-                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
                     'show':         True, # show image on screen
                     'save':         True, # save array in file
@@ -272,6 +273,7 @@ def read_input():
 
 
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
+        
         # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
         params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
         params['rcutoff']         = 20.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
@@ -279,8 +281,11 @@ def read_input():
         params['plot_Plm']        = False           # plot and save photoelectron partial waves?
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
-
-
+        """ *** Legendre expansion *** """
+        params['Leg_lmax']          = 2      # maximum angular momentum in the Legendre expansion
+        params['Leg_plot_reconst']  = True   # plot the reconstructed distribution
+        params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
+        params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
 
         params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
         params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
