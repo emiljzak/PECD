@@ -505,11 +505,11 @@ class momentumfuncs(analysis):
         return Flm, kgrid
     
 
-    def calc_FT_3D_hankel(self, Flm, polargrid, Ymat):
+    def calc_FT_3D_hankel(self, Flm,  Ymat):
         """ returns: fourier transform inside a ball grid (r,theta,phi), or disk (r,theta,phi0) or disk (r,theta0,phi)  """
 
-        npts_k       = polargrid[0].shape[0]
-        npts_th      = polargrid[1].shape[1]
+        npts_k       = Ymat.shape[2]
+        npts_th      = Ymat.shape[3]
 
         n_waves      = (self.params['bound_lmax']+1)**2
         print("size of theta grid = " + str(npts_th))
@@ -518,12 +518,13 @@ class momentumfuncs(analysis):
         FT = np.zeros((npts_k, npts_th), dtype = complex)
         Flm2D = np.zeros((n_waves, npts_k, npts_th), dtype = complex)
 
+
         for ielem, elem in enumerate(Flm):
-            print(elem[1])
+
             for ith in range(npts_th):
                 Flm2D[ielem,:,ith] = elem[3]
-            print(np.shape(elem[1]))
-            FT +=   ((-1.0 * 1j)**elem[1]) * Flm2D[ielem,:,:] #* Ymat[elem[1], elem[1]+elem[2], polargrid[1][:,:]]
+
+            FT +=   ((-1.0 * 1j)**elem[1]) * Flm2D[ielem,:,:] * Ymat[elem[1], elem[1]+elem[2],:,:]
 
         return FT
 
@@ -677,21 +678,20 @@ class momentumfuncs(analysis):
 
 
         
-    def W2D_calc(self,funcpar, Flm, polargrid):
+    def W2D_calc(self, funcpar, Flm, polargrid):
         """calculate numerically W2D for fixed phi angle"""
 
         plane       = funcpar['plane']
 
-        W2Ddir = {} #dictionary containing numpy arrays representing the electron's momentum density in (r,theta) meshgrid
+        W2Ddir = {} # dictionary containing numpy arrays representing the electron's momentum density on (r,theta) meshgrid
 
         for elem in plane:
 
             print("Evaluation plane for W2D: " + elem)
 
-            Ymat    = self.calc_spharm_array(self.params['bound_lmax'],elem, polargrid)
-            W2D = self.calc_FT_3D_hankel(Flm, polargrid, Ymat)
-            W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
-
+            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], elem, polargrid)
+            W2D             = self.calc_FT_3D_hankel(Flm, Ymat)
+            W2Ddir[elem]    = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
         return W2Ddir
 
