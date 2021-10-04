@@ -248,9 +248,10 @@ def read_input():
         W2D = {     'name':         'W2D',
                     'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
-                    'save':         False,
-                    'k_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 100,    #ignored when automatic (2*rmax)
+                    'show':         True, # show image on screen
+                    'save':         True, # save array in file
+                    'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
+                                        'npts': 500,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
                                         'kmax': 2.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
@@ -260,7 +261,7 @@ def read_input():
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
-        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
+        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 5 ))
 
         params['analyze_space']     = []
         params['analyze_momentum']  = [W2D]

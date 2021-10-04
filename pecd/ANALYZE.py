@@ -509,7 +509,7 @@ class momentumfuncs(analysis):
         """ returns: fourier transform inside a ball grid (r,theta,phi) """
 
 
-        npts      = grid_r.size
+        npts        = grid_r.size
         nptsth      = grid_theta.size
         print("size of grid_r = " + str(npts))
         print("size of kgrid = " + str(kgrid.size))
@@ -518,14 +518,14 @@ class momentumfuncs(analysis):
         print(grid_r)
         print(kgrid)
 
-        FT = np.zeros((npts, npts), dtype = complex)
+        FT = np.zeros((nptsth, npts), dtype = complex)
 
         for i in range(nptsth ):
             #print(i)
             for elem in Flm:
                 FT[i,:] +=   ((-1.0 * 1j)**elem[1]) * elem[3][:npts] * PLOTS.spharm(elem[1], elem[2], grid_theta[i] , phi0) 
 
-        return FT, kgrid
+        return FT
 
 
     def calc_partial_waves(self, grid_r, wavepacket):
@@ -620,6 +620,8 @@ class momentumfuncs(analysis):
             kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
         elif funcpars['k_grid']['type'] == "automatic":
             kgrid1D = kgrid
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe'] = ktuple
 
 
         thtuple             = funcpars['th_grid']
@@ -631,6 +633,9 @@ class momentumfuncs(analysis):
         """ generate 2D meshgrid for storing W2D """
         polargrid = np.meshgrid(kgrid1D, thgrid1D)
 
+        #print(polargrid[0].shape,polargrid[1].shape)
+        #exit()
+
         tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
@@ -639,13 +644,13 @@ class momentumfuncs(analysis):
                 " " + str( self.params['time_units']) + " ----- " +\
                 "time index = " + str(itime) )
 
-            self.params['t'] = t
+            funcpars['t'] = t
 
             Flm_t = Flm[i*(self.params['bound_lmax']+1)**2:(i+1)*(self.params['bound_lmax']+1)**2 ]
             print(Flm_t)
 
 
-            W2Ddir = self.W2D_calc(funcpars,Flm,kgrid1D,thgrid1D,grid_r)
+            W2Ddir = self.W2D_calc(funcpars,Flm_t,kgrid1D,thgrid1D, grid_r)
 
 
             if funcpars['plot'][0] == True:
@@ -654,6 +659,7 @@ class momentumfuncs(analysis):
 
                     plane       = elem[0]
                     W           = elem[1]
+                    print(W.shape)
 
                     funcpars['plane_split'] = self.split_word(plane)
 
@@ -662,14 +668,14 @@ class momentumfuncs(analysis):
 
 
             if funcpars['save'] == True:
-
-                with open( params['job_directory'] +  "W2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + helicity + ".dat" , 'w') as rhofile:   
-                    np.savetxt(rhofile, rho, fmt = '%10.4e')
+                for elem in W2Ddir.items():
+                    with open( params['job_directory'] +  "W2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                        "_" + helicity + ".dat" , 'w') as rhofile:   
+                        np.savetxt(rhofile, elem[1], fmt = '%10.4e')
 
 
         
-    def W2D_calc(self,funcpar, Flm, kgrid, thgrid,grid_r):
+    def W2D_calc(self,funcpar, Flm, kgrid, thgrid, grid_r):
         """calculate numerically W2D for fixed phi angle"""
 
         plane       = funcpar['plane']
@@ -681,9 +687,8 @@ class momentumfuncs(analysis):
             print("Evaluation plane for W2D: " + elem)
 
             print(type(W2Ddir))
-            """ TO BE FIXED HERE"""
             phi0 = 0.0
-            W2D, kgrid = self.calc_FT_3D_hankel(Flm, kgrid, thgrid, grid_r, phi0 )
+            W2D = self.calc_FT_3D_hankel(Flm, kgrid, thgrid, grid_r, phi0 )
             W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
 
@@ -691,11 +696,11 @@ class momentumfuncs(analysis):
 
 
 
-    def W2D_plot(self,funcpars,polargrid,rho): 
+    def W2D_plot(self,funcpars,polargrid,W2D): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
-        rtuple      = funcpars['ktulpe'] #range for r
+        ktuple      = funcpars['ktulpe'] #range for k
         thtuple     = funcpars['thtuple'] #range for theta
 
         """
@@ -719,18 +724,18 @@ class momentumfuncs(analysis):
         norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
 
 
-        ax1.set_ylim(rtuple[0],rtuple[1]) #radial scale
+        ax1.set_ylim(ktuple[0],ktuple[1]) #radial scale
         ax1.set_thetamin(thtuple[0]*180.0/np.pi)
         ax1.set_thetamax(thtuple[1]*180.0/np.pi)
 
 
         plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
-        plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 
+        plot_params['rticks']   = list(np.linspace(ktuple[0],ktuple[1],plot_params['nticks_rad'])) 
                             
 
-        plot_rho2D  = ax1.contourf( polargrid[1], 
+        plot_W2D  = ax1.contourf(   polargrid[1], 
                                     polargrid[0], 
-                                    rho,  
+                                    W2D,  
                                     plot_params['ncont'], 
                                     cmap = 'jet', 
                                     vmin = plot_params['vmin'],
@@ -805,8 +810,9 @@ class momentumfuncs(analysis):
                             bbox_inches =   plot_params['save_bbox_inches'],
                             pad_inches  =   plot_params['save_pad_inches']
                             )
-
-        plt.show()
+        if funcpars['show'] == True:
+            plt.show()
+        
         plt.close()
 
 

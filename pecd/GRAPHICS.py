@@ -87,7 +87,7 @@ def gparams_W2D_polar():
     #ncont:      int: number of contours
 
     vmin    = 0.0
-    vmax    = 0.1
+    vmax    = 1.0
     ncont   = 200
     resolution = 200
     fig_size_x = 3.5
@@ -100,7 +100,7 @@ def gparams_W2D_polar():
                             "ncont":    ncont,
 
                             ### TITLE ###
-                            "title_text":       "electron density",
+                            "title_text":       "electron momentum probability distribution",
                             "title_color":      "black",
                             "title_size":       10,
                             "title_vertical":   "baseline", #vertical alignment of the title: {'center', 'top', 'bottom', 'baseline', 'center_baseline'}
@@ -142,7 +142,7 @@ def gparams_W2D_polar():
 
                             ### SAVE PROPERTIES ###       
                             "save":             True,
-                            "save_name":        "rho2D_",
+                            "save_name":        "W2D_",
                             "save_dpi":         'figure', #float or 'figure' for same resolution as figure
                             "save_orientation": 'landscape', #portrait
                             "save_bbox_inches": 'tight', #or float in inches - which portion of the figure to save?
