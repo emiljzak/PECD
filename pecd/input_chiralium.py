@@ -247,10 +247,10 @@ def read_input():
                     }
 
         W2D = {     'name':         'W2D',
-                    'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('YZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
-                    'show':         True, # show image on screen
-                    'save':         True, # save array in file
+                    'show':         False, # show image on screen
+                    'save':         False, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
@@ -259,7 +259,12 @@ def read_input():
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
+                    'legendre':     True,
+            
                     }
+
+
+
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
@@ -286,6 +291,8 @@ def read_input():
         params['Leg_plot_reconst']  = True   # plot the reconstructed distribution
         params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
+
+
 
         params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
         params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
