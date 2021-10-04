@@ -128,7 +128,7 @@ class analysis:
         if plane == "XY":
             theta0 = np.pi / 2.0
             #calculate spherical harmonics on the angular grid for all quantum numbers
-            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            Ymat = np.zeros((lmax+1, 2*lmax+1, grid[0].shape[0], grid[1].shape[1]), dtype=complex)
             
             for l in range(lmax+1):
                 for m in range(-l,l+1):
@@ -494,18 +494,13 @@ class momentumfuncs(analysis):
 
             grid_theta, grid_r = self.calc_rgrid_for_FT()
 
-
-            """ generate 2D meshgrid for calculating FT """
-            polargrid_r = np.meshgrid(grid_r, grid_theta)
-
-
             #calculate partial waves on radial grid
-            Plm         = self.calc_partial_waves(      polargrid_r,
+            Plm         = self.calc_partial_waves(      grid_r,
                                                         wavepacket)
 
             #return Hankel transforms on the appropriate k-vector grid identical to grid_r
             Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
-                                                        polargrid_r)
+                                                        grid_r)
            
         return Flm, kgrid
     
@@ -516,19 +511,24 @@ class momentumfuncs(analysis):
         npts_k       = polargrid[0].shape[0]
         npts_th      = polargrid[1].shape[1]
 
+        n_waves      = (self.params['bound_lmax']+1)**2
+        print("size of theta grid = " + str(npts_th))
         print("size of kgrid = " + str(npts_k))
 
-        FT = np.zeros((npts_th, npts_k), dtype = complex)
+        FT = np.zeros((npts_k, npts_th), dtype = complex)
+        Flm2D = np.zeros((n_waves, npts_k, npts_th), dtype = complex)
 
-        for elem in Flm:
-            print(elem[3].shape)
-            exit()
-            FT +=   ((-1.0 * 1j)**elem[1]) * elem[3] * Ymat[elem[1], elem[1]+elem[2], polargrid[1]]
+        for ielem, elem in enumerate(Flm):
+            print(elem[1])
+            for ith in range(npts_th):
+                Flm2D[ielem,:,ith] = elem[3]
+            print(np.shape(elem[1]))
+            FT +=   ((-1.0 * 1j)**elem[1]) * Flm2D[ielem,:,:] #* Ymat[elem[1], elem[1]+elem[2], polargrid[1][:,:]]
 
         return FT
 
 
-    def calc_partial_waves(self, polargrid_r, wavepacket):
+    def calc_partial_waves(self, grid_r, wavepacket):
         """
         returns: list of numpy arrays. List is labelled by l,m and t_i from 'momentum_analyze_time'
         """
@@ -541,11 +541,12 @@ class momentumfuncs(analysis):
         ipoint_cutoff   = self.params['ipoint_cutoff']
         
         Nt              = wavepacket.shape[0] #number of evaluation times
-         
-        npts_r = polargrid_r[0].shape[0] #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
-        npts_th = polargrid_r[1].shape[1]
+        Nbas            = len(maparray_global)
+        Nr              = len(maparray_chi)
+        npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
+        
 
-        val = np.zeros((npts_r,npts_th), dtype=complex)
+        val = np.zeros(npts, dtype = complex)
 
 
         for itime in range(Nt):
@@ -561,7 +562,7 @@ class momentumfuncs(analysis):
                     for ielem, elem in enumerate(maparray_chi):
                         if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
 
-                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](polargrid_r[0])
+                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
 
                     indang += 1
                     Plm.append([itime,l,m,val])
@@ -569,16 +570,16 @@ class momentumfuncs(analysis):
 
             if self.params['plot_Plm'] == True:
 
+
                 #for i in range(Nr):
                 #    plt.plot(grid_r,chilist[i](grid_r))
                 #plt.show()
                 #only for itime =0:
                 for s in range((lmax+1)**2):
-                    plt.plot(polargrid_r[0][:,0],np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
+                    plt.plot(grid_r,np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
                     plt.legend()
                 plt.show()
                 plt.close()
-                
         return Plm
 
 
@@ -611,7 +612,7 @@ class momentumfuncs(analysis):
         helicity  = self.pull_helicity()
         self.params['helicity'] = helicity
 
-        """ set up 1D grids """
+        """ set up 1D momentum grids """
 
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
@@ -622,10 +623,8 @@ class momentumfuncs(analysis):
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D = kgrid
-            # parameters of k_grid determine only the plotting range
             ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktulpe'] = ktuple
-
 
         thtuple             = funcpars['th_grid']
         funcpars['thtuple'] = thtuple
@@ -634,7 +633,7 @@ class momentumfuncs(analysis):
         
 
         """ generate 2D meshgrid for storing W2D """
-        polargrid = np.meshgrid(kgrid1D, thgrid1D)
+        polargrid = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
 
         #print(polargrid[0].shape,polargrid[1].shape)
         #exit()
@@ -689,7 +688,7 @@ class momentumfuncs(analysis):
 
             print("Evaluation plane for W2D: " + elem)
 
-            Ymat    = self.calc_spharm_array(self.params['bound_lmax'],elem,polargrid)
+            Ymat    = self.calc_spharm_array(self.params['bound_lmax'],elem, polargrid)
             W2D = self.calc_FT_3D_hankel(Flm, polargrid, Ymat)
             W2Ddir[elem] = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 

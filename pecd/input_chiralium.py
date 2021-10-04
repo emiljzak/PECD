@@ -274,7 +274,6 @@ def read_input():
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
         # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
         params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
-        params['npts_th_ft']      = 360
         params['rcutoff']         = 20.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
        
         params['plot_Plm']        = False           # plot and save photoelectron partial waves?
