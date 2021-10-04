@@ -250,6 +250,7 @@ def read_input():
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
                     'show':         True, # show image on screen
                     'save':         True, # save array in file
+                                    # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
@@ -261,7 +262,7 @@ def read_input():
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
-        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 5 ))
+        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
 
         params['analyze_space']     = []
         params['analyze_momentum']  = [W2D]
@@ -270,12 +271,14 @@ def read_input():
         """ *** Momentum-space wavefunction *** """
 
 
-        params['FT_method']       = "FFT_hankel" #"FFT_cart" #or quadratures
-        params['npts_r_ft']       = 500 #number of radial points at which Hankel Transform is evaluated.
-        params['plot_Plm']        = False #plot and save photoelectron partial waves?
-        params['plot_Flm']        = False #plot and save individual Hankel transforms?
-        params['rcutoff']         = 20.0 # radial cut-off of the terminal wavepacket in the calculation of momentum space distributions
+        params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
+        # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
+        params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
+        params['npts_th_ft']      = 360
+        params['rcutoff']         = 20.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
        
+        params['plot_Plm']        = False           # plot and save photoelectron partial waves?
+        params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
 
 

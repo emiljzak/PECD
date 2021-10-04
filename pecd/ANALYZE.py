@@ -115,6 +115,67 @@ class analysis:
         return helicity
         
 
+    def calc_spharm_array(self,lmax,plane,grid):
+        """
+            Returns array of spherical harmonics in range 0,...,l and m = -l, ..., l and on 
+            the grid, which can be 2D or 3D meshgrid, depending on the plane chosen.
+            grid[0] = r
+            grid[1] = theta
+            grid[2] = phi
+            in the form of meshgrid
+        """
+
+        if plane == "XY":
+            theta0 = np.pi / 2.0
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, theta0, grid[1]) 
+
+            return Ymat
+
+        elif plane == "XZ":
+
+            phi0 =  0.0
+
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
+
+            return Ymat
+
+        elif plane == "YZ":
+            phi0 =  np.pi/2
+            
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
+
+            return Ymat
+
+        elif len(plane) == 3:
+            print("Evaluation plane defined by normal vector: " + str(plane))
+            raise NotImplementedError("Feature not yet implemented")
+
+        elif plane == "XYZ":
+            #calculating Ylm on full 3D (r,theta,phi) meshgrid
+            
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1],grid[2].shape[2]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:,:] =  self.spharm(l, m, grid[1], grid[2]) 
+
+            return Ymat
  
 
 class spacefuncs(analysis):
@@ -334,67 +395,6 @@ class spacefuncs(analysis):
         plt.show()
         plt.close()
 
-    def calc_spharm_array(self,lmax,plane,grid):
-        """
-            Returns array of spherical harmonics in range 0,...,l and m = -l, ..., l and on 
-            the grid, which can be 2D or 3D meshgrid, depending on the plane chosen.
-            grid[0] = r
-            grid[1] = theta
-            grid[2] = phi
-            in the form of meshgrid
-        """
-
-        if plane == "XY":
-            theta0 = np.pi / 2.0
-            #calculate spherical harmonics on the angular grid for all quantum numbers
-            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
-            
-            for l in range(lmax+1):
-                for m in range(-l,l+1):
-                    Ymat[l,l+m,:,:] =  self.spharm(l, m, theta0, grid[1]) 
-
-            return Ymat
-
-        elif plane == "XZ":
-
-            phi0 =  0.0
-
-            #calculate spherical harmonics on the angular grid for all quantum numbers
-            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
-            
-            for l in range(lmax+1):
-                for m in range(-l,l+1):
-                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
-
-            return Ymat
-
-        elif plane == "YZ":
-            phi0 =  np.pi/2
-            
-            #calculate spherical harmonics on the angular grid for all quantum numbers
-            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
-            
-            for l in range(lmax+1):
-                for m in range(-l,l+1):
-                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
-
-            return Ymat
-
-        elif len(plane) == 3:
-            print("Evaluation plane defined by normal vector: " + str(plane))
-            raise NotImplementedError("Feature not yet implemented")
-
-        elif plane == "XYZ":
-            #calculating Ylm on full 3D (r,theta,phi) meshgrid
-            
-            #calculate spherical harmonics on the angular grid for all quantum numbers
-            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1],grid[2].shape[2]),dtype=complex)
-            
-            for l in range(lmax+1):
-                for m in range(-l,l+1):
-                    Ymat[l,l+m,:,:,:] =  self.spharm(l, m, grid[1], grid[2]) 
-
-            return Ymat
 
     def calc_wfn_array(self,lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi):
                             
@@ -441,7 +441,7 @@ class momentumfuncs(analysis):
     def __init__(self,params):
         self.params = params
 
-    def calc_grid_for_FT(self):
+    def calc_rgrid_for_FT(self):
         """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
         """ The real-space grid determines the k-space grid returned by PyHank """
 
@@ -457,26 +457,27 @@ class momentumfuncs(analysis):
 
 
 
-    def calc_wfnft(self):
+    def calc_Flm(self):
 
         irun                    = self.params['irun']
         helicity                = self.pull_helicity()
         self.params['helicity'] = helicity
 
-        #which grid point corresponds to the radial cut-off?
+
+        # which grid point corresponds to the radial cut-off?
         self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel() - self.params['rcutoff']))
         print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
         tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
-        #read wavepacket from file
-
+        
+        # read wavepacket from file
         if self.params['wavepacket_format'] == "dat":
             file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
         
         elif self.params['wavepacket_format'] == "h5":
             file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
-        #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
+        # we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
         wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
 
 
@@ -491,16 +492,20 @@ class momentumfuncs(analysis):
 
         elif self.params['FT_method']  == "FFT_hankel":
 
-            grid_theta, grid_r = self.calc_grid_for_FT()
+            grid_theta, grid_r = self.calc_rgrid_for_FT()
+
+
+            """ generate 2D meshgrid for calculating FT """
+            polargrid_r = np.meshgrid(grid_r, grid_theta)
 
 
             #calculate partial waves on radial grid
-            Plm         = self.calc_partial_waves(      grid_r,
+            Plm         = self.calc_partial_waves(      polargrid_r,
                                                         wavepacket)
 
             #return Hankel transforms on the appropriate k-vector grid identical to grid_r
             Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
-                                                        grid_r)
+                                                        polargrid_r)
            
         return Flm, kgrid
     
@@ -516,12 +521,14 @@ class momentumfuncs(analysis):
         FT = np.zeros((npts_th, npts_k), dtype = complex)
 
         for elem in Flm:
-            FT +=   ((-1.0 * 1j)**elem[1]) * elem[3][:npts_k] *Ymat[elem[1], elem[1]+elem[2], polargrid[1]]
+            print(elem[3].shape)
+            exit()
+            FT +=   ((-1.0 * 1j)**elem[1]) * elem[3] * Ymat[elem[1], elem[1]+elem[2], polargrid[1]]
 
         return FT
 
 
-    def calc_partial_waves(self, grid_r, wavepacket):
+    def calc_partial_waves(self, polargrid_r, wavepacket):
         """
         returns: list of numpy arrays. List is labelled by l,m and t_i from 'momentum_analyze_time'
         """
@@ -534,12 +541,11 @@ class momentumfuncs(analysis):
         ipoint_cutoff   = self.params['ipoint_cutoff']
         
         Nt              = wavepacket.shape[0] #number of evaluation times
-        Nbas            = len(maparray_global)
-        Nr              = len(maparray_chi)
-        npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
-        
+         
+        npts_r = polargrid_r[0].shape[0] #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
+        npts_th = polargrid_r[1].shape[1]
 
-        val = np.zeros(npts, dtype = complex)
+        val = np.zeros((npts_r,npts_th), dtype=complex)
 
 
         for itime in range(Nt):
@@ -555,7 +561,7 @@ class momentumfuncs(analysis):
                     for ielem, elem in enumerate(maparray_chi):
                         if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
 
-                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
+                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](polargrid_r[0])
 
                     indang += 1
                     Plm.append([itime,l,m,val])
@@ -563,16 +569,16 @@ class momentumfuncs(analysis):
 
             if self.params['plot_Plm'] == True:
 
-
                 #for i in range(Nr):
                 #    plt.plot(grid_r,chilist[i](grid_r))
                 #plt.show()
                 #only for itime =0:
                 for s in range((lmax+1)**2):
-                    plt.plot(grid_r,np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
+                    plt.plot(polargrid_r[0][:,0],np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
                     plt.legend()
                 plt.show()
                 plt.close()
+                
         return Plm
 
 
@@ -1037,13 +1043,14 @@ if __name__ == "__main__":
 
         momentumobs     = momentumfuncs(params)
 
-        Flm, kgrid = momentumobs.calc_wfnft()
+        # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times.
+        Flm, momentumgrid = momentumobs.calc_Flm()
 
         for elem in params['analyze_momentum']:
 
             func = getattr(momentumobs,elem['name'])
             print("Calling momentum function: " + str(elem['name']))
-            func(elem, Flm, kgrid)
+            func(elem, Flm, momentumgrid)
         
 
 
