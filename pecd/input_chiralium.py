@@ -309,10 +309,12 @@ def read_input():
 
                     }
 
-        PECD = {   'name':         'PECD',
-                    'plot':         (True, GRAPHICS.gparams_PECD()), #specify parameters of the plot to load
-                    'show':         True, # show image on screen
-                    'save':         False, # save array in file
+        PECD = {    'name':         'PECD',
+                    'plot2D':       (True, GRAPHICS.gparams_PECD2D()), #specify parameters of the plot to load
+                    'plot1D':       (True, GRAPHICS.gparams_PECD1D()), #specify parameters of the plot to load
+                    'orient_av':    False, # perform orientation averaging over the Euler angle's grid?
+                    'show':         True, # show images on screen
+                    'save':         False, # save arrays in files
                     }
 
 

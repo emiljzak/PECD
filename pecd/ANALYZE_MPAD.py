@@ -151,80 +151,11 @@ def test_wigner():
 
 
 
-def analyze_Wav(N_batches,params):
-
-    with open( params['job_directory'] + "grid_W_av" , 'r') as gridfile:   
-        grid = np.loadtxt(gridfile)
-
-    if params['field_type']["function_name"] == "fieldCPL":
-        if params['field_type']['typef'] == "LCPL":
-            helicity = "L"
-        elif params['field_type']['typef'] == "RCPL":
-            helicity = "R"
-    else:
-        helicity = "0"
-
-
-    grid = grid.T
-    Wav = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)  
-    Wavi = np.zeros((grid.shape[0],grid.shape[0]), dtype = float)
-    grid = grid.T
-
-    batch_list = [0]
-    for icount, ibatch in enumerate(batch_list):
-        with open( params['job_directory']+ "W" + "_"+ helicity + "_av_3D_" + str(ibatch), 'r') as Wavfile:   
-            Wavi = np.loadtxt(Wavfile)
-        #PLOTS.plot_2D_polar_map(Wavi,grid[1],grid[0],100)
-        Wav += Wavi
-
-    with open( params['job_directory']  +  "W" + "_"+ helicity + "_av_3D" , 'w') as Wavfile:   
-        np.savetxt(Wavfile, Wav, fmt = '%10.4e')
-
-
-    #PLOTS.plot_2D_polar_map(Wav,grid[1],grid[0],100)
-
-    return grid, Wav
-
 def find_nearest(array, value):
     array   = np.asarray(array)
     idx     = (np.abs(array - value)).argmin()
     return array[idx], idx
 
-
-def calc_pecd(N_batches,params,bcoeff,kgrid):
-    
-    with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
-        grid = np.loadtxt(gridfile)
-
-    with open( params['job_directory'] + "W_R_av_3D", 'r') as Wavfile:   
-        WavR = np.loadtxt(Wavfile)
-
-    with open( params['job_directory'] + "W_L_av_3D", 'r') as Wavfile:   
-        WavL = np.loadtxt(Wavfile)
-
-
-    print("Quantitative PECD analysis")
-    k_pecd      = [] #values of electron momentum at which PECD is evaluated
-    ind_kgrid   = [] #index of electron momentum in the list
-
-    for kelem in params['k_pecd']:
-        k, ind = find_nearest(kgrid, kelem)
-        k_pecd.append(k)
-        ind_kgrid.append(ind)
-
-
-    pecd_sph = []
-    pecd_mph = []
-
-    for ielem, k in enumerate(k_pecd):
-        print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax']+1)) + "\n")
-        pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
-
-    pecd_pad = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
-    print("plotting PECD")
-    PLOTS.plot_2D_polar_map(pecd_pad,grid[1],grid[0],100)
-
-    return pecd_sph
 
 
 if __name__ == "__main__": 

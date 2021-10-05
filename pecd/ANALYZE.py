@@ -732,6 +732,55 @@ class momentumfuncs(analysis):
         self.params = params
 
 
+    def PECD(self):
+        
+        """ loop over time-grid """
+
+        """ orientation averaged?"""
+
+        """ Calculate W2D for left- and right-circularly polarized light """
+
+
+
+        """ Perform Legendre decomposition of both distributions """
+
+        """ Calculate PECD """
+
+
+
+        with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
+            grid = np.loadtxt(gridfile)
+
+        with open( params['job_directory'] + "W_R_av_3D", 'r') as Wavfile:   
+            WavR = np.loadtxt(Wavfile)
+
+        with open( params['job_directory'] + "W_L_av_3D", 'r') as Wavfile:   
+            WavL = np.loadtxt(Wavfile)
+
+
+        print("Quantitative PECD analysis")
+        k_pecd      = [] #values of electron momentum at which PECD is evaluated
+        ind_kgrid   = [] #index of electron momentum in the list
+
+        for kelem in params['k_pecd']:
+            k, ind = find_nearest(kgrid, kelem)
+            k_pecd.append(k)
+            ind_kgrid.append(ind)
+
+
+        pecd_sph = []
+        pecd_mph = []
+
+        for ielem, k in enumerate(k_pecd):
+            print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax']+1)) + "\n")
+            pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
+
+        pecd_pad = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
+        print("plotting PECD")
+        PLOTS.plot_2D_polar_map(pecd_pad,grid[1],grid[0],100)
+
+        return pecd_sph
+
 
     def W2Dav(self,funcpars):
 
