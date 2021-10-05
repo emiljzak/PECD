@@ -259,21 +259,21 @@ def read_input():
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
-                    'legendre':     True,
-            
+                    'legendre':     False, # calculate Legendre decomposition
+
+                    'PES':          True, # calculate PES
+                    'PES_params': {     
+                                    'name':         'PES',
+                                    'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
+                                    'show':         True, # show image on screen
+                                    'save':         True, # save array in file
+                                
+                                    'k-axis':       "energy", # energy (eV) or momentum (a.u.)
+                                    'y-axis':       "unit",   # log or unit scale
+                                    'normalize':    True,   # normalize the cross-section
+                                    },
+
                     }
-
-
-        PES = {     'name':         'PES',
-                    'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
-                    'show':         True, # show image on screen
-                    'save':         True, # save array in file
-                   
-                    'k-axis':       "energy", # energy (eV) or momentum (a.u.)
-                    'y-axis':       "log",   # log or unit scale
-                    'normalize':    True,   # normalize the cross-section
-                    }
-
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))

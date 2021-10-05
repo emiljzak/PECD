@@ -38,7 +38,6 @@ class analysis:
         return sph_harm(m, l, phi, theta)
         
 
-
     def calc_tgrid(self):
         print("Setting up time-grid")
 
@@ -232,10 +231,10 @@ class analysis:
             x, w    = np.polynomial.legendre.leggauss(deg)
             w       = w.reshape(nleg,-1)
 
-            nkpoints    = params['n_pes_pts'] 
+            nkpoints    = params['pes_npts'] 
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
 
-            kgrid       = np.linspace(0.05, params['max_pes_en'], nkpoints)
+            kgrid       = np.linspace(0.05, params['pes_max_k'], nkpoints)
 
             """ calculating Legendre moments """
             for n in range(0,Lmax+1):
@@ -283,178 +282,169 @@ class analysis:
 
 
 
-    def PES(self,funcpars,grid,fdir):
+    def calc_rgrid_for_FT(self):
+        """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
+        """ The real-space grid determines the k-space grid returned by PyHank """
 
-        for elem in fdir.items():
+        nbins   = self.params['bound_nbins'] 
+        rmax    = nbins * self.params['bound_binw']
+        npts    = self.params['npts_r_ft'] 
+        N_red   = npts 
 
-            f       = elem[1]
-            plane   = elem[0]
+        grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
+        grid_r      = np.linspace(0.0, rmax, npts, endpoint = False)
 
-            kgrid       = grid[0]
-            thetagrid   = grid[1]
-
-            Lmax    = self.params['pes_lmax'] 
-            nleg     = Lmax
-            x, w    = np.polynomial.legendre.leggauss(nleg)
-            w       = w.reshape(nleg,-1)
-
-            nkpoints    = params['pes_npts'] 
-            spectrum    = np.zeros(nkpoints, dtype = float)
-            kgrid       = np.linspace(0.05, params['pes_max_k'], nkpoints)
-
-            """ Interpolate f(k,theta)"""
-            #W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
-            W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
-
-            """ calculating photo-electron spectrum """
-            print("*** calculating photo-electron spectrum ***")
-
-            for ipoint,k in enumerate(list(kgrid)):   
-            
-                W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
-                spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) # *k (see Demekhin 2013)
-            
-            self.PES_plot(funcpars,spectrum,kgrid)
+        return grid_theta, grid_r
 
 
 
+    def calc_Flm(self):
 
-    def PES_plot(self,funcpars,spectrum,kgrid):
+        irun                    = self.params['irun']
+        helicity                = self.pull_helicity()
+        self.params['helicity'] = helicity
 
-        """ Produces plot of the PES """
 
-        plot_params = funcpars['plot'][1] #all plot params
+        # which grid point corresponds to the radial cut-off?
+        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel() - self.params['rcutoff']))
+        print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
-        """
-        Args:
-            kgrid: np.array of size (nkpoints): momentum grid in a.u.
-            spectrum: array of size (nkpoints): 1D PES
-            plot_params: parameters of the plot loaded from GRAPHICS.py
-        """
+        """ set up time grids for evaluating wfn """
+        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
+        
+        # read wavepacket from file
+        if self.params['wavepacket_format'] == "dat":
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        
+        elif self.params['wavepacket_format'] == "h5":
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
-        figsizex    = plot_params['figsize_x']  # size of the figure on screen
-        figsizey    = plot_params['figsize_y']  # size of the figure on screen
-        resolution  = plot_params['resolution'] # resolution in dpi
+        # we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
 
-        fig         = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
-                        constrained_layout=True)
-        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
-        ax1         = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
 
-        if funcpars['k-axis'] == 'momentum':
-            grid_plot = kgrid
-        elif funcpars['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev
-        else:
-            raise ValueError("incorrect k-axis specification")
+        if self.params['FT_method']    == "FFT_cart":
 
-        if funcpars['y-axis'] == 'unit':
-            func_plot = kgrid * spectrum
+            self.calc_fftcart_psi_3d(   self.params, 
+                                        self.params['maparray_global'], 
+                                        self.params['Gr'], 
+                                        wavepacket,
+                                        self.params['chilist'])
 
-        elif funcpars['y-axis'] == 'log':
-            func_plot =   np.log(kgrid * spectrum)
-        else:
-            raise ValueError("incorrect y-axis specification")
+        elif self.params['FT_method']  == "FFT_hankel":
 
-        if funcpars['normalize'] == True:
-            func_plot /= func_plot.max()
+            grid_theta, grid_r = self.calc_rgrid_for_FT()
+
+            #calculate partial waves on radial grid
+            Plm         = self.calc_partial_waves(      grid_r,
+                                                        wavepacket)
+
+            #return Hankel transforms on the appropriate k-vector grid identical to grid_r
+            Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
+                                                        grid_r)
+           
+        return Flm, kgrid
     
-        plot_PES    = ax1.plot( grid_plot,
-                                func_plot, 
-                                label = plot_params['plot_label'],
-                                marker = plot_params['plot_marker'], 
-                                color = plot_params['plot_colour'] )
+
+    def calc_FT_3D_hankel(self, Flm,  Ymat):
+        """ returns: fourier transform inside a ball grid (r,theta,phi), or disk (r,theta,phi0) or disk (r,theta0,phi)  """
+
+        npts_k       = Ymat.shape[2]
+        npts_th      = Ymat.shape[3]
+
+        n_waves      = (self.params['bound_lmax']+1)**2
+        print("size of theta grid = " + str(npts_th))
+        print("size of kgrid = " + str(npts_k))
+
+        FT = np.zeros((npts_k, npts_th), dtype = complex)
+        Flm2D = np.zeros((n_waves, npts_k, npts_th), dtype = complex)
 
 
+        for ielem, elem in enumerate(Flm):
 
-        ax1.set_title(  label               = plot_params['title_text'],
-                        fontsize            = plot_params['title_size'],
-                        color               = plot_params['title_color'],
-                        verticalalignment   = plot_params['title_vertical'],
-                        horizontalalignment = plot_params['title_horizontal'],
-                        #position            = plot_params[ "title_position"],
-                        pad                 = plot_params['title_pad'],
-                        backgroundcolor     = plot_params['title_background'],
-                        fontname            = plot_params['title_fontname'],
-                        fontstyle           = plot_params['title_fontstyle'])
+            for ith in range(npts_th):
+                Flm2D[ielem,:,ith] = elem[3]
 
-        ax1.xaxis.set_label_position('bottom') 
+            FT +=   ((-1.0 * 1j)**elem[1]) * Flm2D[ielem,:,:] * Ymat[elem[1], elem[1]+elem[2],:,:]
+
+        return FT
+
+
+    def calc_partial_waves(self, grid_r, wavepacket):
+        """
+        returns: list of numpy arrays. List is labelled by l,m and t_i from 'momentum_analyze_time'
+        """
+
+        Plm = []
+        lmax            = self.params['bound_lmax']
+        maparray_global = self.params['maparray_global']
+        maparray_chi    = self.params['maparray_chi']
+        chilist         = self.params['chilist']
+        ipoint_cutoff   = self.params['ipoint_cutoff']
+        
+        Nt              = wavepacket.shape[0] #number of evaluation times
+        Nbas            = len(maparray_global)
+        Nr              = len(maparray_chi)
+        npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
+        
+
+        val = np.zeros(npts, dtype = complex)
+
+
+        for itime in range(Nt):
+            psi = wavepacket[itime,:]
+            c_arr = psi.reshape(len(maparray_chi),-1)
+            print("time-point: " + str(itime))
+            val = 0.0 + 1j * 0.0
+            indang = 0
+            for l in range(0,lmax+1):
+                for m in range(-l,l+1):
+                    print("P_lm: " + str(l) + " " + str(m))
+                
+                    for ielem, elem in enumerate(maparray_chi):
+                        if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
+
+                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
+
+                    indang += 1
+                    Plm.append([itime,l,m,val])
+                    val = 0.0 + 1j * 0.0
+
+            if self.params['plot_Plm'] == True:
+
+
+                #for i in range(Nr):
+                #    plt.plot(grid_r,chilist[i](grid_r))
+                #plt.show()
+                #only for itime =0:
+                for s in range((lmax+1)**2):
+                    plt.plot(grid_r,np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
+                    plt.legend()
+                plt.show()
+                plt.close()
+        return Plm
+
+
+    def calc_hankel_transforms(self, Plm, grid_r):
+        Flm = [] #list of output Hankel transforms
     
-        ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
-                        fontsize            = plot_params['xlabel_size'],
-                        color               = plot_params['label_color'],
-                        loc                 = plot_params['xlabel_loc'],
-                        labelpad            = plot_params['xlabel_pad'] )
+        for ielem, elem in enumerate(Plm):
+            print("Calculating Hankel transform for time-point =  " + str(elem[0]) + " for partial wave Plm: " + str(elem[1]) + " " + str(elem[2]))
 
-        ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
-                        color               = plot_params['label_color'],
-                        labelpad            = plot_params['ylabel_pad'],
-                        loc                 = plot_params['ylabel_loc'],
-                        rotation            = 0)
+            Hank_obj = HankelTransform(elem[1], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
+            #Hank.append(Hank_obj) 
+            Plm_resampled = Hank_obj.to_transform_r(elem[3])
+            F = Hank_obj.qdht(Plm_resampled)
+            Flm.append([elem[0],elem[1],elem[2],F])
+            if  params['plot_Flm']  == True:
+                plt.plot(Hank_obj.kr,np.abs(F))
+        
+        if  params['plot_Flm']  == True:   
+            plt.show()
+            plt.close()
 
-
-        if funcpars['k-axis'] == 'momentum':
-            ax1.xlabel("momentum (a.u)")
-        elif funcpars['k-axis'] == 'energy':
-            ax1.xlabel("energy (eV)")
-
-
-        if funcpars['y-axis'] == 'unit':
-            if funcpars['normalize'] == True:
-                ax1.ylabel("cross section " +r"$\sigma(k)$" +  " (normalized)")
-            else:
-                ax1.ylabel("cross section " +r"$\sigma(k)$" )
-
-        elif funcpars['y-axis'] == 'log':
-            if funcpars['normalize'] == True:
-                ax1.ylabel("cross section "+r"$log(\sigma(k))$" + " (normalized)")
-            else:
-                ax1.ylabel("cross section "+r"$log(\sigma(k))$")
-
-
-        ax1.xlim([0,self.params['pes_max_k']]) 
-
-
-        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
-        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
-
-
-        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
-                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
-                    alpha = 0.5,
-                    transform = ax1.transAxes)
-
-        #custom ticks and labels:
-        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
-        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
-
-        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
-        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
-
-        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
-        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
-
-        if plot_params['save'] == True:
-
-            fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" +
-                                            funcpars['plane_split'][1]+
-                                            funcpars['plane_split'][0]+ "_" +
-                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
-                                            "_" +
-                                            params['helicity'] +
-                                            ".pdf",
-                                            
-                            dpi         =   plot_params['save_dpi'],
-                            orientation =   plot_params['save_orientation'],
-                            bbox_inches =   plot_params['save_bbox_inches'],
-                            pad_inches  =   plot_params['save_pad_inches']
-                            )
-
-        plt.show()
-        plt.legend()  
-        plt.close()
+        return Flm, Hank_obj.kr
 
 class spacefuncs(analysis):
     
@@ -725,171 +715,12 @@ class momentumfuncs(analysis):
     def __init__(self,params):
         self.params = params
 
-    def calc_rgrid_for_FT(self):
-        """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
-        """ The real-space grid determines the k-space grid returned by PyHank """
-
-        nbins   = self.params['bound_nbins'] 
-        rmax    = nbins * self.params['bound_binw']
-        npts    = self.params['npts_r_ft'] 
-        N_red   = npts 
-
-        grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
-        grid_r      = np.linspace(0.0, rmax, npts, endpoint = False)
-
-        return grid_theta, grid_r
 
 
+    def W2D(self,funcpars):
 
-    def calc_Flm(self):
-
-        irun                    = self.params['irun']
-        helicity                = self.pull_helicity()
-        self.params['helicity'] = helicity
-
-
-        # which grid point corresponds to the radial cut-off?
-        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel() - self.params['rcutoff']))
-        print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
-
-        tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
-        
-        # read wavepacket from file
-        if self.params['wavepacket_format'] == "dat":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
-        
-        elif self.params['wavepacket_format'] == "h5":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
-
-        # we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
-
-
-
-        if self.params['FT_method']    == "FFT_cart":
-
-            self.calc_fftcart_psi_3d(   self.params, 
-                                        self.params['maparray_global'], 
-                                        self.params['Gr'], 
-                                        wavepacket,
-                                        self.params['chilist'])
-
-        elif self.params['FT_method']  == "FFT_hankel":
-
-            grid_theta, grid_r = self.calc_rgrid_for_FT()
-
-            #calculate partial waves on radial grid
-            Plm         = self.calc_partial_waves(      grid_r,
-                                                        wavepacket)
-
-            #return Hankel transforms on the appropriate k-vector grid identical to grid_r
-            Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
-                                                        grid_r)
-           
-        return Flm, kgrid
-    
-
-    def calc_FT_3D_hankel(self, Flm,  Ymat):
-        """ returns: fourier transform inside a ball grid (r,theta,phi), or disk (r,theta,phi0) or disk (r,theta0,phi)  """
-
-        npts_k       = Ymat.shape[2]
-        npts_th      = Ymat.shape[3]
-
-        n_waves      = (self.params['bound_lmax']+1)**2
-        print("size of theta grid = " + str(npts_th))
-        print("size of kgrid = " + str(npts_k))
-
-        FT = np.zeros((npts_k, npts_th), dtype = complex)
-        Flm2D = np.zeros((n_waves, npts_k, npts_th), dtype = complex)
-
-
-        for ielem, elem in enumerate(Flm):
-
-            for ith in range(npts_th):
-                Flm2D[ielem,:,ith] = elem[3]
-
-            FT +=   ((-1.0 * 1j)**elem[1]) * Flm2D[ielem,:,:] * Ymat[elem[1], elem[1]+elem[2],:,:]
-
-        return FT
-
-
-    def calc_partial_waves(self, grid_r, wavepacket):
-        """
-        returns: list of numpy arrays. List is labelled by l,m and t_i from 'momentum_analyze_time'
-        """
-
-        Plm = []
-        lmax            = self.params['bound_lmax']
-        maparray_global = self.params['maparray_global']
-        maparray_chi    = self.params['maparray_chi']
-        chilist         = self.params['chilist']
-        ipoint_cutoff   = self.params['ipoint_cutoff']
-        
-        Nt              = wavepacket.shape[0] #number of evaluation times
-        Nbas            = len(maparray_global)
-        Nr              = len(maparray_chi)
-        npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
-        
-
-        val = np.zeros(npts, dtype = complex)
-
-
-        for itime in range(Nt):
-            psi = wavepacket[itime,:]
-            c_arr = psi.reshape(len(maparray_chi),-1)
-            print("time-point: " + str(itime))
-            val = 0.0 + 1j * 0.0
-            indang = 0
-            for l in range(0,lmax+1):
-                for m in range(-l,l+1):
-                    print("P_lm: " + str(l) + " " + str(m))
-                
-                    for ielem, elem in enumerate(maparray_chi):
-                        if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
-
-                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
-
-                    indang += 1
-                    Plm.append([itime,l,m,val])
-                    val = 0.0 + 1j * 0.0
-
-            if self.params['plot_Plm'] == True:
-
-
-                #for i in range(Nr):
-                #    plt.plot(grid_r,chilist[i](grid_r))
-                #plt.show()
-                #only for itime =0:
-                for s in range((lmax+1)**2):
-                    plt.plot(grid_r,np.abs(Plm[s][3]),marker='.',label="P_"+str(s))
-                    plt.legend()
-                plt.show()
-                plt.close()
-        return Plm
-
-
-    def calc_hankel_transforms(self, Plm, grid_r):
-        Flm = [] #list of output Hankel transforms
-    
-        for ielem, elem in enumerate(Plm):
-            print("Calculating Hankel transform for time-point =  " + str(elem[0]) + " for partial wave Plm: " + str(elem[1]) + " " + str(elem[2]))
-
-            Hank_obj = HankelTransform(elem[1], radial_grid = grid_r) #max_radius=200.0, n_points=1000) #radial_grid=fine_grid)
-            #Hank.append(Hank_obj) 
-            Plm_resampled = Hank_obj.to_transform_r(elem[3])
-            F = Hank_obj.qdht(Plm_resampled)
-            Flm.append([elem[0],elem[1],elem[2],F])
-            if  params['plot_Flm']  == True:
-                plt.plot(Hank_obj.kr,np.abs(F))
-        
-        if  params['plot_Flm']  == True:   
-            plt.show()
-            plt.close()
-
-        return Flm, Hank_obj.kr
-
-
-    def W2D(self,funcpars,Flm,kgrid):
+        Flm = self.params['Flm']
+        kgrid = self.params['momentumgrid']
 
         print("Calculating 2D electron momentum probability density")
         
@@ -924,8 +755,10 @@ class momentumfuncs(analysis):
         #print(polargrid[0].shape,polargrid[1].shape)
         #exit()
 
-        tgrid_plot, plot_index = self.params['tgrid_plot_momentum'], self.params['tgrid_plot_index_momentum'] 
-
+        
+        """ set up time grids for evaluating wfn """
+        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
+        
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
             print(  "Generating W2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
@@ -964,6 +797,9 @@ class momentumfuncs(analysis):
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2D
                 self.legendre_expansion(funcpars,polargrid,W2Ddir)
+
+            if funcpars['PES']  == True:
+                self.PES(funcpars,polargrid,W2Ddir)
 
         
     def W2D_calc(self, funcpar, Flm, polargrid):
@@ -1114,7 +950,162 @@ class momentumfuncs(analysis):
 
 
 
+    def PES(self,funcpars,grid,fdir):
 
+        for elem in fdir.items():
+
+            f       = elem[1]
+            plane   = elem[0]
+
+            kgrid       = grid[0]
+            thetagrid   = grid[1]
+
+            Lmax    = self.params['pes_lmax'] 
+            nleg     = Lmax
+            x, w    = np.polynomial.legendre.leggauss(nleg)
+            w       = w.reshape(nleg,-1)
+
+            """ Interpolate f(k,theta)"""
+            W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
+
+
+            print("*** calculating photo-electron spectrum ***")
+            nkpoints    = params['pes_npts'] 
+            pes_kgrid      = np.linspace(0.05, params['pes_max_k'], nkpoints)
+            spectrum    = np.zeros(nkpoints, dtype = float)
+            
+            
+            for ipoint,k in enumerate(list(pes_kgrid)):   
+            
+                W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+                spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
+            
+            self.PES_plot(funcpars,spectrum,pes_kgrid)
+
+
+
+
+    def PES_plot(self,funcpars,spectrum,kgrid):
+
+        """ Produces plot of the PES """
+       
+        plot_params = funcpars['PES_params']['plot'][1] #all plot params
+
+        """
+        Args:
+            kgrid: np.array of size (nkpoints): momentum grid in a.u.
+            spectrum: array of size (nkpoints): 1D PES
+            plot_params: parameters of the plot loaded from GRAPHICS.py
+        """
+
+        figsizex    = plot_params['figsize_x']  # size of the figure on screen
+        figsizey    = plot_params['figsize_y']  # size of the figure on screen
+        resolution  = plot_params['resolution'] # resolution in dpi
+
+        fig         = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
+                        constrained_layout=True)
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+
+        if funcpars['PES_params']['k-axis'] == 'momentum':
+            grid_plot = kgrid
+        elif funcpars['PES_params']['k-axis'] == 'energy':
+            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev
+        else:
+            raise ValueError("incorrect k-axis specification")
+
+        if funcpars['PES_params']['y-axis'] == 'unit':
+            func_plot = kgrid * spectrum
+
+        elif funcpars['PES_params']['y-axis'] == 'log':
+            func_plot =   np.log(kgrid * spectrum)
+        else:
+            raise ValueError("incorrect y-axis specification")
+
+        if funcpars['PES_params']['normalize'] == True:
+            func_plot /= func_plot.max()
+    
+        plot_PES    = ax1.plot( grid_plot,
+                                func_plot, 
+                                label = plot_params['plot_label'],
+                                marker = plot_params['plot_marker'], 
+                                color = plot_params['plot_colour'] )
+
+
+
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+
+        if funcpars['PES_params']['k-axis'] == 'momentum':
+            plt.xlabel("momentum (a.u)")
+        elif funcpars['PES_params']['k-axis'] == 'energy':
+            plt.xlabel("energy (eV)")
+
+
+        if funcpars['PES_params']['y-axis'] == 'unit':
+            if funcpars['PES_params']['normalize'] == True:
+                plt.ylabel("cross section " +r"$\sigma(k)$" +  " (normalized)")
+            else:
+                plt.ylabel("cross section " +r"$\sigma(k)$" )
+
+        elif funcpars['PES_params']['y-axis'] == 'log':
+            if funcpars['PES_params']['normalize'] == True:
+                plt.ylabel("cross section "+r"$log(\sigma(k))$" + " (normalized)")
+            else:
+                plt.ylabel("cross section "+r"$log(\sigma(k))$")
+
+
+
+
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+
+
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
+                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
+                    alpha = 0.5,
+                    transform = ax1.transAxes)
+
+        #custom ticks and labels:
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        if plot_params['save'] == True:
+
+            fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
+                                            plot_params['save_name'] + "_" +
+                                            funcpars['plane_split'][1]+
+                                            funcpars['plane_split'][0]+ "_" +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            params['helicity'] +
+                                            ".pdf",
+                                            
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
+                            )
+
+        plt.show()
+        plt.legend()  
+        plt.close()
 
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
@@ -1556,11 +1547,10 @@ if __name__ == "__main__":
         analysis_obj    = analysis(params)
         
 
+
         params['tgrid_plot_space'], params['tgrid_plot_index_space'] = analysis_obj.setup_timegrids(params['space_analyze_times'])
 
-
         spaceobs        = spacefuncs(params)
-
 
         for elem in params['analyze_space']:
             # Future note: we may want to pull out the wavefunction calculation into a general routine
@@ -1571,22 +1561,16 @@ if __name__ == "__main__":
             print("Calling space function: " + str(elem['name']))
             func(elem)
         
-
-
-        """ set up time grids for evaluating wfn """
-
-        params['tgrid_plot_momentum'], params['tgrid_plot_index_momentum'] = analysis_obj.setup_timegrids(params['momentum_analyze_times'])
-
+        # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
+        params['Flm'], params['momentumgrid'] = analysis_obj.calc_Flm()
+        
         momentumobs     = momentumfuncs(params)
-
-        # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times.
-        Flm, momentumgrid = momentumobs.calc_Flm()
 
         for elem in params['analyze_momentum']:
 
             func = getattr(momentumobs,elem['name'])
             print("Calling momentum function: " + str(elem['name']))
-            func(elem, Flm, momentumgrid)
+            func(elem)
         
 
 

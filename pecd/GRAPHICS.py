@@ -217,7 +217,7 @@ def gparams_PES():
                             ### TIME TEXT LABEL ###
 
                             "time_size":        8,
-                            "time_colour":      'red',
+                            "time_colour":      'black',
 
                             ### SAVE PROPERTIES ###       
                             "save":             True,
