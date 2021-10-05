@@ -206,21 +206,21 @@ class analysis:
                 fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
                 spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax = fig.add_subplot(spec[0, 0], projection='polar')
-                ax.set_ylim(0,1) #radial extent
+                #ax.set_ylim(0,2) #radial extent
 
                 #plot W_av on the original grid
                 W_interp_mesh = W_interp(kgrid[:,0], thetagrid[0,:])
               
-                line_W_original = ax.contourf(kgrid, thetagrid, W_interp_mesh, 
-                                        100, cmap = 'jet') 
-                plt.show()
-
+                #line_W_original = ax.contourf(kgrid, thetagrid, W_interp_mesh, 
+                #                        100, cmap = 'jet') 
+                #plt.show()
+                #plt.close()
                 #plot W_av on test grid 
-                thetagridtest       = np.linspace(-np.pi, np.pi, 200)
-                kgridtest           = np.linspace(0, 1, 200)
+                thetagridtest       = np.linspace(0, 2.0*np.pi, 400)
+                kgridtest           = np.linspace(0, 2, 600)
                 kgridtestmesh ,thetatestmesh    = np.meshgrid(kgridtest, thetagridtest,indexing='ij' )
                 W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
-                line_test = ax.contourf( kgridtestmesh, thetatestmesh , W_interp_testmesh , 
+                line_test = ax.contourf(  thetatestmesh ,kgridtestmesh, W_interp_testmesh , 
                                         100, cmap = 'jet') 
                 plt.show()
                 plt.close()
@@ -234,33 +234,26 @@ class analysis:
 
             nkpoints    = params['n_pes_pts'] 
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
-            spectrum    = np.zeros(nkpoints, dtype = float)
-            kgrid       = np.linspace(0.05,params['max_pes_en'] ,nkpoints)
+
+            kgrid       = np.linspace(0.05, params['max_pes_en'], nkpoints)
 
             """ calculating Legendre moments """
             for n in range(0,Lmax+1):
+
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
+
                 for ipoint,k in enumerate(list(kgrid)):
-                    W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
-                    print(k)
+
+                    print("k = " + '{:.3f}'.format(k))
+                    
+                    W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
-                #plt.plot(kgrid,bcoeff[:,n],label=n)
-                #plt.legend()   
-            #plt.show()
-        
-            """ calculating photo-electron spectrum """
-            for ipoint,k in enumerate(list(kgrid)):   
-                W_interp1 = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
-                spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) #*k (see Demekhin 2013)
-            #plt.plot(kgrid,spectrum/spectrum.max(), label = r"$\sigma(k)$", marker = '.', color = 'r')
-            plt.plot((0.5*kgrid**2)*CONSTANTS.au_to_ev,np.log(kgrid * spectrum), label = r"$\sigma(k)$", marker = '.', color = 'r')
-            plt.xlabel("Energy (eV)") #/spectrum.max()
-            plt.xlim([0,120]) 
-        #plt.xlabel("momentum (a.u.)")
-            plt.ylabel("cross section")
-            plt.legend()   
+
+                plt.plot(kgrid,bcoeff[:,n],label=n)
+                plt.legend()   
             plt.show()
-            exit()
+        
+           
         
             #plot Legendre-reconstructed W_av on test grid 
             thetagridtest       = np.linspace(-np.pi,np.pi, nkpoints)
@@ -286,7 +279,173 @@ class analysis:
             plt.colorbar(line_legendre, ax=ax, aspect=30) 
             #plt.show()
 
-        return bcoeff, kgrid, spectrum/spectrum.max()
+        return bcoeff, kgrid
+
+
+
+    def PES(self,funcpars,grid,fdir):
+
+        for elem in fdir.items():
+
+            f       = elem[1]
+            plane   = elem[0]
+
+            kgrid       = grid[0]
+            thetagrid   = grid[1]
+
+            Lmax    = self.params['pes_lmax'] 
+            nleg     = Lmax
+            x, w    = np.polynomial.legendre.leggauss(nleg)
+            w       = w.reshape(nleg,-1)
+
+            nkpoints    = params['pes_npts'] 
+            spectrum    = np.zeros(nkpoints, dtype = float)
+            kgrid       = np.linspace(0.05, params['pes_max_k'], nkpoints)
+
+            """ Interpolate f(k,theta)"""
+            #W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
+            W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
+
+            """ calculating photo-electron spectrum """
+            print("*** calculating photo-electron spectrum ***")
+
+            for ipoint,k in enumerate(list(kgrid)):   
+            
+                W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+                spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) # *k (see Demekhin 2013)
+            
+            self.PES_plot(funcpars,spectrum,kgrid)
+
+
+
+
+    def PES_plot(self,funcpars,spectrum,kgrid):
+
+        """ Produces plot of the PES """
+
+        plot_params = funcpars['plot'][1] #all plot params
+
+        """
+        Args:
+            kgrid: np.array of size (nkpoints): momentum grid in a.u.
+            spectrum: array of size (nkpoints): 1D PES
+            plot_params: parameters of the plot loaded from GRAPHICS.py
+        """
+
+        figsizex    = plot_params['figsize_x']  # size of the figure on screen
+        figsizey    = plot_params['figsize_y']  # size of the figure on screen
+        resolution  = plot_params['resolution'] # resolution in dpi
+
+        fig         = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
+                        constrained_layout=True)
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+
+        if funcpars['k-axis'] == 'momentum':
+            grid_plot = kgrid
+        elif funcpars['k-axis'] == 'energy':
+            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev
+        else:
+            raise ValueError("incorrect k-axis specification")
+
+        if funcpars['y-axis'] == 'unit':
+            func_plot = kgrid * spectrum
+
+        elif funcpars['y-axis'] == 'log':
+            func_plot =   np.log(kgrid * spectrum)
+        else:
+            raise ValueError("incorrect y-axis specification")
+
+        if funcpars['normalize'] == True:
+            func_plot /= func_plot.max()
+    
+        plot_PES    = ax1.plot( grid_plot,
+                                func_plot, 
+                                label = plot_params['plot_label'],
+                                marker = plot_params['plot_marker'], 
+                                color = plot_params['plot_colour'] )
+
+
+
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+        ax1.xaxis.set_label_position('bottom') 
+    
+        ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
+                        fontsize            = plot_params['xlabel_size'],
+                        color               = plot_params['label_color'],
+                        loc                 = plot_params['xlabel_loc'],
+                        labelpad            = plot_params['xlabel_pad'] )
+
+        ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
+                        color               = plot_params['label_color'],
+                        labelpad            = plot_params['ylabel_pad'],
+                        loc                 = plot_params['ylabel_loc'],
+                        rotation            = 0)
+
+
+        if funcpars['k-axis'] == 'momentum':
+            ax1.xlabel("momentum (a.u)")
+        elif funcpars['k-axis'] == 'energy':
+            ax1.xlabel("energy (eV)")
+
+funcpars['normalize']
+        ax1.xlim([0,120]) 
+        #plt.xlabel("momentum (a.u.)")
+        ax1.ylabel("cross section (normalized)")
+
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+
+
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
+                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
+                    alpha = 0.5,
+                    transform = ax1.transAxes)
+
+        #custom ticks and labels:
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        if plot_params['save'] == True:
+
+            fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
+                                            plot_params['save_name'] + "_" +
+                                            funcpars['plane_split'][1]+
+                                            funcpars['plane_split'][0]+ "_" +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            params['helicity'] +
+                                            ".pdf",
+                                            
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
+                            )
+
+        plt.show()
+        plt.close()
+
+        plt.legend()   
+        plt.show()
+        exit()
 
 class spacefuncs(analysis):
     

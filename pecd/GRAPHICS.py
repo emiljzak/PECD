@@ -164,3 +164,73 @@ def gparams_W2D_polar():
                             "resolution":       resolution
                             }
     return cont2D_params
+
+
+
+
+def gparams_PES():
+
+    """" ===== Plot parameters ====="""
+    #vmin,vmax: float : value range for the plot
+    #ncont:      int: number of contours
+
+    vmin    = 0.0
+    vmax    = 1.0
+    ncont   = 200
+    resolution = 200
+    fig_size_x = 3.5
+    fig_size_y = 3.5
+
+
+    cont1D_params = {      
+
+                            ### TITLE ###
+                            "title_text":       "Photoelectron energy cross-section",
+                            "title_color":      "black",
+                            "title_size":       10,
+                            "title_vertical":   "baseline", #vertical alignment of the title: {'center', 'top', 'bottom', 'baseline', 'center_baseline'}
+                            "title_horizontal": "center", #{'center', 'left', 'right'},
+                            "title_pad":        None, #offset from the top of the axes given in points 
+                            "title_fontstyle":  'normal', #{'normal', 'italic', 'oblique'}
+                            "title_fontname":   'Sans', #'Sans' | 'Courier' | '
+                            "title_background": "None",   
+
+                            ### GRAPH ###
+                            "plot_colour":      'red',
+                            "plot_marker":      '.',
+                            "plot_label":       r"$\sigma(k)$",
+
+                            ### LABELS ###
+                            "xlabel_format":    '%.0f',
+                            "ylabel_format":    '%.0f',
+                            "label_color":      'black',
+                            "xlabel_size":       10,
+                            "ylabel_size":       10,   
+                            "xlabel_pad":       -10.0,     
+                            "ylabel_pad":       -5.0,
+                            "xlabel_loc":       "center",  #left, right      
+                            "ylabel_loc":       "center",  #left, right        
+                            "nticks_rad":        12,
+                            "nticks_th":         12,
+
+
+                            ### TIME TEXT LABEL ###
+
+                            "time_size":        8,
+                            "time_colour":      'red',
+
+                            ### SAVE PROPERTIES ###       
+                            "save":             True,
+                            "save_name":        "PES_",
+                            "save_dpi":         'figure', #float or 'figure' for same resolution as figure
+                            "save_orientation": 'landscape', #portrait
+                            "save_bbox_inches": 'tight', #or float in inches - which portion of the figure to save?
+                            "save_pad_inches":   0.1,
+
+
+                            ### FIGURE PROPERTIES ###    
+                            "figsize_x":        fig_size_x,
+                            "figsize_y":        fig_size_y,
+                            "resolution":       resolution
+                            }
+    return cont1D_params

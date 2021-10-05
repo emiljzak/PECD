@@ -264,11 +264,27 @@ def read_input():
                     }
 
 
+        PES = {     'name':         'PES',
+                    'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
+                    'show':         False, # show image on screen
+                    'save':         False, # save array in file
+                                    # Momentum grid parameters only for plotting purposes
+                    'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
+                                        'npts': 500,    #ignored when automatic (2*rmax)
+                                        'kmin': 0.0,    #ignored when automatic
+                                        'kmax': 2.0  #ignored when automatic
+                                        #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                    },                   
+                    'th_grid':      (0.0,2.0*np.pi,360),
+                    'k-axis':       "energy", # energy (eV) or momentum (a.u.)
+                    'y-axis':       "log",   # log or unit scale
+                    'normalize':    True,   # normalize the cross-section
+                    }
 
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
-        params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
+        params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = []
         params['analyze_momentum']  = [W2D]
@@ -288,7 +304,7 @@ def read_input():
 
         """ *** Legendre expansion *** """
         params['Leg_lmax']          = 2      # maximum angular momentum in the Legendre expansion
-        params['Leg_plot_reconst']  = True   # plot the reconstructed distribution
+        params['Leg_plot_reconst']  = False   # plot the reconstructed distribution
         params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
 
@@ -298,9 +314,9 @@ def read_input():
         params['nphi_pts']        = 50 #number of phi points for the integration over tha azimuthal angle.
             
         """ *** PES *** """
-        params['n_pes_pts']       = 1000 #numer of points for PES evaluation
-        params['max_pes_en']      = 3.0 #in a.u.
-
+        params['pes_npts']       = 1000    # numer of points for PES evaluation
+        params['pes_max_k']      = 3.0     # maximum momentum in a.u.
+        params['pes_lmax']       = 10
 
         """ *** PECD *** """
         params['analyze_pecd']    = False
