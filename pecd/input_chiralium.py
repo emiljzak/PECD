@@ -266,16 +266,9 @@ def read_input():
 
         PES = {     'name':         'PES',
                     'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
-                    'show':         False, # show image on screen
-                    'save':         False, # save array in file
-                                    # Momentum grid parameters only for plotting purposes
-                    'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
-                                        'npts': 500,    #ignored when automatic (2*rmax)
-                                        'kmin': 0.0,    #ignored when automatic
-                                        'kmax': 2.0  #ignored when automatic
-                                        #Automatic means that we choose ranges based on maximum range given by the basis set.   
-                                    },                   
-                    'th_grid':      (0.0,2.0*np.pi,360),
+                    'show':         True, # show image on screen
+                    'save':         True, # save array in file
+                   
                     'k-axis':       "energy", # energy (eV) or momentum (a.u.)
                     'y-axis':       "log",   # log or unit scale
                     'normalize':    True,   # normalize the cross-section

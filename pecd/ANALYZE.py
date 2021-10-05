@@ -399,10 +399,22 @@ class analysis:
         elif funcpars['k-axis'] == 'energy':
             ax1.xlabel("energy (eV)")
 
-funcpars['normalize']
-        ax1.xlim([0,120]) 
-        #plt.xlabel("momentum (a.u.)")
-        ax1.ylabel("cross section (normalized)")
+
+        if funcpars['y-axis'] == 'unit':
+            if funcpars['normalize'] == True:
+                ax1.ylabel("cross section " +r"$\sigma(k)$" +  " (normalized)")
+            else:
+                ax1.ylabel("cross section " +r"$\sigma(k)$" )
+
+        elif funcpars['y-axis'] == 'log':
+            if funcpars['normalize'] == True:
+                ax1.ylabel("cross section "+r"$log(\sigma(k))$" + " (normalized)")
+            else:
+                ax1.ylabel("cross section "+r"$log(\sigma(k))$")
+
+
+        ax1.xlim([0,self.params['pes_max_k']]) 
+
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
         ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
@@ -441,11 +453,8 @@ funcpars['normalize']
                             )
 
         plt.show()
+        plt.legend()  
         plt.close()
-
-        plt.legend()   
-        plt.show()
-        exit()
 
 class spacefuncs(analysis):
     
