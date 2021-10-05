@@ -183,7 +183,16 @@ class analysis:
 
             return Ymat
  
+        elif plane == "Z":
+            # calculate Ylm for arbitrary phi0
+            #calculate spherical harmonics on the angular grid for all quantum numbers
+            Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], params['phi0']) 
 
+            return Ymat
 
     def legendre_expansion(self,funcpars,grid,fdir): 
         """ Calculate the Legendre expansion coefficients as a function of the photo-electron momentum """
@@ -717,6 +726,229 @@ class momentumfuncs(analysis):
 
 
 
+    def W2Dav(self,funcpars):
+
+        Flm = self.params['Flm']
+        kgrid = self.params['momentumgrid']
+
+        print("Calculating 2D electron momentum probability density phi-averaged")
+        
+        irun = self.params['irun']
+        helicity  = self.pull_helicity()
+        self.params['helicity'] = helicity
+        print("helicity = " + str(helicity))
+        #exit()
+        """ set up 1D momentum grids """
+
+        if funcpars['k_grid']['type'] == "manual":
+            # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe'] = ktuple
+            kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
+
+        elif funcpars['k_grid']['type'] == "automatic":
+            # automatic radial momentum grid as given by the resolution of the FT 
+            kgrid1D = kgrid
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe'] = ktuple
+
+        thtuple             = funcpars['th_grid']
+        funcpars['thtuple'] = thtuple
+        unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
+        thgrid1D            = thtuple[1] * unity_vec
+        
+
+        """ generate 2D meshgrid for storing W2D """
+        polargrid = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
+
+        #print(polargrid[0].shape,polargrid[1].shape)
+        #exit()
+
+        
+        """ set up time grids for evaluating wfn """
+        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
+        
+        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+  
+            print(  "Generating W2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                " " + str( self.params['time_units']) + " ----- " +\
+                "time index = " + str(itime) )
+
+            funcpars['t'] = t
+
+            Flm_t = Flm[i*(self.params['bound_lmax']+1)**2:(i+1)*(self.params['bound_lmax']+1)**2 ]
+
+            Wav = self.W2Dav_calc( funcpars,
+                                    Flm_t,
+                                    polargrid)
+
+
+            if funcpars['plot'][0] == True:
+
+                self.W2Dav_plot(funcpars,polargrid,Wav)
+
+            if funcpars['save'] == True:
+   
+                with open( self.params['job_directory'] +  "W2Dav" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, Wav, fmt = '%10.4e')
+
+            if funcpars['legendre'] == True:
+                # perform legendre expansion of W2Dav
+                self.legendre_expansion(funcpars,polargrid,Wav)
+
+            if funcpars['PES']  == True:
+                self.PES(funcpars,polargrid,Wav)
+
+    def W2Dav_calc(self, funcpar, Flm, polargrid):
+        """calculate numerically W2D for a sequence of phi angles and return averaged W2Dav"""
+
+        print("Evaluation planes for W2D: Z")
+        Wav = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+
+        phigrid = np.linspace(0.0, 2.0 * np.pi, funcpar['nphi_pts'], endpoint=False)
+        
+        for iphi in range(phigrid.shape[0]):
+            
+            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', polargrid)
+            W2D             = self.calc_FT_3D_hankel(Flm, Ymat)
+            Wav    += np.abs(W2D)**2/np.max(np.abs(W2D)**2)
+
+        return Wav
+
+
+
+    def W2D_plot(self,funcpars,polargrid,W2D): 
+        """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
+
+        plot_params = funcpars['plot'][1] #all plot params
+        ktuple      = funcpars['ktulpe'] #range for k
+        thtuple     = funcpars['thtuple'] #range for theta
+
+        """
+        Args:
+            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
+            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
+            plot_params: parameters of the plot loaded from GRAPHICS.py
+        """
+
+        figsizex    = plot_params['figsize_x'] #size of the figure on screen
+        figsizey    = plot_params['figsize_y']  #size of the figure on screen
+        resolution  = plot_params['resolution']  #resolution in dpi
+
+        fig         = plt.figure(   figsize=(figsizex, figsizey), 
+                                    dpi=resolution,
+                                    constrained_layout=True)
+                                    
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
+
+        cmap = matplotlib.cm.jet #jet, cool, etc
+        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
+
+
+        ax1.set_ylim(ktuple[0],ktuple[1]) #radial scale
+        ax1.set_thetamin(thtuple[0]*180.0/np.pi)
+        ax1.set_thetamax(thtuple[1]*180.0/np.pi)
+
+
+        plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
+        plot_params['rticks']   = list(np.linspace(ktuple[0],ktuple[1],plot_params['nticks_rad'])) 
+                            
+
+        plot_W2D  = ax1.contourf(   polargrid[1], 
+                                    polargrid[0], 
+                                    W2D,  
+                                    plot_params['ncont'], 
+                                    cmap = 'jet', 
+                                    vmin = plot_params['vmin'],
+                                    vmax = plot_params['vmax'])
+        
+
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+        ax1.xaxis.set_label_position('top') 
+    
+        ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
+                        fontsize            = plot_params['xlabel_size'],
+                        color               = plot_params['label_color'],
+                        loc                 = plot_params['xlabel_loc'],
+                        labelpad            = plot_params['xlabel_pad'] )
+
+        ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
+                        color               = plot_params['label_color'],
+                        labelpad            = plot_params['ylabel_pad'],
+                        loc                 = plot_params['ylabel_loc'],
+                        rotation            = 0)
+
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
+                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
+                    alpha = 0.5,
+                    transform = ax1.transAxes)
+
+        
+        #custom ticks and labels:
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                        ax                  = ax1, 
+                        orientation         = plot_params['cbar_orientation'],
+                        label               = plot_params['cbar_label'],
+                        fraction            = plot_params['cbar_fraction'],
+                        aspect              = plot_params['cbar_aspect'],
+                        shrink              = plot_params['cbar_shrink'],
+                        pad                 = plot_params['cbar_pad'],
+                        extend              = plot_params['cbar_extend'],
+                        ticks               = plot_params['cbar_ticks'],
+                        drawedges           = plot_params['cbar_drawedges'],
+                        format              = plot_params['cbar_format']
+                       )
+        
+        if plot_params['save'] == True:
+
+            fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
+                                            plot_params['save_name'] + "_" +
+                                            funcpars['plane_split'][1]+
+                                            funcpars['plane_split'][0]+ "_" +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            params['helicity'] +
+                                            ".pdf",
+                                            
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
+                            )
+        if funcpars['show'] == True:
+            plt.show()
+        
+        plt.close()
+
+
+
+
+
     def W2D(self,funcpars):
 
         Flm = self.params['Flm']
@@ -962,6 +1194,7 @@ class momentumfuncs(analysis):
 
             Lmax    = self.params['pes_lmax'] 
             nleg     = Lmax
+            print(nleg)
             x, w    = np.polynomial.legendre.leggauss(nleg)
             w       = w.reshape(nleg,-1)
 
@@ -971,7 +1204,7 @@ class momentumfuncs(analysis):
 
             print("*** calculating photo-electron spectrum ***")
             nkpoints    = params['pes_npts'] 
-            pes_kgrid      = np.linspace(0.05, params['pes_max_k'], nkpoints)
+            pes_kgrid   = np.linspace(0.05, params['pes_max_k'], nkpoints)
             spectrum    = np.zeros(nkpoints, dtype = float)
             
             
@@ -1019,9 +1252,14 @@ class momentumfuncs(analysis):
             func_plot = kgrid * spectrum
 
         elif funcpars['PES_params']['y-axis'] == 'log':
-            func_plot =   np.log(kgrid * spectrum)
+            func_plot =   kgrid * spectrum
+            ax1.set_yscale('log')
         else:
             raise ValueError("incorrect y-axis specification")
+
+
+        print(func_plot.max())
+        #exit()
 
         if funcpars['PES_params']['normalize'] == True:
             func_plot /= func_plot.max()
@@ -1267,28 +1505,6 @@ def plot_W_3D_analytic(self,params, maparray_chi, maparray_global, psi, chilist,
 
 
 
-
-def plot_W_2D_av_phi_num(self,params, maparray_chi, maparray_global, psi, chilist):
-    ncontours = 100
-    grid_theta, grid_r = calc_grid_for_FT(params)
-
-    Wav, kgrid  = calc_W_2D_av_phi_num(params, maparray_chi, maparray_global, psi, chilist)
-
-    fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-    spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-    axft = fig.add_subplot(spec[0, 0], projection='polar')
-
-    Nrad = len(kgrid)
-
-    kmesh, thetamesh = np.meshgrid(kgrid,grid_theta)
-
-    axft.set_ylim(0,1) #radial extent
-    line_ft = axft.contourf(thetamesh, kmesh, Wav/np.max(Wav), 
-                            ncontours, cmap = 'jet') #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-    plt.colorbar(line_ft, ax=axft, aspect=30)
-    
-    plt.legend()   
-    plt.show()  
 
 
 
