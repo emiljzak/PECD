@@ -121,7 +121,7 @@ class analysis:
         return helicity
         
 
-    def calc_spharm_array(self,lmax,plane,grid):
+    def calc_spharm_array(self,lmax,plane,grid,phi=None):
         """
             Returns array of spherical harmonics in range 0,...,l and m = -l, ..., l and on 
             the grid, which can be 2D or 3D meshgrid, depending on the plane chosen.
@@ -190,7 +190,7 @@ class analysis:
             
             for l in range(lmax+1):
                 for m in range(-l,l+1):
-                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], params['phi0']) 
+                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi) 
 
             return Ymat
 
@@ -363,8 +363,8 @@ class analysis:
         npts_th      = Ymat.shape[3]
 
         n_waves      = (self.params['bound_lmax']+1)**2
-        print("size of theta grid = " + str(npts_th))
-        print("size of kgrid = " + str(npts_k))
+        #print("size of theta grid = " + str(npts_th))
+        #print("size of kgrid = " + str(npts_k))
 
         FT = np.zeros((npts_k, npts_th), dtype = complex)
         Flm2D = np.zeros((n_waves, npts_k, npts_th), dtype = complex)
@@ -804,21 +804,21 @@ class momentumfuncs(analysis):
         """calculate numerically W2D for a sequence of phi angles and return averaged W2Dav"""
 
         print("Evaluation planes for W2D: Z")
-        Wav = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
+        Wav = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=float)
 
         phigrid = np.linspace(0.0, 2.0 * np.pi, funcpar['nphi_pts'], endpoint=False)
         
         for iphi in range(phigrid.shape[0]):
-            
-            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', polargrid)
+            print('iphi = ' + str(iphi) + ', phi = ' + str(phigrid[iphi]))
+            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', polargrid, phigrid[iphi])
             W2D             = self.calc_FT_3D_hankel(Flm, Ymat)
-            Wav    += np.abs(W2D)**2/np.max(np.abs(W2D)**2)
+            Wav             += np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
-        return Wav
+        return Wav / funcpar['nphi_pts']
 
 
 
-    def W2D_plot(self,funcpars,polargrid,W2D): 
+    def W2Dav_plot(self,funcpars,polargrid,W2D): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
@@ -877,19 +877,7 @@ class momentumfuncs(analysis):
                         fontname            = plot_params['title_fontname'],
                         fontstyle           = plot_params['title_fontstyle'])
 
-        ax1.xaxis.set_label_position('top') 
-    
-        ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
-                        fontsize            = plot_params['xlabel_size'],
-                        color               = plot_params['label_color'],
-                        loc                 = plot_params['xlabel_loc'],
-                        labelpad            = plot_params['xlabel_pad'] )
 
-        ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
-                        color               = plot_params['label_color'],
-                        labelpad            = plot_params['ylabel_pad'],
-                        loc                 = plot_params['ylabel_loc'],
-                        rotation            = 0)
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
         ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
@@ -928,8 +916,6 @@ class momentumfuncs(analysis):
 
             fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
                                             plot_params['save_name'] + "_" +
-                                            funcpars['plane_split'][1]+
-                                            funcpars['plane_split'][0]+ "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             params['helicity'] +

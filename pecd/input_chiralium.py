@@ -289,7 +289,7 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     20, #number of phi points for the integration over tha azimuthal angle.
                     
                     'legendre':     False, # calculate Legendre decomposition
 
