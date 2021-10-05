@@ -233,11 +233,10 @@ class analysis:
                 plt.close()
 
 
-
             Lmax    = self.params['Leg_lmax'] 
-            deg     = Lmax + 10
-            nleg    = deg
-            x, w    = np.polynomial.legendre.leggauss(deg)
+            nleg     = 1000
+            
+            x, w    = np.polynomial.legendre.leggauss(nleg)
             w       = w.reshape(nleg,-1)
 
             nkpoints    = self.params['Leg_npts_r'] # number of radial grid points on which the b-coefficients are calculated
@@ -245,12 +244,11 @@ class analysis:
 
             kgrid1D       = np.linspace(0.05, self.params['pes_max_k'], nkpoints)
             thgrid1D      = np.linspace(0.0, 2.0 * np.pi, self.params['Leg_npts_th'], endpoint=False )
+            
+            
             """ calculating Legendre moments """
-
-
             print("Calculating b(k) coefficients in k range: " + str(0.05) + " ... " + str(self.params['pes_max_k']))
                     
-
             for n in range(0,Lmax+1):
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
@@ -258,11 +256,10 @@ class analysis:
                 for ipoint,k in enumerate(list(kgrid1D)):
 
                     W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
-
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
-                    
+
                 if self.params['plot_bcoeffs'] == True:
-                    plt.plot(kgrid1D,bcoeff[:,n],label=n)
+                    plt.plot(kgrid1D,np.log(bcoeff[:,n]),label=n)
                     plt.legend()
 
             if self.params['plot_bcoeffs'] == True:
@@ -282,12 +279,9 @@ class analysis:
 
                     for n in range(0,Lmax+1):
 
-          
                         Pn                      = eval_legendre(n, np.cos(thetagrid_leg_mesh[0,:])).reshape(thetagrid_leg_mesh.shape[1],1)
-
                         W_legendre[ipoint,:]    += bcoeff[ipoint,n] * Pn[:,0] 
-
-                
+                       
                 fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
                 spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax = fig.add_subplot(spec[0, 0], projection='polar')

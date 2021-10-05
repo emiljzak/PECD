@@ -289,7 +289,7 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
                     'legendre':     True, # calculate Legendre decomposition
 
@@ -309,6 +309,11 @@ def read_input():
 
                     }
 
+        PECD = {   'name':         'PECD',
+                    'plot':         (True, GRAPHICS.gparams_PECD()), #specify parameters of the plot to load
+                    'show':         True, # show image on screen
+                    'save':         False, # save array in file
+                    }
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
@@ -331,12 +336,12 @@ def read_input():
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
         """ *** Legendre expansion *** """
-        params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
+        params['Leg_lmax']          = 4      # maximum angular momentum in the Legendre expansion
         params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
         params['plot_bcoeffs']      = True  # plot b-coefficients
-        params['Leg_npts_r']        = 1000   # number of radial points for plotting of the Legendre expansion
-        params['Leg_npts_th']       = 720   # number of angular points for plotting of the Legendre expansion
+        params['Leg_npts_r']        = 200   # number of radial points for plotting of the Legendre expansion
+        params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
             
         """ *** PES *** """
         params['pes_npts']       = 1000    # numer of points for PES evaluation
@@ -344,9 +349,8 @@ def read_input():
         params['pes_lmax']       = 1
 
         """ *** PECD *** """
-        params['calc_pecd']       = False
         params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-        params['k_pecd']          = [0.3,0.47,0.7,0.9] # (a.u.) (list) at what electron momentum do you want PECD?
-        params["save_snapthots"]  = True
+        params['pecd_momenta']    = [0.7,0.9,1.4] # (a.u.) (list) at what electron momentum do you want PECD?
+
 
     return params
