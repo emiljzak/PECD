@@ -201,7 +201,7 @@ class analysis:
 
             f       = elem[1]
             plane   = elem[0]
-
+            print("plane = " + str(plane))
             kgrid       = grid[0]
             thetagrid   = grid[1]
 
@@ -240,41 +240,51 @@ class analysis:
             x, w    = np.polynomial.legendre.leggauss(deg)
             w       = w.reshape(nleg,-1)
 
-            nkpoints    = self.params['Leg_npts_r']
+            nkpoints    = self.params['Leg_npts_r'] # number of radial grid points on which the b-coefficients are calculated
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
 
             kgrid1D       = np.linspace(0.05, self.params['pes_max_k'], nkpoints)
-
+            thgrid1D      = np.linspace(0.0, 2.0 * np.pi, self.params['Leg_npts_th'], endpoint=False )
             """ calculating Legendre moments """
+
+
+            print("Calculating b(k) coefficients in k range: " + str(0.05) + " ... " + str(self.params['pes_max_k']))
+                    
+
             for n in range(0,Lmax+1):
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
 
                 for ipoint,k in enumerate(list(kgrid1D)):
 
-                    print("k = " + '{:.3f}'.format(k))
-                    
                     W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
 
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+                    
+                if self.params['plot_bcoeffs'] == True:
+                    plt.plot(kgrid1D,bcoeff[:,n],label=n)
+                    plt.legend()
 
-                plt.plot(kgrid1D,bcoeff[:,n],label=n)
-                plt.legend()   
-            plt.show()
-            plt.close()
+            if self.params['plot_bcoeffs'] == True:
+                plt.show()
+                plt.close()
         
            
             #plot Legendre-reconstructed distribution on test grid 
 
+            kgrid_leg_mesh, thetagrid_leg_mesh = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
+
             if self.params['Leg_plot_reconst'] == True:
 
-                W_legendre = np.zeros((kgrid.shape[0],thetagrid.shape[1]), dtype = float)
+                W_legendre = np.zeros((kgrid_leg_mesh.shape[0],thetagrid_leg_mesh.shape[1]), dtype = float)
 
                 for ipoint in range(nkpoints):
 
                     for n in range(0,Lmax+1):
 
-                        Pn                      = eval_legendre(n, np.cos(thetagrid[0,:])).reshape(thetagrid.shape[1],1)
+          
+                        Pn                      = eval_legendre(n, np.cos(thetagrid_leg_mesh[0,:])).reshape(thetagrid_leg_mesh.shape[1],1)
+
                         W_legendre[ipoint,:]    += bcoeff[ipoint,n] * Pn[:,0] 
 
                 
@@ -282,7 +292,7 @@ class analysis:
                 spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax = fig.add_subplot(spec[0, 0], projection='polar')
                 
-                line_legendre = ax.contourf(    kgrid, thetagrid, 
+                line_legendre = ax.contourf(    thetagrid_leg_mesh,  kgrid_leg_mesh,
                                                 W_legendre / W_legendre.max(), 
                                                 100, 
                                                 cmap = 'jet') 

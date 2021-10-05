@@ -331,26 +331,22 @@ def read_input():
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
         """ *** Legendre expansion *** """
-        params['Leg_lmax']          = 2      # maximum angular momentum in the Legendre expansion
+        params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
         params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
-        params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
-        params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
-
-
-
-        params['k_list_pad']      = list(np.linspace(1,2.0,4)) #list of wavevectors for MFPAD plots
-       
+        params['plot_bcoeffs']      = True  # plot b-coefficients
+        params['Leg_npts_r']        = 1000   # number of radial points for plotting of the Legendre expansion
+        params['Leg_npts_th']       = 720   # number of angular points for plotting of the Legendre expansion
             
         """ *** PES *** """
         params['pes_npts']       = 1000    # numer of points for PES evaluation
-        params['pes_max_k']      = 1.5     # maximum momentum in a.u. Must be lower than the momentum range for W2D
+        params['pes_max_k']      = 2.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
         params['pes_lmax']       = 1
 
         """ *** PECD *** """
-        params['analyze_pecd']    = False
+        params['calc_pecd']       = False
         params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-        params['k_pecd']          = [0.3,0.47,0.7,0.9] #(a.u.) (list) at what electron momentum do you want PECD?
-        params["save_snapthots"] = True
+        params['k_pecd']          = [0.3,0.47,0.7,0.9] # (a.u.) (list) at what electron momentum do you want PECD?
+        params["save_snapthots"]  = True
 
     return params
