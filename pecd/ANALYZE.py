@@ -205,16 +205,15 @@ class analysis:
             kgrid       = grid[0]
             thetagrid   = grid[1]
 
-            #exit()
             """ Interpolate f(k,theta)"""
             #W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
             W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
 
-            if self.params['Leg_plot_reconst'] == True:
+            if self.params['Leg_test_interp'] == True:
+
                 fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
                 spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax = fig.add_subplot(spec[0, 0], projection='polar')
-                #ax.set_ylim(0,2) #radial extent
 
                 #plot W_av on the original grid
                 W_interp_mesh = W_interp(kgrid[:,0], thetagrid[0,:])
@@ -233,59 +232,63 @@ class analysis:
                 plt.show()
                 plt.close()
 
-            # Define function and interval
+
+
             Lmax    = self.params['Leg_lmax'] 
             deg     = Lmax + 10
             nleg    = deg
             x, w    = np.polynomial.legendre.leggauss(deg)
             w       = w.reshape(nleg,-1)
 
-            nkpoints    = params['pes_npts'] 
+            nkpoints    = self.params['Leg_npts_r']
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
 
-            kgrid       = np.linspace(0.05, params['pes_max_k'], nkpoints)
+            kgrid1D       = np.linspace(0.05, self.params['pes_max_k'], nkpoints)
 
             """ calculating Legendre moments """
             for n in range(0,Lmax+1):
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
 
-                for ipoint,k in enumerate(list(kgrid)):
+                for ipoint,k in enumerate(list(kgrid1D)):
 
                     print("k = " + '{:.3f}'.format(k))
                     
                     W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
+
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-                plt.plot(kgrid,bcoeff[:,n],label=n)
+                plt.plot(kgrid1D,bcoeff[:,n],label=n)
                 plt.legend()   
             plt.show()
+            plt.close()
         
            
-        
-            #plot Legendre-reconstructed W_av on test grid 
-            thetagridtest       = np.linspace(-np.pi,np.pi, nkpoints)
-            kgridtest           = np.linspace(0.05, 1, nkpoints)
-            kgridtestmesh, thetatestmesh    = np.meshgrid(kgridtest, thetagridtest )
+            #plot Legendre-reconstructed distribution on test grid 
 
-            #W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
+            if self.params['Leg_plot_reconst'] == True:
 
-            W_legendre = np.zeros((kgridtest.shape[0],thetagridtest.shape[0]), dtype = float)
+                W_legendre = np.zeros((kgrid.shape[0],thetagrid.shape[1]), dtype = float)
 
-            for ipoint in range(nkpoints):
+                for ipoint in range(nkpoints):
 
-                for n in range(0,Lmax+1):
-                    Pn = eval_legendre(n, np.cos(thetagridtest)).reshape(thetagridtest.shape[0],1)
-                    W_legendre[ipoint,:] += bcoeff[ipoint,n] * Pn[:,0] 
+                    for n in range(0,Lmax+1):
 
-            
-            fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-            spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-            ax = fig.add_subplot(spec[0, 0], projection='polar')
-            ax.set_ylim(0,1) #radial extent
-            line_legendre = ax.contourf(   thetatestmesh ,kgridtestmesh, W_legendre.T / W_legendre.max(), 100, cmap = 'jet') 
-            plt.colorbar(line_legendre, ax=ax, aspect=30) 
-            #plt.show()
+                        Pn                      = eval_legendre(n, np.cos(thetagrid[0,:])).reshape(thetagrid.shape[1],1)
+                        W_legendre[ipoint,:]    += bcoeff[ipoint,n] * Pn[:,0] 
+
+                
+                fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                ax = fig.add_subplot(spec[0, 0], projection='polar')
+                
+                line_legendre = ax.contourf(    kgrid, thetagrid, 
+                                                W_legendre / W_legendre.max(), 
+                                                100, 
+                                                cmap = 'jet') 
+
+                plt.colorbar(line_legendre, ax=ax, aspect=30) 
+                plt.show()
 
         return bcoeff, kgrid
 
@@ -795,10 +798,10 @@ class momentumfuncs(analysis):
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
-                self.legendre_expansion(funcpars,polargrid,Wav)
+                self.legendre_expansion(funcpars,polargrid,{'av':Wav})
 
             if funcpars['PES']  == True:
-                self.PES(funcpars,polargrid,Wav)
+                self.PESav(funcpars,polargrid,Wav)
 
     def W2Dav_calc(self, funcpar, Flm, polargrid):
         """calculate numerically W2D for a sequence of phi angles and return averaged W2Dav"""
@@ -806,7 +809,9 @@ class momentumfuncs(analysis):
         print("Evaluation planes for W2D: Z")
         Wav = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=float)
 
-        phigrid = np.linspace(0.0, 2.0 * np.pi, funcpar['nphi_pts'], endpoint=False)
+        phimin = 0.0
+        phimax = 2.0 * np.pi
+        phigrid = np.linspace(phimin, phimax, funcpar['nphi_pts'], endpoint=False)
         
         for iphi in range(phigrid.shape[0]):
             print('iphi = ' + str(iphi) + ', phi = ' + str(phigrid[iphi]))
@@ -1202,6 +1207,34 @@ class momentumfuncs(analysis):
             self.PES_plot(funcpars,spectrum,pes_kgrid)
 
 
+    def PESav(self,funcpars,grid,Wav):
+        """ photo-electron spectrum from phi-averaged momentum distribution"""
+    
+        kgrid       = grid[0]
+        thetagrid   = grid[1]
+
+        Lmax        = self.params['pes_lmax'] 
+        nleg        = Lmax
+
+        x, w        = np.polynomial.legendre.leggauss(nleg)
+        w           = w.reshape(nleg,-1)
+
+        """ Interpolate Wav(k,theta)"""
+        W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], Wav[:,:], kx=3, ky=3)
+
+
+        print("*** calculating photo-electron spectrum ***")
+        nkpoints    = params['pes_npts'] 
+        pes_kgrid   = np.linspace(0.05, params['pes_max_k'], nkpoints)
+        spectrum    = np.zeros(nkpoints, dtype = float)
+        
+        
+        for ipoint,k in enumerate(list(pes_kgrid)):   
+        
+            W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+            spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
+        
+        self.PES_plot(funcpars,spectrum,pes_kgrid)
 
 
     def PES_plot(self,funcpars,spectrum,kgrid):
@@ -1243,10 +1276,6 @@ class momentumfuncs(analysis):
         else:
             raise ValueError("incorrect y-axis specification")
 
-
-        print(func_plot.max())
-        #exit()
-
         if funcpars['PES_params']['normalize'] == True:
             func_plot /= func_plot.max()
     
@@ -1255,8 +1284,6 @@ class momentumfuncs(analysis):
                                 label = plot_params['plot_label'],
                                 marker = plot_params['plot_marker'], 
                                 color = plot_params['plot_colour'] )
-
-
 
         ax1.set_title(  label               = plot_params['title_text'],
                         fontsize            = plot_params['title_size'],
@@ -1275,7 +1302,6 @@ class momentumfuncs(analysis):
         elif funcpars['PES_params']['k-axis'] == 'energy':
             plt.xlabel("energy (eV)")
 
-
         if funcpars['PES_params']['y-axis'] == 'unit':
             if funcpars['PES_params']['normalize'] == True:
                 plt.ylabel("cross section " +r"$\sigma(k)$" +  " (normalized)")
@@ -1287,8 +1313,6 @@ class momentumfuncs(analysis):
                 plt.ylabel("cross section "+r"$log(\sigma(k))$" + " (normalized)")
             else:
                 plt.ylabel("cross section "+r"$log(\sigma(k))$")
-
-
 
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
@@ -1311,8 +1335,8 @@ class momentumfuncs(analysis):
         #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
 
         if plot_params['save'] == True:
-
-            fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
+            if funcpars['name'] == 'W2D':
+                fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
                                             plot_params['save_name'] + "_" +
                                             funcpars['plane_split'][1]+
                                             funcpars['plane_split'][0]+ "_" +
@@ -1321,11 +1345,24 @@ class momentumfuncs(analysis):
                                             params['helicity'] +
                                             ".pdf",
                                             
-                            dpi         =   plot_params['save_dpi'],
-                            orientation =   plot_params['save_orientation'],
-                            bbox_inches =   plot_params['save_bbox_inches'],
-                            pad_inches  =   plot_params['save_pad_inches']
+                                            dpi         =   plot_params['save_dpi'],
+                                            orientation =   plot_params['save_orientation'],
+                                            bbox_inches =   plot_params['save_bbox_inches'],
+                                            pad_inches  =   plot_params['save_pad_inches']
                             )
+            elif  funcpars['name'] == 'W2Dav':
+                fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
+                                            plot_params['save_name'] + "_" +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            params['helicity'] +
+                                            ".pdf",
+                                            
+                                            dpi         =   plot_params['save_dpi'],
+                                            orientation =   plot_params['save_orientation'],
+                                            bbox_inches =   plot_params['save_bbox_inches'],
+                                            pad_inches  =   plot_params['save_pad_inches']
+                            )       
 
         plt.show()
         plt.legend()  

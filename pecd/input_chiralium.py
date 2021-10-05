@@ -278,7 +278,7 @@ def read_input():
 
         W2Dav = {   'name':         'W2Dav',
                     'plot':         (True, GRAPHICS.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                    'show':         True, # show image on screen
+                    'show':         False, # show image on screen
                     'save':         False, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
@@ -289,9 +289,11 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     20, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
                     
-                    'legendre':     False, # calculate Legendre decomposition
+                    'legendre':     True, # calculate Legendre decomposition
+
+
 
                     'PES':          False, # calculate PES
                     'PES_params': {     
@@ -330,7 +332,8 @@ def read_input():
 
         """ *** Legendre expansion *** """
         params['Leg_lmax']          = 2      # maximum angular momentum in the Legendre expansion
-        params['Leg_plot_reconst']  = False   # plot the reconstructed distribution
+        params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
+        params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
         params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
 
