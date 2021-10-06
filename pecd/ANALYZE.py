@@ -33,6 +33,12 @@ class analysis:
     def __init__(self,params):
         self.params = params
 
+    def find_nearest(self,array, value):
+        array   = np.asarray(array)
+        idx     = (np.abs(array - value)).argmin()
+        return array[idx], idx
+
+
 
     def spharm(self,l,m,theta,phi):
         return sph_harm(m, l, phi, theta)
@@ -733,7 +739,7 @@ class momentumfuncs(analysis):
 
     def PECD(self,funcpars):
         
-
+       
         print("------------ Quantitative PECD analysis --------------"+'\n\n')
 
         """ Calculate W2D for left- and right-circularly polarized light """
@@ -749,6 +755,9 @@ class momentumfuncs(analysis):
 
         """ ************** Calculate PECD **************** """
         
+
+
+
         """ set up time grids PECD """
         tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
         
@@ -764,53 +773,39 @@ class momentumfuncs(analysis):
             Wav_L = obs_L[i][2]['Wav']
             Wav_R = obs_R[i][2]['Wav']
 
-        # calculating differential W2Dav:
-        if funcpars['plot2D'][0] == True:
-            self.PECD_plot2D(self.params['W2Dav'],polargrid,Wav_R-Wav_L)
+            # calculating differential W2Dav:
+            if funcpars['plot2D'][0] == True:
+                self.PECD_plot2D(funcpars,polargrid,Wav_R-Wav_L)
 
-        exit()
+            bcoeff_L = obs_L[i][2]['bcoeff']
+            bfoeff_R = obs_R[i][2]['bcoeff']
+            kgrid   = obs_R[i][2]['kgrid']
 
-        k_pecd      = [] # values of electron momentum at which PECD is evaluated
-        ind_kgrid   = [] # index of electron momentum in the list
+            k_pecd      = [] # values of electron momentum at which PECD is evaluated
+            ind_kgrid   = [] # index of electron momentum in the list
 
-        for kelem in params['k_pecd']:
-            k, ind = find_nearest(kgrid, kelem)
-            k_pecd.append(k)
-            ind_kgrid.append(ind)
-
-
-
-        with open( params['job_directory']+ "grid_W_av" , 'r') as gridfile:   
-            grid = np.loadtxt(gridfile)
-
-        with open( params['job_directory'] + "W_R_av_3D", 'r') as Wavfile:   
-            WavR = np.loadtxt(Wavfile)
-
-        with open( params['job_directory'] + "W_L_av_3D", 'r') as Wavfile:   
-            WavL = np.loadtxt(Wavfile)
+            for kelem in params['pecd_momenta']:
+                k, ind = self.find_nearest(kgrid, kelem)
+                k_pecd.append(k)
+                ind_kgrid.append(ind)
 
 
-        print("Quantitative PECD analysis")
+            pecd_sph = []
+            pecd_mph = []
 
-        pecd_sph = []
-        pecd_mph = []
+            for ielem, k in enumerate(k_pecd):
+                print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax']+1)) + "\n")
+                pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
 
-        for ielem, k in enumerate(k_pecd):
-            print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax']+1)) + "\n")
-            pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
 
-        pecd_pad = (WavR - WavL)#/(np.abs(WavR)+np.abs(WavL)+1.0) #(WavL+WavR)  #/ 
-        print("plotting PECD")
-        PLOTS.plot_2D_polar_map(pecd_pad,grid[1],grid[0],100)
+
 
         return pecd_sph
 
     def PECD_plot2D(self,funcpars,polargrid,W):
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
-        plot_params = funcpars['plot'][1] #all plot params
-        ktuple      = funcpars['ktulpe'] #range for k
-        thtuple     = funcpars['thtuple'] #range for theta
+        plot_params = funcpars['plot2D'][1] #all plot params
 
         """
         Args:
@@ -835,14 +830,7 @@ class momentumfuncs(analysis):
         norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
 
 
-        ax1.set_ylim(ktuple[0],ktuple[1]) #radial scale
-        ax1.set_thetamin(thtuple[0]*180.0/np.pi)
-        ax1.set_thetamax(thtuple[1]*180.0/np.pi)
 
-
-        plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
-        plot_params['rticks']   = list(np.linspace(ktuple[0],ktuple[1],plot_params['nticks_rad'])) 
-                            
 
         plot_W2D  = ax1.contourf(   polargrid[1], 
                                     polargrid[0], 
@@ -864,6 +852,12 @@ class momentumfuncs(analysis):
                         fontname            = plot_params['title_fontname'],
                         fontstyle           = plot_params['title_fontstyle'])
 
+
+
+
+        ax1.set_ylim(polargrid[1].min(),polargrid[1].max()) #radial scale
+        ax1.set_thetamin(polargrid[0].min())
+        ax1.set_thetamax(polargrid[0].max())
 
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
@@ -988,8 +982,10 @@ class momentumfuncs(analysis):
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
-                Wav_leg = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
-                obs_dict['Wav_leg'] = Wav_leg
+                bcoeff, kgrid = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
+                obs_dict['bcoeff']  = bcoeff
+                obs_dict['kgrid']   = kgrid
+                
             if funcpars['PES']  == True:
                 PES_av = self.PESav(funcpars,polargrid,Wav)
                 obs_dict['PES_av'] = PES_av

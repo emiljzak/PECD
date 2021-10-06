@@ -315,7 +315,9 @@ def read_input():
                     'plot1D':       (True, GRAPHICS.gparams_PECD1D()), #specify parameters of the plot to load
                     'orient_av':    False, # perform orientation averaging over the Euler angle's grid?
                     'show':         True, # show images on screen
-                    'save':         False, # save arrays in files
+                    'save':         True, # save arrays in files
+    
+                    
                     }
 
         #params['obs_params_rho'] = rho2D

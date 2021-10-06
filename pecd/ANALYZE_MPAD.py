@@ -151,11 +151,6 @@ def test_wigner():
 
 
 
-def find_nearest(array, value):
-    array   = np.asarray(array)
-    idx     = (np.abs(array - value)).argmin()
-    return array[idx], idx
-
 
 
 if __name__ == "__main__": 
