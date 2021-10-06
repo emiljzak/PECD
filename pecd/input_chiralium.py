@@ -66,9 +66,9 @@ def read_input():
 
     """==== Molecule-field orientation ===="""
 
-    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
-    params['N_batches'] 	= 1 #number of batches for orientation averaging
-    params['orient_grid_type'] = "2D" # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['N_euler'] 	        = 1     # number of euler grid points per dimension for orientation averaging
+    params['N_batches'] 	    = 1     # number of batches for orientation averaging
+    params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
     """
@@ -117,7 +117,7 @@ def read_input():
         
         params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
 
-        params['field_func_name']    = "RCPL"
+        params['field_func_name']    = "LCPL"
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
@@ -171,7 +171,7 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = True    # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-2 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
@@ -293,7 +293,7 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
                     'legendre':     True, # calculate Legendre decomposition
 
@@ -352,10 +352,10 @@ def read_input():
 
         """ *** Legendre expansion *** """
         params['Leg_lmax']          = 4      # maximum angular momentum in the Legendre expansion
-        params['Leg_plot_reconst']  = False   # plot and compare the reconstructed distribution
+        params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
-        params['plot_bcoeffs']      = False  # plot b-coefficients
-        params['Leg_npts_r']        = 200   # number of radial points for plotting of the Legendre expansion
+        params['plot_bcoeffs']      = True  # plot b-coefficients
+        params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
             
         """ *** PES *** """

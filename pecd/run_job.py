@@ -18,8 +18,7 @@ def gen_euler_grid_2D(n_euler):
     euler_grid_2d   = np.array(list(itertools.product(*[beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
     n_euler_2d      = euler_grid_2d.shape[0]
-    print("\nTotal number of 2D-Euler grid points: ", n_euler_2d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
-    #print(euler_grid_3d)
+    print("\nTotal number of 2D-Euler grid points: ", n_euler_2d , " and the shape of the 3D grid array is:    ", euler_grid_2d.shape)
     return euler_grid_2d, n_euler_2d
 
 def gen_euler_grid(n_euler):

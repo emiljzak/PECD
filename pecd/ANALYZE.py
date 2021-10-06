@@ -240,12 +240,12 @@ class analysis:
 
 
             Lmax    = self.params['Leg_lmax'] 
-            nleg     = 1000
+            nleg     = 100
             
             x, w    = np.polynomial.legendre.leggauss(nleg)
             w       = w.reshape(nleg,-1)
 
-            nkpoints    = self.params['Leg_npts_r'] # number of radial grid points on which the b-coefficients are calculated
+            nkpoints    = self.params['Leg_npts_r'] # number of radial grid points at which the b-coefficients are calculated
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
 
             kgrid1D       = np.linspace(0.05, self.params['pes_max_k'], nkpoints)
@@ -254,16 +254,38 @@ class analysis:
             
             """ calculating Legendre moments """
             print("Calculating b(k) coefficients in k range: " + str(0.05) + " ... " + str(self.params['pes_max_k']))
-                    
+            
+
+            #print("-acos(x) = " + str(-np.arccos(x)))
+            #Pn = eval_legendre(2, x).reshape(nleg,-1)
+            
+            #plt.plot(x,Pn)
+            #plt.show()
+            #exit()
+            
+
+            kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x),indexing='ij')
+
             for n in range(0,Lmax+1):
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
 
                 for ipoint,k in enumerate(list(kgrid1D)):
 
+                    print(k)
                     W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
+
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
+                print(W_interp1.shape)
+                W_interp2    = W_interp(kgrid1D,-np.arccos(x))
+                fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                ax = fig.add_subplot(spec[0, 0], projection='polar')
+                line_test = ax.contourf(  thetamesh_btest , kgridmesh_btest, W_interp2, 
+                        100, cmap = 'jet')
+
+                exit()
                 if self.params['plot_bcoeffs'] == True:
                     plt.plot(kgrid1D,np.log(bcoeff[:,n]),label=n)
                     plt.legend()

@@ -744,7 +744,13 @@ if __name__ == "__main__":
     """ Read grid of Euler angles"""
     grid_euler  = read_euler_grid()
 
-    grid_euler = grid_euler.reshape(-1,3)
+
+    if params['orient_grid_type'] == "3D":
+        grid_euler = grid_euler.reshape(-1,3)     
+    elif params['orient_grid_type'] == "2D":
+        grid_euler = grid_euler.reshape(-1,2)     
+    else:
+        raise ValueError("incorrect euler grid type")
 
     N_Euler = grid_euler.shape[0]
 
