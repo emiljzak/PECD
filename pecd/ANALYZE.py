@@ -794,8 +794,7 @@ class momentumfuncs(analysis):
                 ind_kgrid.append(ind)
 
 
-            pecd_sph = []
-            pecd_mph = []
+            pecd_list = []
 
             if funcpars['save'] == True:
    
@@ -824,12 +823,12 @@ class momentumfuncs(analysis):
                         " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
                         "\n")
 
-                pecd_sph.append([   t,k, [bcoeff_R[ielem,n]/bcoeff_R[ielem,0] for n in range(self.params['pecd_lmax']+1)],
+                pecd_list.append([   t,k, [bcoeff_R[ielem,n]/bcoeff_R[ielem,0] for n in range(self.params['pecd_lmax']+1)],
                                     [bcoeff_L[ielem,n]/bcoeff_L[ielem,0] for n in range(self.params['pecd_lmax']+1)],
                                     2.0 * bcoeff_R[ielem,1]/bcoeff_R[ielem,0] * 100.0])
 
 
-        return pecd_sph
+        return pecd_list
 
     def PECD_plot2D(self,funcpars,polargrid,W):
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """

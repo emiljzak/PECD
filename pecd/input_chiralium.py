@@ -51,10 +51,6 @@ def read_input():
 
     """ CONTINUUM PART"""
 
-
-    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
-    params['N_batches'] 	= 1 #number of batches for orientation averaging
-
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
 
     """==== time-grid parameters ===="""
@@ -66,6 +62,13 @@ def read_input():
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
+
+
+    """==== Molecule-field orientation ===="""
+
+    params['N_euler'] 	    = 1 #number of euler grid points per dimension for orientation averaging
+    params['N_batches'] 	= 1 #number of batches for orientation averaging
+    params['orient_grid_type'] = "2D" # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
     """
@@ -290,7 +293,7 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
                     
                     'legendre':     True, # calculate Legendre decomposition
 

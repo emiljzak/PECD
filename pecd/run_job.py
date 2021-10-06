@@ -11,6 +11,17 @@ def convert(o):
     raise TypeError
 
 
+def gen_euler_grid_2D(n_euler):
+    """ Cartesian product of 1D grids of Euler angles"""
+    beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
+    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
+    euler_grid_2d   = np.array(list(itertools.product(*[beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
+
+    n_euler_2d      = euler_grid_2d.shape[0]
+    print("\nTotal number of 2D-Euler grid points: ", n_euler_2d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
+    #print(euler_grid_3d)
+    return euler_grid_2d, n_euler_2d
+
 def gen_euler_grid(n_euler):
     """ Cartesian product of 1D grids of Euler angles"""
     alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
@@ -63,7 +74,13 @@ def gen_inputs_list(params_input):
     params_list = []
 
     """ Generate a grid of molecular orientations parametrized with the Euler angles"""
-    grid_euler, params_input['n_grid_euler_3d'] = gen_euler_grid(params_input['N_euler'])            
+    if params_input['orient_grid_type'] == "3D":
+        grid_euler, params_input['n_grid_euler_3d'] = gen_euler_grid(params_input['N_euler'])            
+    elif params_input['orient_grid_type'] == "2D":
+        grid_euler, params_input['n_grid_euler_2d'] = gen_euler_grid_2D(params_input['N_euler'])            
+    else:
+        raise ValueError("incorrect euler grid typ")
+
 
 
     lmin        = params_input['bound_lmax_arr'][0]
