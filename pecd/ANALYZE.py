@@ -773,19 +773,23 @@ class momentumfuncs(analysis):
             Wav_L = obs_L[i][2]['Wav']
             Wav_R = obs_R[i][2]['Wav']
 
+            bcoeff_L    = obs_L[i][2]['bcoeff']
+            bcoeff_R    = obs_R[i][2]['bcoeff']
+            kgrid       = obs_R[i][2]['kgrid']
+
+            pecd = Wav_R-Wav_L
+
             # calculating differential W2Dav:
             if funcpars['plot2D'][0] == True:
-                self.PECD_plot2D(funcpars,polargrid,Wav_R-Wav_L)
-
-            bcoeff_L = obs_L[i][2]['bcoeff']
-            bfoeff_R = obs_R[i][2]['bcoeff']
-            kgrid   = obs_R[i][2]['kgrid']
+                self.PECD_plot2D(funcpars,polargrid,pecd)
 
             k_pecd      = [] # values of electron momentum at which PECD is evaluated
             ind_kgrid   = [] # index of electron momentum in the list
 
+            print(kgrid[:,0])
+        
             for kelem in params['pecd_momenta']:
-                k, ind = self.find_nearest(kgrid, kelem)
+                k, ind = self.find_nearest(kgrid[:,0], kelem)
                 k_pecd.append(k)
                 ind_kgrid.append(ind)
 
@@ -793,11 +797,31 @@ class momentumfuncs(analysis):
             pecd_sph = []
             pecd_mph = []
 
+            if funcpars['save'] == True:
+   
+                with open(  self.params['job_directory'] +  "PECD" +\
+                            "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                            ".dat" , 'w') as pecdfile:
+
+                    np.savetxt(pecdfile, pecd , fmt = '%10.4e')
+
+   
+                with open(  self.params['job_directory'] +  "bcoeffs" +\
+                            "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                            ".dat" , 'w') as pecdfile:
+                    for ielem, k in enumerate(k_pecd):
+                        pecdfile.write(    str('{:8.2f}'.format(k)) +\
+                                            " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                                            " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                                            "\n")
+
+            
+            assert (self.params['pecd_lmax'] <= self.params['Leg_lmax'])
+            
             for ielem, k in enumerate(k_pecd):
-                print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(params['pecd_lmax']+1)) + "\n")
-                pecd_sph.append(2.0 * bcoeff[ielem,1]/bcoeff[ielem,0] * 100.0)
-
-
+                print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) + "\n")
+                
+                pecd_sph.append(2.0 * bcoeff_R[ielem,1]/bcoeff_R[ielem,0] * 100.0)
 
 
         return pecd_sph
@@ -853,11 +877,9 @@ class momentumfuncs(analysis):
                         fontstyle           = plot_params['title_fontstyle'])
 
 
-
-
-        ax1.set_ylim(polargrid[1].min(),polargrid[1].max()) #radial scale
-        ax1.set_thetamin(polargrid[0].min())
-        ax1.set_thetamax(polargrid[0].max())
+        ax1.set_ylim(polargrid[0].min(),polargrid[0].max()) #radial scale
+        ax1.set_thetamin(polargrid[1].min())
+        ax1.set_thetamax(polargrid[1].max())
 
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
@@ -985,12 +1007,13 @@ class momentumfuncs(analysis):
                 bcoeff, kgrid = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
                 obs_dict['bcoeff']  = bcoeff
                 obs_dict['kgrid']   = kgrid
-                
+
             if funcpars['PES']  == True:
                 PES_av = self.PESav(funcpars,polargrid,Wav)
                 obs_dict['PES_av'] = PES_av
 
             obs_list.append([i,t,obs_dict])
+
         return obs_list, polargrid
 
 

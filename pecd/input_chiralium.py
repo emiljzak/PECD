@@ -292,7 +292,7 @@ def read_input():
                     
                     'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
-                    'legendre':     False, # calculate Legendre decomposition
+                    'legendre':     True, # calculate Legendre decomposition
 
 
 
@@ -349,9 +349,9 @@ def read_input():
 
         """ *** Legendre expansion *** """
         params['Leg_lmax']          = 4      # maximum angular momentum in the Legendre expansion
-        params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
+        params['Leg_plot_reconst']  = False   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
-        params['plot_bcoeffs']      = True  # plot b-coefficients
+        params['plot_bcoeffs']      = False  # plot b-coefficients
         params['Leg_npts_r']        = 200   # number of radial points for plotting of the Legendre expansion
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
             
@@ -362,7 +362,7 @@ def read_input():
 
         """ *** PECD *** """
         params['pecd_lmax']       = 2               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-        params['pecd_momenta']    = [0.7,0.9,1.4]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
+        params['pecd_momenta']    = [1.35]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
 
 
     return params
