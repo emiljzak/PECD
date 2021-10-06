@@ -264,7 +264,7 @@ class analysis:
             #exit()
             
 
-            kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x),indexing='ij')
+            kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x)+np.pi,indexing='ij')
 
             for n in range(0,Lmax+1):
 
@@ -272,20 +272,19 @@ class analysis:
 
                 for ipoint,k in enumerate(list(kgrid1D)):
 
-                    print(k)
-                    W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
+                    W_interp1        = W_interp(k,-np.arccos(x)+np.pi).reshape(nleg,-1)
 
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-                print(W_interp1.shape)
-                W_interp2    = W_interp(kgrid1D,-np.arccos(x))
-                fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-                spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-                ax = fig.add_subplot(spec[0, 0], projection='polar')
-                line_test = ax.contourf(  thetamesh_btest , kgridmesh_btest, W_interp2, 
-                        100, cmap = 'jet')
-
-                exit()
+                #print(W_interp1.shape)
+                #W_interp2    = W_interp(kgrid1D,-np.arccos(x)+np.pi)
+                #fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                #spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                #ax = fig.add_subplot(spec[0, 0], projection='polar')
+                #line_test = ax.contourf(  thetamesh_btest , kgridmesh_btest, W_interp2, 
+                #        100, cmap = 'jet')
+                #plt.show()
+                #exit()
                 if self.params['plot_bcoeffs'] == True:
                     plt.plot(kgrid1D,np.log(bcoeff[:,n]),label=n)
                     plt.legend()
