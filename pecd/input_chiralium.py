@@ -227,6 +227,7 @@ def read_input():
                     2) W1Dk: W(k,theta0,t)      -   
                     3) W2D:  W(k,theta,phi0,t)     - 2D momentum probability density in k,theta
                     4) W2Dav: W(k,theta,t)     - 2D momentum probability density in k,theta, phi-averaged
+                    5) PECD
         """
         
 
@@ -278,7 +279,7 @@ def read_input():
 
         W2Dav = {   'name':         'W2Dav',
                     'plot':         (True, GRAPHICS.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                    'show':         False, # show image on screen
+                    'show':         True, # show image on screen
                     'save':         False, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
@@ -291,7 +292,7 @@ def read_input():
                     
                     'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
-                    'legendre':     True, # calculate Legendre decomposition
+                    'legendre':     False, # calculate Legendre decomposition
 
 
 
@@ -317,19 +318,26 @@ def read_input():
                     'save':         False, # save arrays in files
                     }
 
+        #params['obs_params_rho'] = rho2D
+        #params['obs_params_W2D'] = W2D
+        #params['obs_params_W2Dav'] = W2Dav
+        #params['obs_params_PECD'] = PECD
+
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = []
-        params['analyze_momentum']  = [W2Dav]
+        params['analyze_momentum']  = [PECD]
         
+
+        params['PECD']  = PECD
+        params['W2Dav'] = W2Dav
+        params['W2D']   = W2D
+        params['rho2D'] = rho2D
 
         """ *** Momentum-space wavefunction *** """
-
-
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
-        
         # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
         params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
         params['rcutoff']         = 20.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
@@ -351,8 +359,8 @@ def read_input():
         params['pes_lmax']       = 1
 
         """ *** PECD *** """
-        params['pecd_lmax']       = 2 #maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-        params['pecd_momenta']    = [0.7,0.9,1.4] # (a.u.) (list) at what electron momentum do you want PECD?
+        params['pecd_lmax']       = 2               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
+        params['pecd_momenta']    = [0.7,0.9,1.4]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
 
 
     return params
