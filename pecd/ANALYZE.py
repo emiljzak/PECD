@@ -786,7 +786,7 @@ class momentumfuncs(analysis):
             k_pecd      = [] # values of electron momentum at which PECD is evaluated
             ind_kgrid   = [] # index of electron momentum in the list
 
-            print(kgrid[:,0])
+
         
             for kelem in params['pecd_momenta']:
                 k, ind = self.find_nearest(kgrid[:,0], kelem)
@@ -819,9 +819,14 @@ class momentumfuncs(analysis):
             assert (self.params['pecd_lmax'] <= self.params['Leg_lmax'])
             
             for ielem, k in enumerate(k_pecd):
-                print(str('{:8.2f}'.format(k)) + " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) + "\n")
-                
-                pecd_sph.append(2.0 * bcoeff_R[ielem,1]/bcoeff_R[ielem,0] * 100.0)
+                print(  str('{:8.2f}'.format(k)) +\
+                        " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                        " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                        "\n")
+
+                pecd_sph.append([   t,k, [bcoeff_R[ielem,n]/bcoeff_R[ielem,0] for n in range(self.params['pecd_lmax']+1)],
+                                    [bcoeff_L[ielem,n]/bcoeff_L[ielem,0] for n in range(self.params['pecd_lmax']+1)],
+                                    2.0 * bcoeff_R[ielem,1]/bcoeff_R[ielem,0] * 100.0])
 
 
         return pecd_sph
@@ -878,8 +883,8 @@ class momentumfuncs(analysis):
 
 
         ax1.set_ylim(polargrid[0].min(),polargrid[0].max()) #radial scale
-        ax1.set_thetamin(polargrid[1].min())
-        ax1.set_thetamax(polargrid[1].max())
+        ax1.set_thetamin(polargrid[1].min()*180.0/np.pi)
+        ax1.set_thetamax(polargrid[1].max()*180.0/np.pi)
 
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
