@@ -1058,7 +1058,7 @@ def rotate_tjmat(grid_euler,irun,tjmat):
 
     lmax = tjmat.shape[0] -1
 
-    tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1), dtype = float)
+    tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1), dtype = complex)
     
     # pull wigner matrices at the given euler angle's set
     

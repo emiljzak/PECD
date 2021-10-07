@@ -58,7 +58,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 1000.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -66,7 +66,7 @@ def read_input():
 
     """==== Molecule-field orientation ===="""
 
-    params['N_euler'] 	        = 2     # number of euler grid points per dimension for orientation averaging
+    params['N_euler'] 	        = 1     # number of euler grid points per dimension for orientation averaging
     params['N_batches'] 	    = 1     # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
@@ -117,7 +117,7 @@ def read_input():
         
         params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
 
-        params['field_func_name']    = "LCPL"
+        params['field_func_name']    = "RCPL"
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
@@ -207,7 +207,7 @@ def read_input():
 
         params['wavepacket_format'] = "h5" #dat or h5
 
-        params['plot_elfield']      = False
+        params['plot_elfield']      = True
         params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     
