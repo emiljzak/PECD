@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -46,7 +46,7 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 40
+    params['bound_nbins']   = 50
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -58,7 +58,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 400.0 
+    params['tmax']          = 1000.0 
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -67,7 +67,7 @@ def read_input():
     """==== Molecule-field orientation ===="""
 
     params['N_euler'] 	        = 2     # number of euler grid points per dimension for orientation averaging
-    params['N_batches'] 	    = 2     # number of batches for orientation averaging
+    params['N_batches'] 	    = 1     # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
