@@ -243,6 +243,15 @@ class analysis:
             nleg     = 100
             
             x, w    = np.polynomial.legendre.leggauss(nleg)
+
+
+            #print(x.shape)
+            #print(w.shape)
+            #print(x)
+            #print("legendre grid")
+            #print(-np.arccos(x)+np.pi)
+
+            #exit()
             w       = w.reshape(nleg,-1)
 
             nkpoints    = self.params['Leg_npts_r'] # number of radial grid points at which the b-coefficients are calculated
@@ -255,17 +264,16 @@ class analysis:
             """ calculating Legendre moments """
             print("Calculating b(k) coefficients in k range: " + str(0.05) + " ... " + str(self.params['pes_max_k']))
             
-
             #print("-acos(x) = " + str(-np.arccos(x)))
-            #Pn = eval_legendre(2, x).reshape(nleg,-1)
-            
+            #Pn = eval_legendre(2, x).reshape(nleg,-1) 
             #plt.plot(x,Pn)
             #plt.show()
             #exit()
             
             #kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x)+np.pi,indexing='ij')
-            print("legendre grid")
-            print(-np.arccos(x)+np.pi)
+            #print("legendre grid")
+            #print(-np.arccos(x)+np.pi)
+
 
             for n in range(0,Lmax+1):
 
@@ -273,7 +281,7 @@ class analysis:
 
                 for ipoint,k in enumerate(list(kgrid1D)):
 
-                    W_interp1        = W_interp(k,-np.arccos(x)+np.pi).reshape(nleg,-1)
+                    W_interp1        = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
 
                     bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
@@ -779,9 +787,6 @@ class momentumfuncs(analysis):
 
         """ ************** Calculate PECD **************** """
         
-
-
-
         """ set up time grids PECD """
         tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
         
@@ -823,14 +828,14 @@ class momentumfuncs(analysis):
             if funcpars['save'] == True:
    
                 with open(  self.params['job_directory'] +  "PECD" +\
-                            "_" + irun + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
+                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
                             ".dat" , 'w') as pecdfile:
 
                     np.savetxt(pecdfile, pecd , fmt = '%10.4e')
 
    
                 with open(  self.params['job_directory'] +  "bcoeffs" +\
-                            "_" + irun + "_" + + str('{:.1f}'.format(t/time_to_au) ) +\
+                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
                             ".dat" , 'w') as pecdfile:
                     for ielem, k in enumerate(k_pecd):
                         pecdfile.write(    str('{:8.2f}'.format(k)) +\
@@ -944,7 +949,7 @@ class momentumfuncs(analysis):
         if plot_params['save'] == True:
 
             fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" + irun + "_" +
+                                            plot_params['save_name'] + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             self.params['helicity'] +
@@ -1024,7 +1029,7 @@ class momentumfuncs(analysis):
 
             if funcpars['save'] == True:
    
-                with open( self.params['job_directory'] +  "W2Dav" + "_" + irun + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                with open( self.params['job_directory'] +  "W2Dav" + "_" + str(irun) + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
                     "_" + helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, Wav, fmt = '%10.4e')
 
@@ -1160,7 +1165,7 @@ class momentumfuncs(analysis):
         if plot_params['save'] == True:
 
             fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" + irun + "_" +
+                                            plot_params['save_name'] + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             self.params['helicity'] +
@@ -1253,7 +1258,7 @@ class momentumfuncs(analysis):
 
             if funcpars['save'] == True:
                 for elem in W2Ddir.items():
-                    with open( self.params['job_directory'] +  "W2D" + irun  + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    with open( self.params['job_directory'] +  "W2D" + str(irun)  + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
                         "_" + helicity + ".dat" , 'w') as rhofile:   
                         np.savetxt(rhofile, elem[1], fmt = '%10.4e')
 
@@ -1395,7 +1400,7 @@ class momentumfuncs(analysis):
             fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
                                             plot_params['save_name'] + "_" +
                                             funcpars['plane_split'][1]+
-                                            funcpars['plane_split'][0]+ "_" + irun + "_" +
+                                            funcpars['plane_split'][0]+ "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             params['helicity'] +
