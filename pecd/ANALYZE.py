@@ -42,7 +42,19 @@ class analysis:
 
     def spharm(self,l,m,theta,phi):
         return sph_harm(m, l, phi, theta)
-        
+    
+    def rotate_spharm(self,func,D):
+        rot_angle = [0.0, np.pi/4, 0.0]
+        func_rotated = np.zeros((func.shape[0], func.shape[1]))
+        for m in range(D.shape[1]):
+            func_rotated += D[:,m] * func[:,m]
+
+        return func_rotated
+
+
+
+
+
 
     def calc_tgrid(self):
         print("Setting up time-grid")

@@ -572,18 +572,6 @@ def spharmcart(l,m,x,y,z):
         phi     = 0.0
     return sph_harm(m, l, phi, theta)
 
-def precompute_spharm(grid_theta,lmax, phi0):
-    SP = {}
-
-    for l in range(0,2*lmax+1):
-        for m in range(-l,l+1):
-            SP[ str(l) + ',' + str(m) ] = PLOTS.spharm(l, m, grid_theta , phi0) 
-    return SP
-
-
-
-
-
 
 
 def gen_euler_grid_theta_chi(n_euler):
