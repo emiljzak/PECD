@@ -293,7 +293,7 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     20, #number of phi points for the integration over tha azimuthal angle.
                     
                     'legendre':     True, # calculate Legendre decomposition
 
@@ -319,7 +319,7 @@ def read_input():
                     'orient_av':    False, # perform orientation averaging over the Euler angle's grid?
                     'show':         True, # show images on screen
                     'save':         True, # save arrays in files
-    
+                    'kmax':         2.0,
                     
                     }
 
@@ -351,7 +351,7 @@ def read_input():
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
         """ *** Legendre expansion *** """
-        params['Leg_lmax']          = 4      # maximum angular momentum in the Legendre expansion
+        params['Leg_lmax']          = 10      # maximum angular momentum in the Legendre expansion
         params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
         params['plot_bcoeffs']      = True  # plot b-coefficients
@@ -364,7 +364,7 @@ def read_input():
         params['pes_lmax']       = 1
 
         """ *** PECD *** """
-        params['pecd_lmax']       = 2               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
+        params['pecd_lmax']       = 6               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
         params['pecd_momenta']    = [1.35]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
 
 

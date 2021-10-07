@@ -263,8 +263,9 @@ class analysis:
             #plt.show()
             #exit()
             
-
-            kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x)+np.pi,indexing='ij')
+            #kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x)+np.pi,indexing='ij')
+            print("legendre grid")
+            print(-np.arccos(x)+np.pi)
 
             for n in range(0,Lmax+1):
 
@@ -296,6 +297,8 @@ class analysis:
            
             #plot Legendre-reconstructed distribution on test grid 
 
+
+            
             kgrid_leg_mesh, thetagrid_leg_mesh = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
 
             if self.params['Leg_plot_reconst'] == True:
@@ -309,9 +312,9 @@ class analysis:
                         Pn                      = eval_legendre(n, np.cos(thetagrid_leg_mesh[0,:])).reshape(thetagrid_leg_mesh.shape[1],1)
                         W_legendre[ipoint,:]    += bcoeff[ipoint,n] * Pn[:,0] 
                        
-                fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-                spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-                ax = fig.add_subplot(spec[0, 0], projection='polar')
+                fig     = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
+                spec    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                ax      = fig.add_subplot(spec[0, 0], projection='polar')
                 
                 line_legendre = ax.contourf(    thetagrid_leg_mesh,  kgrid_leg_mesh,
                                                 W_legendre / W_legendre.max(), 
@@ -820,14 +823,14 @@ class momentumfuncs(analysis):
             if funcpars['save'] == True:
    
                 with open(  self.params['job_directory'] +  "PECD" +\
-                            "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                            "_" + irun + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
                             ".dat" , 'w') as pecdfile:
 
                     np.savetxt(pecdfile, pecd , fmt = '%10.4e')
 
    
                 with open(  self.params['job_directory'] +  "bcoeffs" +\
-                            "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                            "_" + irun + "_" + + str('{:.1f}'.format(t/time_to_au) ) +\
                             ".dat" , 'w') as pecdfile:
                     for ielem, k in enumerate(k_pecd):
                         pecdfile.write(    str('{:8.2f}'.format(k)) +\
@@ -876,9 +879,7 @@ class momentumfuncs(analysis):
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
 
         cmap = matplotlib.cm.jet #jet, cool, etc
-        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
-
-
+        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=W.max())
 
 
         plot_W2D  = ax1.contourf(   polargrid[1], 
@@ -887,7 +888,7 @@ class momentumfuncs(analysis):
                                     plot_params['ncont'], 
                                     cmap = 'jet', 
                                     vmin = plot_params['vmin'],
-                                    vmax = plot_params['vmax'])
+                                    vmax = W.max())
         
 
         ax1.set_title(  label               = plot_params['title_text'],
@@ -902,7 +903,7 @@ class momentumfuncs(analysis):
                         fontstyle           = plot_params['title_fontstyle'])
 
 
-        ax1.set_ylim(polargrid[0].min(),polargrid[0].max()) #radial scale
+        ax1.set_ylim(polargrid[0].min(),funcpars['kmax']) #radial scale
         ax1.set_thetamin(polargrid[1].min()*180.0/np.pi)
         ax1.set_thetamax(polargrid[1].max()*180.0/np.pi)
 
@@ -943,7 +944,7 @@ class momentumfuncs(analysis):
         if plot_params['save'] == True:
 
             fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" +
+                                            plot_params['save_name'] + "_" + irun + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             self.params['helicity'] +
@@ -1023,7 +1024,7 @@ class momentumfuncs(analysis):
 
             if funcpars['save'] == True:
    
-                with open( self.params['job_directory'] +  "W2Dav" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                with open( self.params['job_directory'] +  "W2Dav" + "_" + irun + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
                     "_" + helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, Wav, fmt = '%10.4e')
 
@@ -1053,7 +1054,7 @@ class momentumfuncs(analysis):
         phigrid = np.linspace(phimin, phimax, funcpar['nphi_pts'], endpoint=False)
         
         for iphi in range(phigrid.shape[0]):
-            print('iphi = ' + str(iphi) + ', phi = ' + str(phigrid[iphi]))
+            print('iphi = ' + str(iphi) + ', phi = ' + str('{:.2}'.format(phigrid[iphi])))
             Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', polargrid, phigrid[iphi])
             W2D             = self.calc_FT_3D_hankel(Flm, Ymat)
             Wav             += np.abs(W2D)**2/np.max(np.abs(W2D)**2)
@@ -1159,7 +1160,7 @@ class momentumfuncs(analysis):
         if plot_params['save'] == True:
 
             fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" +
+                                            plot_params['save_name'] + "_" + irun + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             self.params['helicity'] +
@@ -1252,7 +1253,7 @@ class momentumfuncs(analysis):
 
             if funcpars['save'] == True:
                 for elem in W2Ddir.items():
-                    with open( self.params['job_directory'] +  "W2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    with open( self.params['job_directory'] +  "W2D" + irun  + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
                         "_" + helicity + ".dat" , 'w') as rhofile:   
                         np.savetxt(rhofile, elem[1], fmt = '%10.4e')
 
@@ -1394,7 +1395,7 @@ class momentumfuncs(analysis):
             fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
                                             plot_params['save_name'] + "_" +
                                             funcpars['plane_split'][1]+
-                                            funcpars['plane_split'][0]+ "_" +
+                                            funcpars['plane_split'][0]+ "_" + irun + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             params['helicity'] +
