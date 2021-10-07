@@ -640,23 +640,6 @@ def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
 
     return coeffs_rotated
 
-def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
-
-    wigner = spherical.Wigner(Jmax)
-    R = quaternionic.array.from_euler_angles(grid_euler)
-    D = wigner.D(R)
-    #print(D.shape)
-    WDMATS = []
-    for J in range(Jmax+1):
-        WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
-        for m in range(-J,J+1):
-            for k in range(-J,J+1):
-                WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
-        #print(J,WDM)
-        #print(WDM.shape)
-
-        WDMATS.append(WDM)  
-    return WDMATS
 
 
 def gen_3j_dip(lmax):
@@ -732,13 +715,7 @@ if __name__ == "__main__":
     """ Read grid of Euler angles"""
     grid_euler  = read_euler_grid()
 
-
-    if params['orient_grid_type'] == "3D":
-        grid_euler = grid_euler.reshape(-1,3)     
-    elif params['orient_grid_type'] == "2D":
-        grid_euler = grid_euler.reshape(-1,2)     
-    else:
-        raise ValueError("incorrect euler grid type")
+    grid_euler = grid_euler.reshape(-1,3)     
 
     N_Euler = grid_euler.shape[0]
 

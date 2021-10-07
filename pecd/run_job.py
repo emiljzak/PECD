@@ -11,15 +11,18 @@ def convert(o):
     raise TypeError
 
 
+
 def gen_euler_grid_2D(n_euler):
     """ Cartesian product of 1D grids of Euler angles"""
+    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=False))
     beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
     gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
-    euler_grid_2d   = np.array(list(itertools.product(*[beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
+    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
-    n_euler_2d      = euler_grid_2d.shape[0]
-    print("\nTotal number of 2D-Euler grid points: ", n_euler_2d , " and the shape of the 3D grid array is:    ", euler_grid_2d.shape)
-    return euler_grid_2d, n_euler_2d
+    n_euler_3d      = euler_grid_3d.shape[0]
+    print("\nTotal number of 2D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
+    #print(euler_grid_3d)
+    return euler_grid_3d, n_euler_3d
 
 def gen_euler_grid(n_euler):
     """ Cartesian product of 1D grids of Euler angles"""

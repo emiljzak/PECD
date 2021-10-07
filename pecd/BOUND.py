@@ -951,9 +951,28 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     return potmat0, potind
 
 
+def gen_wigner_dmats(n_grid_euler, Jmax , grid_euler):
 
-def gen_3j_multipoles(lmax_basis,lmax_multi):
-    """precompute all necessary 3-j symbols for the matrix elements of multipoles"""
+    wigner = spherical.Wigner(Jmax)
+    R = quaternionic.array.from_euler_angles(grid_euler)
+    D = wigner.D(R)
+    #print(D.shape)
+    WDMATS = []
+    for J in range(Jmax+1):
+        WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
+        for m in range(-J,J+1):
+            for k in range(-J,J+1):
+                WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
+        #print(J,WDM)
+        #print(WDM.shape)
+
+        WDMATS.append(WDM)  
+    return WDMATS
+
+
+def gen_tjmat(lmax_basis,lmax_multi):
+    """precompute all necessary 3-j symbols for the matrix elements of the multipole moments"""
+
     #store in arrays:
     # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
     tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1), dtype = float)
@@ -1001,7 +1020,7 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     
 
     # 3. Build array of 3-j symbols
-    tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
+    tjmat =  gen_tjmat(params['bound_lmax'],params['multi_lmax'])
 
     # 3a. Build array of '1/r**l' values on the radial grid
 
@@ -1032,7 +1051,31 @@ def test_vlm_symmetry(vLM):
                 print("L = " + str(L) + ", M = " + str(M) + ": All have zero difference")
     exit()
 
+def rotate_tjmat(grid_euler,irun,tjmat):
+    
+    Lmax = tjmat.shape[1]
+    lmax = tjmat.shape[0]
+    tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1), dtype = float)
+    
+    # pull wigner matrices at the given euler angle's set
+    
+    n_grid_euler = grid_euler.shape[0]
+    print("number of euler grid points = " + str(n_grid_euler))
+    print("current Euler grid point = " + grid_euler[irun])
 
+    WDMATS = gen_wigner_dmats(n_grid_euler, Lmax, grid_euler[irun])
+
+
+    # transform tjmat
+    for l1 in range(0,lmax+1):
+        for l2 in range(0,lmax+1):
+            for L in range(0,Lmax+1):
+                for M in range(-L,L+1):
+                    for m2 in range(-l2,l2+1):
+                        for Mp in range(-L,L+1):
+                            tjmat_rot[l1,L,l2,M,m2] +=  WDMATS[L][Mp,M,irun] * tjmat[l1,L,l2,M,m2]
+
+    return tjmat_rot
 
 """ ============ POTMAT0 ROTATED with Anton's potential ============ """
 def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
@@ -1065,7 +1108,8 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     #exit()
 
     # 3. Build array of 3-j symbols
-    tjmat =  gen_3j_multipoles(params['bound_lmax'],params['multi_lmax'])
+    tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
+    tjmat_rot   = rotate_tjmat(grid_euler,irun,tjmat)
 
     """ Testing of grid compatibility"""
     """
@@ -1076,9 +1120,11 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     print(max(abs(rgrid_anton-Gr.ravel())))
     exit()
     """
-
     # 4. sum-up partial waves
-    potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
+    if params['N_euler'] == 1:
+        potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
+    else:
+        potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
     #potmat0 = np.asarray(potmat0)
     #print(potmat0[:100])
     #print("Maximum real part of the potential matrix = " + str(np.max(np.abs(potmat0.real))))
