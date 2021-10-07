@@ -5,6 +5,7 @@ import CONSTANTS
 import json
 import itertools
 import importlib
+import time
 
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
@@ -16,7 +17,7 @@ def gen_euler_grid_2D(n_euler):
     """ Cartesian product of 1D grids of Euler angles"""
     alpha_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=False))
     beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
-    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
+    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=2*n_euler, endpoint=False))
     euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
     n_euler_3d      = euler_grid_3d.shape[0]
@@ -26,9 +27,9 @@ def gen_euler_grid_2D(n_euler):
 
 def gen_euler_grid(n_euler):
     """ Cartesian product of 1D grids of Euler angles"""
-    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
+    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=2*n_euler, endpoint=False))
     beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
-    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
+    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=2*n_euler, endpoint=False))
     euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
     n_euler_3d      = euler_grid_3d.shape[0]
@@ -360,6 +361,7 @@ def run_array_job(params_list,grid_euler):
             print ("Job directory is %s" % iparams['job_directory'])
 
             for ibatch in range(iparams['N_batches']):
+                time.sleep(2)
                 if iparams['mode'] == "propagate":
                     pecd_process =  "./master_script.sh " + str(ibatch) +\
                                     " " + str(iparams['job_directory']) + " " +\
