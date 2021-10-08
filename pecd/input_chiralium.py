@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "A" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "R" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -58,7 +58,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 400.0 
+    params['tmax']          = 1000.0 
     params['dt']            = 3.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -333,7 +333,7 @@ def read_input():
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = []
-        params['analyze_momentum']  = [PECD]
+        params['analyze_momentum']  = []
         
 
         params['PECD']  = PECD
@@ -351,7 +351,7 @@ def read_input():
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
         """ *** Legendre expansion *** """
-        params['Leg_lmax']          = 10      # maximum angular momentum in the Legendre expansion
+        params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
         params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
         params['plot_bcoeffs']      = True  # plot b-coefficients

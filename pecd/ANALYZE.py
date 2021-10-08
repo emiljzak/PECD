@@ -1,3 +1,4 @@
+from ctypes import pointer
 from logging import warning
 import numpy as np
 import json
@@ -20,6 +21,7 @@ import MAPPING
 import GRID
 import CONSTANTS
 import PLOTS
+import GRAPHICS
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -50,9 +52,6 @@ class analysis:
             func_rotated += D[:,m] * func[:,m]
 
         return func_rotated
-
-
-
 
 
 
@@ -510,6 +509,42 @@ class analysis:
             plt.close()
 
         return Flm, Hank_obj.kr
+
+
+    def plot_bcoeffs_2D(self,grid_euler):
+
+        N_Euler = grid_euler.shape[0]
+    
+        barray = np.zeros((N_Euler,4+2*(self.params['Leg_lmax']+1)), dtype = float)
+        
+        #for each time pointer
+        #for each k pointer
+
+        for irun in range(N_Euler):
+            barray[irun,0],barray[irun,1] = grid_euler[irun,1], grid_euler[irun,2]
+            for t in list(self.params['momentum_analyze_times']):
+                with open(  self.params['job_directory'] +  "bcoeffs" +\
+                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t) ) +\
+                            ".dat" , 'r') as pecdfile:
+                    barray[irun,2] = t
+                    #for ikelem, k in enumerate(self.params['pecd_momenta']):
+
+                    for line in pecdfile:
+                        words   = line.split()
+                        barray[irun,3] = float(words[0])
+                        for il in range(2*(self.params['Leg_lmax'])):
+      
+                            barray[irun,il+4] = float(words[il+1])
+
+        with open( params['job_directory'] +  "barray.dat" , 'w') as barfile:   
+            np.savetxt(barfile, barray, fmt = '%12.8f')
+
+
+        barray_plot_params = GRAPHICS.gparams_barray2D()
+
+        
+
+        return barray
 
 class spacefuncs(analysis):
     
@@ -2083,6 +2118,7 @@ if __name__ == "__main__":
         Wav += np.abs(FT)**2
 
         
-        """
-        """ Consolidate quanitites averaged over orientations """
-        # PECD_av()
+    """
+    """ Consolidate quanitites averaged over orientations """
+    obj    = analysis(params)
+    obj.plot_bcoeffs_2D(grid_euler)
