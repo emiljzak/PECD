@@ -67,7 +67,7 @@ def read_input():
     """==== Molecule-field orientation ===="""
 
     params['N_euler'] 	        = 10     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
-    params['N_batches'] 	    = 100    # number of batches for orientation averaging
+    params['N_batches'] 	    = 1    # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
@@ -325,7 +325,8 @@ def read_input():
                     }
 
         bcoeffs = { 'name':     'bcoeffs',
-                    'plot':     (True, GRAPHICS.gparams_barray2D())}
+                    'plot':     (True, GRAPHICS.gparams_barray2D()),
+                    }
 
         #params['obs_params_rho'] = rho2D
         #params['obs_params_W2D'] = W2D
@@ -344,7 +345,7 @@ def read_input():
         params['W2Dav'] = W2Dav
         params['W2D']   = W2D
         params['rho2D'] = rho2D
-        params['bcoefs'] = bcoeffs
+        params['bcoeffs'] = bcoeffs
 
 
         """ *** Momentum-space wavefunction *** """

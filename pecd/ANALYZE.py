@@ -529,8 +529,7 @@ class analysis:
 
 
 
-
-    def barray_plot_2D(self,grid_euler,ibcoeff,cont2D_params):
+    def barray_plot_2D(self,grid_euler,ibcoeff,funcpars):
         """ Produces contour plot for b(beta,gamma) """
 
         """
@@ -541,6 +540,7 @@ class analysis:
 
         """
 
+        cont2D_params = funcpars['plot'][1] #all plot params
 
         N_Euler = grid_euler.shape[0]
     
@@ -578,8 +578,8 @@ class analysis:
         bcoef = barray[:,4+ibcoeff]
 
         cmap = matplotlib.cm.jet #jet, cool, etc
-        norm = matplotlib.colors.Normalize(vmin=bcoef.min(), vmax=bcoef.max())
 
+        norm = matplotlib.colors.Normalize(vmin = bcoef.min(), vmax = bcoef.max())
 
         figsizex = cont2D_params['figsize_x'] #size of the figure on screen
         figsizey = cont2D_params['figsize_y']  #size of the figure on screen
@@ -592,11 +592,14 @@ class analysis:
         ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
 
 
+        #x2d,y2d = np.meshgrid(barray[:,1],barray[:,0], 'ij')
+        #bcoef_int = interpolate.intetrp2d(x2d,y2d,bcoef)
+
         plot_cont_1 = ax1.tricontourf( barray[:,1],barray[:,0], bcoef, 
                                     cont2D_params['ncont'], 
                                     cmap = 'jet')
         
-        ax1.set_title(  label               = cont2D_params['title_text'],
+        ax1.set_title(  label               = "",
                         fontsize            = cont2D_params['title_size'],
                         color               = cont2D_params['title_color'],
                         verticalalignment   = cont2D_params['title_vertical'],
@@ -616,31 +619,30 @@ class analysis:
         ax1.set_ylabel(cont2D_params['ylabel'])
 
     
-        ax1.set_xticks(cont2D_params['xticks']) #positions of x-ticks
-        ax1.set_yticks(cont2D_params['yticks']) #positions of y-ticks
+        #ax1.set_xticks(list(np.array(cont2D_params['xticks'])/np.pi)) #positions of x-ticks
+        #ax1.set_yticks(list(np.array(cont2D_params['yticks'])/np.pi)) #positions of y-ticks
 
-        ax1.set_xticklabels(cont2D_params['xticks'],fontsize=8) #x-ticks labels
-        ax1.set_yticklabels(cont2D_params['yticks']) #y-ticks labels
+        ax1.set_xticklabels(list(np.array(cont2D_params['xticks'])/np.pi)) #x-ticks labels
+        ax1.set_yticklabels(list(np.array(cont2D_params['yticks'])/np.pi)) #y-ticks labels
 
         ax1.xaxis.set_major_formatter(FormatStrFormatter(cont2D_params['xlabel_format'])) #set tick label formatter 
         ax1.yaxis.set_major_formatter(FormatStrFormatter(cont2D_params['ylabel_format']))
 
-        fig.colorbar(  mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+        fig.colorbar(   mappable =  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                         ax                  = ax1, 
                         orientation         = cont2D_params['cbar_orientation'],
-                        label               = cont2D_params['cbar_label'],
+                        label               = r'$b_2^{CPR}$'+"(%)",
                         fraction            = cont2D_params['cbar_fraction'],
                         aspect              = cont2D_params['cbar_aspect'],
                         shrink              = cont2D_params['cbar_shrink'],
                         pad                 = cont2D_params['cbar_pad'],
-                        panchor             = cont2D_params['cbar_panchor'],
                         extend              = cont2D_params['cbar_extend'],
                         ticks               = cont2D_params['cbar_ticks'],
                         drawedges           = cont2D_params['cbar_drawedges'],
                         format              = cont2D_params['cbar_format'])
-
+        
         if cont2D_params['save'] == True:
-            fig.savefig(    fname       = cont2D_params['save_name'],
+            fig.savefig(    fname       = "b"+str(ibcoeff) + "_" +  cont2D_params['save_name'],
                             dpi         = cont2D_params['save_dpi'],
                             orientation = cont2D_params['save_orientation'],
                             bbox_inches = cont2D_params['save_bbox_inches'],
@@ -2170,9 +2172,10 @@ if __name__ == "__main__":
     print("====================================="+"\n")
 
     """ Consolidate quanitites averaged over orientations """
-    obj    = analysis(params)
+    obj     = analysis(params)
     ibcoeff = 1
-    obj.plot_bcoeffs_2D(grid_euler,ibcoeff,params['bcoefs'])
+    obj.barray_plot_2D(grid_euler,ibcoeff,params['bcoeffs'])
+    exit()
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
         print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )

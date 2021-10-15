@@ -459,10 +459,9 @@ def gparams_PECD2D():
                             ### FIGURE PROPERTIES ###    
                             "figsize_x":        fig_size_x,
                             "figsize_y":        fig_size_y,
-                            "resolution":       resolution
+                            "resolution":       resolution,
                             }
     return cont2D_params
-
 
 def gparams_barray2D():
     """" ===== Plot parameters ====="""
@@ -471,8 +470,8 @@ def gparams_barray2D():
     #ncont:      int: number of contours
 
 
-    xmax    = np.pi
-    ymax    = 2.0 * np.pi
+    xmax    = 2.0 * np.pi
+    ymax    = 1.0 * np.pi
     xrange  = (0.0, xmax)
     yrange  = (0.0, ymax)
 
@@ -480,10 +479,7 @@ def gparams_barray2D():
     vmax    = 1.0
     ncont   = 10
 
-    cmap = matplotlib.cm.jet #jet, cool, etc
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-
-    cont2D_params = {   "xrange":   xrange,
+    params = {   "xrange":   xrange,
                         "yrange":   yrange,
                         "vmin":     vmin,
                         "vmax":     vmax,
@@ -491,8 +487,8 @@ def gparams_barray2D():
 
                         ### TITLE ###
                         "title_text":       "Title",
-                        "title_color":      "blue",
-                        "title_size":       15,
+                        "title_color":      "black",
+                        "title_size":       10,
                         "title_vertical":   "baseline", #vertical alignment of the title: {'center', 'top', 'bottom', 'baseline', 'center_baseline'}
                         "title_horizontal": "center", #{'center', 'left', 'right'},
                         #"title_position":   (pos_x,pos_y), #manual setting of title position
@@ -502,26 +498,25 @@ def gparams_barray2D():
                         "title_background": "None",   
 
                         ### LABELS ###
-                        "xlabel":           "x",
-                        "ylabel":           "y",
-                        "xlabel_format":    '%.2f',
+                        "xlabel":           "Euler angle "+r'$\gamma$'+"(in "+r'$\pi$'+" units)",
+                        "ylabel":           "Euler angle "+r'$\beta$'+"(in "+r'$\pi$'+" units)",
+                        "xlabel_format":    '%.1f',
                         "ylabel_format":    '%.1f',
-                        "label_color":      'red',
-                        "xlabel_size":       12,
-                        "ylabel_size":       12,   
+                        "label_color":      'black',
+                        "xlabel_size":       10,
+                        "ylabel_size":       10,   
                         "xlabel_pad":       None,     
                         "ylabel_pad":       None,
                         "xlabel_loc":       "center",  #left, right         
-                        "xticks":           list(np.linspace(xrange[0],xrange[1],4)),
-                        "yticks":           list(np.linspace(yrange[0],yrange[1],8)), 
+                        "xticks":           list(np.linspace(xrange[0],xrange[1],8)),
+                        "yticks":           list(np.linspace(yrange[0],yrange[1],4)), 
                                             
                         ### COLORBAR ###: see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
-                        "cbar_mappable":       matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
-                        "cbar_orientation":   'horizontal', #vertical #note that orientation overrides panchor
-                        "cbar_label":         "Some units",   
+                       
+                        "cbar_orientation":   'vertical', #vertical #note that orientation overrides panchor
                         "cbar_fraction":      1.0, #fraction of the original axes to be displayed in the colorbar
-                        "cbar_aspect":        20, #ratio of long to short dimensions
-                        "cbar_shrink":        1.00, #shrink the colorbar
+                        "cbar_aspect":        40, #ratio of long to short dimensions
+                        "cbar_shrink":        0.95, #shrink the colorbar
                         "cbar_pad":           0.05, #distance of colorbar from the adjacent plot axis
                         "cbar_panchor":       (0.3,0.2), #TThe anchor point of the colorbar parent axes. If False, the parent axes' anchor will be unchanged. Defaults to (1.0, 0.5) if vertical; (0.5, 0.0) if horizontal.
                         
@@ -541,7 +536,7 @@ def gparams_barray2D():
 
 
                         ### FIGURE PROPERTIES ###    
-                        "figsize_x":        3.5,
-                        "figsize_y":        3.5,
-                        "resolution":       200
-                        }
+                        "figsize_x":        4.0,
+                        "figsize_y":        2.0,
+                        "resolution":       300}                       
+    return params
