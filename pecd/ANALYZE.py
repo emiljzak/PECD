@@ -595,7 +595,7 @@ class analysis:
         #x2d,y2d = np.meshgrid(barray[:,1],barray[:,0], 'ij')
         #bcoef_int = interpolate.intetrp2d(x2d,y2d,bcoef)
 
-        plot_cont_1 = ax1.tricontourf( barray[:,1],barray[:,0], bcoef, 
+        plot_cont_1 = ax1.tricontourf( barray[:,1]/np.pi,barray[:,0]/np.pi, bcoef, 
                                     cont2D_params['ncont'], 
                                     cmap = 'jet')
         
@@ -619,19 +619,19 @@ class analysis:
         ax1.set_ylabel(cont2D_params['ylabel'])
 
     
-        #ax1.set_xticks(list(np.array(cont2D_params['xticks'])/np.pi)) #positions of x-ticks
-        #ax1.set_yticks(list(np.array(cont2D_params['yticks'])/np.pi)) #positions of y-ticks
+        ax1.set_xticks(cont2D_params['xticks']) #positions of x-ticks
+        ax1.set_yticks(cont2D_params['yticks']) #positions of y-ticks
 
-        ax1.set_xticklabels(list(np.array(cont2D_params['xticks'])/np.pi)) #x-ticks labels
-        ax1.set_yticklabels(list(np.array(cont2D_params['yticks'])/np.pi)) #y-ticks labels
+        ax1.set_xticklabels(cont2D_params['xticks']) #x-ticks labels
+        ax1.set_yticklabels(cont2D_params['yticks']) #y-ticks labels
 
-        ax1.xaxis.set_major_formatter(FormatStrFormatter(cont2D_params['xlabel_format'])) #set tick label formatter 
-        ax1.yaxis.set_major_formatter(FormatStrFormatter(cont2D_params['ylabel_format']))
+        ax1.xaxis.set_major_formatter(FormatStrFormatter('%.1f')) #set tick label formatter 
+        ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
         fig.colorbar(   mappable =  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                         ax                  = ax1, 
                         orientation         = cont2D_params['cbar_orientation'],
-                        label               = r'$b_2^{CPR}$'+"(%)",
+                        label               = r'$b_{0}^{{CPR}}$'.format(ibcoeff)+"(%)",
                         fraction            = cont2D_params['cbar_fraction'],
                         aspect              = cont2D_params['cbar_aspect'],
                         shrink              = cont2D_params['cbar_shrink'],

@@ -508,16 +508,16 @@ def gparams_barray2D():
                         "xlabel_pad":       None,     
                         "ylabel_pad":       None,
                         "xlabel_loc":       "center",  #left, right         
-                        "xticks":           list(np.linspace(xrange[0],xrange[1],8)),
-                        "yticks":           list(np.linspace(yrange[0],yrange[1],4)), 
+                        "xticks":           list(np.linspace(xrange[0]/np.pi,xrange[1]/np.pi,5)),
+                        "yticks":           list(np.linspace(yrange[0]/np.pi,yrange[1]/np.pi,3)), 
                                             
                         ### COLORBAR ###: see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
                        
                         "cbar_orientation":   'vertical', #vertical #note that orientation overrides panchor
                         "cbar_fraction":      1.0, #fraction of the original axes to be displayed in the colorbar
                         "cbar_aspect":        40, #ratio of long to short dimensions
-                        "cbar_shrink":        0.95, #shrink the colorbar
-                        "cbar_pad":           0.05, #distance of colorbar from the adjacent plot axis
+                        "cbar_shrink":        1.0, #shrink the colorbar
+                        "cbar_pad":           0.0, #distance of colorbar from the adjacent plot axis
                         "cbar_panchor":       (0.3,0.2), #TThe anchor point of the colorbar parent axes. If False, the parent axes' anchor will be unchanged. Defaults to (1.0, 0.5) if vertical; (0.5, 0.0) if horizontal.
                         
                         "cbar_ticks":         None, #or list of custom ticks: list(np.linspace(vmin,vmax,10))
