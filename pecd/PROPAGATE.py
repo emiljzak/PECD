@@ -590,7 +590,7 @@ def gen_euler_grid_theta_chi(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
-def rotate_coefficients(ind_euler,maparray,coeffs,WDMATS,lmax,Nr):
+def rotate_coefficients(ind_euler,coeffs,WDMATS,lmax,Nr):
     """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
     #ind_euler - index of euler angles in global 3D grid
 

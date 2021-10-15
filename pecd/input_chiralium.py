@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "R" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "X" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,10 +43,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 50
+    params['bound_nbins']   = 150
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -58,16 +58,16 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 1000.0 
-    params['dt']            = 3.0 # replace with the calculated number for N points per cycle
+    params['tmax']          = 4000.0 
+    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
 
     """==== Molecule-field orientation ===="""
 
-    params['N_euler'] 	        = 2     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
-    params['N_batches'] 	    = 1     # number of batches for orientation averaging
+    params['N_euler'] 	        = 10     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
+    params['N_batches'] 	    = 100    # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
@@ -142,7 +142,7 @@ def read_input():
         params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
         """ **** parameters of the multipole moment expansion of the ESP **** """
-        params['multi_lmax']         = 8 #maximum l in the multipole expansion
+        params['multi_lmax']         = 4 #maximum l in the multipole expansion
         params['multi_ncube_points'] = 201
         params['multi_box_edge']     = 20
 
@@ -173,11 +173,12 @@ def read_input():
         """===== Hamiltonian parameters ====="""
         params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-2 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-5 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
         params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
+        #params['']
 
         """ ===== ARPACK eigensolver parameters ===== """
 
@@ -323,6 +324,9 @@ def read_input():
                     
                     }
 
+        bcoeffs = { 'name':     'bcoeffs',
+                    'plot':     (True, GRAPHICS.gparams_barray2D())}
+
         #params['obs_params_rho'] = rho2D
         #params['obs_params_W2D'] = W2D
         #params['obs_params_W2Dav'] = W2Dav
@@ -340,6 +344,8 @@ def read_input():
         params['W2Dav'] = W2Dav
         params['W2D']   = W2D
         params['rho2D'] = rho2D
+        params['bcoefs'] = bcoeffs
+
 
         """ *** Momentum-space wavefunction *** """
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures

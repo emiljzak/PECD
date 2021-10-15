@@ -1075,8 +1075,9 @@ def rotate_tjmat(grid_euler,irun,tjmat):
             for L in range(0,Lmax+1):
                 for M in range(-L,L+1):
                     for m2 in range(-l2,l2+1):
+
                         for Mp in range(-L,L+1):
-                            tjmat_rot[l1,L,l2,M+L,m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,M+L,m2+l2]
+                            tjmat_rot[l1,L,l2,M+L,m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,Mp+L,m2+l2]
 
     return tjmat_rot
 
