@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'analyze'
+    params['mode']      = 'propagate'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "X" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "N" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -46,7 +46,7 @@ def read_input():
     params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 150
+    params['bound_nbins']   = 15
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -58,7 +58,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4000.0 
+    params['tmax']          = 4.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -66,7 +66,7 @@ def read_input():
 
     """==== Molecule-field orientation ===="""
 
-    params['N_euler'] 	        = 10     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
+    params['N_euler'] 	        = 1     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
@@ -142,7 +142,7 @@ def read_input():
         params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
         """ **** parameters of the multipole moment expansion of the ESP **** """
-        params['multi_lmax']         = 4 #maximum l in the multipole expansion
+        params['multi_lmax']         = 8 #maximum l in the multipole expansion
         params['multi_ncube_points'] = 201
         params['multi_box_edge']     = 20
 
@@ -182,7 +182,7 @@ def read_input():
 
         """ ===== ARPACK eigensolver parameters ===== """
 
-        params['ARPACK_tol']        = 1e-3      # error tolerance (relative)
+        params['ARPACK_tol']        = 1e-5      # error tolerance (relative)
         params['ARPACK_maxiter']    = 60000     # maximum number of iterations
         params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
         params['ARPACK_which']      = 'LA'      # LA, SM, SA, LM
@@ -338,7 +338,7 @@ def read_input():
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = []
-        params['analyze_momentum']  = []
+        params['analyze_momentum']  = [PECD]
         
 
         params['PECD']  = PECD

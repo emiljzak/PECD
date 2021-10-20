@@ -2173,9 +2173,9 @@ if __name__ == "__main__":
 
     """ Consolidate quanitites averaged over orientations """
     obj     = analysis(params)
-    ibcoeff = 1
+    ibcoeff = 9
     obj.barray_plot_2D(grid_euler,ibcoeff,params['bcoeffs'])
-    exit()
+    #exit()
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
         print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )

@@ -370,7 +370,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
 
     VG = []
     counter = 0
-    if params['molec_name'] == "h":
+    if params['molec_name'] == "h1":
         for k in range(len(r_array)-1):
             sph = np.zeros(Gs[k].shape[0], dtype=float)
             print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])))

@@ -309,8 +309,8 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     plt.show()
     """
     """ Build KD, KC matrices """
-    KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw']) #### !!!! check
-    KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])
+    KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw'])**2 #### !!!! check
+    KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])**2
 
     #plot_mat(KD)
     #plt.spy(KD, precision=params['sph_quad_tol'], markersize=5, label="KD")
@@ -892,7 +892,6 @@ def rotate_mol_xyz(params, grid_euler, irun):
 """ ============ POTMAT0 ROTATED ============ """
 def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
-
     mol_xyz = rotate_mol_xyz(params, grid_euler, irun)
   
     if params['esp_mode'] == "exact":
@@ -1068,7 +1067,6 @@ def rotate_tjmat(grid_euler,irun,tjmat):
 
     WDMATS = gen_wigner_dmats(1, Lmax, grid_euler[irun])
 
-
     # transform tjmat
     for l1 in range(0,lmax+1):
         for l2 in range(0,lmax+1):
@@ -1077,7 +1075,7 @@ def rotate_tjmat(grid_euler,irun,tjmat):
                     for m2 in range(-l2,l2+1):
 
                         for Mp in range(-L,L+1):
-                            tjmat_rot[l1,L,l2,M+L,m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,Mp+L,m2+l2]
+                            tjmat_rot[l1,L,l2,M+L,m2+l2] +=  WDMATS[L][M+L,Mp+L,0] * tjmat[l1,L,l2,Mp+L,m2+l2]
 
     return tjmat_rot
 
@@ -1301,7 +1299,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
                 Gs = GRID.read_leb_quad(scheme, params['main_dir'] )
 
                 #pull potential at quadrature points
-                potfilename = "esp_" + params['molec_name'] + "_"+params['esp_method_name'] + "_" + str('%6.4f'%rin) + "_"+scheme + "_"+str(irun)
+                potfilename = "esp_" + params['molec_name'] + "_"+params['esp_mode'] + "_" + str('%6.4f'%rin) + "_"+scheme + "_"+str(irun)
 
                 if os.path.isfile(params['job_directory']  + "esp/" + str(irun) + "/" + potfilename):
                     print (potfilename + " file exist")

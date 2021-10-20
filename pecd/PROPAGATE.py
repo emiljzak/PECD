@@ -674,7 +674,7 @@ def save_map(map,file):
 
 
 if __name__ == "__main__":   
-
+    print("KUREARFASDFDSFASD")
     start_time_total = time.time()
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
