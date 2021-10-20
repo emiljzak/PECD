@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "N" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "C" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,7 +43,7 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_lmax_arr']    = (6,6,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']   = 15
@@ -173,7 +173,7 @@ def read_input():
         """===== Hamiltonian parameters ====="""
         params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-5 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-3 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
         params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
@@ -182,7 +182,7 @@ def read_input():
 
         """ ===== ARPACK eigensolver parameters ===== """
 
-        params['ARPACK_tol']        = 1e-5      # error tolerance (relative)
+        params['ARPACK_tol']        = 1e-3      # error tolerance (relative)
         params['ARPACK_maxiter']    = 60000     # maximum number of iterations
         params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
         params['ARPACK_which']      = 'LA'      # LA, SM, SA, LM
