@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -94,7 +94,7 @@ def read_input():
 
         """ ====== Initial wavefunction ====="""
 
-        params['ivec']          = 2 #ID of eigenstate to propagate
+        params['ivec']          = 8 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
 
@@ -134,7 +134,7 @@ def read_input():
         """===== Potential energy matrix ====="""
         
       
-        params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
+        params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
 
         params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
         params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
@@ -171,7 +171,7 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = True    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-3 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
@@ -237,7 +237,7 @@ def read_input():
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         True, # show image on screen                    
                     'save':         True,
@@ -334,11 +334,11 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
-        params['analyze_space']     = []
-        params['analyze_momentum']  = [PECD]
+        params['analyze_space']     = [rho2D]
+        params['analyze_momentum']  = []
         
 
         params['PECD']  = PECD
