@@ -188,7 +188,7 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
                                                 dtype       = complex,
                                                 compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
                                             )
-
+                flwavepacket.close()
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
 
