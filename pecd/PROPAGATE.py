@@ -188,10 +188,10 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
                                                 dtype       = complex,
                                                 compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
                                             )
-                flwavepacket.close()
+                
     end_time_global = time.time()
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
-
+    flwavepacket.close()
 
 
 def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
@@ -265,6 +265,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         """ Put the indices and values back together in the Hamiltonian array"""
         for ielem, elem in enumerate(potmat):
+            #print(elem[0])
             hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
 
 

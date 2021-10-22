@@ -10,8 +10,8 @@ def gparams_rho2D_polar():
     #ncont:      int: number of contours
 
     vmin    = 0.0
-    vmax    = 0.1
-    ncont   = 200
+    vmax    = 1.0
+    ncont   = 300
     resolution = 200
     fig_size_x = 3.5
     fig_size_y = 3.5

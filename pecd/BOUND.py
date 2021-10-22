@@ -988,7 +988,7 @@ def gen_tjmat(lmax_basis,lmax_multi):
                     for m2 in range(-l2,l2+1):
 
                         tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -m2-M) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
-                        tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt((2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1)/(4.0*np.pi)) * (-1)**(M+m2)
+                        tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) * (-1)**(M+m2)
 
     #print("3j symbols in array:")
     #print(tjmat)
@@ -1111,7 +1111,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     # 3. Build array of 3-j symbols
     tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
-    tjmat_rot   = rotate_tjmat(grid_euler,irun,tjmat)
+
 
 
     #print("tjmat-tjmatrot")
@@ -1133,6 +1133,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     if params['N_euler'] == 1:
         potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
     else:
+        tjmat_rot       = rotate_tjmat(grid_euler,irun,tjmat)
         potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
     #potmat0 = np.asarray(potmat0)
     #print(potmat0[:100])

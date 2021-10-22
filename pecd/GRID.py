@@ -6,7 +6,7 @@
 import numpy as np
 import os
 
-#import psi4
+import psi4
 
 import CONSTANTS
 
@@ -364,10 +364,10 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         1 1
         noreorient
         units au
-        
+        nocom
         H	{0} {1} {2}
 
-        """.format( 0.0, 0.0, 0.0)
+        """.format( 0.0, 0.0, 1.0)
         )
 
     elif params['molec_name'] == "c":

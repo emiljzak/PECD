@@ -137,6 +137,14 @@ class analysis:
             print(wavepacket.shape)
             with h5py.File(filename, 'r') as h5:
                 for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
+                    #wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
+                    #print("Keys: %s" % h5.keys())
+                    #a_group_key = list(h5.keys())[0]
+
+                    # Get the data
+                    #data = list(h5[a_group_key])
+                    #print(data)
+                    #exit()
                     wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
             end_time = time.time()
             print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
@@ -874,8 +882,10 @@ class spacefuncs(analysis):
                             pad_inches  =   plot_params['save_pad_inches']
                             )
 
-        plt.show()
-        plt.close()
+        if funcpars['show'] == True:
+
+            plt.show()
+            plt.close()
 
 
     def calc_wfn_array(self,lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi):

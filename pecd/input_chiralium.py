@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "A" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "T1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -46,7 +46,7 @@ def read_input():
     params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 20
+    params['bound_nbins']   = 100
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -58,7 +58,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -101,8 +101,8 @@ def read_input():
         """ ====== FIELD PARAMETERS ====== """
 
         params['freq_units']    = "ev"      # nm or ev
-        params['omega']         = 40.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
+        params['omega']         = 20.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
+        params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -171,7 +171,7 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = True    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-3 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
@@ -237,14 +237,14 @@ def read_input():
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
-                    'show':         True, # show image on screen                    
+                    'show':         False, # show image on screen                    
                     'save':         True,
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 100,    #ignored when automatic (2*rmax)
+                                        'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 30.0  #ignored when automatic
+                                        'rmax': 200.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -334,11 +334,11 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 3 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
-        params['analyze_space']     = []
-        params['analyze_momentum']  = [PECD]
+        params['analyze_space']     = [rho2D]
+        params['analyze_momentum']  = []
         
 
         params['PECD']  = PECD
