@@ -713,6 +713,7 @@ if __name__ == "__main__":
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
+
     """ Read grid of Euler angles"""
     grid_euler  = read_euler_grid()
 

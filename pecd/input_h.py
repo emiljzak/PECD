@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -42,9 +42,9 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (14,14,1)
-    params['bound_lmax_arr']    = (3,10,8)
-    params['bound_binw_arr']    = (2.5,2.5,1)
+    params['bound_nlobs_arr']   = (10,10,1)
+    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']   = 30
     params['bound_rshift']  = 0.0
@@ -84,7 +84,7 @@ def read_input():
     params['mol_masses']    = {"h":1.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
-    params['sph_quad_tol']       = 1e-5     # tolerance (in a.u.) for the convergence of matrix elements
+    params['sph_quad_tol']       = 1e-4     # tolerance (in a.u.) for the convergence of matrix elements
 
 
     """ __________________________ PROPAGATE BLOCK __________________________"""
@@ -94,7 +94,7 @@ def read_input():
 
         """ ====== Initial wavefunction ====="""
 
-        params['ivec']          = 6 #ID of eigenstate to propagate
+        params['ivec']          = 3 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
 
@@ -134,7 +134,7 @@ def read_input():
         """===== Potential energy matrix ====="""
         
       
-        params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
+        params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
 
         params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
         params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
@@ -171,9 +171,9 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = True    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-5 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-4 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
         params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)

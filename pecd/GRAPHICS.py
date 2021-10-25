@@ -91,7 +91,7 @@ def gparams_W2Dav_polar():
     #ncont:      int: number of contours
 
     vmin    = 0.0
-    vmax    = 1.0
+    vmax    = 0.5
     ncont   = 200
     resolution = 200
     fig_size_x = 3.5
@@ -173,7 +173,7 @@ def gparams_W2D_polar():
     #ncont:      int: number of contours
 
     vmin    = 0.0
-    vmax    = 1.0
+    vmax    = 0.2
     ncont   = 200
     resolution = 200
     fig_size_x = 3.5
@@ -390,7 +390,7 @@ def gparams_PECD2D():
     """" ===== Plot parameters ====="""
 
     vmin    = 0.0
-    vmax    = 1.0
+    vmax    = 0.2
     ncont   = 200
     resolution = 200
     fig_size_x = 3.5
