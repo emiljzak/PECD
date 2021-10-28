@@ -281,15 +281,13 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
         keomat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
     else:
         raise ValueError("Incorrect format type for the Hamiltonian")
-        exit()
-
 
     """call Gauss-Lobatto rule """
-    x   =   np.zeros(nlobs, dtype = float)
-    w   =   np.zeros(nlobs, dtype = float)
-    xc, wc =   GRID.gauss_lobatto(nlobs,14)
-    x   =   np.asarray(xc, dtype=float)
-    w   =   np.asarray(wc, dtype = float)
+    x       =   np.zeros(nlobs, dtype = float)
+    w       =   np.zeros(nlobs, dtype = float)
+    xc, wc  =   GRID.gauss_lobatto(nlobs,14)
+    x       =   np.asarray(xc, dtype = float)
+    w       =   np.asarray(wc, dtype = float)
 
     #w /= np.sum(w[:])
     #w *= 0.5 * params['bound_binw']
@@ -297,7 +295,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     #x *= 0.5 * params['bound_binw']
 
     """ Build D-matrix """
-    DMAT = BUILD_DMAT(x)
+    DMAT = BUILD_DMAT(x,w)
 
     """ Build J-matrix """
     JMAT  = BUILD_JMAT(DMAT,w)
@@ -341,10 +339,10 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     #    print(0.5*keomat)
   
     #plot_mat(keomat)
-    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
-    #plt.legend()
-    #plt.show()
-    #exit()
+    plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+    plt.legend()
+    plt.show()
+    exit()
 
     #print size of KEO matrix
     #keo_csr_size = keomat.data.size/(1024**2)
@@ -352,12 +350,12 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
 
     return  0.5 * keomat 
 
-def BUILD_DMAT(x):
+def BUILD_DMAT(x,w):
 
     N = x.size
     print("Number of Gauss-Lobatto points = " + str(N))
     #include weights in definition of D
-    print(x)
+    #print(x)
 
     DMAT = np.zeros( ( N , N ), dtype=float)
     Dd = np.zeros( N , dtype=float)
@@ -368,11 +366,11 @@ def BUILD_DMAT(x):
                 Dd[n] += (x[n]-x[mu])**(-1)
 
     for n in range(N):
-        DMAT[n,n] += Dd[n]
+        DMAT[n,n] += Dd[n]/np.sqrt(w[n])
 
         for k in range(N):
             if n != k: 
-                DMAT[k,n]  =  (x[n]-x[k])**(-1)
+                DMAT[k,n]  =  1.0 / ( np.sqrt(w[n]) * (x[n]-x[k]) )
 
                 for mu in range(N):
                     if mu != k and mu != n:
@@ -409,22 +407,22 @@ def BUILD_KD(JMAT,w,N): #checked 1 May 2021
     KD = np.zeros( (N-1,N-1), dtype=float)
 
     #b-b:
-    KD[N-2,N-2] = Wb * Wb * ( JMAT[N-1, N-1] + JMAT[0 , 0]  )
+    KD[N-2,N-2] = Wb * Wb * ( w[N-1] * JMAT[N-1, N-1] + w[0] * JMAT[0 , 0]  )
 
     #b-s:
-    #for n2 in range(0,N-2):
-    #    KD[N-2, n2] = Wb * Ws[n2 + 1] * JMAT[N-1, n2 + 1] #checked
+    for n2 in range(0,N-2):
+        KD[N-2, n2] = np.sqrt(w[N-1]) * Wb *  JMAT[N-1, n2 + 1] #checked Ws[n2 + 1] *
 
     #s-b:
     for n1 in range(0,N-2):
-        KD[n1, N-2] = Wb * Ws[n1 + 1] * JMAT[n1 + 1, N-1] 
+        KD[n1, N-2] = np.sqrt(w[N-1]) * Wb *  JMAT[n1 + 1, N-1] #Ws[n1 + 1] *
 
     #s-s:
     for n1 in range(0, N-2):
         for n2 in range(n1, N-2):
-            KD[n1,n2] = Ws[n1 + 1] * Ws[n2 + 1] * JMAT[n1 + 1, n2 + 1] #checked. Note the shift between J-matrix and tss or Kd matrices.
+            KD[n1,n2] = JMAT[n1 + 1, n2 + 1] # Ws[n1 + 1] * Ws[n2 + 1] *  #checked. Note the shift between J-matrix and tss or Kd matrices.
 
-    return KD
+    return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)
 
 
 def BUILD_KC(JMAT,w,N):
@@ -436,14 +434,14 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[N-2] = Wb * Wb * JMAT[0, N-1] 
+    KC[N-2] = Wb * Wb * JMAT[0, N-1] * np.sqrt(w[0] * w[N-1])
 
     #b-s:
     for n2 in range(0, N-2):
-        KC[n2] = Wb * Ws[n2 + 1] * JMAT[0, n2 + 1] 
+        KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] 
 
 
-    return KC #checked 1 May 2021
+    return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
 
 """ ============ KEOMAT - standard implementation ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
@@ -990,6 +988,9 @@ def gen_tjmat(lmax_basis,lmax_multi):
                         tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -m2-M) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
                         tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) * (-1)**(M+m2)
 
+
+    #print(spherical.Wigner3j(1, 2, 2, 1, 1, -2))
+    #exit()
     #print("3j symbols in array:")
     #print(tjmat)
 
