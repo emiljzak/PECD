@@ -324,25 +324,33 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     for i in range(klist.shape[0]):
         if klist[i,0] == klist[i,2]:
             #diagonal blocks
+            #print(klist[i,1],klist[i,3])
             keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
 
             if klist[i,1] == klist[i,3]:
-                rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0
+                rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
+                #print(rin)
                 keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
 
-        elif int(np.abs(klist[i,0] - klist[i,2])) == 1 and klist[i,1] == nlobs - 1: #u^(bb) term missing?
-            keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
+        elif klist[i,0] == klist[i,2] - 1: # i = i' - 1
+            #off-diagonal blocks
+            if klist[i,1] == nlobs - 1: #last n
+                # u_bs and u_bb:
+                keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
+                #print("n' in u_bs = " + str(klist[i,3] - 1 ))
 
 
+
+    #exit()
     #print("KEO matrix")
     #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
     #    print(0.5*keomat)
   
     #plot_mat(keomat)
-    plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
-    plt.legend()
-    plt.show()
-    exit()
+    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+    #plt.legend()
+    #plt.show()
+    #exit()
 
     #print size of KEO matrix
     #keo_csr_size = keomat.data.size/(1024**2)
@@ -354,7 +362,6 @@ def BUILD_DMAT(x,w):
 
     N = x.size
     print("Number of Gauss-Lobatto points = " + str(N))
-    #include weights in definition of D
     #print(x)
 
     DMAT = np.zeros( ( N , N ), dtype=float)
@@ -438,7 +445,7 @@ def BUILD_KC(JMAT,w,N):
 
     #b-s:
     for n2 in range(0, N-2):
-        KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] 
+        KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] #here we exclude n'=0 which is already included in the def. of bridge function
 
 
     return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
@@ -1407,7 +1414,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 def plot_mat(mat):
     """ plot 2D array with color-coded magnitude"""
     fig, ax = plt.subplots()
-
+    #mat = mat.todense()
     im, cbar = heatmap(mat, 0, 0, ax=ax, cmap="gnuplot", cbarlabel="Hij")
 
     fig.tight_layout()

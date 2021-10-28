@@ -279,6 +279,8 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         """ calculate KEO """
         start_time = time.time()
+        #print(Gr.ravel())
+        #exit()
         keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
         end_time = time.time()
         print("New implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -298,8 +300,8 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         
         """ --- make the hamiltonian matrix hermitian --- """
         if params['hmat_format'] == 'numpy_arr':    
-            ham0 = np.copy(hmat)
-            ham0 += np.transpose(hmat.conjugate()) 
+            ham0    = np.copy(hmat)
+            ham0    += np.transpose(hmat.conjugate()) 
             for i in range(ham0.shape[0]):
                 ham0[i,i] -= hmat.diagonal()[i]
             print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
@@ -323,11 +325,11 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             #ham_filtered = sparse.csr_matrix(ham_filtered)
 
         elif params['hmat_format'] == 'sparse_csr':
-            nonzero_mask = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
-            rows = ham0.nonzero()[0][nonzero_mask]
-            cols = ham0.nonzero()[1][nonzero_mask]
-            ham0[rows, cols] = 0
-            ham_filtered = ham0.copy()
+            nonzero_mask        = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
+            rows                = ham0.nonzero()[0][nonzero_mask]
+            cols                = ham0.nonzero()[1][nonzero_mask]
+            ham0[rows, cols]    = 0
+            ham_filtered        = ham0.copy()
 
 
         #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
