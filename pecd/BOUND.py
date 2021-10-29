@@ -142,7 +142,7 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
         for L in range(Lmax):
             for M in range(-L,L+1):
                 #print(vlist[p,0], vlist[p,1], vlist[p,3], vlist[p,4], L, M, vlist[p,5], vlist[p,6] )
-                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
+                v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,1] + vlist[p,2],vlist[p,3] + vlist[p,4]]
         pot.append( [v] )
         potind.append( [ vlist[p,5], vlist[p,6] ] )
     """
@@ -982,7 +982,7 @@ def gen_tjmat(lmax_basis,lmax_multi):
 
     #store in arrays:
     # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
-    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1), dtype = float)
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1, 2 * lmax_basis + 1), dtype = float)
     
     #l1 - ket, l2 - bra
 
@@ -992,9 +992,9 @@ def gen_tjmat(lmax_basis,lmax_multi):
         for l2 in range(0,lmax_basis+1):
             for L in range(0,lmax_multi+1):
                 for M in range(-L,L+1):
-                    for m2 in range(-l2,l2+1):
-
-                        tjmat[l1,L,l2,L+M,l2+m2] =  ( (-1.0)**(M+m2) ) * spherical.Wigner3j(l2, L, l1, m2, M, -1*m2-1*M) * \
+                    for m1 in range(-l1,l1+1):
+                        for m2 in range(-l2,l2+1):
+                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] =  ( (-1.0)**(m1) ) * spherical.Wigner3j(l2, L, l1, m2, M, m1) * \
                                                     spherical.Wigner3j(l2, L, l1, 0, 0, 0) * \
                                                     np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
 
@@ -1004,7 +1004,7 @@ def gen_tjmat(lmax_basis,lmax_multi):
     #print("3j symbols in array:")
     #print(tjmat)
 
-    return tjmat/np.sqrt(4.0*np.pi)
+    return tjmat#/np.sqrt(4.0*np.pi)
 
 
 
