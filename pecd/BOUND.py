@@ -325,7 +325,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
         if klist[i,0] == klist[i,2]:
             #diagonal blocks
             #print(klist[i,1],klist[i,3])
-            keomat[ klist[i,5], klist[i,6] ] = KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
+            keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
 
             if klist[i,1] == klist[i,3]:
                 rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
@@ -334,10 +334,11 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
 
         elif klist[i,0] == klist[i,2] - 1: # i = i' - 1
             #off-diagonal blocks
-            if klist[i,1] == nlobs - 1: #last n
+            if klist[i,1] == nlobs - 1 : #last n
                 # u_bs and u_bb:
-                keomat[ klist[i,5], klist[i,6] ] = KC[ klist[i,3] - 1 ]
-                #print("n' in u_bs = " + str(klist[i,3] - 1 ))
+                keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
+                                
+               # print("n = " + str(klist[i,1]) + ",  n' in u_bs = " + str(klist[i,3] ))
 
 
 

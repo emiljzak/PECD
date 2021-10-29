@@ -6,7 +6,7 @@
 import numpy as np
 import os
 
-#import psi4
+import psi4
 
 import CONSTANTS
 
