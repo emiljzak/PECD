@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "G1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "H10" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,10 +43,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (2,4,3)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 10
+    params['bound_nbins']   = 15
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""

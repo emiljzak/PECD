@@ -290,6 +290,12 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     x       =   np.asarray(xc, dtype = float)
     w       =   np.asarray(wc, dtype = float)
 
+
+    w[0] *= 2.0
+    w[nlobs-1] *=2.0
+
+    #print(w)
+    #exit()
     #w /= np.sum(w[:])
     #w *= 0.5 * params['bound_binw']
     #scaling to quadrature range
@@ -408,7 +414,7 @@ def BUILD_JMAT(D,w):
 
 
 def BUILD_KD(JMAT,w,N): #checked 1 May 2021
-    Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) )
+    Wb = 1.0 / np.sqrt( (w[0] ) ) #+ w[N-1]
     
     Ws = np.zeros(len(w), dtype = float)
     Ws = 1.0 / np.sqrt(w)
@@ -435,7 +441,7 @@ def BUILD_KD(JMAT,w,N): #checked 1 May 2021
 
 
 def BUILD_KC(JMAT,w,N):
-    Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) )
+    Wb = 1.0 / np.sqrt( (w[0] ) ) #+ w[N-1]
     
     Ws = np.zeros(len(w), dtype = float)
     Ws = 1.0 / np.sqrt(w)
@@ -994,8 +1000,8 @@ def gen_tjmat(lmax_basis,lmax_multi):
                 for M in range(-L,L+1):
                     for m1 in range(-l1,l1+1):
                         for m2 in range(-l2,l2+1):
-                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] =  ( (-1.0)**(m1) ) * spherical.Wigner3j(l2, L, l1, m2, M, m1) * \
-                                                    spherical.Wigner3j(l2, L, l1, 0, 0, 0) * \
+                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] =  ( (-1.0)**(-m1) ) * spherical.Wigner3j( L,l2, l1,M, m2, m1) * \
+                                                    spherical.Wigner3j( L,l2, l1, 0, 0, 0) * \
                                                     np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
 
 
