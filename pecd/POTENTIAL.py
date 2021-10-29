@@ -189,17 +189,17 @@ def read_potential(params):
 
             for _ in range(3):
                 next(vlmfile) #skip header
-            
+
             for line in vlmfile:
                 words =  line.split()
                 r     =  float(words[0])
                 v_re  =  float(words[1])
                 v_im  =  float(words[2])
-            
+
                 v.append([r, v_re + 1j * v_im])
             vlmfile.close()
 
-            v.append([400.0,0.0+1j*0.0])
+            #v.append([400.0,0.0+1j*0.0])
             v = np.asarray(v)
             vLM[:,L,L+M] = v[:Nr,1] #assuming our grid matches the one for the potential!!!
 

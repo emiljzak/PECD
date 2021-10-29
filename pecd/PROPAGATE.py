@@ -291,7 +291,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         #print("Old implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
         
         hmat += keomat 
-
+        #BOUND.plot_mat(hmat.todense())
         #print("plot of hmat")
         #BOUND.plot_mat(hmat)
         #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")

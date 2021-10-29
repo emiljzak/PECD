@@ -141,6 +141,7 @@ def calc_potmat_anton_jit( vLM, vlist, tjmat):
         v = 0.0+1j*0.0
         for L in range(Lmax):
             for M in range(-L,L+1):
+                #print(vlist[p,0], vlist[p,1], vlist[p,3], vlist[p,4], L, M, vlist[p,5], vlist[p,6] )
                 v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
         pot.append( [v] )
         potind.append( [ vlist[p,5], vlist[p,6] ] )
@@ -993,8 +994,9 @@ def gen_tjmat(lmax_basis,lmax_multi):
                 for M in range(-L,L+1):
                     for m2 in range(-l2,l2+1):
 
-                        tjmat[l1,L,l2,L+M,l2+m2] =  spherical.Wigner3j(l2, L, l1, m2, M, -m2-M) * spherical.Wigner3j(l2, L, l1, 0, 0, 0)
-                        tjmat[l1,L,l2,L+M,l2+m2] *= np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) * (-1)**(M+m2)
+                        tjmat[l1,L,l2,L+M,l2+m2] =  ( (-1.0)**(M+m2) ) * spherical.Wigner3j(l2, L, l1, m2, M, -1*m2-1*M) * \
+                                                    spherical.Wigner3j(l2, L, l1, 0, 0, 0) * \
+                                                    np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
 
 
     #print(spherical.Wigner3j(1, 2, 2, 1, 1, -2))
@@ -1002,7 +1004,7 @@ def gen_tjmat(lmax_basis,lmax_multi):
     #print("3j symbols in array:")
     #print(tjmat)
 
-    return tjmat#/np.sqrt(4.0*np.pi)
+    return tjmat/np.sqrt(4.0*np.pi)
 
 
 
@@ -1103,6 +1105,17 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
+    #klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
+
+    #klist = np.asarray(klist)
+    #vlist = np.asarray(vlist)
+
+    #print(klist.shape[0])
+    #print(vlist.shape[0])
+
+    #print(np.vstack((klist,vlist)))
+
+    #exit()
 
     # 2. Read the potential partial waves on the grid
     start_time = time.time()
