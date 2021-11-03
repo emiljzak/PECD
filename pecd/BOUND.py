@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
 
+from scipy import special
 import input
 import MAPPING
 import POTENTIAL
@@ -291,8 +292,8 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     w       =   np.asarray(wc, dtype = float)
 
 
-    w[0] *= 2.0
-    w[nlobs-1] *=2.0
+    #w[0] *= 2.0
+    #w[nlobs-1] *=2.0
 
     #print(w)
     #exit()
@@ -972,7 +973,7 @@ def gen_wigner_dmats(n_grid_euler, Jmax, grid_euler):
 
     WDMATS = []
     for J in range(Jmax+1):
-        WDM = np.zeros((2*J+1,2*J+1,n_grid_euler), dtype=complex)
+        WDM = np.zeros((2*J+1, 2*J+1, n_grid_euler), dtype=complex)
         for m in range(-J,J+1):
             for k in range(-J,J+1):
                 WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
@@ -999,10 +1000,11 @@ def gen_tjmat(lmax_basis,lmax_multi):
             for L in range(0,lmax_multi+1):
                 for M in range(-L,L+1):
                     for m1 in range(-l1,l1+1):
-                        for m2 in range(-l2,l2+1):
-                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] =  ( (-1.0)**(-m1) ) * spherical.Wigner3j( L,l2, l1,M, m2, m1) * \
-                                                    spherical.Wigner3j( L,l2, l1, 0, 0, 0) * \
-                                                    np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
+                        for m2 in range(-l2,l2+1): 
+                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] = np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) /(  (2.0*float(l2)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
+                            # ( (-1.0)**(-M) ) * spherical.Wigner3j( l1,L, l2, m1, M, m2) * \
+                            #                        spherical.Wigner3j( l1, L ,l2, 0, 0, 0) * \
+                            #                        np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
 
 
     #print(spherical.Wigner3j(1, 2, 2, 1, 1, -2))
@@ -1074,8 +1076,10 @@ def rotate_tjmat(grid_euler,irun,tjmat):
 
     lmax = tjmat.shape[0] -1
 
-    tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1), dtype = complex)
-    
+    tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1,  2 * lmax + 1), dtype = complex)
+        
+    #l1 - ket, l2 - bra
+
     # pull wigner matrices at the given euler angle's set
     
     n_grid_euler = grid_euler.shape[0]
@@ -1084,15 +1088,17 @@ def rotate_tjmat(grid_euler,irun,tjmat):
 
     WDMATS = gen_wigner_dmats(1, Lmax, grid_euler[irun])
 
+    #print(grid_euler[irun])
+
     # transform tjmat
     for l1 in range(0,lmax+1):
         for l2 in range(0,lmax+1):
             for L in range(0,Lmax+1):
                 for M in range(-L,L+1):
                     for m2 in range(-l2,l2+1):
-
-                        for Mp in range(-L,L+1):
-                            tjmat_rot[l1,L,l2,M+L,m2+l2] +=  WDMATS[L][M+L,Mp+L,0] * tjmat[l1,L,l2,Mp+L,m2+l2]
+                        for m1 in range(-l1,l1+1):
+                            for Mp in range(-L,L+1):
+                                tjmat_rot[l1,L,l2,M+L,l1+m1, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,L+Mp,l1+m1,l2+m2] 
 
     return tjmat_rot
 
