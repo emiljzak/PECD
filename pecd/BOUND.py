@@ -1014,7 +1014,47 @@ def gen_tjmat(lmax_basis,lmax_multi):
 
     return tjmat#/np.sqrt(4.0*np.pi)
 
+def gen_tjmat_quadpy(lmax_basis,lmax_multi):
+    """precompute all necessary 3-j symbols for the matrix elements of the multipole moments"""
 
+    #store in arrays:
+    # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1, 2 * lmax_basis + 1), dtype = float)
+    
+    myscheme = quadpy.u3.schemes["lebedev_131"]()
+    """
+    Symbols: 
+            theta_phi[0] = theta in [0,pi]
+            theta_phi[1] = phi  in [-pi,pi]
+            sph_harm(m1, l1,  theta_phi[1]+np.pi, theta_phi[0])) means that we 
+                                                                 put the phi angle in range [0,2pi] and 
+                                                                 the  theta angle in range [0,pi] as required by 
+                                                                 the scipy special funciton sph_harm
+    """
+    for l1 in range(0,lmax_basis+1):
+        for l2 in range(0,lmax_basis+1):
+            for L in range(0,lmax_multi+1):
+                for M in range(-L,L+1):
+                    for m1 in range(-l1,l1+1):
+                        for m2 in range(-l2,l2+1):
+
+   
+    
+                            tjmat_re =  myscheme.integrate_spherical(lambda theta_phi: np.real(np.conjugate( sph_harm( m1, l1,  theta_phi[1]+np.pi, theta_phi[0] ) ) \
+                                                                            * sph_harm( M, L, theta_phi[1]+np.pi, theta_phi[0] ) \
+                                                                            * sph_harm( m2, l2, theta_phi[1]+np.pi, theta_phi[0] )) ) 
+
+                            tjmat_im =  myscheme.integrate_spherical(lambda theta_phi: np.imag(np.conjugate( sph_harm( m1, l1,  theta_phi[1]+np.pi, theta_phi[0] ) ) \
+                                                                            * sph_harm( M, L, theta_phi[1]+np.pi, theta_phi[0] ) \
+                                                                            * sph_harm( m2, l2, theta_phi[1]+np.pi, theta_phi[0] )) )
+
+
+
+                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] = tjmat_re + 1j * tjmat_im
+
+
+
+    return tjmat#/np.sqrt(4.0*np.pi)
 
 """ ============ POTMAT0 ROTATED with Multipole expansion ============ """
 def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
@@ -1144,7 +1184,9 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     #exit()
 
     # 3. Build array of 3-j symbols
-    tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
+    #tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
+    tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax'])
+
 
 
 
