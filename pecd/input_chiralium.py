@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "quadpy1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "quadpy2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -134,9 +134,9 @@ def read_input():
         """===== Potential energy matrix ====="""
         
       
-        params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
+        params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
 
-        params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
+        params['use_adaptive_quads'] = False          # read adaptive quadrature parameters from file and use them
         params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
 
         params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
@@ -149,7 +149,7 @@ def read_input():
         """==== electrostatic potential ===="""
 
 
-        params['esp_mode']           = "anton" #exact or multipoles or anton. 
+        params['esp_mode']           = "exact" #exact or multipoles or anton. 
                                         # exact -> use Psi4. 
                                         # multipoles -> perform multipole expansion of the potential from given charge distr.
                                         # anton -> partial wave representation of the potential from A. Artemyev
