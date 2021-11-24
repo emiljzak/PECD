@@ -1019,7 +1019,7 @@ def gen_tjmat_quadpy(lmax_basis,lmax_multi):
 
     #store in arrays:
     # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
-    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1, 2 * lmax_basis + 1), dtype = float)
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1, 2 * lmax_basis + 1), dtype = complex)
     
     myscheme = quadpy.u3.schemes["lebedev_131"]()
     """

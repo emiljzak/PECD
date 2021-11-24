@@ -177,11 +177,11 @@ def setup_input(params_input):
 
     """ === molecule directory ==== """ 
     if params_input['jobtype'] == "slurm":
-        params['main_dir']      = "/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/pecd/" 
-        params['working_dir']   = "/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/tests/molecules/" + params['molec_name'] + "/"
+        params['main_dir']      = "/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/PECD/pecd/" 
+        params['working_dir']   = "/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/PECD/tests/molecules/" + params['molec_name'] + "/"
     elif params_input['jobtype'] == "local":
-        params['main_dir']      = "/home/emil/Desktop/projects/PECD_personal/pecd/"
-        params['working_dir']   = "/home/emil/Desktop/projects/PECD_personal/tests/molecules/" + params['molec_name'] + "/"
+        params['main_dir']      = "/home/emil/Desktop/projects/PECD_personal/PECD/pecd/"
+        params['working_dir']   = "/home/emil/Desktop/projects/PECD_personal/PECD/tests/molecules/" + params['molec_name'] + "/"
 
     """ !!!In this version we are using uniform sized bins, allowing for an array of jobs
         Later expand to general radial basis defined by FEMLIST + array of input parameters!!!"""
