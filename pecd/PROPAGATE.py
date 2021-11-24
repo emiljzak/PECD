@@ -245,7 +245,7 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             if params['esp_mode']  == 'anton':
                 hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #complex potential in Demekhin's work
             else:
-                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=float) #if
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #if
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
             exit()

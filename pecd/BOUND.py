@@ -103,8 +103,8 @@ def calc_potmat_jit( vlist, VG, Gs ):
         G = Gs[vlist[p1,0]-1] 
         V = VG[vlist[p1,0]-1] #xi starts from 1,2,3 but python listst start from 0.
 
-        #SH(vlist[p1,1] , vlist[p1,2] , G[:,0],  G[:,1] + np.pi  )
-        f = sph_harm( vlist[p1,2] , vlist[p1,1] , G[:,1] + np.pi,  G[:,0]) * \
+        #sph_harm( vlist[p1,2] , vlist[p1,1] , G[:,1] + np.pi,  G[:,0])
+        f = np.conj(sph_harm( vlist[p1,2] , vlist[p1,1] , G[:,1] + np.pi,  G[:,0])) * \
             sph_harm( vlist[p1,4] , vlist[p1,3] , G[:,1] + np.pi,  G[:,0]) *\
             V[:]
 
