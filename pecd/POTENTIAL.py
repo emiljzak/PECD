@@ -5,6 +5,7 @@
 #
 import numpy as np
 from scipy import interpolate
+from scipy.special import sph_harm
 
 import GRID 
 
@@ -323,6 +324,39 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
 
 
+    r_array = Gr.flatten()
+
+    VG = []
+    counter = 0
+    if params['molec_name'] == "chiralium": # test case for chiralium. We have analytic potential on the radial grid and we want to use Lebedev quadratures for matrix elements
+        
+        # 1. Read potential
+
+        start_time = time.time()
+        vLM,rgrid_anton = read_potential(params)
+        end_time = time.time()
+
+        lmax_multi = params['multi_lmax']
+
+        for k in range(len(r_array)-1):
+            sph = np.zeros(Gs[k].shape[0], dtype=complex)
+            print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])))
+            for s in range(Gs[k].shape[0]):
+
+                #entire potential block 
+                for L in range(0,lmax_multi+1):
+                    for M in range(-L,L+1):
+            
+                        #Gs[k][s,0] = theta
+                        sph[s] += vLM[k,L,L+M] * sph_harm( M, L, Gs[k][s,1]+np.pi, Gs[k][s,0] )
+                counter  += 1
+
+            VG.append(sph)
+
+
+        return VG
+
+
     if os.path.isfile(params['job_directory']  + "esp/" +str(irun) + "/" + params['file_esp']):
         print (params['file_esp'] + " file exist")
 
@@ -370,7 +404,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
 
     VG = []
     counter = 0
-    if params['molec_name'] == "h":
+    if params['molec_name'] == "h": # test case of shifted hydrogen
         r0 = 1.0
         for k in range(len(r_array)-1):
             sph = np.zeros(Gs[k].shape[0], dtype=float)
@@ -381,6 +415,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
                 counter  += 1
 
             VG.append(sph)
+
     else:
         for k in range(len(r_array)-1):
             sph = np.zeros(Gs[k].shape[0], dtype=float)

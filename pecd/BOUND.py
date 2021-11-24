@@ -92,7 +92,7 @@ def SH(l, m, theta, phi):
 	else:
 		return np.sqrt(2.0)*K(l,-m)*np.sin(-m*phi)*P(l,-m,np.cos(theta))
 
-@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+#@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmat_jit( vlist, VG, Gs ):
     pot = []
     potind = []
@@ -103,8 +103,9 @@ def calc_potmat_jit( vlist, VG, Gs ):
         G = Gs[vlist[p1,0]-1] 
         V = VG[vlist[p1,0]-1] #xi starts from 1,2,3 but python listst start from 0.
 
-        f = SH( vlist[p1,1] , vlist[p1,2]  , G[:,0], G[:,1] + np.pi ) * \
-            SH( vlist[p1,3] , vlist[p1,4]  , G[:,0], G[:,1] + np.pi ) * \
+        #SH(vlist[p1,1] , vlist[p1,2] , G[:,0],  G[:,1] + np.pi  )
+        f = sph_harm( vlist[p1,2] , vlist[p1,1] , G[:,1] + np.pi,  G[:,0]) * \
+            sph_harm( vlist[p1,4] , vlist[p1,3] , G[:,1] + np.pi,  G[:,0]) *\
             V[:]
 
         pot.append( [np.dot(w,f.T) * 4.0 * np.pi ] )
@@ -928,8 +929,8 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
                 for n in range(Gr.shape[1]):
                     xi +=1
                     sph_quad_list.append([i,n+1,xi,params['sph_quad_default']])
-            print(sph_quad_list)
-            exit()
+            #print(sph_quad_list)
+            #exit()
 
     start_time = time.time()
     Gs = GRID.GEN_GRID( sph_quad_list, params['main_dir'])
@@ -1243,7 +1244,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 3. Build array of 3-j symbols
     #tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
     tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with quadpy
-    tjmat       = gen_tjmat_leb(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with generic lebedev
+    #tjmat       = gen_tjmat_leb(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with generic lebedev
 
 
 
