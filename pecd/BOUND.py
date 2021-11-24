@@ -1001,7 +1001,7 @@ def gen_tjmat(lmax_basis,lmax_multi):
                 for M in range(-L,L+1):
                     for m1 in range(-l1,l1+1):
                         for m2 in range(-l2,l2+1): 
-                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] = np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) /(  (2.0*float(l2)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
+                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] = np.sqrt( (2.0*float(l2)+1) * (2.0*float(L)+1) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
                             # ( (-1.0)**(-M) ) * spherical.Wigner3j( l1,L, l2, m1, M, m2) * \
                             #                        spherical.Wigner3j( l1, L ,l2, 0, 0, 0) * \
                             #                        np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
