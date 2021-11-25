@@ -1242,8 +1242,8 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     #exit()
 
     # 3. Build array of 3-j symbols
-    #tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
-    tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with quadpy
+    tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
+    #tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with quadpy
     #tjmat       = gen_tjmat_leb(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with generic lebedev
 
 

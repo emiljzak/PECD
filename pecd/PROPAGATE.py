@@ -194,8 +194,8 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     flwavepacket.close()
 
 
-def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
-    """ Build hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file """
+def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
+    """ Build the stationary hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file """
 
     if params['read_ham_init_file'] == True:
 
@@ -227,6 +227,8 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
                 #plt.legend()
                 #plt.show()
         
+                """ Alternatively we can read enr and coeffs from file"""
+
                 """ diagonalize hmat """
                 start_time = time.time()
                 enr, coeffs = call_eigensolver(ham0, params)
@@ -340,11 +342,11 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
         #print("Maximum imaginary part of the hamiltonian matrix = " + str(np.max(ham_filtered.imag)))
         #exit()
 
-        if params['save_ham_init'] == True:
+        if params['save_ham0'] == True:
             if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( params['job_directory']  + params['file_hmat_init'] + "_" + str(irun) , ham_filtered , compressed = False )
+                sparse.save_npz( params['job_directory']  + params['file_hmat0'] + "_" + str(irun) , ham_filtered , compressed = False )
             elif params['hmat_format'] == 'numpy_arr':
-                with open( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) , 'w') as hmatfile:   
+                with open( params['job_directory'] + params['file_hmat0']+ "_" + str(irun) , 'w') as hmatfile:   
                     np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
             print("Hamiltonian matrix saved.")
 
@@ -367,15 +369,15 @@ def BUILD_HMAT_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
 
 
-        if params['save_psi_init'] == True:
-            psifile = open(params['job_directory']  + params['file_psi_init']+ "_"+str(irun), 'w')
+        if params['save_psi0'] == True:
+            psifile = open(params['job_directory']  + params['file_psi0']+ "_"+str(irun), 'w')
             for ielem,elem in enumerate(maparray):
                 psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                                 " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                                 "\t\t ".join('{:10.5e}'.format(coeffs[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
 
-        if params['save_enr_init'] == True:
-            with open(params['job_directory'] + params['file_enr_init']+ "_"+str(irun), "w") as energyfile:   
+        if params['save_enr0'] == True:
+            with open(params['job_directory'] + params['file_enr0']+ "_"+str(irun), "w") as energyfile:   
                 np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
     
 
@@ -734,7 +736,7 @@ if __name__ == "__main__":
 
         #print(grid_euler[irun])
         """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
-        ham_init, psi_init = BUILD_HMAT_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
+        ham_init, psi_init = BUILD_HMAT0_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
         prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
 
 

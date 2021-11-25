@@ -257,27 +257,6 @@ def setup_input(params_input):
 
 
 
-        params['file_hmat_init']      =   "hmat_init_" + params['molec_name']   + \
-                                        "_" + str(params['bound_lmax'])    + \
-                                        "_" + str(params['bound_nlobs']) + \
-                                        "_" + str('{:4.2f}'.format(params['bound_binw']))   + \
-                                        "_" + str(params['bound_nbins'] )   + \
-                                        "_" + str(params['job_label'])  
-
-        params['file_psi_init']       =   "psi_init_" + params['molec_name']   + \
-                                        "_" + str(params['bound_lmax'])    + \
-                                        "_" + str(params['bound_nlobs']) + \
-                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                        "_" + str(params['bound_nbins'])    + \
-                                        "_" + str(params['job_label'])  
-
-        params['file_enr_init']       =   "enr_init_" + params['molec_name']   + \
-                                        "_" + str(params['bound_lmax'])    + \
-                                        "_" + str(params['bound_nlobs']) + \
-                                        "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
-                                        "_" + str(params['bound_nbins'])   + \
-                                        "_" + str(params['job_label']) 
-
         params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
                                         "_" + str(params['bound_lmax'])    + \
                                         "_" + str(params['bound_nlobs'])   + \
