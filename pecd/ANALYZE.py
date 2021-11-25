@@ -751,7 +751,7 @@ class spacefuncs(analysis):
                     funcpars['plane_split'] = self.split_word(plane)
 
                     # call plotting function
-                    self.rho2D_plot(funcpars,polargrid,rho)
+                    self.rho2D_plot(funcpars,polargrid,rho,irun)
 
 
             if funcpars['save'] == True:
@@ -761,7 +761,7 @@ class spacefuncs(analysis):
                     np.savetxt(rhofile, rho, fmt = '%10.4e')
 
 
-    def rho2D_plot(self,funcpars,polargrid,rho): 
+    def rho2D_plot(self,funcpars,polargrid,rho,irun): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
@@ -873,7 +873,7 @@ class spacefuncs(analysis):
                                             funcpars['plane_split'][0]+ "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            params['helicity'] +
+                                            params['helicity'] + "_" + str(irun) +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],

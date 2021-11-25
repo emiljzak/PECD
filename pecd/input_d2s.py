@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'analyze'
+    params['mode']      = 'propagate'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -28,11 +28,11 @@ def read_input():
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
     """
 
-    params['jobtype'] 	= "local" 
+    params['jobtype'] 	= "slurm" 
 
 
 
-    params['job_label']    = "A" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "conv" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,10 +43,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
-    params['bound_binw_arr']    = (2.0,2.0,1)
+    params['bound_lmax_arr']    = (6,6,4)
+    params['bound_binw_arr']    = (1.0,3.0,11)
 
-    params['bound_nbins']   = 15
+    params['bound_nbins']   = 30
     params['bound_rshift']  = 0.0
 
     """ CONTINUUM PART"""
@@ -84,7 +84,7 @@ def read_input():
     params['mol_masses']    = {"S":32.0, "D":2.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
-    params['sph_quad_tol']       = 1e-4     # tolerance (in a.u.) for the convergence of matrix elements
+    params['sph_quad_tol']       = 1e-10     # tolerance (in a.u.) for the convergence of matrix elements
 
 
     """ __________________________ PROPAGATE BLOCK __________________________"""
@@ -136,8 +136,8 @@ def read_input():
       
         params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
 
-        params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
-        params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
+        params['use_adaptive_quads'] = False          # read adaptive quadrature parameters from file and use them
+        params['sph_quad_default']   = "lebedev_131" # global quadrature scheme in case we do not use adaptive quadratures.
 
         params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
@@ -171,9 +171,9 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = True    # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-3 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-12 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
         params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
@@ -182,7 +182,7 @@ def read_input():
 
         """ ===== ARPACK eigensolver parameters ===== """
 
-        params['ARPACK_tol']        = 1e-3      # error tolerance (relative)
+        params['ARPACK_tol']        = 1e-8      # error tolerance (relative)
         params['ARPACK_maxiter']    = 60000     # maximum number of iterations
         params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
         params['ARPACK_which']      = 'LA'      # LA, SM, SA, LM

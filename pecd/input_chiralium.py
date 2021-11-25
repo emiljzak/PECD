@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "leb2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "G2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -66,8 +66,8 @@ def read_input():
 
     """==== Molecule-field orientation ===="""
 
-    params['N_euler'] 	        = 1     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
-    params['N_batches'] 	    = 1    # number of batches for orientation averaging
+    params['N_euler'] 	        = 6     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
+    params['N_batches'] 	    = 6    # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
@@ -244,7 +244,7 @@ def read_input():
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 200.0  #ignored when automatic
+                                        'rmax': 33.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -334,11 +334,11 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 2 ))
 
-        params['analyze_space']     = []
-        params['analyze_momentum']  = [PECD]
+        params['analyze_space']     = [rho2D]
+        params['analyze_momentum']  = []
         
 
         params['PECD']  = PECD
