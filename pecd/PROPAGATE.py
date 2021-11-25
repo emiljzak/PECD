@@ -53,10 +53,10 @@ import matplotlib.ticker as ticker
 
 
 
-def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
+def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
 
-    time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
-    wfn_saverate = params['wfn_saverate']
+    time_to_au      = CONSTANTS.time_to_au[ params['time_units'] ]
+    wfn_saverate    = params['wfn_saverate']
  
     #rho =  sparse.csc_matrix(ham_init).getnnz() / np.prod(sparse.csc_matrix(ham_init).shape)
     #print("density of the sparse hamiltonian matrix = " + str(rho) )
@@ -74,8 +74,8 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
     #ham0 /= 2.0
 
 
-    Nbas = len(psi_init)
-    print("Nbas = " + str(Nbas))
+    Nbas0 = len(psi0)
+    print("Nbas for the bound Hamiltonian = " + str(Nbas0))
 
     print("Setting up time-grid")
     tgrid = np.linspace(    params['t0'] * time_to_au, 
@@ -96,10 +96,6 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         raise ValueError("Incorect field name")
 
 
-    """ Plot initial orbitals """
-    if params['plot_ini_orb'] == True:
-        PLOTS.plot_initial_orbitals(params,maparray,psi_init)
-
     if params['wavepacket_format'] == "dat":
         flwavepacket      = open(   params['job_directory'] + 
                                     params['wavepacket_file'] +
@@ -117,6 +113,10 @@ def prop_wf( params, ham0, psi_init, maparray, Gr, euler, ieuler ):
         raise ValueError("incorrect/not implemented format")
 
   
+    # Project the bound Hamiltonian onto propagation Hamiltonian
+
+    Nbas, ham_init, psi = PROJECT_HAM_GLOBAL(maparray)
+
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
     psi               = psi_init[:,params['ivec']]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
@@ -380,6 +380,12 @@ def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             with open(params['job_directory'] + params['file_enr0']+ "_"+str(irun), "w") as energyfile:   
                 np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
     
+
+    """ Plot initial orbitals """
+    if params['plot_ini_orb'] == True:
+        PLOTS.plot_initial_orbitals(params,maparray,coeffs)
+
+
 
         return ham_filtered, coeffs
 
@@ -679,7 +685,7 @@ def save_map(map,file):
 
 
 if __name__ == "__main__":   
-    print("KUREARFASDFDSFASD")
+
     start_time_total = time.time()
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -704,19 +710,29 @@ if __name__ == "__main__":
     for key, value in params.items():
         print(key, ":", value)
 
-
-    maparray_global, Nbas_global = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
+    maparray0, Nbas0 = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['job_directory'] )
 
-    save_map(maparray_global,params['job_directory'] + 'map_global.dat')
 
-    Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
+    maparray, Nbas = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
+                                                            params['bound_lmax'],
+                                                            params['map_type'],
+                                                            params['job_directory'] )
+
+    save_map(maparray,params['job_directory'] + 'map0.dat')
+    save_map(maparray,params['job_directory'] + 'map_global.dat')
+
+    Gr0, Nr0                       = GRID.r_grid(             params['bound_nlobs'], 
                                                             params['bound_nbins'] , 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
+    Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
+                                                            params['prop_nbins'] , 
+                                                            params['bound_binw'],  
+                                                            params['bound_rshift'] )
 
     """ Read grid of Euler angles"""
     grid_euler  = read_euler_grid()
@@ -736,8 +752,8 @@ if __name__ == "__main__":
 
         #print(grid_euler[irun])
         """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
-        ham_init, psi_init = BUILD_HMAT0_ROT(params, Gr, maparray_global, Nbas_global, grid_euler, irun)
-        prop_wf(params, ham_init, psi_init, maparray_global, Gr, grid_euler[irun], irun)
+        ham0, psi0 = BUILD_HMAT0_ROT(params, Gr0, maparray0, Nbas0, grid_euler, irun)
+        prop_wf(params, ham0, psi0, maparray, Gr, grid_euler[irun], irun)
 
 
 end_time_total = time.time()
