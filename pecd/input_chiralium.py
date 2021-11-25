@@ -67,7 +67,7 @@ def read_input():
     """==== Molecule-field orientation ===="""
 
     params['N_euler'] 	        = 6     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
-    params['N_batches'] 	    = 6    # number of batches for orientation averaging
+    params['N_batches'] 	    = 1    # number of batches for orientation averaging
     params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
