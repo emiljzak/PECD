@@ -113,11 +113,11 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
         raise ValueError("incorrect/not implemented format")
 
   
-    # Project the bound Hamiltonian onto propagation Hamiltonian
+    # Project the bound Hamiltonian onto the propagation Hamiltonian
+    Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
+    ham_init        = PROJECT_HAM_GLOBAL(params, maparray, ham0 )
 
-    Nbas, ham_init, psi = PROJECT_HAM_GLOBAL(maparray)
-
-    wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype=complex )
+    wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:,params['ivec']]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
@@ -166,7 +166,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
                 
-        psi_out             = expm_multiply( -1.0j * ( ham0 + dip ) * dt, psi ) 
+        psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
         wavepacket[itime,:] = psi_out
         psi                 = wavepacket[itime,:]
 
@@ -193,6 +193,25 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
     flwavepacket.close()
 
+def PROJECT_HAM_GLOBAL(params, maparray, ham0):
+    return Nbas, ham
+
+
+def PROJECT_PSI_GLOBAL(params, maparray, psi0):
+    Nbas = len(maparray)
+    Nbas0 = len(psi0)
+    print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
+
+
+    psi = np.zeros(Nbas, dtype = complex)
+    
+    psi[:Nbas0] = psi0[:,params['ivec']]
+    zeros = np.zeros_like(psi[Nbas0:Nbas])
+    print(np.zeros_like(zeros).shape)
+    print(np.allclose(psi[Nbas0-1:Nbas-1], zeros))
+    print(psi[Nbas0-10:Nbas0+10])
+    exit()
+    return psi
 
 def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
     """ Build the stationary hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file """
@@ -381,10 +400,9 @@ def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
                 np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
     
 
-    """ Plot initial orbitals """
-    if params['plot_ini_orb'] == True:
-        PLOTS.plot_initial_orbitals(params,maparray,coeffs)
-
+        """ Plot initial orbitals """
+        if params['plot_ini_orb'] == True:
+            PLOTS.plot_initial_orbitals(params,maparray,coeffs)
 
 
         return ham_filtered, coeffs
@@ -716,7 +734,7 @@ if __name__ == "__main__":
                                                             params['job_directory'] )
 
 
-    maparray, Nbas = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
+    maparray, Nbas = MAPPING.GENMAP_FEMLIST(  params['FEMLIST_PROP'],
                                                             params['bound_lmax'],
                                                             params['map_type'],
                                                             params['job_directory'] )
@@ -753,6 +771,7 @@ if __name__ == "__main__":
         #print(grid_euler[irun])
         """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
         ham0, psi0 = BUILD_HMAT0_ROT(params, Gr0, maparray0, Nbas0, grid_euler, irun)
+
         prop_wf(params, ham0, psi0, maparray, Gr, grid_euler[irun], irun)
 
 

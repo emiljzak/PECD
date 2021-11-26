@@ -192,15 +192,13 @@ def setup_input(params_input):
 
     """ list defining the radial grid"""
 
-    params['nlobs']     = params['bound_nlobs']
-    params['nbins']     = 0
-    params['binw']      = params['bound_binw']
 
     params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
-                                [params['nbins'], params['nlobs'], params['binw']] ] 
+                                [0, params['bound_nlobs'], params['bound_binw']] ] 
 
-    #params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
-    #                            [0,0,0.0] ] #to be used
+    params['FEMLIST_PROP']   = [ [params['prop_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
+                                [0, params['bound_nlobs'], params['bound_binw']] ] 
+
 
     params['job_directory'] =  params['working_dir'] + params['molec_name']   + \
                                 "_" + str(params['bound_lmax'])    + \
@@ -217,9 +215,6 @@ def setup_input(params_input):
         params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
 
         params['wavepacket_file']    = "wavepacket"
-
-        #place IF here analyze vs propagate
-
 
 
         """==== file paths and names ===="""
