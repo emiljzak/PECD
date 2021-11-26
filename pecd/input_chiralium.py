@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "split_split" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "Clebsch_split_17" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -50,7 +50,7 @@ def read_input():
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 50
+    params['prop_nbins']        = 100
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -60,7 +60,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 2000.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -103,8 +103,8 @@ def read_input():
         """ ====== FIELD PARAMETERS ====== """
 
         params['freq_units']    = "ev"      # nm or ev
-        params['omega']         = 20.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
+        params['omega']         = 30.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
+        params['intensity']     = 2.0e+14   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -206,7 +206,7 @@ def read_input():
 
         params['wavepacket_format'] = "h5" #dat or h5
 
-        params['plot_elfield']      = False
+        params['plot_elfield']      = True
         params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
     
@@ -242,7 +242,7 @@ def read_input():
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 100.0  #ignored when automatic
+                                        'rmax': 200.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -335,7 +335,7 @@ def read_input():
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 10 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
-        params['analyze_space']     = []
+        params['analyze_space']     = [rho2D]
         params['analyze_momentum']  = [W2Dav]
         
 
@@ -350,7 +350,7 @@ def read_input():
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
         # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
         params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
-        params['rcutoff']         = 30.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
+        params['rcutoff']         = 40.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
        
         params['plot_Plm']        = False           # plot and save photoelectron partial waves?
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
