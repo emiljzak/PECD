@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "split_full" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "split_split" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -46,7 +46,7 @@ def read_input():
     params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 50
+    params['bound_nbins']       = 17
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
@@ -292,7 +292,7 @@ def read_input():
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     20, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
                     'legendre':     True, # calculate Legendre decomposition
 
@@ -333,17 +333,17 @@ def read_input():
 
 
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 10 ))
-        params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 2 ))
+        params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
-        params['analyze_space']     = [rho2D]
-        params['analyze_momentum']  = []
+        params['analyze_space']     = []
+        params['analyze_momentum']  = [W2Dav]
         
 
-        params['PECD']  = PECD
-        params['W2Dav'] = W2Dav
-        params['W2D']   = W2D
-        params['rho2D'] = rho2D
-        params['bcoeffs'] = bcoeffs
+        params['PECD']      = PECD
+        params['W2Dav']     = W2Dav
+        params['W2D']       = W2D
+        params['rho2D']     = rho2D
+        params['bcoeffs']   = bcoeffs
 
 
         """ *** Momentum-space wavefunction *** """

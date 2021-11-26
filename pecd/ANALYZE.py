@@ -376,7 +376,7 @@ class analysis:
         """ Calculate real-space grid (r,theta) for evaluation of Hankel transform and for plottting"""
         """ The real-space grid determines the k-space grid returned by PyHank """
 
-        nbins   = self.params['bound_nbins'] 
+        nbins   = self.params['prop_nbins'] 
         rmax    = nbins * self.params['bound_binw']
         npts    = self.params['npts_r_ft'] 
         N_red   = npts 
@@ -1784,7 +1784,7 @@ class momentumfuncs(analysis):
         ncontours = 20
 
         nlobs   = params['bound_nlobs']
-        nbins   = params['bound_nbins'] 
+        nbins   = params['prop_nbins'] 
         npoints = 100
         rmax    = nbins * params['bound_binw']
         rmin    = 0.0
