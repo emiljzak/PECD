@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "init1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "split1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -50,7 +50,7 @@ def read_input():
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 100
+    params['prop_nbins']        = 50
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -60,7 +60,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4.0 
+    params['tmax']          = 2000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -104,7 +104,7 @@ def read_input():
 
         params['freq_units']    = "ev"      # nm or ev
         params['omega']         = 20.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
+        params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -123,8 +123,8 @@ def read_input():
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
-        params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)
-        params['gauss_t0']      = 2000.0 #as: pulse centre
+        params['gauss_tau']     = 500.0 #as: pulse duration (sigma)
+        params['gauss_t0']      = 1000.0 #as: pulse centre
 
         """ sin2 pulse """
         params['sin2_ncycles']  = 10
