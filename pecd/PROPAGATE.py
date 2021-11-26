@@ -281,9 +281,9 @@ def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
     if params['read_ham_init_file'] == True:
 
         if params['hmat_format']   == "numpy_arr":
-            if os.path.isfile(params['job_directory'] + params['file_hmat_init'] + "_" + str(irun) + ".dat"  ):
+            if os.path.isfile(params['job_directory'] + params['file_hmat0'] + "_" + str(irun) + ".dat"  ):
         
-                print (params['file_hmat_init'] + " file exist")
+                print (params['file_hmat0'] + " file exist")
                 hmat = read_ham_init_rot(params,irun)
                 """ diagonalize hmat """
                 start_time = time.time()
@@ -301,8 +301,8 @@ def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
 
         elif params['hmat_format']   == "sparse_csr":
 
-            if os.path.isfile(params['job_directory'] + params['file_hmat_init'] + "_" + str(irun) + ".npz" ):
-                print (params['file_hmat_init'] + "_" + str(irun) + ".npz" + " file exist")
+            if os.path.isfile(params['job_directory'] + params['file_hmat0'] + "_" + str(irun) + ".npz" ):
+                print (params['file_hmat0'] + "_" + str(irun) + ".npz" + " file exist")
                 ham0 =  read_ham_init_rot(params,irun)
                 #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
                 #plt.legend()
@@ -561,9 +561,9 @@ def proj_wf0_wfinit_dvr(coeffs0, marray, Nbas_global):
 
 def read_ham_init(params):
     if params['hmat_format'] == 'sparse_csr':
-        hmat = sparse.load_npz( params['working_dir'] + params['file_hmat_init']+ ".npz" )
+        hmat = sparse.load_npz( params['working_dir'] + params['file_hmat0']+ ".npz" )
     elif params['hmat_format'] == 'numpy_arr':
-        with open( params['working_dir'] + params['file_hmat_init'] , 'r') as hmatfile:   
+        with open( params['working_dir'] + params['file_hmat0'] , 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)
     return hmat
 
@@ -571,9 +571,9 @@ def read_ham_init(params):
 def read_ham_init_rot(params,irun):
     #rotated version
     if params['hmat_format'] == 'sparse_csr':
-        hmat = sparse.load_npz( params['job_directory'] + params['file_hmat_init']+ "_" + str(irun) + ".npz" )
+        hmat = sparse.load_npz( params['job_directory'] + params['file_hmat0']+ "_" + str(irun) + ".npz" )
     elif params['hmat_format'] == 'numpy_arr':
-        with open( params['job_directory'] + params['file_hmat_init'] + "_"+str(irun) + ".dat", 'r') as hmatfile:   
+        with open( params['job_directory'] + params['file_hmat0'] + "_"+str(irun) + ".dat", 'r') as hmatfile:   
             hmat = np.loadtxt(hmatfile)
     return hmat
 
