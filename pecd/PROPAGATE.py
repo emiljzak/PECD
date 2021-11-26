@@ -115,7 +115,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
   
     # Project the bound Hamiltonian onto the propagation Hamiltonian
     Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
-    ham_init        = PROJECT_HAM_GLOBAL(params, maparray, ham0 )
+    ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 )
 
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:,params['ivec']]
@@ -193,8 +193,55 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
     flwavepacket.close()
 
-def PROJECT_HAM_GLOBAL(params, maparray, ham0):
-    return Nbas, ham
+def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
+
+    ham = sparse.csr_matrix((Nbas, Nbas), dtype=complex) 
+    
+    # 0. Append the bound hamiltonian
+    ham[:Nbas0,:Nbas0] = ham0
+
+    #print(ham.todense())
+    #plt.spy(ham,precision=1e-8, markersize=2)
+    #plt.show()
+
+    # 1. Build the full KEO in propagation space minus bound space
+ 
+    start_time = time.time()
+    keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+    end_time = time.time()
+    print("Time for construction of KEO matrix in full propagation space is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    #plt.spy(keomat,precision=1e-8, markersize=2)
+    #plt.show()
+
+    print("Shape of keomat: " + str(keomat.shape) )
+    print("Shape of ham: " + str(ham.shape) )
+
+
+
+    keomat_copy = keomat.copy()
+    keomat_copy += keomat.getH()
+    for i in range(keomat.shape[0]):
+        keomat_copy[i,i] /=2.0 #-= hmat.diagonal()[i]
+
+
+    ham[:Nbas0,:Nbas0]  -= keomat_copy[:Nbas0, :Nbas0]
+    #plt.spy(ham,precision=1e-4, markersize=2)
+    #plt.show()
+
+    ham                 += keomat_copy  
+
+    #plt.spy(ham,precision=1e-4, markersize=2)
+    #plt.show()
+
+    BOUND.plot_mat(ham.todense())
+
+    # 2. Build the full potential in propagation space minus bound spac
+        # consider cut-offs for the electrostatic potential 
+
+
+    return ham
 
 
 def PROJECT_PSI_GLOBAL(params, maparray, psi0):
@@ -202,16 +249,10 @@ def PROJECT_PSI_GLOBAL(params, maparray, psi0):
     Nbas0 = len(psi0)
     print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
 
-
-    psi = np.zeros(Nbas, dtype = complex)
-    
+    psi = np.zeros(Nbas, dtype = complex)    
     psi[:Nbas0] = psi0[:,params['ivec']]
-    zeros = np.zeros_like(psi[Nbas0:Nbas])
-    print(np.zeros_like(zeros).shape)
-    print(np.allclose(psi[Nbas0-1:Nbas-1], zeros))
-    print(psi[Nbas0-10:Nbas0+10])
-    exit()
-    return psi
+
+    return Nbas, psi
 
 def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
     """ Build the stationary hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file """
