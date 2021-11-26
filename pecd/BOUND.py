@@ -1576,7 +1576,7 @@ def heatmap( data, row_labels, col_labels, ax=None,
     im = ax.imshow(np.abs(data), **kwargs)
 
     # Create colorbar
-    im.set_clim(0, np.max(np.abs(data)))
+    im.set_clim(0, 2.0 ) #np.max(np.abs(data))
     cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 

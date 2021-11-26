@@ -25,7 +25,7 @@ import itertools
 import json
 import h5py
 
-
+import unittest 
 
 import MAPPING
 import GRID
@@ -118,8 +118,10 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 )
 
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
-    psi               = psi_init[:,params['ivec']]
+    psi               = psi_init[:]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
+
+
 
     if params['calc_free_energy'] == True:
         felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
@@ -215,8 +217,8 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
     #plt.spy(keomat,precision=1e-8, markersize=2)
     #plt.show()
 
-    print("Shape of keomat: " + str(keomat.shape) )
-    print("Shape of ham: " + str(ham.shape) )
+    #print("Shape of keomat: " + str(keomat.shape) )
+    #print("Shape of ham: " + str(ham.shape) )
 
 
 
@@ -232,14 +234,19 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
 
     ham                 += keomat_copy  
 
+
+
+    assert TEST_BOUNDARY_HAM(params,ham,Nbas0) == True
+    
     #plt.spy(ham,precision=1e-4, markersize=2)
     #plt.show()
 
-    BOUND.plot_mat(ham.todense())
+    #BOUND.plot_mat(ham.todense())
 
-    # 2. Build the full potential in propagation space minus bound spac
+    # 2. Optional: add "long-range potential" 
+    # Build the full potential in propagation space minus bound spac
         # consider cut-offs for the electrostatic potential 
-
+        #
 
     return ham
 
@@ -253,6 +260,25 @@ def PROJECT_PSI_GLOBAL(params, maparray, psi0):
     psi[:Nbas0] = psi0[:,params['ivec']]
 
     return Nbas, psi
+
+def TEST_BOUNDARY_HAM(params,ham,Nbas0):
+    """ diagonalize hmat """
+    start_time = time.time()
+    enr, coeffs = call_eigensolver(ham, params)
+    end_time = time.time()
+    print("Time for diagonalization of the full Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    """ diagonalize hmat0 """
+    start_time = time.time()
+    enr0, coeffs0 = call_eigensolver(ham[:Nbas0,:Nbas0], params)
+    end_time = time.time()
+    print("Time for diagonalization of the bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    print(enr-enr0)
+
+    return np.allclose(enr,enr0,atol=1e-4)
+
 
 def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
     """ Build the stationary hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file """

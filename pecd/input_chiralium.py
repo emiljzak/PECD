@@ -177,7 +177,7 @@ def read_input():
         params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-12 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 40 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 10 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']
