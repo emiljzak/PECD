@@ -213,14 +213,11 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
     end_time = time.time()
     print("Time for construction of KEO matrix in full propagation space is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
     #plt.spy(keomat,precision=1e-8, markersize=2)
     #plt.show()
 
     #print("Shape of keomat: " + str(keomat.shape) )
     #print("Shape of ham: " + str(ham.shape) )
-
-
 
     keomat_copy = keomat.copy()
     keomat_copy += keomat.getH()
@@ -234,9 +231,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
 
     ham                 += keomat_copy  
 
-
-
-    assert TEST_BOUNDARY_HAM(params,ham,Nbas0) == True
+    #assert TEST_BOUNDARY_HAM(params,ham,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
     
     #plt.spy(ham,precision=1e-4, markersize=2)
     #plt.show()
