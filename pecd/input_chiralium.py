@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "split1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "split_full" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
 
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,10 +43,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 17
+    params['bound_nbins']       = 50
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
@@ -235,14 +235,14 @@ def read_input():
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen                    
                     'save':         True,
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 33.0  #ignored when automatic
+                                        'rmax': 100.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -332,7 +332,7 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 10 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 2 ))
 
         params['analyze_space']     = [rho2D]

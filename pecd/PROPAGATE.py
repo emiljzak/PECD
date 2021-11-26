@@ -801,7 +801,7 @@ if __name__ == "__main__":
                                                             params['map_type'],
                                                             params['job_directory'] )
 
-    save_map(maparray,params['job_directory'] + 'map0.dat')
+    save_map(maparray0,params['job_directory'] + 'map0.dat')
     save_map(maparray,params['job_directory'] + 'map_global.dat')
 
     Gr0, Nr0                       = GRID.r_grid(             params['bound_nlobs'], 

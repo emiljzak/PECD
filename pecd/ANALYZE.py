@@ -2138,29 +2138,29 @@ if __name__ == "__main__":
     time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
 
     """ generate maps and grids """
-    params['maparray_global'], params['Nbas_global']    = MAPPING.GENMAP_FEMLIST(   params['FEMLIST'],
+    params['maparray_global'], params['Nbas_global']    = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
                                                                                     params['bound_lmax'],
                                                                                     params['map_type'],
                                                                                     params['job_directory'] )
 
-    params['maparray_chi'], params['Nbas_chi']          = MAPPING.GENMAP_FEMLIST(   params['FEMLIST'],  
+    params['maparray_chi'], params['Nbas_chi']          = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],  
                                                                                     0,
                                                                                     params['map_type'], 
                                                                                     path )
 
     params['Gr'], params['Nr ']                         = GRID.r_grid(              params['bound_nlobs'], 
-                                                                                    params['bound_nbins'] , 
+                                                                                    params['prop_nbins'] , 
                                                                                     params['bound_binw'],  
                                                                                     params['bound_rshift'] )
 
     params['Gr_prim'], params['Nr_prim']                = GRID.r_grid_prim(         params['bound_nlobs'], 
-                                                                                    params['bound_nbins'], 
+                                                                                    params['prop_nbins'], 
                                                                                     params['bound_binw'], 
                                                                                     params['bound_rshift'] )
 
     params['chilist']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
                                                                                     params['bound_nlobs'], 
-                                                                                    params['bound_nbins'], 
+                                                                                    params['prop_nbins'], 
                                                                                     params['bound_binw'], 
                                                                                     params['maparray_chi'])
 
