@@ -32,8 +32,8 @@ def read_input():
 
 
 
-    params['job_label']    = "Clebsch_split_17" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
-
+    params['job_label']    = "testdyn_split_cl_dt3" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
     """ 
@@ -103,8 +103,8 @@ def read_input():
         """ ====== FIELD PARAMETERS ====== """
 
         params['freq_units']    = "ev"      # nm or ev
-        params['omega']         = 30.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 2.0e+14   # W/cm^2: peak intensity
+        params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
+        params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -123,8 +123,8 @@ def read_input():
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
-        params['gauss_tau']     = 500.0 #as: pulse duration (sigma)
-        params['gauss_t0']      = 1000.0 #as: pulse centre
+        params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
+        params['gauss_t0']      = 2000.0 #as: pulse centre
 
         """ sin2 pulse """
         params['sin2_ncycles']  = 10
@@ -253,12 +253,12 @@ def read_input():
                     'plane':        ('YZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen
-                    'save':         False, # save array in file
+                    'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
-                                        'kmax': 2.0  #ignored when automatic
+                                        'kmax': 1.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -282,23 +282,23 @@ def read_input():
         W2Dav = {   'name':         'W2Dav',
                     'plot':         (True, GRAPHICS.gparams_W2Dav_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen
-                    'save':         False, # save array in file
+                    'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
-                                        'npts': 1000,    #ignored when automatic (2*rmax)
+                                        'npts': 600,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
-                                        'kmax': 3.0  #ignored when automatic
+                                        'kmax': 1.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
                     'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
-                    'legendre':     True, # calculate Legendre decomposition
+                    'legendre':     False, # calculate Legendre decomposition
 
 
 
-                    'PES':          False, # calculate PES
+                    'PES':          True, # calculate PES
                     'PES_params': {     
                                     'name':         'PES',
                                     'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
@@ -332,10 +332,10 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 10 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
-        params['analyze_space']     = [rho2D]
+        params['analyze_space']     = []
         params['analyze_momentum']  = [W2Dav]
         
 
@@ -365,7 +365,7 @@ def read_input():
             
         """ *** PES *** """
         params['pes_npts']       = 1000    # numer of points for PES evaluation
-        params['pes_max_k']      = 3.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
+        params['pes_max_k']      = 2.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
         params['pes_lmax']       = 1
 
         """ *** PECD *** """

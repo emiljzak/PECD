@@ -157,7 +157,7 @@ def field_params(params):
     if params['field_env_name'] == "gaussian":
         env_dict = {
                         "function_name": "envgaussian", 
-                        "FWHM": 2.355 * (time_to_au * params['gauss_tau'])/np.sqrt(2.0), 
+                        "FWHM": 2.355 * (time_to_au * params['gauss_tau']), 
                         "t0": (time_to_au * params['gauss_t0'])  }
 
     elif params['field_env_name'] == "sin2":
