@@ -658,8 +658,9 @@ class analysis:
                             )
 
         #ax1.legend() #show legends
-        plt.show()
-        plt.close()
+        if funcpars['show'] == True:
+            plt.show()
+            plt.close()
 
 
 class spacefuncs(analysis):
@@ -1774,9 +1775,11 @@ class momentumfuncs(analysis):
                                             pad_inches  =   plot_params['save_pad_inches']
                             )       
 
-        plt.show()
-        plt.legend()  
-        plt.close()
+
+        if funcpars['show'] == True:
+            plt.show()
+            plt.legend()  
+            plt.close()
 
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
