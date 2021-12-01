@@ -1190,7 +1190,7 @@ class momentumfuncs(analysis):
             obs_dict['Wav'] = Wav
             if funcpars['plot'][0] == True:
 
-                self.W2Dav_plot(funcpars,polargrid,Wav)
+                self.W2Dav_plot(funcpars,polargrid,Wav,irun)
 
             if funcpars['save'] == True:
    
@@ -1205,7 +1205,7 @@ class momentumfuncs(analysis):
                 obs_dict['kgrid']   = kgrid
 
             if funcpars['PES']  == True:
-                PES_av = self.PESav(funcpars,polargrid,Wav)
+                PES_av = self.PESav(funcpars,polargrid,Wav,irun)
                 obs_dict['PES_av'] = PES_av
 
             obs_list.append([i,t,obs_dict])
@@ -1233,7 +1233,7 @@ class momentumfuncs(analysis):
 
 
 
-    def W2Dav_plot(self,funcpars,polargrid,W2D): 
+    def W2Dav_plot(self,funcpars,polargrid,W2D,irun): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
@@ -1432,7 +1432,7 @@ class momentumfuncs(analysis):
                 self.legendre_expansion(funcpars,polargrid,W2Ddir)
 
             if funcpars['PES']  == True:
-                self.PES(funcpars,polargrid,W2Ddir)
+                self.PES(funcpars,polargrid,W2Ddir,irun)
 
         
     def W2D_calc(self, funcpar, Flm, polargrid):
@@ -1583,7 +1583,7 @@ class momentumfuncs(analysis):
 
 
 
-    def PES(self,funcpars,grid,fdir):
+    def PES(self,funcpars,grid,fdir,irun):
 
         for elem in fdir.items():
 
@@ -1614,10 +1614,10 @@ class momentumfuncs(analysis):
                 W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
                 spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
             
-            self.PES_plot(funcpars,spectrum,pes_kgrid)
+            self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
 
-    def PESav(self,funcpars,grid,Wav):
+    def PESav(self,funcpars,grid,Wav,irun):
         """ photo-electron spectrum from phi-averaged momentum distribution"""
     
         kgrid       = grid[0]
@@ -1635,7 +1635,7 @@ class momentumfuncs(analysis):
 
         print("*** calculating photo-electron spectrum ***")
         nkpoints    = params['pes_npts'] 
-        pes_kgrid   = np.linspace(0.05, params['pes_max_k'], nkpoints)
+        pes_kgrid   = np.linspace(0.005, params['pes_max_k'], nkpoints)
         spectrum    = np.zeros(nkpoints, dtype = float)
         
         
@@ -1644,10 +1644,10 @@ class momentumfuncs(analysis):
             W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
             spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
         
-        self.PES_plot(funcpars,spectrum,pes_kgrid)
+        self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
 
-    def PES_plot(self,funcpars,spectrum,kgrid):
+    def PES_plot(self,funcpars,spectrum,kgrid,irun):
 
         """ Produces plot of the PES """
        
@@ -1673,15 +1673,15 @@ class momentumfuncs(analysis):
         if funcpars['PES_params']['k-axis'] == 'momentum':
             grid_plot = kgrid
         elif funcpars['PES_params']['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev
+            grid_plot = (0.5*kgrid**2)#*CONSTANTS.au_to_ev
         else:
             raise ValueError("incorrect k-axis specification")
 
         if funcpars['PES_params']['y-axis'] == 'unit':
-            func_plot = kgrid * spectrum
+            func_plot =  spectrum #kgrid *
 
         elif funcpars['PES_params']['y-axis'] == 'log':
-            func_plot =   kgrid * spectrum
+            func_plot =  spectrum
             ax1.set_yscale('log')
         else:
             raise ValueError("incorrect y-axis specification")
@@ -1762,7 +1762,7 @@ class momentumfuncs(analysis):
                             )
             elif  funcpars['name'] == 'W2Dav':
                 fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" +
+                                            plot_params['save_name'] + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             params['helicity'] +
