@@ -163,7 +163,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime][0] * intmat0[0]  + Fvec[itime][1] * intmat0[1] + Fvec[itime][2] * intmat0[2]
+        dip = Fvec[itime][0] * h1  + Fvec[itime][1] * h2 + Fvec[itime][2] * h3
         #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
@@ -582,15 +582,16 @@ def calc_intmat(maparray,rgrid,Nbas):
 
     #field: (E_-1, E_0, E_1) in spherical tensor form
     """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
-
+    #Adopted convention used in Artemyev et al., J. Chem. Phys. 142, 244105 (2015).
+    
     if params['hmat_format'] == 'numpy_arr':    
-        intmat =   np.zeros(( Nbas , Nbas ), dtype = complex)
+        intmat =   np.zeros(( Nbas , Nbas ), dtype = float)
     elif params['hmat_format'] == 'sparse_csr':
-        intmat1 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-        intmat2 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
-        intmat3 = sparse.csr_matrix(( Nbas, Nbas ), dtype = complex)
+        intmat1 = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
+        intmat2 = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
+        intmat3 = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
 
-    D = np.zeros(3)
+    D = np.zeros(3, dtype = float)
 
     """precompute all necessary 3-j symbols"""
     #generate arrays of 3j symbols with 'spherical':
@@ -610,12 +611,15 @@ def calc_intmat(maparray,rgrid,Nbas):
                 #intmat2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[1] * rin 
                 #intmat3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[2] * rin 
 
-                D[:] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4]+maparray[i][3], : ] #-1, 0 , +1
+                D[:] = tjmat[ maparray[i][3], maparray[j][3], maparray[i][4] + maparray[i][3], maparray[j][4] + maparray[j][3], : ] #-1, 0 , +1
+
                 if maparray[j][4] == maparray[i][4]:
                     intmat2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[1] * rin * np.sqrt(2.)
-                elif maparray[j][4] ==1- maparray[i][4]:
+
+                elif maparray[j][4] ==  maparray[i][4] + 1: #-1, LCPL
                     intmat1[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[0] * rin 
-                elif maparray[j][4] ==-1- maparray[i][4]:
+
+                elif maparray[j][4] == maparray[i][4] - 1:
                     intmat3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[2] * rin 
 
 
@@ -732,20 +736,21 @@ def rotate_coefficients(ind_euler,coeffs,WDMATS,lmax,Nr):
     return coeffs_rotated
 
 
-
 def gen_3j_dip(lmax):
     """precompute all necessary 3-j symbols for dipole matrix elements"""
-    #store in arrays:
-    # 2) tjmat[l,l',m,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
-    tjmat = np.zeros( (lmax+1, lmax+1, 2*lmax+1, 3), dtype = float)
+
+    # 2) tjmat[l1,l2,m1,m2,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
+    tjmat = np.zeros( (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3), dtype = float)
 
     for mu in range(0,3):
         for l1 in range(lmax+1):
             for l2 in range(lmax+1):
-                for m in range(-l1,l1+1):
-                    
-                    tjmat[l1,l2,l1+m,mu] = spherical.Wigner3j(l1, 1, l2, m, mu-1, -(m+mu-1)) * spherical.Wigner3j(l1, 1, l2, 0, 0, 0)
-                    tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m+mu-1)
+                for m1 in range(-l1,l1+1):
+                    for m2 in range(-l2,l2+1):
+
+                        tjmat[l1,l2,l1+m1,l2+m2,mu] = np.sqrt( (2.0*float(l2)+1) * (3.0) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,1,mu-1,l1,m1) * spherical.clebsch_gordan(l2,0,1,0,l1,0)
+                    #tjmat[l1,l2,l1+m1,l2+m2,mu] = spherical.Wigner3j(l1, 1, l2, m, mu-1, -(m+mu-1)) * spherical.Wigner3j(l1, 1, l2, 0, 0, 0)
+                    #tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m+mu-1)
 
     #print("3j symbols in array:")
     #print(tjmat)
