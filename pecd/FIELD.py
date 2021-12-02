@@ -10,21 +10,21 @@ class Field():
         self.params = params
 
     """ =================================== FIELD TYPES =================================== """
-    def fieldRCPL(self,t, function_name, omega, E0, CEP0, spherical):
-        #all vectors are returned in spherical tensor form -1, 0, 1 order
+    def fieldRCPL(self, t, function_name, omega, E0, CEP0, spherical):
+        #all vectors are returned in spherical tensor form -1, 0, 1 order. Adopted convention used in Artemyev et al., J. Chem. Phys. 142, 244105 (2015).
         if spherical == True:
-            fieldvec = E0 * np.array( [ 0.0 , 0.0, - (np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ) )] ) 
+            fieldvec = E0 * np.array( [  np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ), 0.0 , 0.0  ] ) / np.sqrt(2.0)
         else:
-            fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, 0.0] ) 
+            fieldvec = E0 * np.array( [  np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ), 0.0 , 0.0  ] ) / np.sqrt(2.0)
         return fieldvec
 
 
-    def fieldLCPL(self,t, function_name, omega, E0, CEP0, spherical):
+    def fieldLCPL(self, t, function_name, omega, E0, CEP0, spherical):
         #all vectors are returned in spherical tensor form -1, 0, 1 order
         if spherical == True:
-            fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, 0.0 ] ) 
+            fieldvec = E0 * np.array( [ 0.0, 0.0,  - 1.0 * ( np.cos( omega * t + CEP0 ) + 1j * np.sin( omega * t + CEP0 ) ) ] ) / np.sqrt(2.0)
         else:
-            fieldvec = E0 * np.array( [ np.cos( omega * t + CEP0 ) - 1j * np.sin( omega * t + CEP0 ) , 0.0, 0.0] ) 
+            fieldvec = E0 * np.array( [ 0.0, 0.0,  - 1.0 * ( np.cos( omega * t + CEP0 ) + 1j * np.sin( omega * t + CEP0 ) ) ] ) / np.sqrt(2.0)
         return fieldvec
 
     def fieldLP(self, t, function_name, omega, E0, CEP0):
