@@ -1145,17 +1145,27 @@ class momentumfuncs(analysis):
 
         """ set up 1D momentum grids """
 
+
+
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
             ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktulpe'] = ktuple
-            kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
+            kgrid1D         =    kgrid1D = kgrid#np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
 
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D = kgrid
-            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            ktuple  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
             funcpars['ktulpe'] = ktuple
+
+
+        print("kgrid from Flm: ")
+        print(kgrid)
+        print("\n")
+        print("kgrid1D defined by user:")
+        print(kgrid1D)
+        #exit()
 
         thtuple             = funcpars['th_grid']
         funcpars['thtuple'] = thtuple
@@ -1367,15 +1377,15 @@ class momentumfuncs(analysis):
 
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
-            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktulpe'] = ktuple
-            kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
+            ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe']  = ktuple
+            kgrid1D             = kgrid # kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
 
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
-            kgrid1D = kgrid
-            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktulpe'] = ktuple
+            kgrid1D             = kgrid
+            ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe']  = ktuple
 
         thtuple             = funcpars['th_grid']
         funcpars['thtuple'] = thtuple
