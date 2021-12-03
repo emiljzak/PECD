@@ -595,8 +595,11 @@ def calc_intmat(maparray,rgrid,Nbas):
 
     """precompute all necessary 3-j symbols"""
     #generate arrays of 3j symbols with 'spherical':
+    start_time = time.time()
     tjmat = gen_3j_dip(params['bound_lmax'])
-  
+    end_time = time.time()
+    print("time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
+
 
     for i in range(Nbas):
         rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]
@@ -616,7 +619,7 @@ def calc_intmat(maparray,rgrid,Nbas):
                 if maparray[j][4] == maparray[i][4]:
                     intmat2[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[1] * rin * np.sqrt(2.)
 
-                elif maparray[j][4] ==  maparray[i][4] + 1: #-1, LCPL
+                elif maparray[j][4] ==  maparray[i][4] + 1: 
                     intmat1[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[0] * rin 
 
                 elif maparray[j][4] == maparray[i][4] - 1:

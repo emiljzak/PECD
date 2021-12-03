@@ -1606,7 +1606,7 @@ class momentumfuncs(analysis):
 
             print("*** calculating photo-electron spectrum ***")
             nkpoints    = params['pes_npts'] 
-            pes_kgrid   = np.linspace(0.05, params['pes_max_k'], nkpoints)
+            pes_kgrid   = np.linspace(0.0, params['pes_max_k'], nkpoints)
             spectrum    = np.zeros(nkpoints, dtype = float)
             
             
@@ -1636,14 +1636,14 @@ class momentumfuncs(analysis):
 
         print("*** calculating photo-electron spectrum ***")
         nkpoints    = params['pes_npts'] 
-        pes_kgrid   = np.linspace(0.005, params['pes_max_k'], nkpoints)
+        pes_kgrid   = np.linspace(0.0, params['pes_max_k'], nkpoints)
         spectrum    = np.zeros(nkpoints, dtype = float)
-        
+        print("Number of Gauss-Legendre quadrature points for PES integration = " + str(w.shape[0]))
         
         for ipoint,k in enumerate(list(pes_kgrid)):   
         
             W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
-            spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
+            spectrum[ipoint] = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
         
         self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
@@ -1674,7 +1674,7 @@ class momentumfuncs(analysis):
         if funcpars['PES_params']['k-axis'] == 'momentum':
             grid_plot = kgrid
         elif funcpars['PES_params']['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)#*CONSTANTS.au_to_ev
+            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev
         else:
             raise ValueError("incorrect k-axis specification")
 
@@ -1776,7 +1776,7 @@ class momentumfuncs(analysis):
                             )       
 
 
-        if funcpars['show'] == True:
+        if funcpars['PES_params']['show']  == True:
             plt.show()
             plt.legend()  
             plt.close()
@@ -2243,7 +2243,7 @@ if __name__ == "__main__":
         
     """
     """ Consolidate quanitites averaged over orientations """
-    obj     = analysis(params)
-    ibcoeff = 9
-    obj.barray_plot_2D(grid_euler,ibcoeff,params['bcoeffs'])
+    #obj     = analysis(params)
+    #ibcoeff = 9
+    #obj.barray_plot_2D(grid_euler,ibcoeff,params['bcoeffs'])
     #exit()
