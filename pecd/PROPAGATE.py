@@ -138,7 +138,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
 
     start_time = time.time()
     intmat0 = []
-    h1, h2, h3 =  calc_intmat( maparray, Gr, Nbas) 
+    h1, h2, h3 =  calc_intmat( maparray, Gr, Nbas, helicity) 
     intmat0.append(h1)
     intmat0.append(h2)
     intmat0.append(h3)
@@ -582,7 +582,7 @@ def read_ham_init_rot(params,irun):
     return hmat
 
 
-def calc_intmat(maparray,rgrid,Nbas):  
+def calc_intmat(maparray,rgrid,Nbas, helicity):  
 
     #field: (E_-1, E_0, E_1) in spherical tensor form
     """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
@@ -610,6 +610,25 @@ def calc_intmat(maparray,rgrid,Nbas):
     print("time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
 
+
+    #determine sigma
+    if helicity == "R":
+        sigma = 1
+    elif helicity == "L":
+        sigma = -1 
+    elif helicity == "0":
+        sigma = 0
+    else:
+        ValueError("incorrect helicity")
+
+    #Generate global diplistt
+    start_time = time.time()
+    diplist = MAPPING.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma )
+    diplist = np.asarray(diplist)
+    end_time = time.time()
+    print("Time for the construction of diplist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    #print(diplist)
+    #exit()
 
     rtol=1e-05
     atol=1e-08
@@ -644,11 +663,11 @@ def calc_intmat(maparray,rgrid,Nbas):
 
 
     #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5)
-    #plt.spy(intmat1, precision=params['sph_quad_tol'], markersize=5, color='r')
-    #plt.spy(intmat2, precision=params['sph_quad_tol'], markersize=5, color='g')
-    #plt.spy(intmat3, precision=params['sph_quad_tol'], markersize=5, color='b')
-    #plt.show()
-    #exit()
+    plt.spy(intmat1, precision=params['sph_quad_tol'], markersize=5, color='r')
+    plt.spy(intmat2, precision=params['sph_quad_tol'], markersize=5, color='g')
+    plt.spy(intmat3, precision=params['sph_quad_tol'], markersize=5, color='b')
+    plt.show()
+    exit()
     #rtol=1e-05
     #atol=1e-08
     #print(intmat_new)
@@ -761,6 +780,7 @@ def gen_3j_dip(lmax,mode):
 
     # 2) tjmat[l1,l2,m1,m2,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
     tjmat = np.zeros( (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3), dtype = float)
+    #Both modes checked with textbooks and verified that produce identical matrix elements. 15 Dec 2021.
 
     if mode == "CG":
 
