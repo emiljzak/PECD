@@ -591,9 +591,8 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     if params['hmat_format'] == 'numpy_arr':    
         intmat =   np.zeros(( Nbas , Nbas ), dtype = float)
     elif params['hmat_format'] == 'sparse_csr':
-        intmat1 = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
-        intmat2 = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
-        intmat3 = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
+        intmat = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
+
 
     D = np.zeros(3, dtype = float)
 
@@ -636,7 +635,18 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     isclose = np.allclose(tjmat_CG, tjmat_tj, rtol=rtol, atol=atol)
     print("Are tjmat_CG and tjmat_tj identical? " + str(isclose))
 
+    rgrid = rgrid.ravel()
 
+    for i in range(diplist.shape[0]):
+        rin = rgrid[ diplist[i][0] - 1 ]
+        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 2.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma +1 ]
+
+    plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='b')
+    plt.show()
+    exit()
+
+
+    """
     for i in range(Nbas):
         rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]
         for j in range(Nbas):
@@ -661,7 +671,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
                 elif maparray[j][4] == maparray[i][4] - 1:
                     intmat3[i,j] = np.sqrt( 2.0 * np.pi / 3.0 ) * D[2] * rin 
 
-
+    
     #plt.spy(intmat_new1, precision=params['sph_quad_tol'], markersize=5)
     plt.spy(intmat1, precision=params['sph_quad_tol'], markersize=5, color='r')
     plt.spy(intmat2, precision=params['sph_quad_tol'], markersize=5, color='g')
@@ -681,8 +691,8 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
     #    print(intmat)
     #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
-
-    return intmat1,intmat2,intmat3
+    """
+    return intmat #1,intmat2,intmat3
 
 
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
