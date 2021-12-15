@@ -137,19 +137,24 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
 
 
     start_time = time.time()
-    intmat0 = []
-    h1, h2, h3 =  calc_intmat( maparray, Gr, Nbas, helicity) 
-    intmat0.append(h1)
-    intmat0.append(h2)
-    intmat0.append(h3)
+    intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
     end_time = time.time()
     print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    #determine sigma
+    if helicity == "R" or helicity =="L":
+        sigma = 2
+    elif helicity == "0":
+        sigma = 1
+    else:
+        ValueError("incorrect helicity")
 
 
 
     Fvec = np.asarray(Fvec)
     Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
-    #Fvec += np.conjugate(Fvec)
+
 
     start_time_global = time.time()
     for itime, t in enumerate(tgrid): 
@@ -163,9 +168,10 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime][0] * h1  + Fvec[itime][1] * h2 + Fvec[itime][2] * h3
+        dip = Fvec[itime][sigma] * intmat + np.conjugate(Fvec[itime][sigma]) * intmat.transpose()
 
-        plt.spy(dip, markersize=5, color='b')
+        plt.spy(Fvec[itime][sigma] * intmat , markersize=5, color='b')
+        plt.spy(np.conjugate(Fvec[itime][sigma]) * intmat.transpose(), markersize=5, color='r')
         plt.show()
         exit()
         #print(Fvec[itime][1]* intmat0[1])
@@ -641,9 +647,9 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
         rin = rgrid[ diplist[i][0] - 1 ]
         intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 2.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma +1 ]
 
-    plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='b')
-    plt.show()
-    exit()
+    #plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='b')
+    #plt.show()
+    #exit()
 
 
     """
