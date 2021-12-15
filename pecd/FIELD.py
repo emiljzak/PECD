@@ -16,7 +16,7 @@ class Field():
             fieldvec = E0 * np.array( [ -1.0 * (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ), 0.0,  np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 )  ] ) / np.sqrt(2.0)
         else:
             fieldvec = E0 * np.array( [  -1.0 * (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ), 0.0,  np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 )  ] ) / np.sqrt(2.0)
-        return fieldvec
+        return fieldvec / np.sqrt(2.0) #see derivation
 
 
     def fieldLCPL(self, t, function_name, omega, E0, CEP0, spherical):
@@ -25,7 +25,7 @@ class Field():
             fieldvec = E0 * np.array( [    np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ) , 0.0,  -1.0 * (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 )) ] ) / np.sqrt(2.0)
         else:
             fieldvec = E0 * np.array( [  np.cos( omega * t + CEP0 )  - 1j * np.sin( omega * t + CEP0 ) , 0.0,  -1.0 * (np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 )) ] ) / np.sqrt(2.0)
-        return fieldvec
+        return fieldvec / np.sqrt(2.0)
 
     def fieldLP(self, t, function_name, omega, E0, CEP0):
         #fieldvec = t

@@ -170,10 +170,10 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
         dip = Fvec[itime][sigma] * intmat + np.conjugate(Fvec[itime][sigma]) * intmat.transpose()
 
-        plt.spy(Fvec[itime][sigma] * intmat , markersize=5, color='b')
-        plt.spy(np.conjugate(Fvec[itime][sigma]) * intmat.transpose(), markersize=5, color='r')
-        plt.show()
-        exit()
+        #plt.spy(Fvec[itime][sigma] * intmat , markersize=5, color='b')
+        #plt.spy(np.conjugate(Fvec[itime][sigma]) * intmat.transpose(), markersize=5, color='r')
+        #plt.show()
+        #exit()
         #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
@@ -645,7 +645,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
 
     for i in range(diplist.shape[0]):
         rin = rgrid[ diplist[i][0] - 1 ]
-        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 2.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma +1 ]
+        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma +1 ]
 
     #plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='b')
     #plt.show()
@@ -698,7 +698,8 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #    print(intmat)
     #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
     """
-    return intmat #1,intmat2,intmat3
+    #see derivation for the "-" sign in front of intmat
+    return (-1.0) * intmat #1,intmat2,intmat3
 
 
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
