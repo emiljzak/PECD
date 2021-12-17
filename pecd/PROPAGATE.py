@@ -614,12 +614,10 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     end_time = time.time()
     print("time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
     
-    start_time = time.time()
-    tjmat_tj = gen_3j_dip(params['bound_lmax'], "tj")
-    end_time = time.time()
-    print("time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
-
-
+    #start_time = time.time()
+    #tjmat_tj = gen_3j_dip(params['bound_lmax'], "tj")
+    #end_time = time.time()
+    #print("time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
     #determine sigma
     if helicity == "R":
@@ -633,39 +631,38 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
 
     #Generate global diplistt
     start_time = time.time()
-    diplist = MAPPING.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma )
+    
+    diplist = MAPPING.GEN_DIPLIST_opt1(maparray, Nbas, params['bound_lmax'], params['map_type'], sigma ) # new, non-vectorized O(n) implementation
+    #diplist = MAPPING.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma ) #old O(n**2) implementation
     diplist = np.asarray(diplist)
     end_time = time.time()
     print("Time for the construction of diplist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     #print(diplist)
     #exit()
 
-    rtol=1e-05
-    atol=1e-08
-
-    isclose = np.allclose(tjmat_CG, tjmat_tj, rtol=rtol, atol=atol)
-    print("Are tjmat_CG and tjmat_tj identical? " + str(isclose))
+    #rtol=1e-05
+    #atol=1e-08
+    #isclose = np.allclose(tjmat_CG, tjmat_tj, rtol=rtol, atol=atol)
+    #print("Are tjmat_CG and tjmat_tj identical? " + str(isclose))
 
     rgrid = rgrid.ravel()
 
     for i in range(diplist.shape[0]):
-        rin = rgrid[ diplist[i][0] - 1 ]
-        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], 0] #sigma+1
+        #this step can be made more efficient by vectorisation based on copying the tjmat block and overlaying rgrid
+        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 4.0 * np.pi / 3.0 ) * rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma+1] #sigma+1
         
-        intmathc[ diplist[i,5], diplist[i,6] ] = -np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
-
-
+        #intmathc[ diplist[i,5], diplist[i,6] ] = -np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
 
 
     #plt.spy(intmathc-intmat, precision=1e-12, markersize=7, color='r')
     #plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='b')
 
     #plt.show()
-    #exit()
+    #   exit()
 
-    isclose = np.allclose(intmat.todense(),intmathc.todense())
-    print("Is tjmat[sigma].hc identical to (-1) * tjmat[-sigma]? " + str(isclose))
-    exit()
+    #isclose = np.allclose(intmat.todense(),intmathc.todense())
+    #print("Is tjmat[sigma].hc identical to (-1) * tjmat[-sigma]? " + str(isclose))
+    #exit()
     """
     for i in range(Nbas):
         rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]

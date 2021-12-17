@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
+from logging import raiseExceptions
 import numpy as np
 from numba import jit, prange
 jitcache = False
@@ -202,7 +203,7 @@ def GEN_SPHLIST(lmax):
 
 #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def GEN_VLIST(maparray, Nbas, map_type):
-    #create list of indices for matrix elements of the potential
+    #create a list of indices for matrix elements of the potential
     vlist = []
 
     #needs speed-up: convert maparray to numpy array and vectorize, add numpy
@@ -210,7 +211,7 @@ def GEN_VLIST(maparray, Nbas, map_type):
     if map_type == 'DVR':
         for p1 in range(Nbas):
             for p2 in range(p1, Nbas):
-                if maparray[p1][2] == maparray[p2][2]: #and maparray[p1][2] < xi_cutoff
+                if maparray[p1][2] == maparray[p2][2]: 
                     vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
                         maparray[p2][3], maparray[p2][4], p1, p2  ])
 
@@ -223,7 +224,7 @@ def GEN_VLIST(maparray, Nbas, map_type):
 
 
 def GEN_KLIST(maparray, Nbas, map_type):
-    #create list of indices for matrix elements of the KEO
+    #create a list of indices for matrix elements of the KEO
     klist = []
 
     if map_type == 'DVR':
@@ -237,10 +238,89 @@ def GEN_KLIST(maparray, Nbas, map_type):
 
     return klist
 
+def calc_p2(l,m,xi,lmax):
+    return (xi-1)*(lmax+1)**2 + l*(l+1) + m
 
-""" TESTING 
-params = {}
-params['map_type'] = 'SPECT'
-params['working_dir'] = "/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/h2o/"
-GENMAP(5,3,1,params)
-"""
+
+def GEN_DIPLIST_opt1(maparray, Nbas, lmax, map_type, sigma ):
+    """
+    create a list of indices for matrix elements of the dipole interaction matrix.     
+    """
+    
+    diplist = []
+    if map_type == 'DVR':
+        for p1 in range(Nbas):
+
+            xi = maparray[p1][2] 
+            l1 = maparray[p1][3]
+            m1 = maparray[p1][4]
+
+            if l1+1 <= lmax:
+                p2 = calc_p2(l1+1,m1-sigma,xi,lmax)
+                diplist.append([ xi, l1, m1, l1+1, m1-sigma, p1, p2 ])
+            if l1-1 >= 0:
+                p2 = calc_p2(l1-1,m1-sigma,xi,lmax)
+                diplist.append([ xi, l1, m1, l1-1, m1-sigma, p1, p2 ])
+    else:
+        ValueError("Incorrect map type")
+
+
+
+    return diplist
+
+
+def GEN_DIPLIST(maparray, Nbas, map_type, sigma ):
+    """
+    Old O(n**2) implementation.
+    create a list of indices for matrix elements of the dipole interaction matrix. 
+    Generates full square matrix for sigma = -1 or 0. 
+    sigma = +1 can be generated using symmetries.
+    
+    """
+    
+    diplist = []
+    if map_type == 'DVR':
+
+        #set up indices for block-listing
+
+        if sigma == 0:
+
+            for p1 in range(Nbas):
+                for p2 in range(Nbas):
+                    if maparray[p1][2] == maparray[p2][2]: 
+
+                        if maparray[p1][3] == maparray[p2][3] - 1 or maparray[p1][3] == maparray[p2][3] + 1:
+                            if maparray[p1][4] == maparray[p2][4]: 
+                                diplist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
+                                maparray[p2][3], maparray[p2][4], p1, p2 ])
+
+        elif sigma == +1:
+
+            #for xi in range(Nr-1):
+            #    for i1 in range(block_size):
+            for p1 in range(Nbas):          
+                for p2 in range(Nbas):
+                    if maparray[p1][2] == maparray[p2][2]: 
+
+                        if maparray[p1][3] == maparray[p2][3] - 1 or maparray[p1][3] == maparray[p2][3] + 1:
+                            if maparray[p2][4] == maparray[p1][4] + 1: 
+                                diplist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
+                                maparray[p2][3], maparray[p2][4], p1, p2 ])
+
+        elif sigma == -1:
+            for p1 in range(Nbas):
+                for p2 in range(Nbas):
+                    if maparray[p1][2] == maparray[p2][2]: 
+
+                        if maparray[p1][3] == maparray[p2][3] - 1 or maparray[p1][3] == maparray[p2][3] + 1:
+                            if maparray[p2][4] == maparray[p1][4] - 1: 
+                                diplist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
+                                maparray[p2][3], maparray[p2][4], p1, p2 ])
+    else:
+        ValueError("Incorrect map type")
+
+
+
+    return diplist
+
+
