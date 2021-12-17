@@ -117,7 +117,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
     ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 )
 
-    wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
+    #wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
@@ -142,11 +142,14 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
 
+    intmat_hc = intmat.transpose()
+
     #determine sigma
     if helicity == "R" or helicity =="L":
         sigma = 2
     elif helicity == "0":
         sigma = 1
+        intmat /= 2.0
     else:
         ValueError("incorrect helicity")
 
@@ -168,7 +171,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime][sigma] * intmat + np.conjugate(Fvec[itime][sigma]) * intmat.transpose()
+        dip = Fvec[itime,sigma] * intmat + np.conjugate(Fvec[itime,sigma]) * intmat_hc
 
         #plt.spy(Fvec[itime][sigma] * intmat , markersize=5, color='b')
         #plt.spy(np.conjugate(Fvec[itime][sigma]) * intmat.transpose(), markersize=5, color='r')
@@ -177,10 +180,12 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
         #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
-                
-        psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
-        wavepacket[itime,:] = psi_out
-        psi                 = wavepacket[itime,:]
+
+        psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+
+        #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+        #wavepacket[itime,:] = psi_out
+        #psi                 = wavepacket[itime,:]
 
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
@@ -598,7 +603,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
         intmat =   np.zeros(( Nbas , Nbas ), dtype = float)
     elif params['hmat_format'] == 'sparse_csr':
         intmat = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
-
+        intmathc = sparse.csr_matrix(( Nbas, Nbas ), dtype = float) #for symmetry testing
 
     D = np.zeros(3, dtype = float)
 
@@ -645,13 +650,22 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
 
     for i in range(diplist.shape[0]):
         rin = rgrid[ diplist[i][0] - 1 ]
-        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma +1 ]
+        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], 0] #sigma+1
+        
+        intmathc[ diplist[i,5], diplist[i,6] ] = -np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
 
+
+
+
+    #plt.spy(intmathc-intmat, precision=1e-12, markersize=7, color='r')
     #plt.spy(intmat, precision=params['sph_quad_tol'], markersize=5, color='b')
+
     #plt.show()
     #exit()
 
-
+    isclose = np.allclose(intmat.todense(),intmathc.todense())
+    print("Is tjmat[sigma].hc identical to (-1) * tjmat[-sigma]? " + str(isclose))
+    exit()
     """
     for i in range(Nbas):
         rin = rgrid[ maparray[i][0], maparray[i][1] -1 ]
