@@ -141,8 +141,8 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     end_time = time.time()
     print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
-
-    intmat_hc = intmat.transpose() #d_ll'mm',mu=-1
+    intmat_hc = intmat.copy()
+    intmat_hc = intmat_hc.transpose() #d_ll'mm',mu=-1
 
     #determine sigma
     if helicity == "R" or helicity =="L":
@@ -171,16 +171,16 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime,0] * intmat + Fvec[itime,2] * intmat_hc
-
-        #plt.spy(Fvec[itime][sigma] * intmat , markersize=5, color='b')
-        #plt.spy(np.conjugate(Fvec[itime][sigma]) * intmat.transpose(), markersize=5, color='r')
+        #dip = Fvec[itime,0] * intmat - np.conj(Fvec[itime,2]) * intmat_hc
+        dip = intmat + intmat_hc
+        #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
+        #plt.spy(Fvec[itime,2] * intmat.transpose(), markersize=5, color='r')
         #plt.show()
         #exit()
         #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
-        #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric( ham0 + dip )))
-
+        print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham0.todense()  )))
+        exit()
         psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
 
         #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
@@ -649,7 +649,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
 
     for i in range(diplist.shape[0]):
         #this step can be made more efficient by vectorisation based on copying the tjmat block and overlaying rgrid
-        intmat[ diplist[i,5], diplist[i,6] ] =  rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma+1] #sigma+1
+        intmat[ diplist[i,5], diplist[i,6] ] =  rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], 2] #sigma+1
         
         #intmathc[ diplist[i,5], diplist[i,6] ] = -np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
 
