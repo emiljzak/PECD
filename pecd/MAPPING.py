@@ -244,7 +244,7 @@ def calc_p2(l,m,xi,lmax):
 
 def GEN_DIPLIST_opt1(maparray, Nbas, lmax, map_type, sigma ):
     """
-    create a list of indices for matrix elements of the dipole interaction matrix.     
+    create a list of indices for matrix elements of the dipole interaction matrix. In the future: vectorize by copying the core array. 
     """
     
     diplist = []
