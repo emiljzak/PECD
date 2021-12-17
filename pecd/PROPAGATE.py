@@ -142,7 +142,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
 
-    intmat_hc = intmat.transpose()
+    intmat_hc = intmat.transpose() #d_ll'mm',mu=-1
 
     #determine sigma
     if helicity == "R" or helicity =="L":
@@ -171,7 +171,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime,sigma] * intmat + np.conjugate(Fvec[itime,sigma]) * intmat_hc
+        dip = Fvec[itime,0] * intmat + Fvec[itime,2] * intmat_hc
 
         #plt.spy(Fvec[itime][sigma] * intmat , markersize=5, color='b')
         #plt.spy(np.conjugate(Fvec[itime][sigma]) * intmat.transpose(), markersize=5, color='r')
@@ -603,9 +603,9 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
         intmat =   np.zeros(( Nbas , Nbas ), dtype = float)
     elif params['hmat_format'] == 'sparse_csr':
         intmat = sparse.csr_matrix(( Nbas, Nbas ), dtype = float)
-        intmathc = sparse.csr_matrix(( Nbas, Nbas ), dtype = float) #for symmetry testing
+        #intmathc = sparse.csr_matrix(( Nbas, Nbas ), dtype = float) #for symmetry testing
 
-    D = np.zeros(3, dtype = float)
+    #D = np.zeros(3, dtype = float)
 
     """precompute all necessary 3-j symbols"""
     #generate arrays of 3j symbols with 'spherical':
@@ -620,19 +620,19 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #print("time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
     #determine sigma
-    if helicity == "R":
-        sigma = 1
-    elif helicity == "L":
-        sigma = -1 
-    elif helicity == "0":
-        sigma = 0
-    else:
-        ValueError("incorrect helicity")
+    #if helicity == "R":
+    #    sigma = 1
+    #elif helicity == "L":
+    #    sigma = -1 
+    #elif helicity == "0":
+    #   sigma = 0
+    #else:
+    #    ValueError("incorrect helicity")
 
     #Generate global diplistt
     start_time = time.time()
-    
-    diplist = MAPPING.GEN_DIPLIST_opt1(maparray, Nbas, params['bound_lmax'], params['map_type'], sigma ) # new, non-vectorized O(n) implementation
+    """ Note: we always (for R/L CPL) produce diplist for sigma = +1 and generate elements with sigma = -1 with the hermitian conjugate"""
+    diplist = MAPPING.GEN_DIPLIST_opt1(maparray, Nbas, params['bound_lmax'], params['map_type'] ) # new, non-vectorized O(n) implementation
     #diplist = MAPPING.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma ) #old O(n**2) implementation
     diplist = np.asarray(diplist)
     end_time = time.time()
@@ -649,7 +649,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
 
     for i in range(diplist.shape[0]):
         #this step can be made more efficient by vectorisation based on copying the tjmat block and overlaying rgrid
-        intmat[ diplist[i,5], diplist[i,6] ] = np.sqrt( 4.0 * np.pi / 3.0 ) * rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma+1] #sigma+1
+        intmat[ diplist[i,5], diplist[i,6] ] =  rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], sigma+1] #sigma+1
         
         #intmathc[ diplist[i,5], diplist[i,6] ] = -np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
 
@@ -710,7 +710,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
     """
     #see derivation for the "-" sign in front of intmat
-    return (-1.0) * intmat #1,intmat2,intmat3
+    return (-1.0) *np.sqrt( 2.0 * np.pi / 3.0 ) * intmat #1,intmat2,intmat3
 
 
 def check_symmetric(a, rtol=1e-05, atol=1e-08):

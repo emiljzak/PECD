@@ -242,11 +242,11 @@ def calc_p2(l,m,xi,lmax):
     return (xi-1)*(lmax+1)**2 + l*(l+1) + m
 
 
-def GEN_DIPLIST_opt1(maparray, Nbas, lmax, map_type, sigma ):
+def GEN_DIPLIST_opt1(maparray, Nbas, lmax, map_type ):
     """
     create a list of indices for matrix elements of the dipole interaction matrix. In the future: vectorize by copying the core array. 
     """
-    
+    sigma = 1 #we always calculate h_ll'mm',+1 element and generate h_ll'mm',-1 with the hermitian conjugate (regardless of the light's helicity) 
     diplist = []
     if map_type == 'DVR':
         for p1 in range(Nbas):
@@ -263,8 +263,6 @@ def GEN_DIPLIST_opt1(maparray, Nbas, lmax, map_type, sigma ):
                 diplist.append([ xi, l1, m1, l1-1, m1-sigma, p1, p2 ])
     else:
         ValueError("Incorrect map type")
-
-
 
     return diplist
 
