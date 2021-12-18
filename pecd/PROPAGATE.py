@@ -173,19 +173,19 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
         dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
         #dip = intmat + intmat_hc
-        plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
-        plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
-        plt.show()
+        #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
+        #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
+        #plt.show()
         
         #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
-        print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(dip.todense() )))
-        exit()
-        #psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+        #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
+        #exit()
+        psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
 
-        psi_out             = expm_multiply( -1.0j * ( ham_init ) * dt, psi ) 
-        wavepacket[itime,:] = psi_out
-        psi                 = wavepacket[itime,:]
+        #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+        #wavepacket[itime,:] = psi_out
+        #psi                 = wavepacket[itime,:]
 
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
