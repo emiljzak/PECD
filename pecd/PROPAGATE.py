@@ -117,7 +117,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
     ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 )
 
-    #wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
+    wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
@@ -171,21 +171,21 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        #dip = Fvec[itime,0] * intmat - np.conj(Fvec[itime,2]) * intmat_hc
-        dip = intmat + intmat_hc
-        #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
-        #plt.spy(Fvec[itime,2] * intmat.transpose(), markersize=5, color='r')
-        #plt.show()
-        #exit()
+        dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
+        #dip = intmat + intmat_hc
+        plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
+        plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
+        plt.show()
+        
         #print(Fvec[itime][1]* intmat0[1])
         #dip = sparse.csr_matrix(dip)
-        print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham0.todense()  )))
+        print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(dip.todense() )))
         exit()
-        psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+        #psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
 
-        #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
-        #wavepacket[itime,:] = psi_out
-        #psi                 = wavepacket[itime,:]
+        psi_out             = expm_multiply( -1.0j * ( ham_init ) * dt, psi ) 
+        wavepacket[itime,:] = psi_out
+        psi                 = wavepacket[itime,:]
 
         end_time = time.time()
         print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
@@ -596,7 +596,7 @@ def read_ham_init_rot(params,irun):
 def calc_intmat(maparray,rgrid,Nbas, helicity):  
 
     #field: (E_-1, E_0, E_1) in spherical tensor form
-    """calculate the <Y_l'm'(theta,phi)| d(theta,phi) | Y_lm(theta,phi)> integral """
+    """calculate the <Y_l1m1(theta,phi)| d(theta,phi) | Y_l2m2(theta,phi)> integral """
     #Adopted convention used in Artemyev et al., J. Chem. Phys. 142, 244105 (2015).
     
     if params['hmat_format'] == 'numpy_arr':    
@@ -651,7 +651,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
         #this step can be made more efficient by vectorisation based on copying the tjmat block and overlaying rgrid
         intmat[ diplist[i,5], diplist[i,6] ] =  rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,1], diplist[i,3], diplist[i,1]+diplist[i,2], diplist[i,3]+diplist[i,4], 2] #sigma+1
         
-        #intmathc[ diplist[i,5], diplist[i,6] ] = -np.sqrt( 4.0 * np.pi / 3.0 ) * rin * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
+        #intmathc[ diplist[i,5], diplist[i,6] ] = rgrid[ diplist[i][0] - 1 ] * tjmat_CG[ diplist[i,3], diplist[i,1], diplist[i,3]+diplist[i,4], diplist[i,1]+diplist[i,2], 2 ]
 
 
     #plt.spy(intmathc-intmat, precision=1e-12, markersize=7, color='r')
@@ -710,11 +710,11 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
     """
     #see derivation for the "-" sign in front of intmat
-    return (-1.0) *np.sqrt( 2.0 * np.pi / 3.0 ) * intmat #1,intmat2,intmat3
+    return (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat #1,intmat2,intmat3
 
 
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
-    return np.allclose(a, a.conj(), rtol=rtol, atol=atol)
+    return np.allclose(a, a.H, rtol=rtol, atol=atol)
 
 def cart2sph(x,y,z):
     r=np.sqrt(x**2+y**2+z**2)
