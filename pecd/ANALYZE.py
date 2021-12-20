@@ -26,7 +26,7 @@ import GRAPHICS
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib
-from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import FormatStrFormatter, LogLocator
 
 from pyhank import qdht, iqdht, HankelTransform
 
@@ -798,14 +798,43 @@ class spacefuncs(analysis):
         plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
         plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 
                             
+        if funcpars["scale"] == "log":
 
-        plot_rho2D  = ax1.contourf( polargrid[1], 
-                                    polargrid[0], 
-                                    rho,  
-                                    plot_params['ncont'], 
-                                    cmap = 'jet', 
-                                    vmin = plot_params['vmin'],
-                                    vmax = plot_params['vmax'])
+            plot_rho2D  = ax1.contourf( polargrid[1], 
+                                        polargrid[0], 
+                                        rho,
+                                        plot_params['ncont'],
+                                        locator = LogLocator(), #  plot_params['ncont'], 
+                                        cmap = 'jet'), 
+                                        #vmin = plot_params['vmin'],
+                                        #vmax = 0.05)#plot_params['vmax'])
+
+        elif funcpars["scale"] == "unit":
+            plot_rho2D  = ax1.contourf( polargrid[1], 
+                                        polargrid[0], 
+                                        rho,
+                                        plot_params['ncont'],
+                                        cmap = 'jet', 
+                                        vmin = plot_params['vmin'],
+                                        vmax = plot_params['vmax'])#)
+
+
+            fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                            ax                  = ax1, 
+                            orientation         = plot_params['cbar_orientation'],
+                            label               = plot_params['cbar_label'],
+                            fraction            = plot_params['cbar_fraction'],
+                            aspect              = plot_params['cbar_aspect'],
+                            shrink              = plot_params['cbar_shrink'],
+                            pad                 = plot_params['cbar_pad'],
+                            extend              = plot_params['cbar_extend'],
+                            ticks               = plot_params['cbar_ticks'],
+                            drawedges           = plot_params['cbar_drawedges'],
+                            format              = plot_params['cbar_format']
+                        )
+        
+        else:
+            ValueError("incorrect scale for contourf")
         
 
         ax1.set_title(  label               = plot_params['title_text'],
@@ -852,20 +881,6 @@ class spacefuncs(analysis):
         #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
         #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
 
-        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
-                        ax                  = ax1, 
-                        orientation         = plot_params['cbar_orientation'],
-                        label               = plot_params['cbar_label'],
-                        fraction            = plot_params['cbar_fraction'],
-                        aspect              = plot_params['cbar_aspect'],
-                        shrink              = plot_params['cbar_shrink'],
-                        pad                 = plot_params['cbar_pad'],
-                        extend              = plot_params['cbar_extend'],
-                        ticks               = plot_params['cbar_ticks'],
-                        drawedges           = plot_params['cbar_drawedges'],
-                        format              = plot_params['cbar_format']
-                       )
-        
         if plot_params['save'] == True:
 
             fig.savefig(    fname       =   params['job_directory']  + "/graphics/space/"+
@@ -1137,7 +1152,7 @@ class momentumfuncs(analysis):
         irun                    = self.params['irun']
         helicity                = self.pull_helicity()
         print("helicity = " + str(helicity))
-        self.params['helicity'] = helicity
+        self.params['helicity'] =  helicity
 
         Flm, kgrid = analysis_obj.calc_Flm(helicity)
 
@@ -1145,7 +1160,8 @@ class momentumfuncs(analysis):
 
         """ set up 1D momentum grids """
 
-
+        print(helicity)
+        #exit()
 
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
