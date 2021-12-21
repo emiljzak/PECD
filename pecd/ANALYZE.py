@@ -803,11 +803,13 @@ class spacefuncs(analysis):
             plot_rho2D  = ax1.contourf( polargrid[1], 
                                         polargrid[0], 
                                         rho,
-                                        plot_params['ncont'],
+                                        levels = np.logspace(-14,0,num=30),#levels=[1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1e0],
                                         locator = LogLocator(), #  plot_params['ncont'], 
                                         cmap = 'jet'), 
                                         #vmin = plot_params['vmin'],
                                         #vmax = 0.05)#plot_params['vmax'])
+
+            #fig.colorbar(ax=ax1)
 
         elif funcpars["scale"] == "unit":
             plot_rho2D  = ax1.contourf( polargrid[1], 
