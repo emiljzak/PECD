@@ -53,7 +53,7 @@ import matplotlib.ticker as ticker
 
 
 
-def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
+def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
 
     time_to_au      = CONSTANTS.time_to_au[ params['time_units'] ]
     wfn_saverate    = params['wfn_saverate']
@@ -115,7 +115,10 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
   
     # Project the bound Hamiltonian onto the propagation Hamiltonian
     Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
-    ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 )
+    ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
+
+    #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
+    #plt.show()
 
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:]
@@ -210,12 +213,12 @@ def prop_wf( params, ham0, psi0, maparray, Gr, euler, ieuler ):
     print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
     flwavepacket.close()
 
-def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
+def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
 
     ham = sparse.csr_matrix((Nbas, Nbas), dtype=complex) 
-    
+    print("size of bound hamiltonian = " + str(Nbas0))
     # 0. Append the bound hamiltonian
-    ham[:Nbas0,:Nbas0] = ham0
+    #ham[:Nbas0,:Nbas0] = ham0
 
     #print(ham.todense())
     #plt.spy(ham,precision=1e-8, markersize=2)
@@ -234,17 +237,17 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
     #print("Shape of keomat: " + str(keomat.shape) )
     #print("Shape of ham: " + str(ham.shape) )
 
-    keomat_copy = keomat.copy()
-    keomat_copy += keomat.getH()
-    for i in range(keomat.shape[0]):
-        keomat_copy[i,i] /=2.0 #-= hmat.diagonal()[i]
+    #keomat_copy = keomat.copy()
+    #keomat_copy += keomat.getH()
+    #for i in range(keomat.shape[0]):
+    #    keomat_copy[i,i] /=2.0 #-= hmat.diagonal()[i]
 
 
-    ham[:Nbas0,:Nbas0]  -= keomat_copy[:Nbas0, :Nbas0]
+    #ham[:Nbas0,:Nbas0]  -= keomat_copy[:Nbas0, :Nbas0]
     #plt.spy(ham,precision=1e-4, markersize=2)
     #plt.show()
 
-    ham                 += keomat_copy  
+    ham = keomat#_copy  
 
     #assert TEST_BOUNDARY_HAM(params,ham,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
     
@@ -256,9 +259,24 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0):
     # 2. Optional: add "long-range potential" 
     # Build the full potential in propagation space minus bound spac
         # consider cut-offs for the electrostatic potential 
-        #
+    potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
-    return ham
+    potind = np.asarray(potind)
+    """ Put the indices and values back together in the Hamiltonian array"""
+    for ielem, elem in enumerate(potmat):
+        #print(elem[0])
+        ham[ potind[ielem,0], potind[ielem,1] ] += elem[0]
+
+
+
+    hmat_csr_size = ham.data.size/(1024**2)
+    print('Size of the sparse Hamiltonian csr_matrix: '+ '%3.2f' %hmat_csr_size + ' MB')
+    ham_copy = ham.copy()
+    ham_copy += ham.getH()
+    for i in range(ham.shape[0]):
+        ham_copy[i,i] /=2.0#-= hmat.diagonal()[i]
+        
+    return ham_copy
 
 
 def PROJECT_PSI_GLOBAL(params, maparray, psi0):
@@ -921,7 +939,7 @@ if __name__ == "__main__":
         """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
         ham0, psi0 = BUILD_HMAT0_ROT(params, Gr0, maparray0, Nbas0, grid_euler, irun)
 
-        prop_wf(params, ham0, psi0, maparray, Gr, grid_euler[irun], irun)
+        prop_wf(params, ham0, psi0, maparray, Gr, grid_euler, irun)
 
 
 end_time_total = time.time()

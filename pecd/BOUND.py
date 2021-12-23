@@ -938,7 +938,7 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     if params['esp_mode'] == "exact":
         start_time = time.time()
-        VG = POTENTIAL.BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun)
+        VG = POTENTIAL.BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,True)
         end_time = time.time()
         print("Time for construction of the ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -1206,7 +1206,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
     
     """
-
+    Nr = (params['bound_nlobs']-1) * params['bound_nbins']  
     # 1. Construct vlist
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
@@ -1228,7 +1228,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     # 2. Read the potential partial waves on the grid
     start_time = time.time()
-    vLM,rgrid_anton = POTENTIAL.read_potential(params)
+    vLM,rgrid_anton = POTENTIAL.read_potential(params,Nr,True)
     end_time = time.time()
     print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -1261,13 +1261,105 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
         raise ValueError('the radial grid does not match the grid of the potential')
     print(max(abs(rgrid_anton-Gr.ravel())))
     exit()
-    """
+    """    
+    start_time = time.time()
     # 4. sum-up partial waves
     if params['N_euler'] == 1:
         potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
     else:
         tjmat_rot       = rotate_tjmat(grid_euler,irun,tjmat)
         potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
+
+    end_time = time.time()
+    print("Time for calculation of the potential matrix elements: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+
+    #potmat0 = np.asarray(potmat0)
+    #print(potmat0[:100])
+    #print("Maximum real part of the potential matrix = " + str(np.max(np.abs(potmat0.real))))
+    #print("Maximum imaginary part of the potential matrix = " + str(np.max(np.abs(potmat0.imag))))
+    #exit()
+    # 5. Return final potential matrix
+    return potmat0,potind
+
+
+
+def BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
+    """ Full potential matrix: Calculate potential matrix using projection onto spherical harmonics representation of 
+    the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
+    Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
+    
+    """
+
+    Nr = Gr.ravel().shape[0]
+
+    # 1. Construct vlist
+    start_time = time.time()
+    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = np.asarray(vlist)
+    end_time = time.time()
+    print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+    #klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
+
+    #klist = np.asarray(klist)
+    #vlist = np.asarray(vlist)
+
+    #print(klist.shape[0])
+    #print(vlist.shape[0])
+
+    #print(np.vstack((klist,vlist)))
+
+    #exit()
+
+    # 2. Read the potential partial waves on the grid
+    start_time = time.time()
+    vLM,rgrid_anton = POTENTIAL.read_potential(params,Nr,False)
+    end_time = time.time()
+    print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+
+    #test_vlm_symmetry(vLM)
+
+    #print("Maximum imaginary part of the potential:")
+    #print(vLM.imag.max())
+    #print(vLM.imag.min())
+    #exit()
+
+    # 3. Build array of 3-j symbols
+    tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
+    #tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with quadpy
+    #tjmat       = gen_tjmat_leb(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with generic lebedev
+
+
+
+    #print("tjmat-tjmatrot")
+    #print(np.allclose(tjmat,tjmat_rot))
+    #print("tjmatrot")
+    #print(tjmat_rot)
+    #exit()
+
+    """ Testing of grid compatibility"""
+    """
+    print(Gr.ravel().shape)
+    print(rgrid_anton.shape) #the two grids agree
+    if np.allclose(Gr.ravel(), rgrid_anton, rtol=1e-6, atol=1e-6)==False:
+        raise ValueError('the radial grid does not match the grid of the potential')
+    print(max(abs(rgrid_anton-Gr.ravel())))
+    exit()
+    """    
+    start_time = time.time()
+    # 4. sum-up partial waves
+    if params['N_euler'] == 1:
+        potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
+    else:
+        tjmat_rot       = rotate_tjmat(grid_euler,irun,tjmat)
+        potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
+
+    end_time = time.time()
+    print("Time for calculation of the potential matrix elements: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+
     #potmat0 = np.asarray(potmat0)
     #print(potmat0[:100])
     #print("Maximum real part of the potential matrix = " + str(np.max(np.abs(potmat0.real))))

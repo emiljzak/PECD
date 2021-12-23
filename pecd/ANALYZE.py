@@ -925,6 +925,10 @@ class spacefuncs(analysis):
         wfn = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
         aux = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=complex)
 
+        #print("Chilist length = " + str(len(chilist)))
+        #print("Nbas_chi = " + str(Nbas_chi))
+        #exit()
+
         icoeff = 0
         for xi in range(Nbas_chi):
             chi_rgrid = chilist[xi](polargrid[0])

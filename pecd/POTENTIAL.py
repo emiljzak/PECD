@@ -165,11 +165,11 @@ def calc_multipoles(params):
     return qlm
 
 
-def read_potential(params):
+def read_potential(params,Nr,bound):
     #read the partial waves representation of the electrostatic potential. A. Artemyev's potential.
     #vLM[xi, L, M]
 
-    Nr = (params['bound_nlobs']-1) * params['bound_nbins']
+    #Nr = (params['bound_nlobs']-1) * params['bound_nbins']
 
     vLM = np.zeros((    Nr,
                         params['multi_lmax'] + 1, 
@@ -199,14 +199,16 @@ def read_potential(params):
 
                 v.append([r, v_re + 1j * v_im])
             vlmfile.close()
-
-            #v.append([400.0,0.0+1j*0.0])
-            v = np.asarray(v)
+            if bound == False:
+                v.append([400.0,0.0+1j*0.0])
+            v = np.asarray(v,dtype=complex)
             vLM[:,L,L+M] = v[:Nr,1] #assuming our grid matches the one for the potential!!!
 
     rgrid = v[:Nr,0]
 
     return vLM,rgrid
+
+
 
 def INTERP_POT(params):
     #interpolate potential on the grid
@@ -321,10 +323,11 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
     return VG
 
 
-def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
+def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,bound):
 
 
     r_array = Gr.flatten()
+    Nr = r_array.shape[0]
 
     VG = []
     counter = 0
@@ -333,7 +336,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun):
         # 1. Read potential
 
         start_time = time.time()
-        vLM,rgrid_anton = read_potential(params)
+        vLM,rgrid_anton = read_potential(params,Nr,bound)
         end_time = time.time()
 
         lmax_multi = params['multi_lmax']
