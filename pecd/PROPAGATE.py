@@ -117,9 +117,14 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
     Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
     ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
 
-    #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
+    plt.spy(ham0, precision=1e-4, markersize=6,color='r')
 
+    plt.spy(ham_init, precision=1e-4, markersize=5,color='b')
+
+    plt.show()
+    plt.spy(ham0-ham_init, precision=1e-6, markersize=5,color='g')
+    plt.show()
+    exit()
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
@@ -184,7 +189,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
         #exit()
-        psi = expm_multiply( -1.0j * ( ham0  ) * dt, psi ) 
+        psi = expm_multiply( -1.0j * ( ham_init + dip  ) * dt, psi ) 
 
         #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
         #wavepacket[itime,:] = psi_out
