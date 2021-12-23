@@ -199,8 +199,8 @@ def read_potential(params,Nr,bound):
 
                 v.append([r, v_re + 1j * v_im])
             vlmfile.close()
-            if bound == False:
-                v.append([400.0,0.0+1j*0.0])
+            #if bound == False:
+            v.append([400.0,0.0+1j*0.0])
             v = np.asarray(v,dtype=complex)
             vLM[:,L,L+M] = v[:Nr,1] #assuming our grid matches the one for the potential!!!
 
@@ -279,7 +279,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
             grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory'] + "esp/")
             grid_xyz = np.asarray(grid_xyz)
             V        = GRID.CALC_ESP_PSI4(params['job_directory'] + "esp/",params)
-            V        = -1.0 * np.asarray(V)
+            V        = -1.0 * np.asarray(V,dtype=complex)
             esp_grid = np.hstack((grid_xyz,V[:,None])) 
             fl       = open(params['job_directory']  + "esp/" + params['file_esp'],"w")
             np.savetxt(fl,esp_grid, fmt='%10.6f')
@@ -302,7 +302,7 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
         grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['working_dir'] + "esp/")
         grid_xyz = np.asarray(grid_xyz)
         V        = GRID.CALC_ESP_PSI4(params['working_dir'] + "esp/", params)
-        V        = -1.0 * np.asarray(V)
+        V        = -1.0 * np.asarray(V,dtype=complex)
 
         esp_grid = np.hstack((grid_xyz,V[:,None])) 
         fl       = open(params['working_dir'] + "esp/" + params['file_esp'], "w")
@@ -374,7 +374,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,bound):
             grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/"+str(irun) + "/" )
             grid_xyz = np.asarray(grid_xyz)
             V        = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/"+str(irun) + "/" , params)
-            V        = -1.0 * np.asarray(V)
+            V        = -1.0 * np.asarray(V,dtype=complex)
             esp_grid = np.hstack((grid_xyz,V[:,None])) 
             fl       = open(params['job_directory']  + "esp/"+str(irun) + "/"  + params['file_esp'], "w")
             np.savetxt(fl,esp_grid, fmt='%10.6f')
@@ -387,7 +387,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,bound):
                 words   = line.split()
                 potval  = float(words[3])
                 V.append(potval)
-            V = np.asarray(V)
+            V = np.asarray(V,dtype=complex)
 
     else:
         print (params['file_esp'] + " file does not exist")

@@ -158,7 +158,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
 
 
 
-    Fvec = np.asarray(Fvec)
+    Fvec = np.asarray(Fvec,dtype=complex)
     Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
 
 
@@ -174,7 +174,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
+        #dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
         #dip = intmat + intmat_hc
         #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
         #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
@@ -184,7 +184,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
         #exit()
-        psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+        psi = expm_multiply( -1.0j * ( ham0  ) * dt, psi ) 
 
         #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
         #wavepacket[itime,:] = psi_out
@@ -261,7 +261,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
         # consider cut-offs for the electrostatic potential 
     potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
-    potind = np.asarray(potind)
+    potind = np.asarray(potind,dtype=int)
     """ Put the indices and values back together in the Hamiltonian array"""
     for ielem, elem in enumerate(potmat):
         #print(elem[0])
@@ -564,7 +564,7 @@ def read_coeffs(filename,nvecs):
         c       = []
         for ivec in range(nvecs):
             c.append(float(words[5+ivec]))
-        coeffs.append([i,n,xi,l,m,np.asarray(c)])
+        coeffs.append([i,n,xi,l,m,np.asarray(c,dtype=complex)])
     return coeffs
 
 def proj_wf0_wfinit_dvr(coeffs0, marray, Nbas_global):
@@ -652,7 +652,7 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     """ Note: we always (for R/L CPL) produce diplist for sigma = +1 and generate elements with sigma = -1 with the hermitian conjugate"""
     diplist = MAPPING.GEN_DIPLIST_opt1(maparray, Nbas, params['bound_lmax'], params['map_type'] ) # new, non-vectorized O(n) implementation
     #diplist = MAPPING.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma ) #old O(n**2) implementation
-    diplist = np.asarray(diplist)
+    diplist = np.asarray(diplist,dtype=int)
     end_time = time.time()
     print("Time for the construction of diplist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     #print(diplist)

@@ -644,7 +644,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
 
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist)
+    vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -947,7 +947,7 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist)
+    vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -1210,7 +1210,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 1. Construct vlist
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist)
+    vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -1296,7 +1296,7 @@ def BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     # 1. Construct vlist
     start_time = time.time()
     vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist)
+    vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
