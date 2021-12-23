@@ -787,7 +787,7 @@ class spacefuncs(analysis):
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
 
         cmap = matplotlib.cm.jet #jet, cool, etc
-        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
+
 
 
         ax1.set_ylim(rtuple[0],rtuple[1]) #radial scale
@@ -809,7 +809,21 @@ class spacefuncs(analysis):
                                         #vmin = plot_params['vmin'],
                                         #vmax = 0.05)#plot_params['vmax'])
 
-            #fig.colorbar(ax=ax1)
+            norm = matplotlib.colors.LogNorm(vmin=1e-14, vmax=1e0)
+            fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                ax                  = ax1, 
+                orientation         = plot_params['cbar_orientation'],
+                label               = plot_params['cbar_label'],
+                fraction            = plot_params['cbar_fraction'],
+                aspect              = plot_params['cbar_aspect'],
+                shrink              = plot_params['cbar_shrink'],
+                pad                 = plot_params['cbar_pad'],
+                extend              = plot_params['cbar_extend'],
+                ticks               = plot_params['cbar_ticks'],
+                drawedges           = plot_params['cbar_drawedges'],
+                format              = '%.1e'
+            )
+        
 
         elif funcpars["scale"] == "unit":
             plot_rho2D  = ax1.contourf( polargrid[1], 
@@ -820,7 +834,7 @@ class spacefuncs(analysis):
                                         vmin = plot_params['vmin'],
                                         vmax = plot_params['vmax'])#)
 
-
+            norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
             fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
                             ax                  = ax1, 
                             orientation         = plot_params['cbar_orientation'],
