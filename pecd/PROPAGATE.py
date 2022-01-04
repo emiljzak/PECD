@@ -117,14 +117,13 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
     Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
     ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
 
-    plt.spy(ham0, precision=1e-4, markersize=6,color='r')
+    #plt.spy(ham0, precision=1e-8, markersize=6,color='r')
 
-    plt.spy(ham_init, precision=1e-4, markersize=5,color='b')
+    #plt.spy(ham_init, precision=1e-8, markersize=5,color='b')
 
-    plt.show()
-    plt.spy(ham0-ham_init, precision=1e-6, markersize=5,color='g')
-    plt.show()
-    exit()
+    #plt.show()
+
+    #exit()
     wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
     psi               = psi_init[:]
     psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
@@ -179,7 +178,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        #dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
+        dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
         #dip = intmat + intmat_hc
         #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
         #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
@@ -229,6 +228,25 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     #plt.spy(ham,precision=1e-8, markersize=2)
     #plt.show()
 
+
+
+    #plt.spy(ham,precision=1e-4, markersize=2)
+    #plt.show()
+
+    #BOUND.plot_mat(ham.todense())
+
+    # 2. Optional: add "long-range potential" 
+    # Build the full potential in propagation space minus bound spac
+        # consider cut-offs for the electrostatic potential 
+    potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+
+    potind = np.asarray(potind,dtype=int)
+    """ Put the indices and values back together in the Hamiltonian array"""
+    for ielem, elem in enumerate(potmat):
+        #print(elem[0])
+        ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
+
+
     # 1. Build the full KEO in propagation space minus bound space
  
     start_time = time.time()
@@ -252,26 +270,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     #plt.spy(ham,precision=1e-4, markersize=2)
     #plt.show()
 
-    ham = keomat#_copy  
-
-    #assert TEST_BOUNDARY_HAM(params,ham,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
-    
-    #plt.spy(ham,precision=1e-4, markersize=2)
-    #plt.show()
-
-    #BOUND.plot_mat(ham.todense())
-
-    # 2. Optional: add "long-range potential" 
-    # Build the full potential in propagation space minus bound spac
-        # consider cut-offs for the electrostatic potential 
-    potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
-
-    potind = np.asarray(potind,dtype=int)
-    """ Put the indices and values back together in the Hamiltonian array"""
-    for ielem, elem in enumerate(potmat):
-        #print(elem[0])
-        ham[ potind[ielem,0], potind[ielem,1] ] += elem[0]
-
+    ham += keomat#_copy  
 
 
     hmat_csr_size = ham.data.size/(1024**2)
@@ -280,8 +279,28 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     ham_copy += ham.getH()
     for i in range(ham.shape[0]):
         ham_copy[i,i] /=2.0#-= hmat.diagonal()[i]
-        
-    return ham_copy
+
+
+    #apply filters
+
+    """ --- filter hamiltonian matrix  --- """
+
+    if params['hmat_format'] == 'numpy_arr':    
+        ham_filtered = np.where( np.abs(ham0) < params['hmat_filter'], 0.0, ham0)
+        #ham_filtered = sparse.csr_matrix(ham_filtered)
+
+    elif params['hmat_format'] == 'sparse_csr':
+        nonzero_mask        = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
+        rows                = ham0.nonzero()[0][nonzero_mask]
+        cols                = ham0.nonzero()[1][nonzero_mask]
+        ham0[rows, cols]    = 0
+        ham_filtered        = ham0.copy()
+
+
+    #assert TEST_BOUNDARY_HAM(params,ham_copy,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
+    
+
+    return ham_filtered
 
 
 def PROJECT_PSI_GLOBAL(params, maparray, psi0):
