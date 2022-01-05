@@ -286,15 +286,15 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     """ --- filter hamiltonian matrix  --- """
 
     if params['hmat_format'] == 'numpy_arr':    
-        ham_filtered = np.where( np.abs(ham0) < params['hmat_filter'], 0.0, ham0)
+        ham_filtered = np.where( np.abs(ham_copy) < params['hmat_filter'], 0.0, ham_copy)
         #ham_filtered = sparse.csr_matrix(ham_filtered)
 
     elif params['hmat_format'] == 'sparse_csr':
-        nonzero_mask        = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
-        rows                = ham0.nonzero()[0][nonzero_mask]
-        cols                = ham0.nonzero()[1][nonzero_mask]
-        ham0[rows, cols]    = 0
-        ham_filtered        = ham0.copy()
+        nonzero_mask        = np.array(np.abs(ham_copy[ham_copy.nonzero()]) < params['hmat_filter'])[0]
+        rows                = ham_copy.nonzero()[0][nonzero_mask]
+        cols                = ham_copy.nonzero()[1][nonzero_mask]
+        ham_copy[rows, cols]    = 0
+        ham_filtered        = ham_copy.copy()
 
 
     #assert TEST_BOUNDARY_HAM(params,ham_copy,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
