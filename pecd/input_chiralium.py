@@ -22,7 +22,7 @@ def read_input():
         All other parameters are read from respective input files.
     """
     
-    """ ===== type of job ===== """ 
+    """ ===== type of job ===== analyze""" 
     """
         1) 'local':    local job 
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "F" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "J_halved" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,10 +43,10 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_lmax_arr']    = (6,6,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 17
+    params['bound_nbins']       = 200
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
@@ -62,7 +62,7 @@ def read_input():
     params['t0']            = 0.0 
     params['tmax']          = 6000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
 
@@ -104,7 +104,7 @@ def read_input():
 
         params['freq_units']    = "ev"      # nm or ev
         params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
+        params['intensity']     = 0.0#1.0e+14   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -175,7 +175,7 @@ def read_input():
         """===== Hamiltonian parameters ====="""
         params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-8 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-15 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
         params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
@@ -241,25 +241,25 @@ def read_input():
                     'save':         True,
                     'scale':        "log", #unit or log
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 800,    #ignored when automatic (2*rmax)
+                                        'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
                                         'rmax': 400.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
-                    'coeff_thr':    1e-6 #threshold for the wavefunction coefficients in the calculation of rho
+                    'coeff_thr':    1e-10 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 
         W2D = {     'name':         'W2D',
-                    'plane':        ('XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen
                     'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
-                                        'npts': 500,    #ignored when automatic (2*rmax)
+                                        'npts': 1000,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
-                                        'kmax': 1.0  #ignored when automatic
+                                        'kmax': 2.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -285,7 +285,7 @@ def read_input():
                     'show':         True, # show image on screen
                     'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
-                    'k_grid':       {   'type':'manual', #manual or automatic grid type. 
+                    'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
                                         'npts': 1000,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
                                         'kmax': 2.0  #ignored when automatic
@@ -306,7 +306,7 @@ def read_input():
                                     'show':         True, # show image on screen
                                     'save':         True, # save array in file
                                 
-                                    'k-axis':       "momentum", # energy (eV) or momentum (a.u.)
+                                    'k-axis':       "energy", # energy (eV) or momentum (a.u.)
                                     'y-axis':       "log",   # log or unit scale
                                     'normalize':    True,   # normalize the cross-section
                                     },
@@ -334,11 +334,11 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = [rho2D]
-        params['analyze_momentum']  = []
+        params['analyze_momentum']  = [W2Dav]
         
 
         params['PECD']      = PECD
@@ -366,9 +366,9 @@ def read_input():
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
             
         """ *** PES *** """
-        params['pes_npts']       = 800   # numer of points for PES evaluation
-        params['pes_max_k']      = 2.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
-        params['pes_lmax']       = 80
+        params['pes_npts']       = 1000   # numer of points for PES evaluation
+        params['pes_max_k']      = 7.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
+        params['pes_lmax']       = 100
 
         """ *** PECD *** """
         params['pecd_lmax']       = 4               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function

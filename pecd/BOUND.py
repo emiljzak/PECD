@@ -421,9 +421,10 @@ def BUILD_KD(JMAT,w,N): #checked 1 May 2021
     Ws = 1.0 / np.sqrt(w)
 
     KD = np.zeros( (N-1,N-1), dtype=float)
-
+    #elements below are invariant to boundary quadrature scaling
     #b-b:
     KD[N-2,N-2] = Wb * Wb * ( w[N-1] * JMAT[N-1, N-1] + w[0] * JMAT[0 , 0]  )
+
 
     #b-s:
     for n2 in range(0,N-2):
@@ -450,12 +451,12 @@ def BUILD_KC(JMAT,w,N):
     KC = np.zeros( (N-1), dtype=float)
 
     #b-b:
-    KC[N-2] = Wb * Wb * JMAT[0, N-1] * np.sqrt(w[0] * w[N-1])
+    KC[N-2] = Wb * Wb * JMAT[0, N-1] * np.sqrt(w[0] * w[N-1]) #invariant to quadrature weights scaling
 
     #b-s:
     for n2 in range(0, N-2):
         KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] #here we exclude n'=0 which is already included in the def. of bridge function
-
+    #changed 0->N-1 above
 
     return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
 

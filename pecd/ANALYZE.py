@@ -494,7 +494,7 @@ class analysis:
                     for ielem, elem in enumerate(maparray_chi):
                         if elem[2] > ipoint_cutoff: #cut-out bound-state electron density
 
-                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r)
+                            val +=  c_arr[ielem][indang] * chilist[elem[2]-1](grid_r) #* grid_r
 
                     indang += 1
                     Plm.append([itime,l,m,val])
@@ -931,7 +931,7 @@ class spacefuncs(analysis):
 
         icoeff = 0
         for xi in range(Nbas_chi):
-            chi_rgrid = chilist[xi](polargrid[0])
+            chi_rgrid = chilist[xi](polargrid[0]) 
             aux = 0.0
             for l in range(lmax+1):
                 for m in range(-l,l+1):
@@ -941,7 +941,7 @@ class spacefuncs(analysis):
                         #aux += (psi[2*icoeff] + 1j*psi[2*icoeff+1])  * Ymat[l,l+m,:,:]
                     icoeff += 1
             wfn += chi_rgrid * aux
-        return wfn
+        return wfn#* polargrid[0]
 
     def rho2D_calc(self, psi, polargrid, chilist, funcpar, Nbas_chi,  lmax):
 
@@ -1718,9 +1718,9 @@ class momentumfuncs(analysis):
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
 
         if funcpars['PES_params']['k-axis'] == 'momentum':
-            grid_plot = kgrid
+            grid_plot = kgrid/(np.sqrt(4.0*np.pi))
         elif funcpars['PES_params']['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev
+            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev/(4.0*np.pi)
         else:
             raise ValueError("incorrect k-axis specification")
 
