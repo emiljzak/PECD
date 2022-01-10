@@ -238,14 +238,24 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     # 2. Optional: add "long-range potential" 
     # Build the full potential in propagation space minus bound spac
         # consider cut-offs for the electrostatic potential 
-    potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
-    potind = np.asarray(potind,dtype=int)
-    """ Put the indices and values back together in the Hamiltonian array"""
-    for ielem, elem in enumerate(potmat):
-        #print(elem[0])
-        ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
+    if params['molec_name'] == "chiralium": 
+        potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
+        potind = np.asarray(potind,dtype=int)
+        """ Put the indices and values back together in the Hamiltonian array"""
+        for ielem, elem in enumerate(potmat):
+            #print(elem[0])
+            ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
+
+    elif params['molec_name'] == "h": # test case of shifted hydrogen
+        potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun ) 
+
+        potind = np.asarray(potind,dtype=int)
+        """ Put the indices and values back together in the Hamiltonian array"""
+        for ielem, elem in enumerate(potmat):
+            #print(elem[0])
+            ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
 
     # 1. Build the full KEO in propagation space minus bound space
  

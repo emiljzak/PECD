@@ -1720,7 +1720,7 @@ class momentumfuncs(analysis):
         if funcpars['PES_params']['k-axis'] == 'momentum':
             grid_plot = kgrid/(np.sqrt(4.0*np.pi))
         elif funcpars['PES_params']['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev/(4.0*np.pi)
+            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev#/(4.0*np.pi)
         else:
             raise ValueError("incorrect k-axis specification")
 

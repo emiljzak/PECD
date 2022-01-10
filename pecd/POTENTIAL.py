@@ -325,12 +325,12 @@ def BUILD_ESP_MAT_EXACT(params, Gs, Gr):
 
 def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,bound):
 
-
     r_array = Gr.flatten()
     Nr = r_array.shape[0]
 
     VG = []
     counter = 0
+
     if params['molec_name'] == "chiralium": # test case for chiralium. We have analytic potential on the radial grid and we want to use Lebedev quadratures for matrix elements
         
         # 1. Read potential

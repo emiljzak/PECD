@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -42,15 +42,15 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,10,1)
+    params['bound_nlobs_arr']   = (12,12,1)
     params['bound_lmax_arr']    = (2,2,1)
-    params['bound_binw_arr']    = (2.0,2.0,1)
+    params['bound_binw_arr']    = (3.0,3.0,1)
 
-    params['bound_nbins']       = 20
+    params['bound_nbins']       = 50
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 20
+    params['prop_nbins']        = 200
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -60,7 +60,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 6.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -96,15 +96,15 @@ def read_input():
 
         """ ====== Initial wavefunction ====="""
 
-        params['ivec']          = 2 #ID of eigenstate to propagate
+        params['ivec']          = 0 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
 
         """ ====== FIELD PARAMETERS ====== """
 
         params['freq_units']    = "ev"      # nm or ev
-        params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 0.0#1.0e+14   # W/cm^2: peak intensity
+        params['omega']         = 20.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
+        params['intensity']     = 7e+16   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -124,7 +124,7 @@ def read_input():
 
         """ gaussian pulse """
         params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
-        params['gauss_t0']      = 3000.0 #as: pulse centre
+        params['gauss_t0']      = 2000.0 #as: pulse centre
 
         """ sin2 pulse """
         params['sin2_ncycles']  = 10
@@ -138,7 +138,7 @@ def read_input():
       
         params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
 
-        params['use_adaptive_quads'] = True         # read adaptive quadrature parameters from file and use them
+        params['use_adaptive_quads'] = False        # read adaptive quadrature parameters from file and use them
         params['sph_quad_default']   = "lebedev_119" # global quadrature scheme in case we do not use adaptive quadratures.
 
         params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
@@ -175,9 +175,9 @@ def read_input():
         """===== Hamiltonian parameters ====="""
         params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-15 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-12 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 100 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']
@@ -235,15 +235,15 @@ def read_input():
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen                    
                     'save':         True,
                     'scale':        "log", #unit or log
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 500,    #ignored when automatic (2*rmax)
+                                        'npts': 600,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 400.0  #ignored when automatic
+                                        'rmax': 600.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -334,7 +334,7 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = [rho2D]
@@ -367,7 +367,7 @@ def read_input():
             
         """ *** PES *** """
         params['pes_npts']       = 1000   # numer of points for PES evaluation
-        params['pes_max_k']      = 7.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
+        params['pes_max_k']      = 5.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
         params['pes_lmax']       = 100
 
         """ *** PECD *** """
