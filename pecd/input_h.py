@@ -22,7 +22,7 @@ def read_input():
         All other parameters are read from respective input files.
     """
     
-    """ ===== type of job ===== """ 
+    """ ===== type of job ===== analyze""" 
     """
         1) 'local':    local job 
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
@@ -32,8 +32,8 @@ def read_input():
 
 
 
-    params['job_label']    = "C1" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
-
+    params['job_label']    = "A" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
     """ 
@@ -43,13 +43,15 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']   = 30
-    params['bound_rshift']  = 0.0
+    params['bound_nbins']       = 20
+    params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
+    params['prop_nbins']        = 20
+
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
 
@@ -58,7 +60,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4.0 
+    params['tmax']          = 6.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -68,7 +70,7 @@ def read_input():
 
     params['N_euler'] 	        = 1     # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
-    params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
     """
@@ -94,15 +96,15 @@ def read_input():
 
         """ ====== Initial wavefunction ====="""
 
-        params['ivec']          = 3 #ID of eigenstate to propagate
+        params['ivec']          = 2 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
 
         """ ====== FIELD PARAMETERS ====== """
 
         params['freq_units']    = "ev"      # nm or ev
-        params['omega']         = 40.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
-        params['intensity']     = 1.0e+14   # W/cm^2: peak intensity
+        params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
+        params['intensity']     = 0.0#1.0e+14   # W/cm^2: peak intensity
 
         """ Available field types :
             1) RCPL   - right-circularly polarized field
@@ -117,12 +119,12 @@ def read_input():
         
         params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
 
-        params['field_func_name']    = "RCPL"
+        params['field_func_name']    = "LP"
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
-        params['gauss_tau']     = 1000.0 #as: pulse duration (sigma)
-        params['gauss_t0']      = 2000.0 #as: pulse centre
+        params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
+        params['gauss_t0']      = 3000.0 #as: pulse centre
 
         """ sin2 pulse """
         params['sin2_ncycles']  = 10
@@ -134,10 +136,10 @@ def read_input():
         """===== Potential energy matrix ====="""
         
       
-        params['gen_adaptive_quads'] = True # generate adaptive quadratures and save their parameters in a file?
+        params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
 
-        params['use_adaptive_quads'] = True          # read adaptive quadrature parameters from file and use them
-        params['sph_quad_default']   = "lebedev_023" # global quadrature scheme in case we do not use adaptive quadratures.
+        params['use_adaptive_quads'] = True         # read adaptive quadrature parameters from file and use them
+        params['sph_quad_default']   = "lebedev_119" # global quadrature scheme in case we do not use adaptive quadratures.
 
         params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
 
@@ -171,11 +173,11 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False   # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-10 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-15 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 40 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']
@@ -198,13 +200,9 @@ def read_input():
         params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
 
         """====  SAVING ===="""
-        params['save_ham0']     = True #save the calculated bound state Hamiltonian
+        params['save_ham0']     = True #save the calculated bound state Hamiltonian?
         params['save_psi0']     = True #save psi0
         params['save_enr0']     = True #save eigenenergies for psi0
-
-        params['save_ham_init']  = True #save initial hamiltonian in a file for later use?
-        params['save_psi_init']  = True
-        params['save_enr_init']  = True
 
         params['wavepacket_format'] = "h5" #dat or h5
 
@@ -237,28 +235,29 @@ def read_input():
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen                    
                     'save':         True,
+                    'scale':        "log", #unit or log
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                         'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 45.0  #ignored when automatic
+                                        'rmax': 400.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
-                    'coeff_thr':    1e-6 #threshold for the wavefunction coefficients in the calculation of rho
+                    'coeff_thr':    1e-10 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 
         W2D = {     'name':         'W2D',
-                    'plane':        ('YZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen
-                    'save':         False, # save array in file
+                    'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
-                    'k_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 500,    #ignored when automatic (2*rmax)
+                    'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
+                                        'npts': 1000,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
                                         'kmax': 2.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
@@ -284,23 +283,23 @@ def read_input():
         W2Dav = {   'name':         'W2Dav',
                     'plot':         (True, GRAPHICS.gparams_W2Dav_polar()), #specify parameters of the plot to load
                     'show':         True, # show image on screen
-                    'save':         False, # save array in file
+                    'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
                     'k_grid':       {   'type':'automatic', #manual or automatic grid type. 
-                                        'npts': 500,    #ignored when automatic (2*rmax)
+                                        'npts': 1000,    #ignored when automatic (2*rmax)
                                         'kmin': 0.0,    #ignored when automatic
                                         'kmax': 2.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
                     
-                    'nphi_pts':     2, #number of phi points for the integration over tha azimuthal angle.
+                    'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                     
-                    'legendre':     True, # calculate Legendre decomposition
+                    'legendre':     False, # calculate Legendre decomposition
 
 
 
-                    'PES':          False, # calculate PES
+                    'PES':          True, # calculate PES
                     'PES_params': {     
                                     'name':         'PES',
                                     'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
@@ -320,12 +319,13 @@ def read_input():
                     'orient_av':    False, # perform orientation averaging over the Euler angle's grid?
                     'show':         True, # show images on screen
                     'save':         True, # save arrays in files
-                    'kmax':         2.0,
+                    'kmax':         3.0,
                     
                     }
 
         bcoeffs = { 'name':     'bcoeffs',
-                    'plot':     (True, GRAPHICS.gparams_barray2D()),
+                    'plot':     (False, GRAPHICS.gparams_barray2D()),
+                    'show':     False,
                     }
 
         #params['obs_params_rho'] = rho2D
@@ -334,45 +334,45 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = [rho2D]
-        params['analyze_momentum']  = []
+        params['analyze_momentum']  = [W2Dav]
         
 
-        params['PECD']  = PECD
-        params['W2Dav'] = W2Dav
-        params['W2D']   = W2D
-        params['rho2D'] = rho2D
-        params['bcoeffs'] = bcoeffs
+        params['PECD']      = PECD
+        params['W2Dav']     = W2Dav
+        params['W2D']       = W2D
+        params['rho2D']     = rho2D
+        params['bcoeffs']   = bcoeffs
 
 
         """ *** Momentum-space wavefunction *** """
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
         # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-        params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
-        params['rcutoff']         = 20.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
+        params['npts_r_ft']       = 1000             # number of radial points over which the Hankel Transform is evaluated.
+        params['rcutoff']         = 50.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
        
         params['plot_Plm']        = False           # plot and save photoelectron partial waves?
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
         """ *** Legendre expansion *** """
         params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
-        params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
+        params['Leg_plot_reconst']  = False   # plot and compare the reconstructed distribution
         params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
         params['plot_bcoeffs']      = True  # plot b-coefficients
         params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
         params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
             
         """ *** PES *** """
-        params['pes_npts']       = 1000    # numer of points for PES evaluation
-        params['pes_max_k']      = 2.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
-        params['pes_lmax']       = 1
+        params['pes_npts']       = 1000   # numer of points for PES evaluation
+        params['pes_max_k']      = 7.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
+        params['pes_lmax']       = 100
 
         """ *** PECD *** """
-        params['pecd_lmax']       = 6               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-        params['pecd_momenta']    = [1.35]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
+        params['pecd_lmax']       = 4               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
+        params['pecd_momenta']    = [1.15]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
 
 
     return params
