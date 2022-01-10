@@ -408,7 +408,7 @@ def BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,bound):
     VG = []
     counter = 0
     if params['molec_name'] == "h": # test case of shifted hydrogen
-        r0 = 1.0
+        r0 = 0.0
         for k in range(len(r_array)-1):
             sph = np.zeros(Gs[k].shape[0], dtype=float)
             print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])))

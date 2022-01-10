@@ -367,7 +367,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
         nocom
         H	{0} {1} {2}
 
-        """.format( 0.0, 0.0, 1.0)
+        """.format( 0.0, 0.0, 0.0)
         )
 
     elif params['molec_name'] == "c":
