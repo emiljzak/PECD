@@ -82,7 +82,7 @@ def read_input():
     """
 
     params['molec_name']    = "h"
-    params['mol_geometry']  = {"rc":0.0} #angstroms
+    params['mol_geometry']  = {"rc":0.0} #angstroms. For the H-atom: shift from the centre.
     params['mol_masses']    = {"h":1.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
