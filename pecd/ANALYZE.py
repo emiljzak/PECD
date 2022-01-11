@@ -670,6 +670,126 @@ class spacefuncs(analysis):
     def __init__(self,params):
         self.params = params
 
+    def rho1D_rad(self,funcpars):
+        print("Calculating 1D radial electron density")
+            
+        irun = self.params['irun']
+
+        helicity  = self.pull_helicity()
+        params['helicity'] = helicity
+
+        """ set up 1D grids """
+
+        if funcpars['r_grid']['type'] == "manual":
+            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
+        elif funcpars['r_grid']['type'] == "automatic":
+            rmax = 0.0
+            for elem in self.params['FEMLIST']:
+                rmax += elem[0] * elem[2]
+            rtuple = (0.0, rmax, 2*int(rmax) )
+        else:
+            raise ValueError("incorrect radial grid type")
+        
+        rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+
+        """ set up time grids for evaluating rho2D """
+        tgrid,dt = self.calc_tgrid()
+
+        plot_index = self.calc_plot_times(tgrid,dt,self.params['space_analyze_times']) #plot time indices
+
+        tgrid_plot = tgrid[plot_index]
+
+        #read wavepacket from file
+
+        if params['wavepacket_format'] == "dat":
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        
+        elif params['wavepacket_format'] == "h5":
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
+
+        #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
+
+        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+  
+            print(  "Generating rho1D_rad at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                " " + str( self.params['time_units']) + " ----- " +\
+                "time index = " + str(itime) )
+
+            funcpars['t'] = t
+
+
+            rho1D = self.rho1D_rad_calc(   wavepacket[i,:], 
+                                        rgrid1D, 
+                                        self.params['chilist'],
+                                        funcpars,  
+                                        self.params['Nbas_chi'], 
+                                        self.params['bound_lmax'])
+
+            if funcpars['plot'][0] == True:
+                # call plotting function
+                self.rho1D_rad_plot(funcpars,rgrid1D,rho1D,irun)
+
+
+            if funcpars['save'] == True:
+
+                with open( params['job_directory'] +  "rho1D_rad" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
+                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    np.savetxt(rhofile, rho1D, fmt = '%10.4e')
+
+
+
+    def plot_chi(self,rmin,rmax,npoints,rgrid,nlobs,nbins):
+        """plot the selected radial basis functions"""
+        r = np.linspace(rmin, rmax, npoints, endpoint=True, dtype=float)
+        x=np.zeros(nlobs)
+        w=np.zeros(nlobs)
+        x,w=GRID.gauss_lobatto(nlobs,14)
+        w=np.array(w)
+        x=np.array(x) # convert back to np arrays
+        y = np.zeros((len(r), nbins * nlobs))
+        counter = 0
+        wcounter = 0
+        for i in range(nbins):
+            for n in range(nlobs-1):
+                y[:,counter] = PLOTS.chi(i, n, r, rgrid ,w, nlobs, nbins) #* w[wcounter]**(0.5)
+                counter += 1
+            wcounter +=1
+        figLob = plt.figure()
+        plt.xlabel('r/a.u.')
+        plt.ylabel('Lobatto basis function')
+        plt.legend()   
+        plt.plot(r, y) 
+        plt.show()
+
+    def rho1D_rad_plot(self,funcpars,rgrid1D,rho1D,irun):
+        """plot selected radial wavefunctions on the bound Hamiltonian grid"""
+
+        nlobs = self.params['bound_nlobs']
+
+        x   =   np.zeros(nlobs)
+        w   =   np.zeros(nlobs)
+        x,w =   GRID.gauss_lobatto(nlobs,14)
+        w   =   np.array(w)
+        x   =   np.array(x) # convert back to np arrays
+
+        y =     np.zeros(len(rgrid1D))
+        theta0 = 0.0
+        phi0 = 0.0
+        #counter = 0
+        for ivec in range(nvecs):
+            y = np.zeros(len(r),dtype=complex)
+            for ipoint in coeffs:
+                y +=  ipoint[5][ivec] * PLOTS.chi(ipoint[0],ipoint[1],r,rgrid,w,nlobs,nbins) * PLOTS.spharm(ipoint[3], ipoint[4], theta0, phi0).real
+            plt.plot(r, np.abs(y)**2/max(np.abs(y)**2), '-',label=str(ivec)) 
+        plt.xlabel('r/a.u.')
+        plt.ylabel('Radial eigenfunction')
+        plt.legend()   
+        plt.show()     
+
+
+
+
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
         
@@ -869,13 +989,11 @@ class spacefuncs(analysis):
         ax1.set_xlabel( xlabel              = funcpars['plane_split'][1],
                         fontsize            = plot_params['xlabel_size'],
                         color               = plot_params['label_color'],
-                        loc                 = plot_params['xlabel_loc'],
                         labelpad            = plot_params['xlabel_pad'] )
 
         ax1.set_ylabel( ylabel              = funcpars['plane_split'][0],
                         color               = plot_params['label_color'],
                         labelpad            = plot_params['ylabel_pad'],
-                        loc                 = plot_params['ylabel_loc'],
                         rotation            = 0)
 
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
@@ -956,7 +1074,7 @@ class spacefuncs(analysis):
 
             Ymat    = self.calc_spharm_array(lmax,elem,polargrid)
             wfn     = self.calc_wfn_array(lmax,Nbas_chi,polargrid,chilist,Ymat,coeff_thr,psi)
-            rhodir[elem] = np.abs(wfn)**2/np.max(np.abs(wfn)**2)
+            rhodir[elem] = np.abs(wfn)**2#/np.max(np.abs(wfn)**2)
         
 
         return rhodir

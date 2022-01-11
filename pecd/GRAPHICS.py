@@ -3,6 +3,12 @@ import matplotlib
 import matplotlib.cm
 import matplotlib.colors
 
+
+
+def gparams_rho1D_rad():
+
+    cont1D_params = { }
+
 def gparams_rho2D_polar():
 
     """" ===== Plot parameters ====="""

@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "A" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "orb" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
@@ -46,11 +46,11 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (3.0,3.0,1)
 
-    params['bound_nbins']       = 50
+    params['bound_nbins']       = 30
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 200
+    params['prop_nbins']        = 30
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -60,7 +60,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4000.0 
+    params['tmax']          = 40.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -96,7 +96,7 @@ def read_input():
 
         """ ====== Initial wavefunction ====="""
 
-        params['ivec']          = 0 #ID of eigenstate to propagate
+        params['ivec']          = 1 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
 
@@ -232,22 +232,38 @@ def read_input():
                     5) PECD
         """
         
+        rho1D_rad = {   'name':         'rho1D_rad',
+                        'plot':         (True, GRAPHICS.gparams_rho1D_rad()),
+                        'show':         True, # show image on screen                    
+                        'save':         True,
+                        'scale':        "log", #unit or log
+                        'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                            'npts': 500,    #ignored when automatic (2*rmax)
+                                            'rmin': 0.0,    #ignored when automatic
+                                            'rmax': 10.0  #ignored when automatic
+                                        #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                        },                   
+                        'Nthpts':      3600, #number of angular integration points
+                        'coeff_thr':    1e-12, #threshold for the wavefunction coefficients in the calculation of rho
+                        'nvecs':        3 #how many initial eigenvectors to plot
+                    }
+
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY','YZ','XZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen                    
                     'save':         True,
-                    'scale':        "log", #unit or log
+                    'scale':        "unit", #unit or log
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 600,    #ignored when automatic (2*rmax)
+                                        'npts': 500,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 600.0  #ignored when automatic
+                                        'rmax': 10.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
-                    'coeff_thr':    1e-10 #threshold for the wavefunction coefficients in the calculation of rho
+                    'coeff_thr':    1e-12 #threshold for the wavefunction coefficients in the calculation of rho
                     }
 
         W2D = {     'name':         'W2D',
@@ -334,7 +350,7 @@ def read_input():
         #params['obs_params_PECD'] = PECD
 
 
-        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
+        params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
         params['analyze_space']     = [rho2D]
