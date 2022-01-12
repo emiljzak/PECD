@@ -5,9 +5,15 @@ import matplotlib.colors
 
 
 
-def gparams_rho1D_rad():
+def gparams_rho1D_ini_rad():
 
     cont1D_params = { }
+
+
+def gparams_rho1D_wf_rad():
+
+    cont1D_params = { }
+
 
 def gparams_rho2D_polar():
 

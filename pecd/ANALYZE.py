@@ -670,8 +670,76 @@ class spacefuncs(analysis):
     def __init__(self,params):
         self.params = params
 
-    def rho1D_rad(self,funcpars):
-        print("Calculating 1D radial electron density")
+    def read_psi0(self):
+        coeffs = []
+        indices = []
+        start_time = time.time()
+
+        irun = self.params['irun']
+        filename = self.params['job_directory'] + self.params['file_psi0'] + "_" + str(irun)
+        with open(filename, 'r', ) as f:
+            for line in f:
+                words   = line.split()
+                indices.append( [ int(words[i]) for i in range(5) ] ) 
+           
+                coeffs.append( [ complex(words[5+ivec]) for ivec in range(self.params['num_ini_vec']) ] )
+
+        end_time = time.time()
+
+        print("time for reading psi0 =  " + str("%10.3f"%(end_time - start_time)) + "s")
+
+        return indices,coeffs
+
+
+    def rho1D_ini_rad(self,funcpars):
+
+        """ Plotting initial radial orbitals"""
+
+
+        """ set up 1D radial grid """
+
+        if funcpars['r_grid']['type'] == "manual":
+            rtuple  = (funcpars['r_grid']['rmin'], funcpars['r_grid']['rmax'], funcpars['r_grid']['npts'])
+        elif funcpars['r_grid']['type'] == "automatic":
+            rmax = 0.0
+            for elem in self.params['FEMLIST']:
+                rmax += elem[0] * elem[2]
+            rtuple = (0.0, rmax, 2*int(rmax) )
+        else:
+            raise ValueError("incorrect radial grid type")
+        
+        rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
+
+        """ load initial orbitals """
+
+        indices,coeffs = self.read_psi0()
+
+        coeffs = np.asarray(coeffs,dtype = complex)
+        indices = np.asarray(indices,dtype = int)
+        #print(coeffs.shape)
+        #print(indices.shape)
+        #psi0 = np.hstack([indices,coeffs]) 
+        #print(coeffs[:,4])
+        #exit()
+
+
+        rho1D_ini = self.rho1D_ini_rad_calc(    coeffs,
+                                                rgrid1D, 
+                                                self.params['chilist'],
+                                                funcpars,  
+                                                self.params['Nbas_chi'], 
+                                                self.params['bound_lmax'])
+        
+        #print(rho1D_ini.imag.max())
+        #exit()
+        if funcpars['plot'][0] == True:
+                # call plotting function
+                self.rho1D_ini_rad_plot(funcpars,rgrid1D,rho1D_ini)
+
+
+
+    def rho1D_wf_rad(self,funcpars):
+        print("Calculating 1D radial electron density for the propagated wavepacket")
             
         irun = self.params['irun']
 
@@ -692,7 +760,9 @@ class spacefuncs(analysis):
         
         rgrid1D         = np.linspace(rtuple[0], rtuple[1], rtuple[2], endpoint=True, dtype=float)
 
-        """ set up time grids for evaluating rho2D """
+      
+
+        """ set up time grids for evaluating rho1D from the propagated wavefunction """
         tgrid,dt = self.calc_tgrid()
 
         plot_index = self.calc_plot_times(tgrid,dt,self.params['space_analyze_times']) #plot time indices
@@ -718,14 +788,16 @@ class spacefuncs(analysis):
 
             funcpars['t'] = t
 
+            """ 1D radial electron density calculated at requested times for the propagated wavefunction"""
+            rho1D = self.rho1D_rad_calc(    wavepacket[i,:], 
+                                            rgrid1D, 
+                                            self.params['chilist'],
+                                            funcpars,  
+                                            self.params['Nbas_chi'], 
+                                            self.params['bound_lmax'])
 
-            rho1D = self.rho1D_rad_calc(   wavepacket[i,:], 
-                                        rgrid1D, 
-                                        self.params['chilist'],
-                                        funcpars,  
-                                        self.params['Nbas_chi'], 
-                                        self.params['bound_lmax'])
-
+            
+            
             if funcpars['plot'][0] == True:
                 # call plotting function
                 self.rho1D_rad_plot(funcpars,rgrid1D,rho1D,irun)
@@ -737,6 +809,49 @@ class spacefuncs(analysis):
                     "_" + helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho1D, fmt = '%10.4e')
 
+
+
+    def rho1D_ini_rad_calc(self,coeffs,rgrid1D,chilist,funcpars,Nbas_chi,lmax):
+        
+        nvecs   = funcpars['vecs'][1] - funcpars['vecs'][0]
+        y       = np.zeros((len(rgrid1D),nvecs),dtype=complex)
+
+        for ivec in range(funcpars['vecs'][0],funcpars['vecs'][1]):
+
+            #version 1
+
+            for xi1 in range(Nbas_chi):
+                chi_rgrid1 = chilist[xi1](rgrid1D) 
+                
+                for xi2 in range(Nbas_chi): 
+                    chi_rgrid2 = chilist[xi2](rgrid1D) 
+                
+                    aux = 0.0 + 1j * 0.0
+
+
+                    for l in range(lmax+1):
+                        for m in range(-l,l+1):
+                            aux += np.conj(coeffs[xi1*(lmax+1)**2+l*(l+1)+m,ivec]) *  coeffs[xi2*(lmax+1)**2+l*(l+1)+m,ivec]
+
+                            #print(xi1*(lmax+1)**2+l*(l+1)+m)
+
+                    y[:,ivec] += chi_rgrid1 * chi_rgrid2 * aux
+                    #y[:,ivec] += chi_rgrid1 * chi_rgrid2 *  np.conj(coeffs[xi1*(lmax+1)**2+1,ivec]) *  coeffs[xi2*(lmax+1)**2+1,ivec]
+          
+            #y[:,ivec] /= y[:,ivec].max()    
+        return y
+
+
+
+
+    def rho1D_rad_calc(self,coeffs,rgrid1D,chilist,funcpars,Nbas_chi,lmax):
+        
+        nvecs = funcpars['nvecs']
+        for ivec in range(nvecs):
+            y = np.zeros(len(rgrid1D),dtype=complex)
+            for ipoint in coeffs:
+                y +=  ipoint[5][ivec] * PLOTS.chi(ipoint[0],ipoint[1],r,rgrid,w,nlobs,nbins) * PLOTS.spharm(ipoint[3], ipoint[4], theta0, phi0).real
+            
 
 
     def plot_chi(self,rmin,rmax,npoints,rgrid,nlobs,nbins):
@@ -762,6 +877,18 @@ class spacefuncs(analysis):
         plt.plot(r, y) 
         plt.show()
 
+
+    def rho1D_ini_rad_plot(self,funcpars,rgrid1D,rho1D_ini):
+        for ivec in range(rho1D_ini.shape[1]):
+            plt.plot(rgrid1D, rho1D_ini[:,ivec], '-',label=str(ivec)) 
+        
+        plt.xlabel('r/a.u.')
+        plt.ylabel('Radial eigenfunction')
+        plt.legend()   
+        plt.show()     
+        exit()
+
+
     def rho1D_rad_plot(self,funcpars,rgrid1D,rho1D,irun):
         """plot selected radial wavefunctions on the bound Hamiltonian grid"""
 
@@ -774,14 +901,11 @@ class spacefuncs(analysis):
         x   =   np.array(x) # convert back to np arrays
 
         y =     np.zeros(len(rgrid1D))
-        theta0 = 0.0
-        phi0 = 0.0
-        #counter = 0
-        for ivec in range(nvecs):
-            y = np.zeros(len(r),dtype=complex)
-            for ipoint in coeffs:
-                y +=  ipoint[5][ivec] * PLOTS.chi(ipoint[0],ipoint[1],r,rgrid,w,nlobs,nbins) * PLOTS.spharm(ipoint[3], ipoint[4], theta0, phi0).real
-            plt.plot(r, np.abs(y)**2/max(np.abs(y)**2), '-',label=str(ivec)) 
+        nvecs = funcpars['nvecs']
+
+
+            
+        plt.plot(r, np.abs(y)**2/max(np.abs(y)**2), '-',label=str(ivec)) 
         plt.xlabel('r/a.u.')
         plt.ylabel('Radial eigenfunction')
         plt.legend()   

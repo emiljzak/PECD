@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "orb" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "orb_plotSA" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
@@ -43,7 +43,7 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (12,12,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (3.0,3.0,1)
 
     params['bound_nbins']       = 30
@@ -177,7 +177,7 @@ def read_input():
         params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-12 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 100 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 30 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']
@@ -187,7 +187,7 @@ def read_input():
         params['ARPACK_tol']        = 1e-8      # error tolerance (relative)
         params['ARPACK_maxiter']    = 60000     # maximum number of iterations
         params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
-        params['ARPACK_which']      = 'LA'      # LA, SM, SA, LM
+        params['ARPACK_which']      = 'SA'      # LA, SM, SA, LM
         params['ARPACK_mode']       = "normal"  # normal or inverse
 
 
@@ -231,9 +231,25 @@ def read_input():
                     4) W2Dav: W(k,theta,t)     - 2D momentum probability density in k,theta, phi-averaged
                     5) PECD
         """
-        
-        rho1D_rad = {   'name':         'rho1D_rad',
-                        'plot':         (True, GRAPHICS.gparams_rho1D_rad()),
+
+        rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
+                            'plot':         (True, GRAPHICS.gparams_rho1D_ini_rad()),
+                            'show':         True, # show image on screen                    
+                            'save':         True,
+                            'scale':        "log", #unit or log
+                            'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                                'npts': 2000,    #ignored when automatic (2*rmax)
+                                                'rmin': 0.0,    #ignored when automatic
+                                                'rmax': 50.0  #ignored when automatic
+                                            #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                            },                   
+                            'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
+                            'vecs':         (0,20)  #(i_min, i_max): which of the initial eigenvectors to plot
+                        }
+
+
+        rho1D_wf_rad = {   'name':         'rho1D_wf_rad',
+                        'plot':         (True, GRAPHICS.gparams_rho1D_wf_rad()),
                         'show':         True, # show image on screen                    
                         'save':         True,
                         'scale':        "log", #unit or log
@@ -243,9 +259,8 @@ def read_input():
                                             'rmax': 10.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                         },                   
-                        'Nthpts':      3600, #number of angular integration points
                         'coeff_thr':    1e-12, #threshold for the wavefunction coefficients in the calculation of rho
-                        'nvecs':        3 #how many initial eigenvectors to plot
+                        'ini_vecs':     ( True,(0,2) ) #Plot initial vectors? If True then (i_min, i_max): which of the initial eigenvectors to plot
                     }
 
 
@@ -353,8 +368,8 @@ def read_input():
         params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
         params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
 
-        params['analyze_space']     = [rho2D]
-        params['analyze_momentum']  = [W2Dav]
+        params['analyze_space']     = [rho1D_ini_rad]
+        params['analyze_momentum']  = []
         
 
         params['PECD']      = PECD
