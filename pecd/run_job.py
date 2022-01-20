@@ -382,7 +382,7 @@ def run_array_job(params_list,grid_euler):
 if __name__ == "__main__":    
 
 
-    inputfile 	= "input_chiralium" #input file name
+    inputfile 	= "input_h" #input file name
     input_module = importlib.import_module(inputfile)
 
     print("input file: " + str(inputfile))

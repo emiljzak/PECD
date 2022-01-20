@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'analyze'
+    params['mode']      = 'propagate'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "p2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "orb_S50" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
@@ -50,7 +50,7 @@ def read_input():
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 400
+    params['prop_nbins']        = 30
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -60,7 +60,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 6000.0 
+    params['tmax']          = 2.0 
     params['dt']            = 1.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -82,7 +82,7 @@ def read_input():
     """
 
     params['molec_name']    = "h"
-    params['mol_geometry']  = {"rc":0.0} #angstroms. For the H-atom: shift from the centre.
+    params['mol_geometry']  = {"rc":0.5} #angstroms. For the H-atom: shift from the centre.
     params['mol_masses']    = {"h":1.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
@@ -173,11 +173,11 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = True   # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = False   # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-15 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-5 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 10 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']
@@ -238,13 +238,13 @@ def read_input():
                             'save':         True,
                             'scale':        "log", #unit or log
                             'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                                'npts': 1000,    #ignored when automatic (2*rmax)
+                                                'npts': 999,    #ignored when automatic (2*rmax)
                                                 'rmin': 0.0,    #ignored when automatic
-                                                'rmax': 50.0  #ignored when automatic
+                                                'rmax': 30.0  #ignored when automatic
                                             #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                             },                   
                             'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
-                            'vecs':         (0,10)  #(i_min, i_max): which of the initial eigenvectors to plot
+                            'vecs':         (0,5)  #(i_min, i_max): which of the initial eigenvectors to plot
                         }
 
 

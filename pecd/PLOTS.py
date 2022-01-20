@@ -68,7 +68,7 @@ def chi(i,n,r,Gr,w,nlobs,nbins):
     if n == nlobs-1: #bridge functions
         #print("bridge: ", n,i)
 
-        val = ( f(i,nlobs-1,r,Gr,nlobs,nbins) + f(i+1,0,r,Gr,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) + float( w[0] ) )**(-1)
+        val = ( f(i,nlobs-1,r,Gr,nlobs,nbins) + f(i+1,0,r,Gr,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) +  float( w[0] ) )**(-1)
     #print(type(val),np.shape(val))
         return val
 

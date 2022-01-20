@@ -714,7 +714,7 @@ class spacefuncs(analysis):
 
         indices,coeffs = self.read_psi0()
 
-        coeffs = np.asarray(coeffs,dtype = complex)
+        coeffs  = np.asarray(coeffs,dtype = complex)
         indices = np.asarray(indices,dtype = int)
         #print(coeffs.shape)
         #print(indices.shape)
@@ -725,10 +725,12 @@ class spacefuncs(analysis):
 
         rho1D_ini = self.rho1D_ini_rad_calc(    coeffs,
                                                 rgrid1D, 
-                                                self.params['chilist'],
+                                                self.params['chilist_bound'],
                                                 funcpars,  
                                                 self.params['Nbas_chi'], 
-                                                self.params['bound_lmax'])
+                                                self.params['bound_lmax'],
+                                                self.params['bound_nlobs'],
+                                                self.params['bound_nbins'])
         
         #print(rho1D_ini.imag.max())
         #exit()
@@ -811,11 +813,23 @@ class spacefuncs(analysis):
 
 
 
-    def rho1D_ini_rad_calc(self,coeffs,rgrid1D,chilist,funcpars,Nbas_chi,lmax):
+    def rho1D_ini_rad_calc(self,coeffs,rgrid1D,chilist,funcpars,Nbas_chi,lmax,Nlobs,Nbins):
         
         nvecs   = funcpars['vecs'][1] - funcpars['vecs'][0]
         y       = np.zeros((len(rgrid1D),nvecs),dtype=complex)
+        
+        print("\n")
+        print("==========================================================================")
+        print("==============Generating 1D radial electron density plot =================")
+        print("==========================================================================")
+        print("\n")
+        
+        print("Nlobs= " + str(Nlobs))
+        print("Nbins= " + str(Nbins))
+        print("lmax= " + str(lmax))
 
+
+        start_time = time.time()
         for ivec in range(funcpars['vecs'][0],funcpars['vecs'][1]):
 
             #version 1
@@ -836,28 +850,47 @@ class spacefuncs(analysis):
                             #print(xi1*(lmax+1)**2+l*(l+1)+m)
 
                     y[:,ivec] += chi_rgrid1 * chi_rgrid2 * aux
-              """      
                     
+            """        
             #version 2 (20 Jan)
+            #a = np.zeros((Nbins, Nlobs-1, Nlobs-1), dtype=complex)
 
-            for i in range(Nbins):
-                chi_rgrid1 = chilist[xi](rgrid1D) 
-                chi_rgrid2 = chilist[xi](rgrid1D) 
-               
-                aux = 0.0 + 1j * 0.0
+            #print(rgrid1D)
+            #exit()
 
+            for i in range(0,Nbins-1):
+                for n1 in range(0,Nlobs):
+                    #print((i*(Nlobs-1)+n1-1))
+        
+                    for n2 in range(0,Nlobs):
+                        
+                        aux = 0.0 + 1j*0.0
+                        for l in range(lmax+1):
+                            for m in range(-l,l+1):
+                                aux += np.conj(coeffs[(i*(Nlobs-1)+n1-1)*(lmax+1)**2+l*(l+1)+m,ivec]) *  coeffs[(i*(Nlobs-1)+n2-1)*(lmax+1)**2+l*(l+1)+m,ivec]
+                                
 
-                for l in range(lmax+1):
-                    for m in range(-l,l+1):
-                        aux += np.conj(coeffs[xi1*(lmax+1)**2+l*(l+1)+m,ivec]) *  coeffs[xi2*(lmax+1)**2+l*(l+1)+m,ivec]
-
-                        #print(xi1*(lmax+1)**2+l*(l+1)+m)
-
-                y[:,ivec] += chi_rgrid1 * chi_rgrid2 * aux
-                
+                        y[:,ivec] +=  chilist[i*(Nlobs-1)+n1-1](rgrid1D) * chilist[i*(Nlobs-1)+n2-1](rgrid1D)  * aux
+                #chilist[Nlobs-2+(i)*(Nlobs-1)](rgrid1D) # bridge functions
                 #y[:,ivec] += chi_rgrid1 * chi_rgrid2 *  np.conj(coeffs[xi1*(lmax+1)**2+1,ivec]) *  coeffs[xi2*(lmax+1)**2+1,ivec]
-          
-            #y[:,ivec] /= y[:,ivec].max()    
+            
+            #y[:,ivec] /= y[:,ivec].max()
+            for n1 in range(0,Nlobs-2):
+                    #print((i-1)*(Nlobs-1)+n1)
+                    for n2 in range(0,Nlobs-2):
+                        
+                        aux = 0.0 + 1j*0.0
+                        for l in range(lmax+1):
+                            for m in range(-l,l+1):
+                                aux += np.conj(coeffs[((Nbins-1)*(Nlobs-1)+n1)*(lmax+1)**2+l*(l+1)+m,ivec]) *  coeffs[((Nbins-1)*(Nlobs-1)+n2)*(lmax+1)**2+l*(l+1)+m,ivec]
+
+               
+            
+                        y[:,ivec] += chilist[(Nbins-1)*(Nlobs-1)+n1](rgrid1D) * chilist[(Nbins-1)*(Nlobs-1)+n2](rgrid1D)  * aux
+
+        end_time = time.time()
+        print("Time for calculation of the radial electron density = " + str("%10.3f"%(end_time-start_time)) + "s")
+
         return y
 
 
@@ -2458,6 +2491,11 @@ if __name__ == "__main__":
                                                                                     params['map_type'], 
                                                                                     path )
 
+    params['maparray_chi_bound'], params['Nbas_chi_bound']          = MAPPING.GENMAP_FEMLIST(   params['FEMLIST'],  
+                                                                                    0,
+                                                                                    params['map_type'], 
+                                                                                    path )
+
     params['Gr'], params['Nr ']                         = GRID.r_grid(              params['bound_nlobs'], 
                                                                                     params['prop_nbins'] , 
                                                                                     params['bound_binw'],  
@@ -2467,12 +2505,18 @@ if __name__ == "__main__":
                                                                                     params['prop_nbins'], 
                                                                                     params['bound_binw'], 
                                                                                     params['bound_rshift'] )
-
+    # generate radial functions interpolated over the bound Hamiltonian grid
     params['chilist']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
                                                                                     params['bound_nlobs'], 
                                                                                     params['prop_nbins'], 
                                                                                     params['bound_binw'], 
                                                                                     params['maparray_chi'])
+    params['chilist_bound']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
+                                                                                    params['bound_nlobs'], 
+                                                                                    params['bound_nbins'], 
+                                                                                    params['bound_binw'], 
+                                                                                    params['maparray_chi_bound'])
+
 
     """ Read grid of Euler angles"""
     with open( "grid_euler.dat" , 'r') as eulerfile:   
