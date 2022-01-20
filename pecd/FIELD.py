@@ -4,7 +4,19 @@
 import numpy as np
 
 class Field():
-    """Class representing electric field"""
+    """Class representing electric field
+    
+    Args:
+        filename : str
+            Name of the HDF5 file from which tensor data is loaded.
+    Kwargs:
+        thresh : float
+            Threshold for neglecting matrix elements when reading from file
+
+    Attrs:
+        rank : int
+            Rank of tensor operator.
+    """
 
     def __init__(self,params):
         self.params = params
