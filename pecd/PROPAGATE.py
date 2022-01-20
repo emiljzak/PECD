@@ -178,7 +178,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
     
         #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
         #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc
+        dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc #+ Fvec[itime,0] * intmat
         #dip = intmat + intmat_hc
         #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
         #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')

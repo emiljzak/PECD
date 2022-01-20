@@ -819,7 +819,7 @@ class spacefuncs(analysis):
         for ivec in range(funcpars['vecs'][0],funcpars['vecs'][1]):
 
             #version 1
-
+            """
             for xi1 in range(Nbas_chi):
                 chi_rgrid1 = chilist[xi1](rgrid1D) 
                 
@@ -836,7 +836,26 @@ class spacefuncs(analysis):
                             #print(xi1*(lmax+1)**2+l*(l+1)+m)
 
                     y[:,ivec] += chi_rgrid1 * chi_rgrid2 * aux
-                    #y[:,ivec] += chi_rgrid1 * chi_rgrid2 *  np.conj(coeffs[xi1*(lmax+1)**2+1,ivec]) *  coeffs[xi2*(lmax+1)**2+1,ivec]
+              """      
+                    
+            #version 2 (20 Jan)
+
+            for i in range(Nbins):
+                chi_rgrid1 = chilist[xi](rgrid1D) 
+                chi_rgrid2 = chilist[xi](rgrid1D) 
+               
+                aux = 0.0 + 1j * 0.0
+
+
+                for l in range(lmax+1):
+                    for m in range(-l,l+1):
+                        aux += np.conj(coeffs[xi1*(lmax+1)**2+l*(l+1)+m,ivec]) *  coeffs[xi2*(lmax+1)**2+l*(l+1)+m,ivec]
+
+                        #print(xi1*(lmax+1)**2+l*(l+1)+m)
+
+                y[:,ivec] += chi_rgrid1 * chi_rgrid2 * aux
+                
+                #y[:,ivec] += chi_rgrid1 * chi_rgrid2 *  np.conj(coeffs[xi1*(lmax+1)**2+1,ivec]) *  coeffs[xi2*(lmax+1)**2+1,ivec]
           
             #y[:,ivec] /= y[:,ivec].max()    
         return y
@@ -1960,7 +1979,7 @@ class momentumfuncs(analysis):
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
 
         if funcpars['PES_params']['k-axis'] == 'momentum':
-            grid_plot = kgrid/(np.sqrt(4.0*np.pi))
+            grid_plot = kgrid#/(np.sqrt(4.0*np.pi))
         elif funcpars['PES_params']['k-axis'] == 'energy':
             grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev#/(4.0*np.pi)
         else:

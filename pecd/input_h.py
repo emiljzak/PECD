@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "orb_plotSA" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "p2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     #Clebsch_split_17
 
     """====== Basis set parameters for BOUND ======"""
@@ -50,7 +50,7 @@ def read_input():
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 30
+    params['prop_nbins']        = 400
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
@@ -60,9 +60,9 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 40.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['tmax']          = 6000.0 
+    params['dt']            = 1.0 # replace with the calculated number for N points per cycle
+    params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
 
@@ -96,14 +96,14 @@ def read_input():
 
         """ ====== Initial wavefunction ====="""
 
-        params['ivec']          = 1 #ID of eigenstate to propagate
+        params['ivec']          = 0 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
 
         """ ====== FIELD PARAMETERS ====== """
 
         params['freq_units']    = "ev"      # nm or ev
-        params['omega']         = 20.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
+        params['omega']         = 30.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
         params['intensity']     = 7e+16   # W/cm^2: peak intensity
 
         """ Available field types :
@@ -119,12 +119,12 @@ def read_input():
         
         params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
 
-        params['field_func_name']    = "LP"
+        params['field_func_name']    = "RCPL"
         params['field_env_name']     = "gaussian" 
 
         """ gaussian pulse """
         params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
-        params['gauss_t0']      = 2000.0 #as: pulse centre
+        params['gauss_t0']      = 3000.0 #as: pulse centre
 
         """ sin2 pulse """
         params['sin2_ncycles']  = 10
@@ -173,11 +173,11 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
+        params['read_ham_init_file']    = True   # if available read the initial Hamiltonian from file
         params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-12 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+        params['hmat_filter']           = 1e-15 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 30 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 10 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']
@@ -238,13 +238,13 @@ def read_input():
                             'save':         True,
                             'scale':        "log", #unit or log
                             'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                                'npts': 2000,    #ignored when automatic (2*rmax)
+                                                'npts': 1000,    #ignored when automatic (2*rmax)
                                                 'rmin': 0.0,    #ignored when automatic
                                                 'rmax': 50.0  #ignored when automatic
                                             #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                             },                   
                             'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
-                            'vecs':         (0,20)  #(i_min, i_max): which of the initial eigenvectors to plot
+                            'vecs':         (0,10)  #(i_min, i_max): which of the initial eigenvectors to plot
                         }
 
 
@@ -266,15 +266,15 @@ def read_input():
 
         
         rho2D = {   'name':         'rho2D',
-                    'plane':        ('XY','YZ','XZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                    'plane':        ('XY','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                     'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen                    
                     'save':         True,
-                    'scale':        "unit", #unit or log
+                    'scale':        "log", #unit or log
                     'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                        'npts': 500,    #ignored when automatic (2*rmax)
+                                        'npts': 600,    #ignored when automatic (2*rmax)
                                         'rmin': 0.0,    #ignored when automatic
-                                        'rmax': 10.0  #ignored when automatic
+                                        'rmax': 600.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     },                   
                     'th_grid':      (0.0,2.0*np.pi,360),
@@ -383,7 +383,7 @@ def read_input():
         params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
         # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
         params['npts_r_ft']       = 1000             # number of radial points over which the Hankel Transform is evaluated.
-        params['rcutoff']         = 50.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
+        params['rcutoff']         = 20.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
        
         params['plot_Plm']        = False           # plot and save photoelectron partial waves?
         params['plot_Flm']        = False           # plot and save individual Hankel transforms?
@@ -398,7 +398,7 @@ def read_input():
             
         """ *** PES *** """
         params['pes_npts']       = 1000   # numer of points for PES evaluation
-        params['pes_max_k']      = 5.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
+        params['pes_max_k']      = 4.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
         params['pes_lmax']       = 100
 
         """ *** PECD *** """
