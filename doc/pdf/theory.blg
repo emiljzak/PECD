@@ -1,10 +1,10 @@
 This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: theory.aux
-I couldn't open database file string.bib
----line 36 of file theory.aux
- : \bibdata{theoryNotes,string
- :                            ,cmi,b-rotation}
+I couldn't open database file theory.bib
+---line 19 of file theory.aux
+ : \bibdata{theoryNotes,theory
+ :                            }
 I'm skipping whatever remains of this command
 The style file: apsrev4-2.bst
 Reallocated singl_function (elt_size=4) to 100 items from 50.
@@ -17,13 +17,6 @@ Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Database file #1: theoryNotes.bib
-Warning--I didn't find a database entry for "Spector:NatComm:5:3190"
-Warning--I didn't find a database entry for "Lock:PRL108:133901"
-Warning--I didn't find a database entry for "Cireasa2015"
-Warning--I didn't find a database entry for "piewanowski2014"
-Warning--I didn't find a database entry for "Woerner:Nature466:604"
-Warning--I didn't find a database entry for "Baykusheva:PRX8:031060"
-Warning--I didn't find a database entry for "He2020"
 control{REVTEX42Control}, control.key{N/A}, control.author{N/A}, control.editor{N/A}, control.title{N/A}, control.pages{N/A}, control.year{N/A}, control.eprint{N/A}, 
 control{apsrev42Control}, control.key{N/A}, control.author{08}, control.editor{1}, control.title{0}, control.pages{0}, control.year{1}, control.eprint{N/A}, 
 Warning--jnrlst (dependency: not reversed) set 1
@@ -39,7 +32,7 @@ Control: year (1) truncated
 Control: production of eprint (0) enabled
 You've used 2 entries,
             6079 wiz_defined-function locations,
-            1648 strings with 15237 characters,
+            1635 strings with 15022 characters,
 and the built_in function-call counts, 991 in all, are:
 = -- 12
 > -- 16

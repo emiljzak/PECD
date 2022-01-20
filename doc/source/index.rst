@@ -1,55 +1,29 @@
-.. CMItemplate documentation master file
-   This file should at least contain the root `toctree` directive.
 
-CMI Python-project template documentation
+CHIRALEX documentation
 =========================================
 
-This package_ serves as a template for CMI Python projects.
+A computer code for chiral photo-electron dynamics calculations.
 
 User documentation
 ------------------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    installation
    user-guide
 
 
-Developer documentation
+API documentation
 -----------------------
 
-The full documentation of the source code is available in the following subpages. This includes, for
-instance, available classes and methods, and their respective parameters and return values.
+The full documentation for the code's specific modules, classes and functions is given below.
 
 .. toctree::
    :maxdepth: 4
 
-   cmitemplate
-   developer-guide
-   todolist
+   PROPAGATE.rst
 
 
-Indices and tables
-==================
+.. _package: https://github.com/emiljzak/PECD
 
-.. toctree::
-   :maxdepth: 4
-
-   references
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-
-.. _package: https://github.com/CFEL-CMI/CMI-Python-project-template
-
-
-.. comment
-   Local Variables:
-   coding: utf-8
-   mode: fly-spell
-   fill-column: 100
-   truncate-lines: t
-   End:
