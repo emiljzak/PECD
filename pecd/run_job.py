@@ -383,7 +383,7 @@ if __name__ == "__main__":
 
 
     inputfile 	= "input_chiralium" #input file name
-    input_module = importlib.import_module(inputfile)
+    input_module = importlib.import_module("/inputs/" + inputfile)
 
     print("input file: " + str(inputfile))
 
