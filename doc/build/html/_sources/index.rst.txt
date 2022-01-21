@@ -22,7 +22,7 @@ The full documentation for the code's specific modules, classes and functions is
 .. toctree::
    :maxdepth: 4
 
-   PROPAGATE.rst
+   propagate.rst
 
 
 .. _package: https://github.com/emiljzak/PECD

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; fill-column: 120 -*-
 #
-# Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 #
 from textwrap import indent
 from h5py._hl import datatype
@@ -54,6 +54,11 @@ import matplotlib.ticker as ticker
 
 
 def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
+
+    """ This function propagates the wavefunction with time-dependent Hamiltonian and saves the wavepacket in a file.
+    
+    
+    """
 
     time_to_au      = CONSTANTS.time_to_au[ params['time_units'] ]
     wfn_saverate    = params['wfn_saverate']
@@ -188,6 +193,7 @@ def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
         #dip = sparse.csr_matrix(dip)
         #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
         #exit()
+        #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
         psi = expm_multiply( -1.0j * ( ham_init + dip  ) * dt, psi ) 
 
         #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 

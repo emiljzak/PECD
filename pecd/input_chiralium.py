@@ -1,8 +1,8 @@
 import numpy as np
-import CONSTANTS
+import constants
 import os
 import itertools
-import GRAPHICS
+import graphics
 
 def read_input():
 
@@ -236,7 +236,7 @@ def read_input():
         
         rho2D = {   'name':         'rho2D',
                     'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
-                    'plot':         (True, GRAPHICS.gparams_rho2D_polar()), #specify parameters of the plot to load
+                    'plot':         (True, graphics.gparams_rho2D_polar()), #specify parameters of the plot to load
                     'show':         True, # show image on screen                    
                     'save':         True,
                     'scale':        "log", #unit or log
@@ -252,7 +252,7 @@ def read_input():
 
         W2D = {     'name':         'W2D',
                     'plane':        ('XZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
-                    'plot':         (True, GRAPHICS.gparams_W2D_polar()), #specify parameters of the plot to load
+                    'plot':         (True, graphics.gparams_W2D_polar()), #specify parameters of the plot to load
                     'show':         False, # show image on screen
                     'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
@@ -268,7 +268,7 @@ def read_input():
                     'PES':          True, # calculate PES
                     'PES_params': {     
                                     'name':         'PES',
-                                    'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
+                                    'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
                                     'show':         True, # show image on screen
                                     'save':         True, # save array in file
                                 
@@ -281,7 +281,7 @@ def read_input():
 
 
         W2Dav = {   'name':         'W2Dav',
-                    'plot':         (True, GRAPHICS.gparams_W2Dav_polar()), #specify parameters of the plot to load
+                    'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
                     'show':         True, # show image on screen
                     'save':         True, # save array in file
                                     # Momentum grid parameters only for plotting purposes
@@ -302,7 +302,7 @@ def read_input():
                     'PES':          True, # calculate PES
                     'PES_params': {     
                                     'name':         'PES',
-                                    'plot':         (True, GRAPHICS.gparams_PES()), #specify parameters of the plot to load
+                                    'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
                                     'show':         True, # show image on screen
                                     'save':         True, # save array in file
                                 
@@ -314,8 +314,8 @@ def read_input():
                     }
 
         PECD = {    'name':         'PECD',
-                    'plot2D':       (True, GRAPHICS.gparams_PECD2D()), #specify parameters of the plot to load
-                    'plot1D':       (True, GRAPHICS.gparams_PECD1D()), #specify parameters of the plot to load
+                    'plot2D':       (True, graphics.gparams_PECD2D()), #specify parameters of the plot to load
+                    'plot1D':       (True, graphics.gparams_PECD1D()), #specify parameters of the plot to load
                     'orient_av':    False, # perform orientation averaging over the Euler angle's grid?
                     'show':         True, # show images on screen
                     'save':         True, # save arrays in files
@@ -324,7 +324,7 @@ def read_input():
                     }
 
         bcoeffs = { 'name':     'bcoeffs',
-                    'plot':     (False, GRAPHICS.gparams_barray2D()),
+                    'plot':     (False, graphics.gparams_barray2D()),
                     'show':     False,
                     }
 

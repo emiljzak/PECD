@@ -6,16 +6,7 @@ ToDo list
 
 .. todolist::
 
-Tasks
--------------
 
 1. Use jit for KEO, split filling up the sparse matrix into a separate function
-
-.. comment
-   Local Variables:
-   coding: utf-8
-   fill-column: 100
-   truncate-lines: t
-   End:
-
+2. Consider using SciPy.sparse LinearOperator class with custom matrix-vector product (NUMBA?) in expm_multiply in prop_wf. Can it give speed-up?
 

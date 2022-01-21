@@ -4,7 +4,7 @@ PECD code user guide
 The PECD package is developed and maintained by the Controlled Molecule Imaging group (CMI) at
 the Center for Free-Electron Laser Science (CFEL), Hamburg, Germany.
 
-For further reading see: https://github.com/CFEL-CMI/PECD
+For further reading see: https://github.com/emiljzak/PECD.git 
 
 General usage
 -------------

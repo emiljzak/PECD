@@ -1,5 +1,14 @@
 \BOOKMARK [0][-]{section*.2}{CHIRALEX: theory}{}% 2
 \BOOKMARK [1][-]{section*.1}{Abstract}{section*.2}% 1
 \BOOKMARK [1][-]{section*.3}{Introduction}{section*.2}% 3
-\BOOKMARK [1][-]{section*.4}{Kinetic energy operator}{section*.2}% 4
-\BOOKMARK [1][-]{section*.5}{References}{section*.2}% 5
+\BOOKMARK [1][-]{section*.4}{basis functions and grids}{section*.2}% 4
+\BOOKMARK [2][-]{section*.5}{Radial quadratures}{section*.4}% 5
+\BOOKMARK [2][-]{section*.6}{Radial grid}{section*.4}% 6
+\BOOKMARK [2][-]{section*.7}{Radial basis functions}{section*.4}% 7
+\BOOKMARK [3][-]{section*.8}{Interpolated radial functions}{section*.7}% 8
+\BOOKMARK [2][-]{section*.9}{Angular basis functions}{section*.4}% 9
+\BOOKMARK [1][-]{section*.10}{index mapping}{section*.2}% 10
+\BOOKMARK [1][-]{section*.11}{Rotated electrostatic potential}{section*.2}% 11
+\BOOKMARK [1][-]{section*.12}{Kinetic energy operator}{section*.2}% 12
+\BOOKMARK [1][-]{section*.13}{Hamiltonian}{section*.2}% 13
+\BOOKMARK [1][-]{section*.14}{References}{section*.2}% 14

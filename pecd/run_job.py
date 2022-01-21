@@ -1,7 +1,9 @@
 import numpy as np
 import os
 import subprocess
-import CONSTANTS
+
+import constants
+
 import json
 import itertools
 import importlib
@@ -121,7 +123,7 @@ def gen_inputs_list(params_input):
 def field_params(params):
     """ Define field parameters"""
 
-    time_to_au  = CONSTANTS.time_to_au[ params['time_units'] ]
+    time_to_au  = constants.time_to_au[ params['time_units'] ]
 
     """==== field dictionaries ===="""
     field_dict = {}
@@ -262,9 +264,9 @@ def setup_input(params_input):
         
         """ ******** Field frequency *********"""
         if params['freq_units'] == "nm":
-            params['omega']     = 10**9 *  CONSTANTS.vellgt / params_input['omega'] # from wavelength (nm) to frequency  (Hz)
+            params['omega']     = 10**9 *  constants.vellgt / params_input['omega'] # from wavelength (nm) to frequency  (Hz)
         elif params['freq_units'] == "ev":
-            params['omega']     = CONSTANTS.ev_to_hz * params_input['omega']  # from ev to frequency  (Hz)
+            params['omega']     = constants.ev_to_hz * params_input['omega']  # from ev to frequency  (Hz)
         else:
             raise ValueError("Incorrect units for frequency")
 
@@ -279,7 +281,7 @@ def setup_input(params_input):
         print( "Suggested time-step (" + str(suggested_no_pts_per_cycle) + "pts/cycle) for field linear frequency = " + str("%12.3f"%(params['omega']/1e12)) + " THz is: " + str("%10.2f"%(opt_cycle_as/suggested_no_pts_per_cycle )) + " as")
 
         params['omega']     *= 2.0 * np.pi                      # linear to angular frequency
-        params['omega']     *= CONSTANTS.freq_to_au['Hz']       # Hz to a.u.
+        params['omega']     *= constants.freq_to_au['Hz']       # Hz to a.u.
         params['opt_cycle'] = 2.0 * np.pi /params['omega']  # optical cycle (a.u.)
 
         #params['E0'] = 1.0e9 #V/cm
@@ -288,11 +290,11 @@ def setup_input(params_input):
 
         """ ******** Field strength *********"""
         field_units     = "V/cm"
-        field_strength  = np.sqrt(params_input['intensity']/(CONSTANTS.vellgt * CONSTANTS.epsilon0))
+        field_strength  = np.sqrt(params_input['intensity']/(constants.vellgt * constants.epsilon0))
         print("field strength = " + "  %8.2e"%field_strength + " " + field_units)
 
         params['E0']        = field_strength
-        params['E0']        *= CONSTANTS.field_to_au[field_units] 
+        params['E0']        *= constants.field_to_au[field_units] 
 
 
 
@@ -383,7 +385,7 @@ if __name__ == "__main__":
 
 
     inputfile 	= "input_chiralium" #input file name
-    input_module = importlib.import_module("/inputs/" + inputfile)
+    input_module = importlib.import_module(inputfile)
 
     print("input file: " + str(inputfile))
 
