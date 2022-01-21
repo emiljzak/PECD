@@ -5,7 +5,7 @@ import numpy as np
 
 class Field():
     """Class representing electric field
-    
+
     Args:
         filename : str
             Name of the HDF5 file from which tensor data is loaded.
@@ -60,7 +60,32 @@ class Field():
 
     """ =================================== GENERATE FIELD =================================== """
     def gen_field(self,t):
-        """main program constructing the electric field at time t"""
+        """main program constructing the electric field at time t
+    
+        
+            Initial state vectors are eigenfunctions of Hamiltonian `H`. If
+                `temp` is None, all eigenfunctions are returned unweighted. If
+                `temp` is 0, only lowest energy eigenfunction is returned. If
+                `temp` is > 0, all eigenfunctions are returned Boltzmann-
+                -weighted.
+
+        Args:
+            H : :py:class:`field.CarTens`
+                Hamiltonian operator
+            temp : float
+                Temperature in Kelvin
+            thresh : float
+                Collective threshold below which to neglect higher energy
+                states
+            zpe : float
+                Zero-point energy, by default lowest eigenvalue of H is taken
+
+        Returns:
+            vecs : numpy.ndarray
+                Initial state vectors (each row represents an initial state)
+        """
+
+        
         if self.params['field_form'] == 'analytic':
            
             field_type_function = getattr(self, self.params['field_type']['function_name'] )
