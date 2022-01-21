@@ -5,8 +5,11 @@ Public API: CHIRALEX package
 
 
 
-Propagation of the wavepacket (:code:`field`)
-----------------------------------------------------
+
+
+
+Electric field (:code:`field`)
+------------------------------
 
 .. autosummary::
 
@@ -19,9 +22,16 @@ Propagation of the wavepacket (:code:`field`)
 
 
 
+	
+
 Propagation of the wavepacket (:code:`propagate`)
-----------------------------------------------------
+-------------------------------------------------
 
 .. autosummary::
+	
+	pecd.propagate.Propagator
 
-	pecd.propagate.prop_wf
+
+.. autoclass:: pecd.propagate.Propagator
+
+	.. automethod:: gen_timegrid

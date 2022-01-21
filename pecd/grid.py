@@ -8,7 +8,7 @@ import os
 
 import psi4
 
-import CONSTANTS
+import constants
 
 from sympy import symbols
 from sympy.core import S, Dummy, pi
@@ -226,7 +226,7 @@ def CALC_ESP_PSI4(dir,params):
     psi4.core.be_quiet()
     properties_origin=["COM"]
     #psi4.core.set_output_file(dir, False)
-    ang_au = CONSTANTS.angstrom_to_au
+    ang_au = constants.angstrom_to_au
     xS = 0.0 * ang_au
     yS = 0.0 * ang_au
     zS = 0.0 * ang_au
@@ -262,7 +262,7 @@ def CALC_ESP_PSI4_ROT(dir,params,mol_xyz):
     os.chdir(dir)
     psi4.core.be_quiet()
     properties_origin=["COM"] #[“NUCLEAR_CHARGE”] or ["COM"] #here might be the shift!
-    ang_au = CONSTANTS.angstrom_to_au
+    ang_au = constants.angstrom_to_au
 
     if params['molec_name'] == "d2s":
         mol = psi4.geometry("""

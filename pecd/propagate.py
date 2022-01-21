@@ -12,8 +12,8 @@ from scipy.sparse.linalg import expm, expm_multiply, eigsh
 from scipy.special import sph_harm
 from scipy.special import eval_legendre
 
-import quaternionic
-import spherical
+#import quaternionic
+#import spherical
 from sympy.core.numbers import Integer
 
 from sympy.physics.wigner import gaunt
@@ -27,12 +27,12 @@ import h5py
 
 import unittest 
 
-import mapping
-import grid
-import bound
-import constants
-import field
-import plots
+#import mapping
+#import grid
+#import bound
+#import constants
+#import field
+#import plots
 
 
 import time
@@ -50,6 +50,25 @@ import matplotlib.ticker as ticker
 #from pycallgraph import PyCallGraph
 #from pycallgraph.output import GraphvizOutput
 #from pycallgraph import Config
+
+"""Example function with types documented in the docstring.
+
+`PEP 484`_ type annotations are supported. If attribute, parameter, and
+return types are annotated according to `PEP 484`_, they do not need to be
+included in the docstring:
+
+Args:
+    param1 (int): The first parameter.
+    param2 (str): The second parameter.
+
+Returns:
+    bool: The return value. True for success, False otherwise.
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484/
+
+"""
+
 
 class Propagator():
     """Class contains methods related to the time-propagation of the wavefunction.
@@ -69,16 +88,19 @@ class Propagator():
     """
 
     def __init__(self,params,irun):
-        self.params = params
-        self.irun   = irun
 
+        self.params             = params
+        self.irun               = irun
+        self.time_to_au         = constants.time_to_au[ params['time_units'] ]
+        self.wfn_saverate       = params['wfn_saverate']
+    
     @staticmethod
     def calc_mat_density(mat):
         dens =  sparse.csc_matrix(mat).getnnz() / np.prod(sparse.csc_matrix(mat.shape))
         print("The density of the sparse matrix = " + str(dens) )
 
-    def plot_mat(self,mat):
-        bound.plot_mat(mat.todense())
+    #def plot_mat(self,mat):
+    #    bound.plot_mat(mat.todense())
 
     def spy_mat(self,mat):
         plt.spy(mat, precision=self.params['sph_quad_tol'], markersize=5)
@@ -120,11 +142,30 @@ class Propagator():
 
     def gen_timegrid(self):
 
-        tgrid = np.linspace(    self.params['t0'] * time_to_au, 
-                                self.params['tmax'] * time_to_au, 
+        """ 
+            Calculates equidistant time-grid for the wavefunction proapgation.
+            Start and end points are included in the grid. 
+
+        
+            Returns: 
+                tgrid : numpy 1D array
+                    time grid array
+                dt : float
+                    time step
+
+
+            Examples:
+
+                If t0=0.0 and tmax = 10.0 and dt = 1.0 the grid has 11 elements:
+                [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10.]
+        """
+
+
+        tgrid = np.linspace(    self.params['t0'] * self.time_to_au, 
+                                self.params['tmax'] * self.time_to_au, 
                                 int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
                                 endpoint = True )
-        dt    = self.params['dt'] * time_to_au
+        dt    = self.params['dt'] * self.time_to_au
         
         return tgrid, dt
 
@@ -141,9 +182,7 @@ class Propagator():
 
         global time_to_au
         global wfn_saverate        
-        time_to_au      = constants.time_to_au[ self.params['time_units'] ]
-        wfn_saverate    = self.params['wfn_saverate']
-    
+
         self.calc_mat_density(ham_init)
         self.spy_mat(ham_init)
         self.plot_mat(ham_init)
@@ -961,6 +1000,8 @@ def save_map(map,file):
 
 if __name__ == "__main__":   
 
+
+    
     start_time_total = time.time()
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -988,6 +1029,16 @@ if __name__ == "__main__":
 
     for key, value in params.items():
         print(key, ":", value)
+
+
+
+    PropObj = Propagator(params,0)
+    tgrid,dt = PropObj.gen_timegrid()
+    
+    print(len(tgrid))
+    print(tgrid/constants.time_to_au[ params['time_units'] ])
+    print(tgrid[1]-tgrid[0])
+    exit()
 
     #Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
     #      Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
@@ -1048,5 +1099,5 @@ if __name__ == "__main__":
         prop_wf(params, ham0, psi0, grid_euler, irun)
 
 
-end_time_total = time.time()
-print("Global time =  " + str("%10.3f"%(end_time_total-start_time_total)) + "s")
+    end_time_total = time.time()
+    print("Global time =  " + str("%10.3f"%(end_time_total-start_time_total)) + "s")

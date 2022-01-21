@@ -15,10 +15,3 @@ The basic usage so far includes the following steps:
 Initial wavefunction
 --------------------
 
-
-
-.. comment
-   Local Variables:
-   coding: utf-8
-   fill-column: 100
-   End:

@@ -60,8 +60,8 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 4.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
+    params['tmax']          = 10.0 
+    params['dt']            = 1.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 

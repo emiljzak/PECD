@@ -14,7 +14,7 @@ reprint,%final% add final to see real layout, no todonotes anymore, ...
 \usepackage{mathtools}
 \usepackage{hyperref, hypernat}
 \usepackage[displaymath,textmath,graphics]{preview}
-
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
 \graphicspath{{./figures/}} % define figure directory
 
 \newcommand{\cfeldesy}{\affiliation{Center for Free-Electron Laser Science, Deutsches
@@ -34,6 +34,8 @@ reprint,%final% add final to see real layout, no todonotes anymore, ...
 \maketitle%
 
 \section{Introduction}
+
+Essential parameters are kept in the \textit{params} dictionary, which is passed throughout the program. It is used to construct all types of objects, from grids to the propagator object.
 
 \section{basis functions and grids}
 
@@ -59,6 +61,37 @@ Each molecular-frame orientation gives different electrostatic potential as seen
 
 \section{Hamiltonian}
 We decided to keep the bound state Hamiltonian $H_0$ and the initial propagation Hamiltonian $H_{init}$ as separate entities, calculated independently. The computational overhead related to calculating the bound-state part twice is marginal, as we assume that the full propagation basis is much bigger than the basis for the bound Hamiltonian $Nbas \gg Nbas0$. Future releases might recycle the bound state KEO and POT and build only the outside region Hamiltonian.
+
+\section{Wavepacket propagation}
+\subsection{time grid}
+The time grid for the calculation is determined by the input keywords:
+\begin{table}[h!]
+	\begin{center}
+		\caption{Time grid keywords.}
+		\label{tab:time-grids}
+		\begin{tabular}{l|c|r}
+			\textbf{keyword} & \textbf{description} & \textbf{type}\\
+			\hline
+			t0 & start time & float\\
+			tmax & end time & float\\
+			dt & time step & float\\
+			time\_units & units & string \\
+			wfn\_saverate & save rate of the wavepacket  & float \\
+			
+		\end{tabular}
+	\end{center}
+\end{table}
+
+The generated grid is equidistant given by the following formula:
+\begin{equation}
+t[i] = t_0 + i \cdot dt ;\ i=0,1,2,...,Ntpts
+\end{equation}
+where 
+\begin{equation}
+Ntpts = \ceil[\Bigg]{\frac{t_{max}-t_0}{dt}+1}
+\end{equation}
+such that the array of time-points contains elements: $t[0],t[1],...,t[Ntpts]$.
+Note that the last point (tmax) is included in the grid. 
 
 
 \bibliography{theory}
