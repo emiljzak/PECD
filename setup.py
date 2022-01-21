@@ -10,7 +10,7 @@ name = "CHIRALEX"
 version = "0.91.dev0"
 release = version
 long_description = """
-Original author:    Emil Zak <emil.zak@cfel.de>
+Original author:    Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 Current maintainer: Emil Zak <emil.zak@cfel.de>
 """
 
@@ -21,13 +21,11 @@ setup(name=name,
       author_email        = "emil.zak@cfel.de",
       maintainer          = "Emil Zak",
       maintainer_email    = "emil.zak@cfel.de",
-      url                 = "https://github.com/CFEL-CMI/PECD",
+      url                 = "https://github.com/emiljzak/PECD.git",
       description         = "Quantum-mechanical calculations of photo-electron circular dichroism",
       version             = version,
       long_description    = long_description,
       license             = "GPL",
-      packages            = ['cmitemplate'],
-      scripts             = ['scripts/cmitemplate_calc'],
       command_options={
           'build_sphinx': {
               'project': ('setup.py', name),
