@@ -342,9 +342,20 @@ def TEST_BOUNDARY_HAM(params,ham,Nbas0):
     return np.allclose(enr,enr0,atol=1e-4)
 
 
-def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
-    """ Build the stationary hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file """
-
+def BUILD_HMAT0_ROT(params, grid_euler, irun):
+    """ Build the bound Hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file 
+    
+    
+    
+    
+    
+    
+    """
+    
+    print("Nbas0 = " + str(Nbas0))
+    print("maparray0: ")
+    print(maparray)
+    
     if params['read_ham_init_file'] == True:
 
         if params['hmat_format']   == "numpy_arr":
@@ -411,7 +422,7 @@ def BUILD_HMAT0_ROT(params, Gr, maparray, Nbas, grid_euler, irun):
             potmat, potind = BOUND.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
         
         elif params['esp_mode'] == "anton":
-            potmat, potind = BOUND.BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+            potmat, potind = BOUND.BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun )
 
         """ Put the indices and values back together in the Hamiltonian array"""
         for ielem, elem in enumerate(potmat):
@@ -891,10 +902,17 @@ def gen_3j_dip(lmax,mode):
     return tjmat
 
 
-def read_euler_grid():   
+def read_euler_grid(Nbatches):   
     with open( "grid_euler.dat" , 'r') as eulerfile:   
         grid_euler = np.loadtxt(eulerfile)
-    return grid_euler
+
+    grid_euler = grid_euler.reshape(-1,3)     
+
+    N_Euler = grid_euler.shape[0]
+
+    N_per_batch = int(N_Euler/Nbatches)
+
+    return grid_euler, N_Euler, N_per_batch
 
 def save_map(map,file):
     fl = open(file,'w')
@@ -909,71 +927,72 @@ if __name__ == "__main__":
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-    print(" ")
+    print("\n")
+    print("----------------------------------------------------------- ")
     print("---------------------- START PROPAGATE --------------------")
-    print(" ")
+    print("----------------------------------------------------------- ")
+    print("\n")
     
-    ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
+    ibatch  = int(sys.argv[1]) # id of the batch in the Euler's angles grid run
     os.chdir(sys.argv[2])
-    path = os.getcwd()
+    path    = os.getcwd()
 
-    print("dir: " + path)
+    print("current working directory: " + path)
 
     with open('input_prop', 'r') as input_file:
         params = json.load(input_file)
 
-    print(" ")
-    print("---------------------- INPUT ECHO --------------------")
-    print(" ")
+    print("\n")
+    print("----------------------------------------------------------- ")
+    print("------------------------ INPUT ECHO -----------------------")
+    print("----------------------------------------------------------- ")
+    print("\n")
 
     for key, value in params.items():
         print(key, ":", value)
 
-    maparray0, Nbas0 = MAPPING.GENMAP_FEMLIST(  params['FEMLIST'],
-                                                            params['bound_lmax'],
-                                                            params['map_type'],
-                                                            params['job_directory'] )
+    #Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
+    #      Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
+    params['maparray0'], params['Nbas0'] = MAPPING.GENMAP_FEMLIST(  params['FEMLIST_BOUND'],
+                                                                    params['bound_lmax'],
+                                                                    params['map_type'],
+                                                                    params['job_directory'] )
 
+    params['maparray'], params['Nbas']  = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
+                                                                    params['bound_lmax'],
+                                                                    params['map_type'],
+                                                                    params['job_directory'] )
 
-    maparray, Nbas = MAPPING.GENMAP_FEMLIST(  params['FEMLIST_PROP'],
-                                                            params['bound_lmax'],
-                                                            params['map_type'],
-                                                            params['job_directory'] )
+    params['maparray0_chi'], params['Nbas0_chi'] = MAPPING.GENMAP_FEMLIST(  params['FEMLIST_BOUND'],  
+                                                                            0,
+                                                                            params['map_type'], 
+                                                                            params['job_directory'] )
+                                    
+    save_map(params['maparray0'], params['job_directory'] + 'map_bound.dat')
+    save_map(params['maparray0_chi'], params['job_directory'] + 'map_bound_chi.dat')    
+    save_map(params['maparray'], params['job_directory'] + 'map_global.dat')
 
-    save_map(maparray0,params['job_directory'] + 'map0.dat')
-    save_map(maparray,params['job_directory'] + 'map_global.dat')
-
-    Gr0, Nr0                       = GRID.r_grid(           params['bound_nlobs'], 
+    params['Gr0'], params['Nr0']        = GRID.r_grid(      params['bound_nlobs'], 
                                                             params['bound_nbins'] , 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
-    Gr, Nr                       = GRID.r_grid(             params['bound_nlobs'], 
+    params['Gr'], params['Nr']          = GRID.r_grid(      params['bound_nlobs'], 
                                                             params['prop_nbins'] , 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
+
     """ Read grid of Euler angles"""
-    grid_euler  = read_euler_grid()
-
-    grid_euler = grid_euler.reshape(-1,3)     
-
-    N_Euler = grid_euler.shape[0]
-
-    N_per_batch = int(N_Euler/params['N_batches'])
-
-    maparray_chi, Nbas_chi = MAPPING.GENMAP_FEMLIST( params['FEMLIST'],  0, \
-                                params['map_type'], path )
-
-    save_map(maparray_chi,params['job_directory'] + 'map_chi.dat')
+    grid_euler, N_Euler, N_per_batch  = read_euler_grid(params['N_batches'])
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
         #print(grid_euler[irun])
-        """ Generate Initial Hamiltonian with rotated electrostatic potential in unrotated basis """
-        ham0, psi0 = BUILD_HMAT0_ROT(params, Gr0, maparray0, Nbas0, grid_euler, irun)
+        """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
+        ham0, psi0 = BUILD_HMAT0_ROT(params, grid_euler, irun)
 
-        prop_wf(params, ham0, psi0, maparray, Gr, grid_euler, irun)
+        prop_wf(params, ham0, psi0, grid_euler, irun)
 
 
 end_time_total = time.time()

@@ -16,7 +16,7 @@ def read_input():
         2) 'analyze':      analyze wavefunction for a grid of Euler angles and a grid of parameters
     """
     
-    params['mode']      = 'propagate'
+    params['mode']      = 'analyze'
     """
         In analyze mode the user specifies only basis set parameters and parameters in the 'analysis' section below
         All other parameters are read from respective input files.
@@ -244,7 +244,7 @@ def read_input():
                                             #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                             },                   
                             'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
-                            'vecs':         (0,5)  #(i_min, i_max): which of the initial eigenvectors to plot
+                            'vecs':         (0,10)  #(i_min, i_max): which of the initial eigenvectors to plot
                         }
 
 

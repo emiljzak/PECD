@@ -19,8 +19,7 @@ def GENMAP_FEMLIST(femlist,lmax,maptype,working_dir):
     #for elem in maparray:   
     #    fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+ "  %5d"%elem[3]+  " %5d"%elem[4]+" %5d"%elem[5]+"\n")
     #fl.close()
-
-
+    
     return maparray, Nbas
 
 

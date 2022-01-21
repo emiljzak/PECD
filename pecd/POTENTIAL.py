@@ -19,6 +19,57 @@ from mpl_toolkits.mplot3d import Axes3D
 from multipoles import MultipoleExpansion
 
 
+
+def sph2cart(r,theta,phi):
+    x=r*np.sin(theta)*np.cos(phi)
+    y=r*np.sin(theta)*np.sin(phi)
+    z=r*np.cos(theta)
+    return x,y,z
+
+def integrate_esp():
+        
+    import scipy.integrate as integrate
+    import numpy as np
+    from scipy import interpolate
+    import matplotlib.pyplot as plt
+    flesp = open("/Users/zakemil/Nextcloud/projects/PECD/tests/molecules/h2o/esp_radial",'r')
+    esp = []
+    for line in flesp:
+        words   = line.split()
+        xi       = int(words[0])
+        r       = float(words[1])
+        v      = float(words[2])
+        esp.append([xi,r,v])
+
+    esp_int = np.asarray(esp,dtype=float)
+    esp_int_interp  = interpolate.interp1d(esp_int[:,1], esp_int[:,2],kind='linear')
+    integral_esp = integrate.quad(lambda x: float(esp_int_interp(x)), 0.011, 5.0)
+    print(integral_esp)
+
+    plt.plot(esp_int[:,1], esp_int[:,2])
+    plt.show()
+
+def calc_repulsion_energy():
+
+    au_to_ev    = 27.211 
+    r_array     = np.array([4.0, 2.0, 2.0, 4.0, 0.0 ])
+    theta_array = np.array([0.0, np.pi/2.0, np.pi/2.0, 2.19, 0.0])
+    phi_array   = np.array([0.0, 0.0, np.pi/2.0, 3.93, 0.0])
+    Q_array     = np.array([0.5, 1.5, 1.0, 0.25, 2.0])
+
+
+    Nnuc = r_array.shape[0]
+    Vnn = 0.0
+    for inuc in range(Nnuc):
+        for jnuc in range(inuc+1,Nnuc):
+            Vnn += Q_array[inuc] * Q_array[jnuc] * (r_array[inuc]**2 + r_array[jnuc]**2 - 2.0 * r_array[inuc] * r_array[jnuc] *\
+                ( np.sin(theta_array[inuc]) * np.sin(theta_array[jnuc]) * np.cos(phi_array[inuc]-phi_array[jnuc])+\
+                    np.cos(theta_array[inuc]) * np.cos(theta_array[jnuc]) ))**(-0.5)
+
+    print("Nuclear repulsion energy Vnn = " + str(Vnn) + " a.u.")
+    print("Nuclear repulsion energy Vnn = " + str(Vnn*au_to_ev) + " ev")
+
+
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
     raise TypeError

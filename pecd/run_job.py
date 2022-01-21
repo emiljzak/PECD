@@ -193,7 +193,7 @@ def setup_input(params_input):
     """ list defining the radial grid"""
 
 
-    params['FEMLIST']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
+    params['FEMLIST_BOUND']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
                                 [0, params['bound_nlobs'], params['bound_binw']] ] 
 
     params['FEMLIST_PROP']   = [ [params['prop_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
@@ -382,7 +382,7 @@ def run_array_job(params_list,grid_euler):
 if __name__ == "__main__":    
 
 
-    inputfile 	= "input_h" #input file name
+    inputfile 	= "input_chiralium" #input file name
     input_module = importlib.import_module(inputfile)
 
     print("input file: " + str(inputfile))

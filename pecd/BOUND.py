@@ -1201,7 +1201,7 @@ def rotate_tjmat(grid_euler,irun,tjmat):
     return tjmat_rot
 
 """ ============ POTMAT0 ROTATED with Anton's potential ============ """
-def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
+def BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun ):
     """ Calculate potential matrix using projection onto spherical harmonics representation of 
     the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
     Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
@@ -1214,7 +1214,7 @@ def BUILD_POTMAT0_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
+    exit()
     #klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
     #klist = np.asarray(klist)
@@ -1818,10 +1818,10 @@ def spharm(l,m,theta,phi):
 
 
 
-if __name__ == "__main__":      
+#if __name__ == "__main__":      
 
 
-    params = input.gen_input()
+    #params = input.gen_input()
 
-    BUILD_HMAT0(params)
+    #BUILD_HMAT0(params)
 
