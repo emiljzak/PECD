@@ -96,7 +96,40 @@ class Propagator():
 
         return helicity
 
+    def allocate_wavepacket(self,helicity):
+        
+        if self.params['wavepacket_format'] == "dat":
 
+            flwavepacket      = open(   self.params['job_directory'] + 
+                                        self.params['wavepacket_file'] +
+                                        helicity + "_" + str(self.irun) 
+                                        + ".dat", 'w' )
+
+        elif self.params['wavepacket_format'] == "h5":
+
+            flwavepacket =  h5py.File(  self.params['job_directory'] +
+                                        self.params['wavepacket_file'] + 
+                                        helicity + "_" + str(self.irun) + ".h5",
+                                        mode = 'w')
+
+        else:
+            raise ValueError("incorrect/not implemented format for the wavepacket")
+
+        return flwavepacket
+
+
+    def gen_timegrid(self):
+        tgrid = np.linspace(    self.params['t0'] * time_to_au, 
+                                self.params['tmax'] * time_to_au, 
+                                int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
+                                endpoint = True )
+        dt    = self.params['dt'] * time_to_au
+        
+        return tgrid, dt
+
+    def normalize_psi(self,psi):
+        return psi/np.sqrt( np.sum( np.conj(psi) * psi ) )
+ 
 
     def prop_wf(self, ham_init, psi_init, intmat ):
 
@@ -105,8 +138,10 @@ class Propagator():
         
         """
 
-        time_to_au      = constants.time_to_au[ params['time_units'] ]
-        wfn_saverate    = params['wfn_saverate']
+        global time_to_au
+        global wfn_saverate        
+        time_to_au      = constants.time_to_au[ self.params['time_units'] ]
+        wfn_saverate    = self.params['wfn_saverate']
     
         self.calc_mat_density(ham_init)
         self.spy_mat(ham_init)
@@ -116,62 +151,32 @@ class Propagator():
         print("Setting up time-grid...")
         print("\n")
 
-        tgrid = np.linspace(    self.params['t0'] * time_to_au, 
-                                self.params['tmax'] * time_to_au, 
-                                int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
-                                endpoint = True )
-        dt    = self.params['dt'] * time_to_au
-
-
-        helicity = self.pull_helicity(params)
+        tgrid, dt = self.gen_timegrid()
 
         print("\n")
         print("Allocating wavepacket...")
         print("\n")
 
-        if params['wavepacket_format'] == "dat":
-            flwavepacket      = open(   params['job_directory'] + 
-                                        params['wavepacket_file'] +
-                                        helicity + "_" + str(ieuler) 
-                                        + ".dat", 'w' )
+        helicity = self.pull_helicity()
+        fl_wavepacket = self.allocate_wavepacket(helicity)
 
-        elif params['wavepacket_format'] == "h5":
+        print("\n")
+        print("Normalizing initial wavepacket...")
+        print("\n")
 
-            flwavepacket =  h5py.File(  params['job_directory'] +
-                                        params['wavepacket_file'] + 
-                                        helicity + "_" + str(ieuler) + ".h5",
-                                        mode='w')
+        psi = self.normalize_psi(psi_init)
 
-        else:
-            raise ValueError("incorrect/not implemented format")
+        print("\n")
+        print("Generating electric fields...")
+        print("\n")
 
-    
-        # Project the bound Hamiltonian onto the propagation Hamiltonian
-        Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
-        ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
-
-        #plt.spy(ham0, precision=1e-8, markersize=6,color='r')
-
-        #plt.spy(ham_init, precision=1e-8, markersize=5,color='b')
-
-        #plt.show()
-
-        #exit()
-        wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
-        psi               = psi_init[:]
-        psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
-
-
-
-        if params['calc_free_energy'] == True:
-            felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
-
-        print("initialize electric field")
         Elfield = field.Field(params)
-        Fvec = Elfield.gen_field(tgrid) 
+        Fvec    = Elfield.gen_field(tgrid) 
         
         if params['plot_elfield'] == True:
             plots.plot_elfield(Fvec,tgrid,time_to_au)
+
+
 
         print(" Initialize the interaction matrix ")
 
@@ -1021,6 +1026,12 @@ if __name__ == "__main__":
     grid_euler, N_Euler, N_per_batch  = read_euler_grid(params['N_batches'])
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+
+
+        # Project the bound Hamiltonian onto the propagation Hamiltonian
+        Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
+        ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
+
 
         #print(grid_euler[irun])
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
