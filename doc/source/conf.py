@@ -23,7 +23,7 @@ copyright = '2022, Emil Zak'
 author = 'Emil Zak'
 
 # The full version, including alpha/beta/rc tags
-release = ''
+release = '0.1beta'
 
 
 # -- General configuration ---------------------------------------------------
@@ -51,7 +51,7 @@ exclude_patterns = []
 pygments_style = None
 autosummary_generate = True
 napolean_use_rtype = False
-
+napoleon_google_docstring = True
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

@@ -50,23 +50,27 @@ import matplotlib.ticker as ticker
 #from pycallgraph import PyCallGraph
 #from pycallgraph.output import GraphvizOutput
 #from pycallgraph import Config
-
-"""Example function with types documented in the docstring.
-
-`PEP 484`_ type annotations are supported. If attribute, parameter, and
-return types are annotated according to `PEP 484`_, they do not need to be
-included in the docstring:
+"""Molecular frame embedding
 
 Args:
-    param1 (int): The first parameter.
-    param2 (str): The second parameter.
+    arg
+        String defining molecular frame
+
+        .. code-block:: python
+
+            water.frame = "diag(inertia)" # rotates to a frame where the inertia tensor
+                                            # becomes diagonal
+            water.frame = "zxy" # permutes the x, y, and z axes
+            water.pol = [[9.1369, 0, 0], [0, 9.8701, 0], [0, 0, 9.4486]]
+            water.frame = "pol" # rotates frame with water.pol matrix
+            water.frame = "diag(pol)" # rotates to a frame where water.pol tensor
+                                        # becomes diagonal
+            water.frame = "None" # or None, resets frame to the one defined
+                                    # by the input  molecular geometry
 
 Returns:
-    bool: The return value. True for success, False otherwise.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484/
-
+    array (3,3)
+        Frame rotation matrix
 """
 
 
@@ -140,24 +144,21 @@ class Propagator():
         return flwavepacket
 
 
-    def gen_timegrid(self):
+    def gen_timegrid(self,ijifds):
 
-        """ 
-            Calculates equidistant time-grid for the wavefunction proapgation.
-            Start and end points are included in the grid. 
+        """ fd
+        Calculates equidistant time-grid for the wavefunction proapgation.
+        Start and end points are included in the grid. 
 
-        
-            Returns: 
-                tgrid : numpy 1D array
-                    time grid array
-                dt : float
-                    time step
+        Returns: tuple
+            tgrid: numpy 1D array
+                time grid array
+            dt: float
+                time step
 
-
-            Examples:
-
-                If t0=0.0 and tmax = 10.0 and dt = 1.0 the grid has 11 elements:
-                [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10.]
+        Examples:
+            If t0=0.0 and tmax = 10.0 and dt = 1.0 the grid has 11 elements:
+            [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10.]
         """
 
 
