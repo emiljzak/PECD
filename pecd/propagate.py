@@ -77,6 +77,25 @@ class Propagator():
         dens =  sparse.csc_matrix(mat).getnnz() / np.prod(sparse.csc_matrix(mat.shape))
         print("The density of the sparse matrix = " + str(dens) )
 
+    def plot_mat(self,mat):
+        bound.plot_mat(mat.todense())
+
+    def spy_mat(self,mat):
+        plt.spy(mat, precision=self.params['sph_quad_tol'], markersize=5)
+        plt.show()
+
+    def pull_helicity(self):
+        if self.params['field_type']['function_name'] == "fieldRCPL":
+            helicity = "R"
+        elif self.params['field_type']['function_name'] == "fieldLCPL":
+            helicity = "L"  
+        elif self.params['field_type']['function_name'] == "fieldLP":
+            helicity = "0"
+        else:
+            raise ValueError("Incorect field name")
+
+        return helicity
+
 
 
     def prop_wf(self, ham_init, psi_init, intmat ):
@@ -90,39 +109,25 @@ class Propagator():
         wfn_saverate    = params['wfn_saverate']
     
         self.calc_mat_density(ham_init)
+        self.spy_mat(ham_init)
+        self.plot_mat(ham_init)
 
-        #exit()
-        #plt.spy(ham1,precision=params['sph_quad_tol'], markersize=2)
-        #plt.show()
-        
+        print("\n")
+        print("Setting up time-grid...")
+        print("\n")
 
-        #bound.plot_mat(ham_init.todense())
-        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-        #plt.show()
-        #ham0 /= 2.0
-
-
-        Nbas0 = len(psi0)
-        print("Nbas for the bound Hamiltonian = " + str(Nbas0))
-
-        print("Setting up time-grid")
-        tgrid = np.linspace(    params['t0'] * time_to_au, 
-                                params['tmax'] * time_to_au, 
-                                int((params['tmax']-params['t0'])/params['dt']+1), 
+        tgrid = np.linspace(    self.params['t0'] * time_to_au, 
+                                self.params['tmax'] * time_to_au, 
+                                int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
                                 endpoint = True )
-        dt = params['dt'] * time_to_au
+        dt    = self.params['dt'] * time_to_au
 
-        print("Allocating wavepacket")
 
-        if params['field_type']['function_name'] == "fieldRCPL":
-            helicity = "R"
-        elif params['field_type']['function_name'] == "fieldLCPL":
-            helicity = "L"  
-        elif params['field_type']['function_name'] == "fieldLP":
-            helicity = "0"
-        else:
-            raise ValueError("Incorect field name")
+        helicity = self.pull_helicity(params)
 
+        print("\n")
+        print("Allocating wavepacket...")
+        print("\n")
 
         if params['wavepacket_format'] == "dat":
             flwavepacket      = open(   params['job_directory'] + 
