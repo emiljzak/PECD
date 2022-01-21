@@ -1,0 +1,193 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Installing CMItemplate &#8212; Python  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PECD code user guide" href="user-guide.html" />
+    <link rel="prev" title="CMI Python-project template documentation" href="index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="user-guide.html" title="PECD code user guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="CMI Python-project template documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Python  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installing CMItemplate</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="installing-cmitemplate">
+<h1>Installing CMItemplate<a class="headerlink" href="#installing-cmitemplate" title="Permalink to this headline">¶</a></h1>
+<section id="prerequisites-and-obtaining-cmitemplate">
+<h2>Prerequisites and obtaining CMItemplate<a class="headerlink" href="#prerequisites-and-obtaining-cmitemplate" title="Permalink to this headline">¶</a></h2>
+<p>Since CMItemplate is written in Python, you need to install Python (version 3).</p>
+<p>In general, you should specify which Python extension packages are needed, such as</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/CFEL-CMI/cmiext">cmiext</a></p></li>
+<li><p>NumPy</p></li>
+</ul>
+<p>CMItemplate is avaiable on <a class="reference external" href="https://github.com/CFEL-CMI/CMI-Python-project-template">GitHub</a>, please contact Jochen Küpper &lt;<a class="reference external" href="mailto:jochen&#46;kuepper&#37;&#52;&#48;cfel&#46;de">jochen<span>&#46;</span>kuepper<span>&#64;</span>cfel<span>&#46;</span>de</a>&gt; for
+further details.</p>
+</section>
+<section id="id1">
+<h2>Installing CMItemplate<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>A normal installation is performed by simply running the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>However, often you do not have the administrative rights to install in global directories, or simply
+do not want to overrride a global installtion. In this case, you might want to perform a local
+installation in your user directory using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
+</pre></div>
+</div>
+<p>A similar setup can be achieved using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">develop</span> <span class="o">--</span><span class="n">user</span>
+</pre></div>
+</div>
+<p>which, however, sets up the installation in such a way that changes to your source directory are
+automatically and immediately visible through the installed version. This avoids repeated
+re-installs while you are developing code.</p>
+<p>Once you are satisfied with your changes you might consider reinstalling using one of the above two
+options.</p>
+<p>Fur further details of <code class="docutils literal notranslate"><span class="pre">develop</span></code> install, see <a class="reference external" href="http://naoko.github.io/your-project-install-pip-setup">http://naoko.github.io/your-project-install-pip-setup</a></p>
+</section>
+<section id="installing-cmitemplate-in-user-specified-path">
+<h2>Installing CMItemplate: in user-specified path<a class="headerlink" href="#installing-cmitemplate-in-user-specified-path" title="Permalink to this headline">¶</a></h2>
+<p>Use PYTHONUSERBASE to specify the installation path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>setenv PYTHONUSERBASE $HOME/.local
+python setup.py install --user
+</pre></div>
+</div>
+<p>In the above example of installation (in tcsh shell), the module will be installed in the following path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$HOME/.local/lib/python/site-packages
+</pre></div>
+</div>
+<p>and the scripts will be installed in the following path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$HOME/.local/bin
+</pre></div>
+</div>
+<p>To import modules and call scripts of such user-specific installation, the following environment
+declarifications are required:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>setenv PATH /opt/local/bin:$HOME/.local/bin:$PATH
+setenv PYTHONUSERBASE $HOME/.local
+</pre></div>
+</div>
+<p>The above example is provided for the tcsh shell. You can also then use <code class="docutils literal notranslate"><span class="pre">site</span></code> module of python
+in python command prompt to make sure the environment is properly set up. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">site</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">site</span><span class="o">.</span><span class="n">USER_BASE</span>
+<span class="go">&#39;$HOME/.local&#39;</span>
+</pre></div>
+</div>
+<p>Also type “which <code class="docutils literal notranslate"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">script</span> <span class="pre">file</span></code>” to find the real path of the script called. It should
+be in “$HOME/.local/bin”.</p>
+<p>For further details, see <a class="reference external" href="https://docs.python.org/3/install/index.html#inst-alt-install-user">https://docs.python.org/3/install/index.html#inst-alt-install-user</a> and
+<a class="reference external" href="https://docs.python.org/3/using/cmdline.html#envvar-PYTHONUSERBASE">https://docs.python.org/3/using/cmdline.html#envvar-PYTHONUSERBASE</a></p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Installing CMItemplate</a><ul>
+<li><a class="reference internal" href="#prerequisites-and-obtaining-cmitemplate">Prerequisites and obtaining CMItemplate</a></li>
+<li><a class="reference internal" href="#id1">Installing CMItemplate</a></li>
+<li><a class="reference internal" href="#installing-cmitemplate-in-user-specified-path">Installing CMItemplate: in user-specified path</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">CMI Python-project template documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="user-guide.html"
+                          title="next chapter">PECD code user guide</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/installation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="user-guide.html" title="PECD code user guide"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="CMI Python-project template documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Python  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installing CMItemplate</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Last updated on 2022-01-20.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>
