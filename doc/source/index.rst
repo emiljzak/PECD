@@ -12,7 +12,7 @@ User documentation
 
    installation
    user-guide
-
+   todolist
 
 API documentation
 -----------------------

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; fill-column: 120 -*-
 #
-# Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>
 
 from setuptools import setup
 
-copyright = 'Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>'
-name = "PECD"
-version = "0.9.dev0"
+copyright = 'Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>'
+name = "CHIRALEX"
+version = "0.91.dev0"
 release = version
 long_description = """
 Original author:    Emil Zak <emil.zak@cfel.de>

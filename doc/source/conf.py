@@ -18,9 +18,9 @@ sys.setrecursionlimit(1500)
 
 # -- Project information -----------------------------------------------------
 
-project = 'Richmol'
-copyright = '2021, RichMol developers, https://www.controlled-molecule-imaging.org'
-author = 'The RichMol developers'
+project = 'Chiralex'
+copyright = '2022, Emil Zak'
+author = 'Emil Zak'
 
 # The full version, including alpha/beta/rc tags
 release = ''
@@ -73,5 +73,5 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '_static/richmol_logo.jpg'
+html_logo = '_static/temp_logo.png'
 

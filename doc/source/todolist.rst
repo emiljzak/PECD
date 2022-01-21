@@ -6,7 +6,10 @@ ToDo list
 
 .. todolist::
 
+Tasks
+-------------
 
+1. Use jit for KEO, split filling up the sparse matrix into a separate function
 
 .. comment
    Local Variables:
@@ -14,3 +17,5 @@ ToDo list
    fill-column: 100
    truncate-lines: t
    End:
+
+

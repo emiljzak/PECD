@@ -1,7 +1,7 @@
 .. currentmodule:: pecd
 
 Public API: CHIRALEX package
-***************************
+*****************************
 
 
 
