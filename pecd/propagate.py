@@ -27,13 +27,13 @@ import h5py
 
 import unittest 
 
-import MAPPING
-import GRID
-import BOUND
-import CONSTANTS
-import FIELD
-import PLOTS
-import ROTDENS
+import mapping
+import grid
+import bound
+import constants
+import field
+import plots
+
 
 import time
 import os
@@ -51,177 +51,200 @@ import matplotlib.ticker as ticker
 #from pycallgraph.output import GraphvizOutput
 #from pycallgraph import Config
 
+class Propagator():
+    """Class contains methods related to the time-propagation of the wavefunction.
 
+    Args:
+        filename : str
+           fdsfsd
+    Kwargs:
+        thresh : float
+            fdsf
 
-def prop_wf( params, ham0, psi0, maparray, Gr, grid_euler, ieuler ):
-
-    """ This function propagates the wavefunction with time-dependent Hamiltonian and saves the wavepacket in a file.
-    
-    
+    Attrs:
+        params : dict
+            Keeps relevant parameters.
+        irun : int
+            id of the run over the Euler grid
     """
 
-    time_to_au      = CONSTANTS.time_to_au[ params['time_units'] ]
-    wfn_saverate    = params['wfn_saverate']
- 
-    #rho =  sparse.csc_matrix(ham_init).getnnz() / np.prod(sparse.csc_matrix(ham_init).shape)
-    #print("density of the sparse hamiltonian matrix = " + str(rho) )
+    def __init__(self,params,irun):
+        self.params = params
+        self.irun   = irun
 
-    #rho =  ham1.getnnz() / np.prod(ham1.shape)
-    #print("density of the sparse hamiltonian matrix after filter = " + str(rho) )
-    #exit()
-    #plt.spy(ham1,precision=params['sph_quad_tol'], markersize=2)
-    #plt.show()
+    @staticmethod
+    def calc_mat_density(mat):
+        dens =  sparse.csc_matrix(mat).getnnz() / np.prod(sparse.csc_matrix(mat.shape))
+        print("The density of the sparse matrix = " + str(dens) )
+
+
+
+    def prop_wf(self, ham_init, psi_init, intmat ):
+
+        """ This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.
+        
+        
+        """
+
+        time_to_au      = constants.time_to_au[ params['time_units'] ]
+        wfn_saverate    = params['wfn_saverate']
     
+        self.calc_mat_density(ham_init)
 
-    #BOUND.plot_mat(ham_init.todense())
-    #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
-    #plt.show()
-    #ham0 /= 2.0
-
-
-    Nbas0 = len(psi0)
-    print("Nbas for the bound Hamiltonian = " + str(Nbas0))
-
-    print("Setting up time-grid")
-    tgrid = np.linspace(    params['t0'] * time_to_au, 
-                            params['tmax'] * time_to_au, 
-                            int((params['tmax']-params['t0'])/params['dt']+1), 
-                            endpoint = True )
-    dt = params['dt'] * time_to_au
-
-    print("Allocating wavepacket")
-
-    if params['field_type']['function_name'] == "fieldRCPL":
-        helicity = "R"
-    elif params['field_type']['function_name'] == "fieldLCPL":
-        helicity = "L"  
-    elif params['field_type']['function_name'] == "fieldLP":
-        helicity = "0"
-    else:
-        raise ValueError("Incorect field name")
-
-
-    if params['wavepacket_format'] == "dat":
-        flwavepacket      = open(   params['job_directory'] + 
-                                    params['wavepacket_file'] +
-                                    helicity + "_" + str(ieuler) 
-                                    + ".dat", 'w' )
-
-    elif params['wavepacket_format'] == "h5":
-
-        flwavepacket =  h5py.File(  params['job_directory'] +
-                                    params['wavepacket_file'] + 
-                                    helicity + "_" + str(ieuler) + ".h5",
-                                    mode='w')
-
-    else:
-        raise ValueError("incorrect/not implemented format")
-
-  
-    # Project the bound Hamiltonian onto the propagation Hamiltonian
-    Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
-    ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
-
-    #plt.spy(ham0, precision=1e-8, markersize=6,color='r')
-
-    #plt.spy(ham_init, precision=1e-8, markersize=5,color='b')
-
-    #plt.show()
-
-    #exit()
-    wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
-    psi               = psi_init[:]
-    psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
-
-
-
-    if params['calc_free_energy'] == True:
-        felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
-
-    print("initialize electric field")
-    Elfield = FIELD.Field(params)
-    Fvec = Elfield.gen_field(tgrid) 
-    
-    if params['plot_elfield'] == True:
-        PLOTS.plot_elfield(Fvec,tgrid,time_to_au)
-
-    print(" Initialize the interaction matrix ")
-
-
-    start_time = time.time()
-    intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
-    end_time = time.time()
-    print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
-
-    intmat_hc = intmat.copy()
-    intmat_hc = intmat_hc.transpose() #d_ll'mm',mu=-1
-
-    #determine sigma
-    if helicity == "R" or helicity =="L":
-        sigma = 2
-    elif helicity == "0":
-        sigma = 1
-        intmat /= 2.0
-    else:
-        ValueError("incorrect helicity")
-
-
-
-    Fvec = np.asarray(Fvec,dtype=complex)
-    Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
-
-
-    start_time_global = time.time()
-    for itime, t in enumerate(tgrid): 
-
-        start_time = time.time()
-        if itime%10 == 0:
-            print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
-        else:
-            print("t = " + str( "%10.1f"%(t/time_to_au)) + " as")
-       
-    
-        #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
-        #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
-        dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc #+ Fvec[itime,0] * intmat
-        #dip = intmat + intmat_hc
-        #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
-        #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
+        #exit()
+        #plt.spy(ham1,precision=params['sph_quad_tol'], markersize=2)
         #plt.show()
         
-        #print(Fvec[itime][1]* intmat0[1])
-        #dip = sparse.csr_matrix(dip)
-        #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
+
+        #bound.plot_mat(ham_init.todense())
+        #plt.spy(ham_init, precision=params['sph_quad_tol'], markersize=5)
+        #plt.show()
+        #ham0 /= 2.0
+
+
+        Nbas0 = len(psi0)
+        print("Nbas for the bound Hamiltonian = " + str(Nbas0))
+
+        print("Setting up time-grid")
+        tgrid = np.linspace(    params['t0'] * time_to_au, 
+                                params['tmax'] * time_to_au, 
+                                int((params['tmax']-params['t0'])/params['dt']+1), 
+                                endpoint = True )
+        dt = params['dt'] * time_to_au
+
+        print("Allocating wavepacket")
+
+        if params['field_type']['function_name'] == "fieldRCPL":
+            helicity = "R"
+        elif params['field_type']['function_name'] == "fieldLCPL":
+            helicity = "L"  
+        elif params['field_type']['function_name'] == "fieldLP":
+            helicity = "0"
+        else:
+            raise ValueError("Incorect field name")
+
+
+        if params['wavepacket_format'] == "dat":
+            flwavepacket      = open(   params['job_directory'] + 
+                                        params['wavepacket_file'] +
+                                        helicity + "_" + str(ieuler) 
+                                        + ".dat", 'w' )
+
+        elif params['wavepacket_format'] == "h5":
+
+            flwavepacket =  h5py.File(  params['job_directory'] +
+                                        params['wavepacket_file'] + 
+                                        helicity + "_" + str(ieuler) + ".h5",
+                                        mode='w')
+
+        else:
+            raise ValueError("incorrect/not implemented format")
+
+    
+        # Project the bound Hamiltonian onto the propagation Hamiltonian
+        Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
+        ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
+
+        #plt.spy(ham0, precision=1e-8, markersize=6,color='r')
+
+        #plt.spy(ham_init, precision=1e-8, markersize=5,color='b')
+
+        #plt.show()
+
         #exit()
-        #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
-        psi = expm_multiply( -1.0j * ( ham_init + dip  ) * dt, psi ) 
+        wavepacket        = np.zeros( ( len(tgrid), Nbas ) , dtype = complex )
+        psi               = psi_init[:]
+        psi[:]           /= np.sqrt( np.sum( np.conj(psi) * psi ) )
 
-        #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
-        #wavepacket[itime,:] = psi_out
-        #psi                 = wavepacket[itime,:]
 
+
+        if params['calc_free_energy'] == True:
+            felenfile = open( params['job_directory'] + "FEL_energy.dat", 'w' )
+
+        print("initialize electric field")
+        Elfield = field.Field(params)
+        Fvec = Elfield.gen_field(tgrid) 
+        
+        if params['plot_elfield'] == True:
+            plots.plot_elfield(Fvec,tgrid,time_to_au)
+
+        print(" Initialize the interaction matrix ")
+
+
+        start_time = time.time()
+        intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
         end_time = time.time()
-        print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
+        print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
-        if itime%wfn_saverate == 0:
-            if params['wavepacket_format'] == "dat":
-                flwavepacket.write( '{:10.3f}'.format(t) + 
-                                    " ".join('{:15.5e}'.format(psi[i].real) + 
-                                    '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +
-                                    '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
-                                     "\n")
+        intmat_hc = intmat.copy()
+        intmat_hc = intmat_hc.transpose() #d_ll'mm',mu=-1
 
-            elif params['wavepacket_format'] == "h5":
+        #determine sigma
+        if helicity == "R" or helicity =="L":
+            sigma = 2
+        elif helicity == "0":
+            sigma = 1
+            intmat /= 2.0
+        else:
+            ValueError("incorrect helicity")
 
-                flwavepacket.create_dataset(    name        = str('{:10.3f}'.format(t)), 
-                                                data        = psi,
-                                                dtype       = complex,
-                                                compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
-                                            )
-                
-    end_time_global = time.time()
-    print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
-    flwavepacket.close()
+
+
+        Fvec = np.asarray(Fvec,dtype=complex)
+        Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
+
+
+        start_time_global = time.time()
+        for itime, t in enumerate(tgrid): 
+
+            start_time = time.time()
+            if itime%10 == 0:
+                print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
+            else:
+                print("t = " + str( "%10.1f"%(t/time_to_au)) + " as")
+        
+        
+            #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
+            #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
+            dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc #+ Fvec[itime,0] * intmat
+            #dip = intmat + intmat_hc
+            #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
+            #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
+            #plt.show()
+            
+            #print(Fvec[itime][1]* intmat0[1])
+            #dip = sparse.csr_matrix(dip)
+            #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
+            #exit()
+            #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
+            psi = expm_multiply( -1.0j * ( ham_init + dip  ) * dt, psi ) 
+
+            #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+            #wavepacket[itime,:] = psi_out
+            #psi                 = wavepacket[itime,:]
+
+            end_time = time.time()
+            print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
+
+            if itime%wfn_saverate == 0:
+                if params['wavepacket_format'] == "dat":
+                    flwavepacket.write( '{:10.3f}'.format(t) + 
+                                        " ".join('{:15.5e}'.format(psi[i].real) + 
+                                        '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +
+                                        '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
+                                        "\n")
+
+                elif params['wavepacket_format'] == "h5":
+
+                    flwavepacket.create_dataset(    name        = str('{:10.3f}'.format(t)), 
+                                                    data        = psi,
+                                                    dtype       = complex,
+                                                    compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
+                                                )
+                    
+        end_time_global = time.time()
+        print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
+        flwavepacket.close()
 
 def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
 
@@ -239,14 +262,14 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     #plt.spy(ham,precision=1e-4, markersize=2)
     #plt.show()
 
-    #BOUND.plot_mat(ham.todense())
+    #bound.plot_mat(ham.todense())
 
     # 2. Optional: add "long-range potential" 
     # Build the full potential in propagation space minus bound spac
         # consider cut-offs for the electrostatic potential 
 
     if params['molec_name'] == "chiralium": 
-        potmat, potind = BOUND.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+        potmat, potind = bound.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
 
         potind = np.asarray(potind,dtype=int)
         """ Put the indices and values back together in the Hamiltonian array"""
@@ -255,7 +278,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
             ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
 
     elif params['molec_name'] == "h": # test case of shifted hydrogen
-        potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun ) 
+        potmat, potind = bound.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun ) 
 
         potind = np.asarray(potind,dtype=int)
         """ Put the indices and values back together in the Hamiltonian array"""
@@ -266,7 +289,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     # 1. Build the full KEO in propagation space minus bound space
  
     start_time = time.time()
-    keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+    keomat = bound.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
     end_time = time.time()
     print("Time for construction of KEO matrix in full propagation space is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -313,7 +336,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
         ham_filtered        = ham_copy.copy()
 
 
-    #assert TEST_BOUNDARY_HAM(params,ham_copy,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
+    #assert TEST_boundARY_HAM(params,ham_copy,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
     
 
     return ham_filtered
@@ -329,7 +352,7 @@ def PROJECT_PSI_GLOBAL(params, maparray, psi0):
 
     return Nbas, psi
 
-def TEST_BOUNDARY_HAM(params,ham,Nbas0):
+def TEST_boundARY_HAM(params,ham,Nbas0):
     """ diagonalize hmat """
     start_time = time.time()
     enr, coeffs = call_eigensolver(ham, params)
@@ -375,7 +398,7 @@ def BUILD_HMAT0_ROT(params, grid_euler, irun):
                 end_time = time.time()
                 print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-                #BOUND.plot_mat(hmat)
+                #bound.plot_mat(hmat)
                 #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
                 #plt.show()
                 return hmat, coeffs
@@ -421,14 +444,14 @@ def BUILD_HMAT0_ROT(params, grid_euler, irun):
         if params['esp_mode'] == "exact":
             """ Use Psi4 to generate values of the ESP at quadrature grid points. 
                 Use jit for fast calculation of the matrix elements """
-            potmat, potind = BOUND.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
+            potmat, potind = bound.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
 
 
         elif params['esp_mode'] == "multipoles":
-            potmat, potind = BOUND.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+            potmat, potind = bound.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
         
         elif params['esp_mode'] == "anton":
-            potmat, potind = BOUND.BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun )
+            potmat, potind = bound.BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun )
 
         """ Put the indices and values back together in the Hamiltonian array"""
         for ielem, elem in enumerate(potmat):
@@ -438,7 +461,7 @@ def BUILD_HMAT0_ROT(params, grid_euler, irun):
 
         #print("plot of hmat")
 
-        #BOUND.plot_mat(hmat.todense())
+        #bound.plot_mat(hmat.todense())
         #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
         #plt.legend()
         #plt.show()
@@ -448,19 +471,19 @@ def BUILD_HMAT0_ROT(params, grid_euler, irun):
         start_time = time.time()
         #print(Gr.ravel())
         #exit()
-        keomat = BOUND.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+        keomat = bound.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
         end_time = time.time()
         print("New implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
         #start_time = time.time()
-        #keomat = BOUND.BUILD_KEOMAT( params, maparray, Nbas , Gr )
+        #keomat = bound.BUILD_KEOMAT( params, maparray, Nbas , Gr )
         #end_time = time.time()
         #print("Old implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
         
         hmat += keomat 
-        #BOUND.plot_mat(hmat.todense())
+        #bound.plot_mat(hmat.todense())
         #print("plot of hmat")
-        #BOUND.plot_mat(hmat)
+        #bound.plot_mat(hmat)
         #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
         #plt.legend()
         #plt.show()
@@ -543,12 +566,12 @@ def BUILD_HMAT0_ROT(params, grid_euler, irun):
 
         if params['save_enr0'] == True:
             with open(params['job_directory'] + params['file_enr0']+ "_"+str(irun), "w") as energyfile:   
-                np.savetxt( energyfile, enr * CONSTANTS.au_to_ev , fmt='%10.5f' )
+                np.savetxt( energyfile, enr * constants.au_to_ev , fmt='%10.5f' )
     
 
         """ Plot initial orbitals """
         if params['plot_ini_orb'] == True:
-            PLOTS.plot_initial_orbitals(params,maparray,coeffs)
+            plots.plot_initial_orbitals(params,maparray,coeffs)
 
 
         return ham_filtered, coeffs
@@ -557,7 +580,7 @@ def call_eigensolver(A,params):
     if params['ARPACK_enr_guess'] == None:
         print("No eigenvalue guess defined")
     else:
-        params['ARPACK_enr_guess'] /= CONSTANTS.au_to_ev
+        params['ARPACK_enr_guess'] /= constants.au_to_ev
 
 
     if params['ARPACK_which'] == 'LA':
@@ -701,8 +724,8 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #Generate global diplistt
     start_time = time.time()
     """ Note: we always (for R/L CPL) produce diplist for sigma = +1 and generate elements with sigma = -1 with the hermitian conjugate"""
-    diplist = MAPPING.GEN_DIPLIST_opt1(maparray, Nbas, params['bound_lmax'], params['map_type'] ) # new, non-vectorized O(n) implementation
-    #diplist = MAPPING.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma ) #old O(n**2) implementation
+    diplist = mapping.GEN_DIPLIST_opt1(maparray, Nbas, params['bound_lmax'], params['map_type'] ) # new, non-vectorized O(n) implementation
+    #diplist = mapping.GEN_DIPLIST( maparray, Nbas, params['map_type'], sigma ) #old O(n**2) implementation
     diplist = np.asarray(diplist,dtype=int)
     end_time = time.time()
     print("Time for the construction of diplist: " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -959,17 +982,17 @@ if __name__ == "__main__":
 
     #Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
     #      Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
-    params['maparray0'], params['Nbas0'] = MAPPING.GENMAP_FEMLIST(  params['FEMLIST_BOUND'],
+    params['maparray0'], params['Nbas0'] = mapping.GENMAP_FEMLIST(  params['FEMLIST_bound'],
                                                                     params['bound_lmax'],
                                                                     params['map_type'],
                                                                     params['job_directory'] )
 
-    params['maparray'], params['Nbas']  = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
+    params['maparray'], params['Nbas']  = mapping.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
                                                                     params['bound_lmax'],
                                                                     params['map_type'],
                                                                     params['job_directory'] )
 
-    params['maparray0_chi'], params['Nbas0_chi'] = MAPPING.GENMAP_FEMLIST(  params['FEMLIST_BOUND'],  
+    params['maparray0_chi'], params['Nbas0_chi'] = mapping.GENMAP_FEMLIST(  params['FEMLIST_bound'],  
                                                                             0,
                                                                             params['map_type'], 
                                                                             params['job_directory'] )
@@ -978,12 +1001,12 @@ if __name__ == "__main__":
     save_map(params['maparray0_chi'], params['job_directory'] + 'map_bound_chi.dat')    
     save_map(params['maparray'], params['job_directory'] + 'map_global.dat')
 
-    params['Gr0'], params['Nr0']        = GRID.r_grid(      params['bound_nlobs'], 
+    params['Gr0'], params['Nr0']        = grid.r_grid(      params['bound_nlobs'], 
                                                             params['bound_nbins'] , 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
 
-    params['Gr'], params['Nr']          = GRID.r_grid(      params['bound_nlobs'], 
+    params['Gr'], params['Nr']          = grid.r_grid(      params['bound_nlobs'], 
                                                             params['prop_nbins'] , 
                                                             params['bound_binw'],  
                                                             params['bound_rshift'] )
