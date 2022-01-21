@@ -12,7 +12,10 @@ Propagation of the wavepacket (:code:`FIELD`)
 
 	pecd.FIELD.Field
 
-.. autoclass::
+
+.. autoclass:: pecd.FIELD.Field
+
+    .. automethod:: gen_field
 
 
 
