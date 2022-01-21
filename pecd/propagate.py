@@ -119,6 +119,7 @@ class Propagator():
 
 
     def gen_timegrid(self):
+
         tgrid = np.linspace(    self.params['t0'] * time_to_au, 
                                 self.params['tmax'] * time_to_au, 
                                 int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
@@ -170,34 +171,11 @@ class Propagator():
         print("Generating electric fields...")
         print("\n")
 
-        Elfield = field.Field(params)
+        Elfield = field.Field(self.params)
         Fvec    = Elfield.gen_field(tgrid) 
         
         if params['plot_elfield'] == True:
             plots.plot_elfield(Fvec,tgrid,time_to_au)
-
-
-
-        print(" Initialize the interaction matrix ")
-
-
-        start_time = time.time()
-        intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
-        end_time = time.time()
-        print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
-
-        intmat_hc = intmat.copy()
-        intmat_hc = intmat_hc.transpose() #d_ll'mm',mu=-1
-
-        #determine sigma
-        if helicity == "R" or helicity =="L":
-            sigma = 2
-        elif helicity == "0":
-            sigma = 1
-            intmat /= 2.0
-        else:
-            ValueError("incorrect helicity")
-
 
 
         Fvec = np.asarray(Fvec,dtype=complex)
@@ -208,24 +186,19 @@ class Propagator():
         for itime, t in enumerate(tgrid): 
 
             start_time = time.time()
+
             if itime%10 == 0:
                 print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
             else:
                 print("t = " + str( "%10.1f"%(t/time_to_au)) + " as")
         
-        
-            #dip =   np.tensordot( Fvec[itime], intmat0, axes=([0],[2]) ) 
-            #dip =   Elfield.gen_field(t)[0] * intmat0[:,:,0]  + Elfield.gen_field(t)[2] * intmat0[:,:,2]
+            # building the electric dipole interaction matrix
             dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc #+ Fvec[itime,0] * intmat
-            #dip = intmat + intmat_hc
-            #plt.spy(Fvec[itime,0] * intmat , markersize=5, color='b')
-            #plt.spy(Fvec[itime,2] * intmat_hc, markersize=5, color='r')
-            #plt.show()
-            
-            #print(Fvec[itime][1]* intmat0[1])
+           
             #dip = sparse.csr_matrix(dip)
             #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
             #exit()
+            
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
             psi = expm_multiply( -1.0j * ( ham_init + dip  ) * dt, psi ) 
 
@@ -233,28 +206,34 @@ class Propagator():
             #wavepacket[itime,:] = psi_out
             #psi                 = wavepacket[itime,:]
 
-            end_time = time.time()
-            print("time =  " + str("%10.3f"%(end_time-start_time)) + "s")
 
             if itime%wfn_saverate == 0:
-                if params['wavepacket_format'] == "dat":
-                    flwavepacket.write( '{:10.3f}'.format(t) + 
-                                        " ".join('{:15.5e}'.format(psi[i].real) + 
-                                        '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +
-                                        '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
-                                        "\n")
 
-                elif params['wavepacket_format'] == "h5":
+                if self.params['wavepacket_format'] == "dat":
+                    
+                    fl_wavepacket.write(    '{:10.3f}'.format(t) + 
+                                            " ".join('{:15.5e}'.format(psi[i].real) + 
+                                            '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +
+                                            '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
+                                            "\n")
 
-                    flwavepacket.create_dataset(    name        = str('{:10.3f}'.format(t)), 
+                elif self.params['wavepacket_format'] == "h5":
+
+                    fl_wavepacket.create_dataset(   name        = str('{:10.3f}'.format(t)), 
                                                     data        = psi,
                                                     dtype       = complex,
                                                     compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
                                                 )
-                    
+            
+            end_time = time.time()
+            print("time per timestep =  " + str("%10.3f"%(end_time-start_time)) + "s")
+    
+        
         end_time_global = time.time()
         print("The time for the wavefunction propagation is: " + str("%10.3f"%(end_time_global-start_time_global)) + "s")
-        flwavepacket.close()
+        fl_wavepacket.close()
+
+
 
 def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
 
@@ -697,6 +676,8 @@ def read_ham_init_rot(params,irun):
 
 def calc_intmat(maparray,rgrid,Nbas, helicity):  
 
+    start_time = time.time()
+
     #field: (E_-1, E_0, E_1) in spherical tensor form
     """calculate the <Y_l1m1(theta,phi)| d(theta,phi) | Y_l2m2(theta,phi)> integral """
     #Adopted convention used in Artemyev et al., J. Chem. Phys. 142, 244105 (2015).
@@ -812,6 +793,24 @@ def calc_intmat(maparray,rgrid,Nbas, helicity):
     #print("Is the interaction matrix symmetric? " + str(check_symmetric(intmat)))
     """
     #see derivation for the "-" sign in front of intmat
+
+
+    intmat_hc = intmat.copy()
+    intmat_hc = intmat_hc.transpose() #d_ll'mm',mu=-1
+
+    #determine sigma
+    if helicity == "R" or helicity =="L":
+        sigma = 2
+    elif helicity == "0":
+        sigma = 1
+        intmat /= 2.0
+    else:
+        ValueError("incorrect helicity")
+    
+    end_time = time.time()
+    print("time for calculation of dipole interaction matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
+
+
     return (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat #1,intmat2,intmat3
 
 
@@ -1024,6 +1023,15 @@ if __name__ == "__main__":
 
     """ Read grid of Euler angles"""
     grid_euler, N_Euler, N_per_batch  = read_euler_grid(params['N_batches'])
+
+
+
+    print("\n")
+    print("Building the interaction matrix...")
+    print("\n")
+
+    intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
+
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
