@@ -8,12 +8,29 @@ import numpy as np
 
 import itertools
 
-from numba import jit, prange
-jitcache = False
+#from numba import jit, prange
+#jitcache = False
 
 
 class Map():
+    """Map class keeps methods for generating and manipulating index mapping for the wavefunction and matrices.
 
+    Note:
+        The characteristics of the photo-electron propagation using the FEM-DVR method suggests
+        that a DVR-type mapping is suitable and natural.
+
+    Attributes:
+        femlist (list): keeps sizes of radial bins and the number of points/functions in each bin.
+                        Format: [ [nbins,nlobs,Rbin], ... ].
+
+        map_type (str): type of mapping function ('DVR' or 'SPECT')
+
+        job_dir (str): path to current working directory
+
+    Parameters:
+        lmax (int): maximum value of the l quantum number
+
+    """
     def __init__(self, femlist, map_type, job_dir, lmax = 0):
 
         self.femlist    = femlist
@@ -29,7 +46,7 @@ class Map():
         fl.close()
 
 
-    def GENMAP_FEMLIST(self):
+    def genmap_femlist(self):
         #generate mapping for general FEMLIST
         if self.map_type == 'DVR':
             maparray, Nbas = self.MAP_DVR_FEMLIST_NAT()
@@ -344,7 +361,7 @@ class Map():
 class GridEuler():
 
     def __init__(self,N_euler,N_batches,grid_type):
-        
+
         self.N_euler    = N_euler
         self.N_batches  = N_batches
         self.grid_type  = grid_type
