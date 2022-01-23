@@ -27,13 +27,11 @@ import h5py
 
 import unittest 
 
-#import mapping
-#import grid
-#import bound
-#import constants
-#import field
-#import plots
-
+import wavefunction
+import hamiltonian
+import field
+import plots
+import constants
 
 import time
 import os
@@ -146,7 +144,7 @@ class Propagator():
 
     def gen_timegrid(self,ijifds):
 
-        """ fd
+        """ 
         Calculates equidistant time-grid for the wavefunction proapgation.
         Start and end points are included in the grid. 
 
@@ -181,9 +179,6 @@ class Propagator():
         
         """
 
-        global time_to_au
-        global wfn_saverate        
-
         self.calc_mat_density(ham_init)
         self.spy_mat(ham_init)
         self.plot_mat(ham_init)
@@ -211,15 +206,12 @@ class Propagator():
         print("Generating electric fields...")
         print("\n")
 
-        Elfield = field.Field(self.params)
-        Fvec    = Elfield.gen_field(tgrid) 
+        FieldObj = field.Field(self.params)
+        Fvec    = FieldObj.gen_field(tgrid) 
         
         if params['plot_elfield'] == True:
-            plots.plot_elfield(Fvec,tgrid,time_to_au)
+            plots.plot_elfield(Fvec,tgrid,self.time_to_au)
 
-
-        Fvec = np.asarray(Fvec,dtype=complex)
-        Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
 
 
         start_time_global = time.time()
@@ -228,9 +220,9 @@ class Propagator():
             start_time = time.time()
 
             if itime%10 == 0:
-                print("t = " + str( "%10.1f"%(t/time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
+                print("t = " + str( "%10.1f"%(t/self.time_to_au)) + " as" + " normalization: " + str(np.sqrt( np.sum( np.conj(psi) * psi )) ) ) 
             else:
-                print("t = " + str( "%10.1f"%(t/time_to_au)) + " as")
+                print("t = " + str( "%10.1f"%(t/self.time_to_au)) + " as")
         
             # building the electric dipole interaction matrix
             dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc #+ Fvec[itime,0] * intmat
@@ -980,25 +972,6 @@ def gen_3j_dip(lmax,mode):
     return tjmat
 
 
-def read_euler_grid(Nbatches):   
-    with open( "grid_euler.dat" , 'r') as eulerfile:   
-        grid_euler = np.loadtxt(eulerfile)
-
-    grid_euler = grid_euler.reshape(-1,3)     
-
-    N_Euler = grid_euler.shape[0]
-
-    N_per_batch = int(N_Euler/Nbatches)
-
-    return grid_euler, N_Euler, N_per_batch
-
-def save_map(map,file):
-    fl = open(file,'w')
-    for elem in map:   
-        fl.write(" ".join('{:5d}'.format(elem[i]) for i in range(0,6)) + "\n")
-    fl.close()
-
-
 if __name__ == "__main__":   
 
 
@@ -1031,56 +1004,89 @@ if __name__ == "__main__":
     for key, value in params.items():
         print(key, ":", value)
 
-
-
-    PropObj = Propagator(params,0)
-    tgrid,dt = PropObj.gen_timegrid()
+    #PropObj = Propagator(params,0)
+    #tgrid,dt = PropObj.gen_timegrid()
     
-    print(len(tgrid))
-    print(tgrid/constants.time_to_au[ params['time_units'] ])
-    print(tgrid[1]-tgrid[0])
-    exit()
+    #print(len(tgrid))
+    #print(tgrid/constants.time_to_au[ params['time_units'] ])
+    #print(tgrid[1]-tgrid[0])
+    #exit()
 
-    #Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
-    #      Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
-    params['maparray0'], params['Nbas0'] = mapping.GENMAP_FEMLIST(  params['FEMLIST_bound'],
-                                                                    params['bound_lmax'],
-                                                                    params['map_type'],
-                                                                    params['job_directory'] )
+    print("\n")
+    print("Generating index maps...")
+    print("\n")
 
-    params['maparray'], params['Nbas']  = mapping.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
-                                                                    params['bound_lmax'],
-                                                                    params['map_type'],
-                                                                    params['job_directory'] )
+    MapObjBound = wavefunction.Map( params['FEMLIST_bound'],
+                                    params['bound_lmax'],
+                                    params['map_type'],
+                                    params['job_directory'])
 
-    params['maparray0_chi'], params['Nbas0_chi'] = mapping.GENMAP_FEMLIST(  params['FEMLIST_bound'],  
-                                                                            0,
-                                                                            params['map_type'], 
-                                                                            params['job_directory'] )
+    MapObjBoundRad = wavefunction.Map(  params['FEMLIST_bound'],
+                                        0,
+                                        params['map_type'],
+                                        params['job_directory'])
+
+    MapObjProp = wavefunction.Map(  params['FEMLIST_PROP'],
+                                    params['bound_lmax'],
+                                    params['map_type'],
+                                    params['job_directory'] )
+
+    # Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
+    #       Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
+    params['maparray0'], params['Nbas0'] = MapObjBound.GENMAP_FEMLIST()
+
+    params['maparray'], params['Nbas']  = MapObjProp.GENMAP_FEMLIST()
+
+    params['maparray0_rad'], params['Nbas0_rad'] = MapObjBoundRad.GENMAP_FEMLIST()
                                     
-    save_map(params['maparray0'], params['job_directory'] + 'map_bound.dat')
-    save_map(params['maparray0_chi'], params['job_directory'] + 'map_bound_chi.dat')    
-    save_map(params['maparray'], params['job_directory'] + 'map_global.dat')
-
-    params['Gr0'], params['Nr0']        = grid.r_grid(      params['bound_nlobs'], 
-                                                            params['bound_nbins'] , 
-                                                            params['bound_binw'],  
-                                                            params['bound_rshift'] )
-
-    params['Gr'], params['Nr']          = grid.r_grid(      params['bound_nlobs'], 
-                                                            params['prop_nbins'] , 
-                                                            params['bound_binw'],  
-                                                            params['bound_rshift'] )
+    MapObjBound.save_map(params['maparray0'], 'map_bound.dat')
+    MapObjBoundRad.save_map(params['maparray0_rad'],  'map_bound_rad.dat')    
+    MapObjProp.save_map(params['maparray'], 'map_prop.dat')
 
 
-    """ Read grid of Euler angles"""
-    grid_euler, N_Euler, N_per_batch  = read_euler_grid(params['N_batches'])
+    print("\n")
+    print("Generating grids...")
+    print("\n")
 
+    GridObjBound = wavefunction.Grid(   params['bound_nlobs'], 
+                                        params['bound_nbins'] , 
+                                        params['bound_binw'],  
+                                        params['bound_rshift']) 
+
+    GridObjProp = wavefunction.Grid(    params['bound_nlobs'], 
+                                        params['prop_nbins'] , 
+                                        params['bound_binw'],  
+                                        params['bound_rshift'])
+
+    params['Gr0'], params['Nr0']        = GridObjBound.gen_grid()
+    params['Gr'], params['Nr']          = GridObjProp.gen_grid()
+
+
+    print("\n")
+    print("Reading grid of molecular orientations (Euler angles)...")
+    print("\n")
+
+    GridObjEuler = wavefunction.GridEuler(  params['N_euler'],
+                                            params['N_batches'],
+                                            params['orient_grid_type'])
+    
+    grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
+
+
+
+
+    print("\n")
+    print("Setting up Hamiltonians...")
+    print("\n")
+
+    HamObjBound = hamiltonian.Ha
 
 
     print("\n")
     print("Building the interaction matrix...")
     print("\n")
+
+
 
     intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
 

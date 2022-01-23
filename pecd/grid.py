@@ -135,65 +135,6 @@ def gauss_lobatto(n, n_digits):
     return xi, w
     
 
-def r_grid(nlobatto,nbins,binwidth,rshift):
-    """radial grid of Gauss-Lobatto quadrature points"""        
-    #return radial coordinate r_in for given i and n, natural order
-
-    """Note: this function must be generalized to account for FEMLIST
-    Only constant bin size is possible at the moment"""
-
-    x       = np.zeros(nlobatto)
-    w       = np.zeros(nlobatto)
-    x, w    = gauss_lobatto(nlobatto,14)
-    w       = np.array(w)
-    x       = np.array(x) # convert back to np arrays
-    xgrid   = np.zeros( (nbins, nlobatto-1), dtype=float) 
-    
-    bingrid     = np.zeros(nbins)
-    bingrid     = x[1:] * 0.5 * binwidth + 0.5 * binwidth
-    xgrid[:,]   = bingrid
-    Translvec   = np.zeros(nbins)
-
-    for i in range(len(Translvec)):
-        Translvec[i] = float(i) * binwidth + rshift
-
-    for ibin in range(nbins):    
-        xgrid[ibin,:] += Translvec[ibin]
-
-    #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
-
-    return xgrid, (nlobatto-1) * nbins
-
-def r_grid_prim(nlobatto,nbins,binwidth,rshift):
-    """radial grid of Gauss-Lobatto quadrature points"""        
-    #return radial coordinate r_in for given i and n
-    #we double count joining points. It means we work in primitive basis/grid
-
-    """Note: this function must be generalized to account for FEMLIST"""
-
-    x = np.zeros(nlobatto)
-    w = np.zeros(nlobatto)
-    x, w = gauss_lobatto(nlobatto,14)
-    w = np.array(w)
-    x = np.array(x) # convert back to np arrays
-    xgrid = np.zeros( (nbins,nlobatto), dtype=float) 
-    
-    bingrid = np.zeros(nbins)
-    bingrid = x * 0.5 * binwidth + 0.5 * binwidth
-    xgrid[:,] = bingrid
-
-    Translvec = np.zeros(nbins)
-
-    for i in range(len(Translvec)):
-        Translvec[i] = float(i) * binwidth + rshift
-
-    for ibin in range(nbins):    
-        xgrid[ibin,:] += Translvec[ibin]
-
-    #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
-
-    return xgrid, nlobatto * nbins
-
 def sph2cart(r,theta,phi):
     x = r * np.sin(theta) * np.cos(phi)
     y = r * np.sin(theta) * np.sin(phi)

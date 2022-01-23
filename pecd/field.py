@@ -82,7 +82,7 @@ class Field():
 
         Returns:
             vecs : numpy.ndarray
-                Initial state vectors (each row represents an initial state)
+                Initial state vectors (each row represents an initial state). we return spherical tensor components -1, 0, 1
         """
 
         
@@ -110,5 +110,15 @@ class Field():
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
 
-        return field_m1 * fieldenv , field_0 * fieldenv, field_p1 * fieldenv #note that we return spherical tensor components -1, 0, 1
+        Fvec = np.zeros(t.shape[0],dtype=complex)
+        Fvec[0], Fvec[1], Fvec[2] = field_m1 * fieldenv , field_0 * fieldenv, field_p1 * fieldenv
+
+        print(Fvec.shape)
+
+        Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
+
+
+        print(Fvec.shape)
+        exit()
+        return Fvec 
 

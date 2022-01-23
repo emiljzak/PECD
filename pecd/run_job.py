@@ -3,45 +3,15 @@ import os
 import subprocess
 
 import constants
+import wavefunction
 
 import json
-import itertools
 import importlib
 import time
 
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
     raise TypeError
-
-
-
-def gen_euler_grid_2D(n_euler):
-    """ Cartesian product of 1D grids of Euler angles"""
-    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=False))
-    beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
-    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
-    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
-
-    n_euler_3d      = euler_grid_3d.shape[0]
-    print("\nTotal number of 2D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
-    #print(euler_grid_3d)
-    return euler_grid_3d, n_euler_3d
-
-def gen_euler_grid(n_euler):
-    """ Cartesian product of 1D grids of Euler angles"""
-    alpha_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
-    beta_1d         = list(np.linspace(0, np.pi,    num=n_euler, endpoint=True))
-    gamma_1d        = list(np.linspace(0, 2*np.pi,  num=n_euler, endpoint=False))
-    euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
-
-    n_euler_3d      = euler_grid_3d.shape[0]
-    print("\nTotal number of 3D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
-    #print(euler_grid_3d)
-    return euler_grid_3d, n_euler_3d
-
-def save_euler_grid(grid_euler, path):   
-    with open( path + "grid_euler.dat" , 'w') as eulerfile:   
-        np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
 def save_input_file(params,filename):
     with open(params['job_directory']+ "input_"+filename, 'w') as input_file: 
@@ -78,15 +48,6 @@ def gen_inputs_list(params_input):
 
     params_list = []
 
-    """ Generate a grid of molecular orientations parametrized with the Euler angles"""
-    if params_input['orient_grid_type'] == "3D":
-        grid_euler, params_input['n_grid_euler_3d'] = gen_euler_grid(params_input['N_euler'])            
-    elif params_input['orient_grid_type'] == "2D":
-        grid_euler, params_input['n_grid_euler_2d'] = gen_euler_grid_2D(params_input['N_euler'])            
-    else:
-        raise ValueError("incorrect euler grid typ")
-
-
 
     lmin        = params_input['bound_lmax_arr'][0]
     lmax        = params_input['bound_lmax_arr'][1]
@@ -118,7 +79,7 @@ def gen_inputs_list(params_input):
 
                 params_list.append(setup_input(params_input))
                
-    return params_list, grid_euler
+    return params_list
 
 def field_params(params):
     """ Define field parameters"""
@@ -304,7 +265,7 @@ def setup_input(params_input):
 
     return params
 
-def run_array_job(params_list,grid_euler):
+def run_array_job(params_list):
 
     for iparams in params_list:
 
@@ -315,7 +276,21 @@ def run_array_job(params_list,grid_euler):
             """ Save input file and euler angles grid """
             print("mode = propagate")
             save_input_file(iparams,"prop")
-            save_euler_grid(grid_euler, path)
+
+
+            GridObjEuler = wavefunction.GridEuler(  iparams['N_euler'],
+                                                    iparams['N_batches'],
+                                                    iparams['orient_grid_type'])
+
+            """ Generate a grid of molecular orientations parametrized by the Euler angles"""
+            if iparams['orient_grid_type'] == "3D":
+                grid_euler, iparams['n_grid_euler_3d'] = GridObjEuler.gen_euler_grid()            
+            elif iparams['orient_grid_type'] == "2D":
+                grid_euler, iparams['n_grid_euler_2d'] = GridObjEuler.gen_euler_grid_2D()            
+            else:
+                raise ValueError("incorrect euler grid typ")
+
+            GridObjEuler.save_euler_grid(grid_euler, path)
 
         elif iparams['mode'] == 'analyze':
             print("mode = analyze")
@@ -392,6 +367,7 @@ if __name__ == "__main__":
     params_input = input_module.read_input()
     print("jobtype: " + str(params_input['jobtype']))
 
-    params_list, grid_euler = gen_inputs_list(params_input)
+    params_list = gen_inputs_list(params_input)
 
-    run_array_job(params_list,grid_euler)
+
+    run_array_job(params_list)

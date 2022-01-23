@@ -8,10 +8,9 @@ import os
 
 import json
 
-import input
-import GRID
-import MAPPING
-import CONSTANTS
+import grid
+#import mapping
+import constants
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
