@@ -176,6 +176,16 @@ def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
 """ end of @jit section """
 
 
+
+
+
+class Hamiltonian():
+
+    def __init__(self,params):
+        self.params = params
+
+
+        """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
 def BUILD_HMAT0(params):
 
     maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \

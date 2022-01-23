@@ -359,6 +359,12 @@ def run_array_job(params_list):
 if __name__ == "__main__":    
 
 
+    print("\n")
+    print("***********************************************************")
+    print("------------------------- CHIRALEX ------------------------")
+    print("***********************************************************")
+    print("\n")
+
     inputfile 	= "input_chiralium" #input file name
     input_module = importlib.import_module(inputfile)
 

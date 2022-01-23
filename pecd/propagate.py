@@ -1073,37 +1073,44 @@ if __name__ == "__main__":
     grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
 
 
-
-
     print("\n")
     print("Setting up Hamiltonians...")
     print("\n")
 
-    HamObjBound = hamiltonian.Ha
+    HamObj = hamiltonian.Hamiltonian(params)
 
+    print("\n")
+    print("Building the kinetic energy operator matrix for the bound Hamiltonian...")
+    print("\n")
+
+    KEO_bound = HamObj.build_keo_bound()
+
+
+    print("\n")
+    print("Building the kinetic energy operator matrix for the propagation Hamiltonian...")
+    print("\n")
+
+    KEO_prop = HamObj.build_keo_prop()
 
     print("\n")
     print("Building the interaction matrix...")
     print("\n")
 
-
-
-    intmat =  calc_intmat( maparray, Gr, Nbas, helicity) 
+    intmat =  HamObj.build_intmat() 
 
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
-
-        # Project the bound Hamiltonian onto the propagation Hamiltonian
-        Nbas, psi_init  = PROJECT_PSI_GLOBAL(params,maparray,psi0) 
-        ham_init        = PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0 ,grid_euler, ieuler)
-
-
         #print(grid_euler[irun])
-        """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
-        ham0, psi0 = BUILD_HMAT0_ROT(params, grid_euler, irun)
 
-        prop_wf(params, ham0, psi0, grid_euler, irun)
+        ham0, psi0 = HamObj.BUILD_HMAT0_ROT(params, grid_euler, irun)
+
+        Nbas, psi_init  = PsiObj.PROJECT_PSI_GLOBAL(params,psi0) 
+        ham_init        = HamObjPROJECT_HAM_GLOBAL(params, ham0 ,grid_euler, irun)
+
+        PropObj = Propagator(params,irun)
+
+        PropObj.prop_wf(params, ham_init, psi_init, irun)
 
 
     end_time_total = time.time()
