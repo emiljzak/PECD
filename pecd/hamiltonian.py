@@ -198,6 +198,25 @@ class Hamiltonian():
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
 
+    @staticmethod
+    @jit(nopython=True)   
+    def gen_klist_jit(Nbas,maparray):
+
+        klist = []
+
+        for p1 in range(Nbas):
+            for p2 in range(p1, Nbas):
+                if maparray[p1,3] == maparray[p2,3] and maparray[p1,4] == maparray[p2,4]:
+                    if maparray[p1,0] == maparray[p2,0] or maparray[p1,0] == maparray[p2,0] - 1 or maparray[p1,0] == maparray[p2,0] + 1: 
+                        klist.append([ maparray[p1,0], maparray[p1,1], maparray[p2,0], \
+                        maparray[p2,1], maparray[p2,3], p1, p2 ])
+
+        return klist
+
+
+    def call_gen_klist_jit(self,Nbas):
+        maparray = np.asarray(self.maparray, dtype = int)
+        self.gen_klist_jit(Nbas,maparray)
 
 
     def gen_klist(self):
@@ -209,8 +228,11 @@ class Hamiltonian():
                     list [i1,n1,i2,n2,l2,p1,p2]
         """
 
-        klist = []
 
+        
+        klist = []
+        print(self.Nbas)
+        exit()
         for p1 in range(self.Nbas):
             for p2 in range(p1, self.Nbas):
                 if self.maparray[p1][3] == self.maparray[p2][3] and self.maparray[p1][4] == self.maparray[p2][4]:
@@ -237,7 +259,15 @@ class Hamiltonian():
 
 
         start_time = time.time()
-        klist = self.gen_klist()
+        klist = self.call_gen_klist_jit(2)
+
+        #klist = self.gen_klist()
+        end_time = time.time()
+        print("Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        start_time = time.time()
+        klist = self.call_gen_klist_jit(self.Nbas)
         end_time = time.time()
         print("Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
