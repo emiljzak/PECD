@@ -49,29 +49,6 @@ import matplotlib.ticker as ticker
 #from pycallgraph import PyCallGraph
 #from pycallgraph.output import GraphvizOutput
 #from pycallgraph import Config
-"""Molecular frame embedding
-
-Args:
-    arg
-        String defining molecular frame
-
-        .. code-block:: python
-
-            water.frame = "diag(inertia)" # rotates to a frame where the inertia tensor
-                                            # becomes diagonal
-            water.frame = "zxy" # permutes the x, y, and z axes
-            water.pol = [[9.1369, 0, 0], [0, 9.8701, 0], [0, 0, 9.4486]]
-            water.frame = "pol" # rotates frame with water.pol matrix
-            water.frame = "diag(pol)" # rotates to a frame where water.pol tensor
-                                        # becomes diagonal
-            water.frame = "None" # or None, resets frame to the one defined
-                                    # by the input  molecular geometry
-
-Returns:
-    array (3,3)
-        Frame rotation matrix
-"""
-
 
 class Propagator():
     """Class contains methods related to the time-propagation of the wavefunction.
@@ -1049,18 +1026,21 @@ if __name__ == "__main__":
     print("Generating grids...")
     print("\n")
 
-    GridObjBound = wavefunction.Grid(   params['bound_nlobs'], 
+    GridObjBound = wavefunction.GridRad(   params['bound_nlobs'], 
                                         params['bound_nbins'] , 
                                         params['bound_binw'],  
                                         params['bound_rshift']) 
 
-    GridObjProp = wavefunction.Grid(    params['bound_nlobs'], 
+    GridObjProp = wavefunction.GridRad(    params['bound_nlobs'], 
                                         params['prop_nbins'] , 
                                         params['bound_binw'],  
                                         params['bound_rshift'])
 
     params['Gr0'], params['Nr0']        = GridObjBound.gen_grid()
     params['Gr'], params['Nr']          = GridObjProp.gen_grid()
+
+
+    exit()
 
 
     print("\n")

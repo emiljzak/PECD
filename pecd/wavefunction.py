@@ -47,11 +47,20 @@ class Map():
 
 
     def genmap_femlist(self):
+        """ 
+        Driver routine to call map generators
+
+        Returns: tuple
+            maparray: list
+                [[ibin,n,ipoint,l,m,id],...]
+            Nbas: int
+                Number of basis functions
+        """
         #generate mapping for general FEMLIST
         if self.map_type == 'DVR':
-            maparray, Nbas = self.MAP_DVR_FEMLIST_NAT()
+            maparray, Nbas = self.map_dvr_femlist_nat()
         elif self.map_type == 'SPECT':
-            maparray, Nbas = self.MAP_SPECT_FEMLIST()
+            maparray, Nbas = self.map_spect_femlist()
 
         #fl = open(working_dir + 'map.dat','w')
         #for elem in maparray:   
@@ -62,13 +71,23 @@ class Map():
 
 
 
-    def MAP_DVR_FEMLIST(self):
-        imap = 0
-        xi = 0
-        maparray = []
-        ibincount = -1
+    def map_dvr_femlist(self):
+        """ 
+        Generates an index map with grid points as major dimension and bridge points/functions placed as first in the bin.
 
+        Returns: tuple
+            maparray: list
+                [[ibin,n,ipoint,l,m,id],...]
+            Nbas: int
+                Number of basis functions
+        """
+
+        imap        = 0
+        xi          = 0
+        maparray    = []
+        ibincount   = -1
         nbins = 0
+
         for elem in self.femlist:
             nbins += elem[0]
         print("total number of bins = " + str(nbins))
@@ -91,10 +110,30 @@ class Map():
                                 maparray.append([ibincount,n,xi,l,m,imap])
 
 
-        return maparray, imap
+        Nbas = imap
+        return maparray, Nbas
 
 
-    def MAP_DVR_FEMLIST_NAT(self):
+    def map_dvr_femlist_nat(self):
+        """ 
+        Generates an index map with grid points as major dimension and bridge points/functions placed as last in the bin.
+
+        Returns: tuple
+            maparray: list
+                [[ibin,n,ipoint,l,m,id],...]
+            Nbas: int
+                Number of basis functions
+
+        Note: the convention adopted to generate the index map assumes that all radial indices start with 0.
+                This python-compatible convention helps to clear out any confusions.
+                The resulting matrix structure is close to block-diagonal, with single-point sized bridges between bins, as shown in the image below:
+        .. image:: /_images/ham_nat.png
+            :width: 500
+        Examples:
+                ibin  n     ipoint l    m   id
+
+        """
+
         #natural order of grid points and basis functions, including bridges
         imap = 0
         xi = 0
@@ -121,12 +160,11 @@ class Map():
                                 #print(ibincount,n,xi,l,m,imap)
                                 maparray.append([ibincount,n,xi,l,m,imap])
 
+        Nbas = imap
+        return maparray, Nbas
 
-        return maparray, imap
 
-
-
-    def MAP_SPECT_FEMLIST(self,femlist,lmax):
+    def map_spect_femlist(self,femlist,lmax):
         ##### NEEDS VERIFICATION #########
         imap = 0
         xi = 0
@@ -159,71 +197,6 @@ class Map():
         return maparray, imap
 
 
-
-
-    def GENMAP(self,nlobs,nbins,lmax,maptype,working_dir):
-        #only for uniform FEMLIST of bins
-        if maptype == 'DVR':
-            maparray, Nbas = self.MAP_DVR(nlobs,nbins,lmax)
-        elif maptype == 'SPECT':
-            maparray, Nbas = self.MAP_SPECT(nlobs,nbins,lmax)
-
-        fl = open(working_dir + 'map.dat','w')
-        for elem in maparray:   
-            fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+ "  %5d"%elem[3]+  " %5d"%elem[4]+" %5d"%elem[5]+"\n")
-        fl.close()
-
-
-        return maparray, Nbas
-
-
-    def MAP_DVR(self,nlobs,nbins,lmax):
-
-        imap = 0
-        xi = 0
-        maparray = []
-
-        for i in range(0,nbins):
-            for n in range (0,nlobs):
-                if n == nlobs-1:
-                    continue        
-                elif n == 0 and i == nbins-1:
-                    continue
-                else:
-                    xi += 1
-                    for l in range(0,lmax+1):
-                        for m in range(-l,l+1):
-
-                            imap += 1
-                            #print(i,n,xi,l,m,imap)
-                            maparray.append([i,n,xi,l,m,imap])
-                
-
-        return maparray, imap
-
-
-    def MAP_SPECT(self,nlobs,nbins,lmax):
-
-        imap = 0
-        maparray = []
-
-        for l in range(0,lmax+1):
-            for m in range(-l,l+1):
-                xi = 0
-                for i in range(0,nbins):
-                    for n in range (0,nlobs):
-                        if n == nlobs-1:
-                            continue        
-                        elif n == 0 and i == nbins-1:
-                            continue
-                        else:
-                            xi += 1
-                            imap += 1
-                            #print(l,m,i,n,xi,imap)
-                            maparray.append([l,m,i,n,xi,imap])
-                
-
-        return maparray, imap
 
 
     def GEN_SPHLIST(self,lmax):
@@ -411,42 +384,70 @@ class GridEuler():
 
 
 class GridRad():
-    
-    def __init__(self,params):
-        self.params = params
+    """Class contains methods related to the radial grid.
+
+    Attrs:
+        nlobs : int
+            number of Gauss-Lobatto functions per bin
+        nbins : int
+            number of bins
+        binwidth : float
+            width (a.u.) of the bin
+        rshift : float
+            shift of the grid (a.u.)
+    """
+
+    def __init__(self,nlobs,nbins,binwidth,rshift):
+        self.nlobs = nlobs
+        self.nbins = nbins
+        self.binwidth = binwidth
+        self.rshift = rshift
 
 
+    def gen_grid(self):
+        """ Generates radial grid based on Gauss-Lobatto quadrature points
+            Three grids are returned: quadrature grid, primitive grid, coupled grid used in final calculation.
 
+        Returns: tuple
+        x: numpy 1D array (float)
+            Gauss-lobatto quadrature grid
 
-    
-    def r_grid(self,nlobatto,nbins,binwidth,rshift):
-        """radial grid of Gauss-Lobatto quadrature points"""        
-        #return radial coordinate r_in for given i and n, natural order
-
-        """Note: this function must be generalized to account for FEMLIST
-        Only constant bin size is possible at the moment"""
-
-        x       = np.zeros(nlobatto)
-        w       = np.zeros(nlobatto)
-        x, w    = gauss_lobatto(nlobatto,14)
-        w       = np.array(w)
-        x       = np.array(x) # convert back to np arrays
-        xgrid   = np.zeros( (nbins, nlobatto-1), dtype=float) 
+        rgrid_prim: numpy 1D array (float)
+            Primitive radial grid containing all grid points, plus point values at bin boundries are duplicated i.e. first point in the bin has equal value to last point from previous bin.
         
+        rgrid: numpy 1D array (float)
+            Coupled radial grid with boundary points excluded and no duplicate points at bin boundaries.
+
+        ToDo: this function must be generalized to account for FEMLIST. Presently only constant bin size is possible."""
+
+        nlobs = self.nlobs
+        nbins = self.nbins
+        binwidth = self.binwidth
+        rshift = self.rshift
+
+        x       = np.zeros(nlobs, dtype = float)
+        w       = np.zeros(nlobs, dtype = float)
+        x, w    = self.gauss_lobatto(nlobs,14)
+        w       = np.array(w)
+        x       = np.array(x)
+
+        rgrid   = np.zeros( (nbins, nlobs-1), dtype = float) 
+        rgrid_prim = 0
+
         bingrid     = np.zeros(nbins)
         bingrid     = x[1:] * 0.5 * binwidth + 0.5 * binwidth
-        xgrid[:,]   = bingrid
+        rgrid[:,]   = bingrid
         Translvec   = np.zeros(nbins)
 
         for i in range(len(Translvec)):
             Translvec[i] = float(i) * binwidth + rshift
 
         for ibin in range(nbins):    
-            xgrid[ibin,:] += Translvec[ibin]
+            rgrid[ibin,:] += Translvec[ibin]
 
-        #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
+        print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
 
-        return xgrid, (nlobatto-1) * nbins
+        return x, rgrid_prim, rgrid 
 
     def r_grid_prim(self,nlobatto,nbins,binwidth,rshift):
         """radial grid of Gauss-Lobatto quadrature points"""        
