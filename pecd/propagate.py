@@ -1075,7 +1075,6 @@ if __name__ == "__main__":
     print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
-
     print("\n")
     print("Building the bound Hamiltonian operator matrix...")
     print("\n")
@@ -1108,9 +1107,7 @@ if __name__ == "__main__":
 
     intmat =  HamObjProp.build_intmat() 
 
-
-
-
+    # loop over molecular orientations in the present batch
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
         start_time = time.time()
@@ -1134,9 +1131,8 @@ if __name__ == "__main__":
         psi_init = PsiObj.project_psi_global(psi0_rot)
 
         
-
         PropObj = Propagator(params,irun)
-        PropObj.prop_wf(params, ham_init, psi_init, irun)
+        PropObj.prop_wf(params, ham_init, intmat, psi_init, irun)
 
 
     end_time_total = time.time()

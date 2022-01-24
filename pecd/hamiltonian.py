@@ -185,6 +185,151 @@ class Hamiltonian():
         self.params = params
         self.hamtype = hamtype
 
+        if hamtype == "bound":
+            self.Nbas       = params['Nbas0']
+            self.maparray   = params['maparray0']  
+            self.Gr         = params['rgrid0']  
+            self.nbins      = params['bound_nbins']
+        elif hamtype == "prop":
+            self.Nbas       = params['Nbas']
+            self.maparray   = params['maparray'] 
+            self.Gr         = params['rgrid']
+            self.nbins      = params['prop_nbins']
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+
+
+
+    def gen_klist(self):
+        """
+        Generates a list of non-zero indices in the KEO matrix 
+
+        Returns: list
+                klist: 1D list
+                    list [i1,n1,i2,n2,l2,p1,p2]
+        """
+
+        klist = []
+
+        for p1 in range(self.Nbas):
+            for p2 in range(p1, self.Nbas):
+                if self.maparray[p1][3] == self.maparray[p2][3] and self.maparray[p1][4] == self.maparray[p2][4]:
+                    if self.maparray[p1][0] == self.maparray[p2][0] or self.maparray[p1][0] == self.maparray[p2][0] - 1 or self.maparray[p1][0] == self.maparray[p2][0] + 1: 
+                        klist.append([ self.maparray[p1][0], self.maparray[p1][1], self.maparray[p2][0], \
+                        self.maparray[p2][1], self.maparray[p2][3], p1, p2 ])
+
+        return klist
+
+
+    def build_keo(self):
+
+        nlobs = self.params['bound_nlobs'] 
+
+        if self.params['hmat_format'] == 'numpy_arr':    
+            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
+        elif self.params['hmat_format'] == 'sparse_csr':
+            keomat = sparse.csr_matrix((self.Nbas, self.Nbas), dtype=float)
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+
+        x = self.params['x']
+        w = self.params['w']
+
+
+        start_time = time.time()
+        klist = self.gen_klist()
+        end_time = time.time()
+        print("Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        #print(klist)
+        exit()
+
+        #w[0] *= 2.0
+        #w[nlobs-1] *=2.0
+
+        #print(w)
+        #exit()
+        #w /= np.sum(w[:])
+        #w *= 0.5 * params['bound_binw']
+        #scaling to quadrature range
+        #x *= 0.5 * params['bound_binw']
+
+        """ Build D-matrix """
+        DMAT = self.BUILD_DMAT(x,w)
+
+        """ Build J-matrix """
+        JMAT  = self.BUILD_JMAT(DMAT,w)
+
+        """
+        plot_mat(JMAT)
+        plt.spy(JMAT, precision=params['sph_quad_tol'], markersize=5, label="J-matrix")
+        plt.legend()
+        plt.show()
+        """
+        """ Build KD, KC matrices """
+        KD  = self.BUILD_KD(JMAT,w,nlobs) / (0.5 * self.params['bound_binw'])**2 #### !!!! check
+        KC  = self.BUILD_KC(JMAT,w,nlobs) / (0.5 * self.params['bound_binw'])**2
+
+        #plot_mat(KD)
+        #plt.spy(KD, precision=params['sph_quad_tol'], markersize=5, label="KD")
+        #plt.legend()
+        #plt.show()
+
+        """ Generate K-list """
+        klist = self.gen_klist()
+
+        """ Fill up global KEO """
+        klist = np.asarray(klist, dtype=int)
+
+        for i in range(klist.shape[0]):
+            if klist[i,0] == klist[i,2]:
+                #diagonal blocks
+                #print(klist[i,1],klist[i,3])
+                keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
+
+                if klist[i,1] == klist[i,3]:
+                    rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
+                    #print(rin)
+                    keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
+
+            elif klist[i,0] == klist[i,2] - 1: # i = i' - 1
+                #off-diagonal blocks
+                if klist[i,1] == nlobs - 1 : #last n
+                    # u_bs and u_bb:
+                    keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
+                                    
+                # print("n = " + str(klist[i,1]) + ",  n' in u_bs = " + str(klist[i,3] ))
+
+
+
+        #exit()
+        #print("KEO matrix")
+        #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+        #    print(0.5*keomat)
+    
+        #plot_mat(keomat)
+        #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+        #plt.legend()
+        #plt.show()
+        #exit()
+
+        #print size of KEO matrix
+        #keo_csr_size = keomat.data.size/(1024**2)
+        #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
+
+        return  0.5 * keomat 
+
+
+    def build_pot(self):
+        return 0
+
+    def build_ham(self):
+        return 0
+
+    def build_intmat(self):
+        return 0
+
 
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
 def BUILD_HMAT0(params):
@@ -283,100 +428,6 @@ def BUILD_HMAT0(params):
 
 
 
-""" ============ KEOMAT - new fast implementation ============ """
-def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
-
-    nlobs = params['bound_nlobs'] 
-
-    if params['hmat_format'] == 'numpy_arr':    
-        keomat =  np.zeros((Nbas, Nbas), dtype=float)
-    elif params['hmat_format'] == 'sparse_csr':
-        keomat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
-    else:
-        raise ValueError("Incorrect format type for the Hamiltonian")
-
-    """call Gauss-Lobatto rule """
-    x       =   np.zeros(nlobs, dtype = float)
-    w       =   np.zeros(nlobs, dtype = float)
-    xc, wc  =   GRID.gauss_lobatto(nlobs,14)
-    x       =   np.asarray(xc, dtype = float)
-    w       =   np.asarray(wc, dtype = float)
-
-
-    #w[0] *= 2.0
-    #w[nlobs-1] *=2.0
-
-    #print(w)
-    #exit()
-    #w /= np.sum(w[:])
-    #w *= 0.5 * params['bound_binw']
-    #scaling to quadrature range
-    #x *= 0.5 * params['bound_binw']
-
-    """ Build D-matrix """
-    DMAT = BUILD_DMAT(x,w)
-
-    """ Build J-matrix """
-    JMAT  = BUILD_JMAT(DMAT,w)
-
-    """
-    plot_mat(JMAT)
-    plt.spy(JMAT, precision=params['sph_quad_tol'], markersize=5, label="J-matrix")
-    plt.legend()
-    plt.show()
-    """
-    """ Build KD, KC matrices """
-    KD  = BUILD_KD(JMAT,w,nlobs) / (0.5 * params['bound_binw'])**2 #### !!!! check
-    KC  = BUILD_KC(JMAT,w,nlobs) / (0.5 * params['bound_binw'])**2
-
-    #plot_mat(KD)
-    #plt.spy(KD, precision=params['sph_quad_tol'], markersize=5, label="KD")
-    #plt.legend()
-    #plt.show()
-
-    """ Generate K-list """
-    klist = mapping.GEN_KLIST(maparray, Nbas, params['map_type'] )
-
-    """ Fill up global KEO """
-    klist = np.asarray(klist, dtype=int)
-
-    for i in range(klist.shape[0]):
-        if klist[i,0] == klist[i,2]:
-            #diagonal blocks
-            #print(klist[i,1],klist[i,3])
-            keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
-
-            if klist[i,1] == klist[i,3]:
-                rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
-                #print(rin)
-                keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
-
-        elif klist[i,0] == klist[i,2] - 1: # i = i' - 1
-            #off-diagonal blocks
-            if klist[i,1] == nlobs - 1 : #last n
-                # u_bs and u_bb:
-                keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
-                                
-               # print("n = " + str(klist[i,1]) + ",  n' in u_bs = " + str(klist[i,3] ))
-
-
-
-    #exit()
-    #print("KEO matrix")
-    #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-    #    print(0.5*keomat)
-  
-    #plot_mat(keomat)
-    #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
-    #plt.legend()
-    #plt.show()
-    #exit()
-
-    #print size of KEO matrix
-    #keo_csr_size = keomat.data.size/(1024**2)
-    #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
-
-    return  0.5 * keomat 
 
 def BUILD_DMAT(x,w):
 

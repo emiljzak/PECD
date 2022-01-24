@@ -105,7 +105,7 @@ class Map():
 
         for elem in self.femlist:
             nbins += elem[0]
-        print("total number of bins = " + str(nbins))
+
 
         for elem in self.femlist:
             for i in range(elem[0]):
@@ -157,8 +157,7 @@ class Map():
         nbins_tot = 0
         for elem in self.femlist:
             nbins_tot += elem[0]
-        print("total number of bins = " + str(nbins_tot))
-
+       
         for elem in self.femlist:
             for i in range(elem[0]):
                 ibincount +=1
@@ -171,7 +170,7 @@ class Map():
                             for m in range(-l,l+1):
 
                                 imap += 1
-                                print(ibincount,n,xi,l,m,imap)
+                                #print(ibincount,n,xi,l,m,imap)
                                 maparray.append([ibincount,n,xi,l,m,imap])
 
         Nbas = imap
@@ -244,22 +243,6 @@ class Map():
                     if maparray[p1][2] == maparray[p2][2]:
                         vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
         return vlist
-
-
-    def GEN_KLIST(self,maparray, Nbas, map_type):
-        #create a list of indices for matrix elements of the KEO
-        klist = []
-
-        if map_type == 'DVR':
-            for p1 in range(Nbas):
-                for p2 in range(p1, Nbas):
-                    if maparray[p1][3] == maparray[p2][3] and maparray[p1][4] == maparray[p2][4]:
-                        if maparray[p1][0] == maparray[p2][0] or maparray[p1][0] == maparray[p2][0] - 1 or maparray[p1][0] == maparray[p2][0] + 1: 
-                            klist.append([ maparray[p1][0], maparray[p1][1], maparray[p2][0], \
-                            maparray[p2][1], maparray[p2][3], p1, p2 ])
-
-
-        return klist
 
     def calc_p2(l,m,xi,lmax):
         return (xi-1)*(lmax+1)**2 + l*(l+1) + m
@@ -345,6 +328,19 @@ class Map():
         return diplist
 
 class GridEuler():
+    """GridEuler class keeps methods for generating and manipulating the grid of molecular orientations
+
+    Attributes:
+        N_euler (int): number of molecular molecular orientations per dimension
+
+        N_batches (int): number of batches into which the full run is divided
+
+        grid_type (str): 2D or 3D grid type. For 2D the first Euler angle (alpha) is fixed at 0.0.
+
+
+    """
+
+
 
     def __init__(self,N_euler,N_batches,grid_type):
 
@@ -362,25 +358,46 @@ class GridEuler():
 
         N_Euler = grid_euler.shape[0]
 
-        N_per_batch = int(N_Euler/self.Nbatches)
+        N_per_batch = int(N_Euler/self.N_batches)
 
         return grid_euler, N_Euler, N_per_batch
 
 
     def gen_euler_grid_2D(self):
-        """ Cartesian product of 1D grids of Euler angles"""
+        """
+        Generates the 2D Cartesian product of 1D grids of Euler angles. 
+
+        Returns: tuple
+                euler_grid: numpy 2D array
+                    grid of euler angles [alpha=0.0,beta,gamma]
+                n_euler: int
+                    the total number of grid points
+
+        Status: tested.
+
+        """
         alpha_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=False))
         beta_1d         = list(np.linspace(0, np.pi,    num=self.N_euler, endpoint=True))
         gamma_1d        = list(np.linspace(0, 2*np.pi,  num=self.N_euler, endpoint=False))
-        euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
+        euler_grid   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
-        n_euler_3d      = euler_grid_3d.shape[0]
-        print("\nTotal number of 2D-Euler grid points: ", n_euler_3d , " and the shape of the 3D grid array is:    ", euler_grid_3d.shape)
+        n_euler      = euler_grid.shape[0]
+        print("\nTotal number of 2D-Euler grid points: ", n_euler , " and the shape of the 3D grid array is:    ", euler_grid.shape)
         #print(euler_grid_3d)
-        return euler_grid_3d, n_euler_3d
+        return euler_grid, n_euler
 
     def gen_euler_grid(self):
-        """ Cartesian product of 1D grids of Euler angles"""
+        """
+        Generates the 3D Cartesian product of 1D grids of Euler angles. 
+
+        Returns: tuple
+                euler_grid: numpy 3D array
+                    grid of euler angles [alpha,beta,gamma]
+                n_euler: int
+                    the total number of grid points
+
+        Status: tested
+        """
         alpha_1d        = list(np.linspace(0, 2*np.pi,  num=self.N_euler, endpoint=False))
         beta_1d         = list(np.linspace(0, np.pi,    num=self.N_euler, endpoint=True))
         gamma_1d        = list(np.linspace(0, 2*np.pi,  num=self.N_euler, endpoint=False))
