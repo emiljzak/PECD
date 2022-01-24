@@ -428,10 +428,10 @@ class GridRad():
     """
 
     def __init__(self,nlobs,nbins,binwidth,rshift):
-        self.nlobs = nlobs
-        self.nbins = nbins
-        self.binwidth = binwidth
-        self.rshift = rshift
+        self.nlobs      = nlobs
+        self.nbins      = nbins
+        self.binwidth   = binwidth
+        self.rshift     = rshift
 
 
     def gen_grid(self):
@@ -472,9 +472,14 @@ class GridRad():
 
         x               = np.zeros(nlobs, dtype = float)
         w               = np.zeros(nlobs, dtype = float)
-        x, w            = self.gauss_lobatto(nlobs,14)
-        w               = np.array(w)
-        x               = np.array(x)
+        xx, ww            = self.gauss_lobatto(nlobs,14)
+
+        for k in range(nlobs):
+            x[k] = float(xx[k]) 
+            w[k] = float(ww[k]) 
+        
+        #w               = np.asarray(w,dtype=float)
+       # x               = np.asarray(x,dtype=float)
 
         xgrid_prim      = np.zeros((nbins, nlobs), dtype = float) 
         xgrid_coupled   = np.zeros((nbins, nlobs-1), dtype = float) 

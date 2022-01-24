@@ -1063,7 +1063,7 @@ if __name__ == "__main__":
     keo_bound = HamObjBound.build_keo()
     end_time = time.time()
     print("Time for construction of the kinetic energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
+    exit()
 
     print("\n")
     print("Building the potential energy operator matrix for the bound Hamiltonian...")

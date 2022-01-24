@@ -180,6 +180,19 @@ def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
 
 
 class Hamiltonian():
+    """Hamiltonian class keeps methods for generating and manipulating matrices: kinetic energy operator, potential energy operator, hamiltonian, dipole interaction operator.
+
+    Note:
+        The characteristics of the photo-electron propagation using the FEM-DVR method suggests
+        that a DVR-type mapping is suitable and natural.
+
+    Attributes:
+        hamtype (str): 'bound' or 'prop' determines the type of the hamiltonian to be created
+                        
+
+        params (dics): standard input parameters dictionary
+
+    """
 
     def __init__(self,params,hamtype = 'bound'):
         self.params = params
@@ -199,7 +212,7 @@ class Hamiltonian():
             raise ValueError("Incorrect format type for the Hamiltonian")
 
     @staticmethod
-    @jit(nopython=True)   
+    @jit(nopython=True,parallel=False,fastmath=False)
     def gen_klist_jit(Nbas,maparray):
 
         klist = []
@@ -216,8 +229,8 @@ class Hamiltonian():
 
     def call_gen_klist_jit(self,Nbas):
         maparray = np.asarray(self.maparray, dtype = int)
-        self.gen_klist_jit(Nbas,maparray)
-
+        klist = self.gen_klist_jit(Nbas,maparray)
+        return klist
 
     def gen_klist(self):
         """
@@ -253,27 +266,29 @@ class Hamiltonian():
 
         x = self.params['x']
         w = self.params['w']
-
+        #x = np.asarray(x, dtype = float)
+   
+        #exit()
+        #pure python:
         #start_time = time.time()
         #klist = self.gen_klist()
         #end_time = time.time()
         #print("Python: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
+        #using numba jit:
         start_time = time.time()
         klist = self.call_gen_klist_jit(self.Nbas)
         end_time = time.time()
         print("JIT First run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
-        start_time = time.time()
-        klist = self.call_gen_klist_jit(self.Nbas)
-        end_time = time.time()
-        print("JIT Second run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        #start_time = time.time()
+        #klist = self.call_gen_klist_jit(self.Nbas)
+        #end_time = time.time()
+        #print("JIT Second run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
-        #print(klist)
-        exit()
+        #fixes:
 
         #w[0] *= 2.0
         #w[nlobs-1] *=2.0
@@ -306,8 +321,7 @@ class Hamiltonian():
         #plt.legend()
         #plt.show()
 
-        """ Generate K-list """
-        klist = self.gen_klist()
+        Gr = self.Gr
 
         """ Fill up global KEO """
         klist = np.asarray(klist, dtype=int)
@@ -319,7 +333,7 @@ class Hamiltonian():
                 keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
 
                 if klist[i,1] == klist[i,3]:
-                    rin = Gr[ klist[i,0], klist[i,1] - 1 ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
+                    rin = Gr[ klist[i,0]*(nlobs-1)+ klist[i,1]  ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
                     #print(rin)
                     keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
 
@@ -338,11 +352,11 @@ class Hamiltonian():
         #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
         #    print(0.5*keomat)
     
-        #plot_mat(keomat)
-        #plt.spy(keomat, precision=params['sph_quad_tol'], markersize=5, label="KEO")
+        plot_mat(keomat)
+        plt.spy(keomat, precision=1e-12, markersize=5, label="KEO")
         #plt.legend()
-        #plt.show()
-        #exit()
+        plt.show()
+        exit()
 
         #print size of KEO matrix
         #keo_csr_size = keomat.data.size/(1024**2)
@@ -362,195 +376,100 @@ class Hamiltonian():
 
 
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
-def BUILD_HMAT0(params):
-
-    maparray, Nbas = mapping.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
-                                     params['map_type'], params['job_directory'] )
-
-    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
-
-    if params['hmat_format'] == 'csr':
-        hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
-    elif params['hmat_format'] == 'regular':
-        hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
 
 
 
-    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-   # plot_mat(keomat_fast)
-   # plt.show()
+    def BUILD_DMAT(self,x,w):
 
-    #start_time = time.time()
-    #keomat_standard = BUILD_KEOMAT( params, maparray, Nbas , Gr )
-    #end_time = time.time()
-    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        N       = x.shape[0]
+        DMAT    = np.zeros( ( N , N ), dtype=float)
+        Dd      = np.zeros( N , dtype=float)
+
+        for n in range(N):
+            for mu in range(N):
+                if mu != n:
+                    Dd[n] += (x[n]-x[mu])**(-1)
+
+        print(type(w[N-1]))
+
+        for n in range(N):
+            DMAT[n,n] += Dd[n]/np.sqrt(w[n])
+
+            for k in range(N):
+                if n != k: 
+                    DMAT[k,n]  =  1.0 / ( np.sqrt(w[n]) * (x[n]-x[k]) )
+
+                    for mu in range(N):
+                        if mu != k and mu != n:
+                            DMAT[k,n] *= (x[k]-x[mu])/(x[n]-x[mu])
+
+        #print(Dd)
+
+        #plot_mat(DMAT)
+        #plt.spy(DMAT, precision=params['sph_quad_tol'], markersize=5, label="D-matrix")
+        #plt.legend()
+        #plt.show()
+        #exit()
+        return DMAT
 
 
-    #plt.spy(keomat_fast, precision=params['sph_quad_tol'], markersize=5, label="KEO_fast")
-    #plt.legend()
+    def BUILD_JMAT(self,D,w):
+
+        wdiag = np.zeros((w.size,w.size), dtype = float)
+        for k in range(w.size):
+            wdiag[k,k] = w[k] 
+        DT = np.copy(D)
+        DT = DT.T
+
+        return multi_dot([DT,wdiag,D])
+        #return np.dot( np.dot(DT,wdiag), D )
 
 
-    #plot_mat(keomat_standard)
-    #plt.spy(keomat_standard, precision=params['sph_quad_tol'], markersize=5, label="KEO_standard")
-    #plt.legend()
-    #plt.show()
-
-
-    #rtol=1e-03
-    #atol=1e-04
-    #print(np.allclose(keomat_fast, keomat_standard, rtol=rtol, atol=atol))
-
-    #exit()
-
-    """ calculate hmat """
-    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
+    def BUILD_KD(self,JMAT,w,N): #checked 1 May 2021
+        Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) ) #+ w[N-1]
         
-    for ielem, elem in enumerate(potmat0):
-        #print(potind[ielem][0],potind[ielem][1])
-        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0] #we can speed up this bit
+        Ws = np.zeros(len(w), dtype = float)
+        Ws = 1.0 / np.sqrt(w)
+
+        KD = np.zeros( (N-1,N-1), dtype=float)
+        #elements below are invariant to boundary quadrature scaling
+        #b-b:
+        KD[N-2,N-2] = Wb * Wb * ( w[N-1] * JMAT[N-1, N-1] + w[0] * JMAT[0 , 0]  )
 
 
-    start_time = time.time()
-    keomat = BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
-    end_time = time.time()
+        #b-s:
+        for n2 in range(0,N-2):
+            KD[N-2, n2] = np.sqrt(w[N-1]) * Wb *  JMAT[N-1, n2 + 1] #checked Ws[n2 + 1] *
 
-    #start_time = time.time()
-    #keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
-    #end_time = time.time()
-    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        #s-b:
+        for n1 in range(0,N-2):
+            KD[n1, N-2] = np.sqrt(w[N-1]) * Wb *  JMAT[n1 + 1, N-1] #Ws[n1 + 1] *
 
-    hmat += keomat 
+        #s-s:
+        for n1 in range(0, N-2):
+            for n2 in range(n1, N-2):
+                KD[n1,n2] = JMAT[n1 + 1, n2 + 1] # Ws[n1 + 1] * Ws[n2 + 1] *  #checked. Note the shift between J-matrix and tss or Kd matrices.
 
-    #plot_mat(hmat)
-    #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
-    #plt.show()
-    
-    """ diagonalize hmat """
-    start_time = time.time()
-    enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
-    end_time = time.time()
-    print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)
 
 
-    #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
+    def BUILD_KC(self,JMAT,w,N):
+        Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) #+ w[N-1]
+        
+        Ws = np.zeros(len(w), dtype = float)
+        Ws = 1.0 / np.sqrt(w)
 
-    print("Normalization of the wavefunction: ")
-    for v in range(params['num_ini_vec']):
-        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs0[:,v] ) * coeffs0[:,v] ) )))
+        KC = np.zeros( (N-1), dtype=float)
 
-    if params['save_ham0'] == True:
-        if params['hmat_format'] == 'csr':
-            sparse.save_npz(params['job_directory'] + params['file_hmat0'] , hmat , compressed = False )
-        elif params['hmat_format'] == 'regular':
-            with open( params['job_directory'] + params['file_hmat0'] , 'w') as hmatfile:   
-                np.savetxt(hmatfile, hmat, fmt = '%10.4e')
+        #b-b:
+        KC[N-2] = Wb * Wb * JMAT[0, N-1] * np.sqrt(w[0] * w[N-1]) #invariant to quadrature weights scaling
 
-    if params['save_psi0'] == True:
-        psi0file = open(params['job_directory'] + params['file_psi0'], 'w')
-        for ielem,elem in enumerate(maparray):
-            psi0file.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
-                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
-                            "\t\t ".join('{:10.5e}'.format(coeffs0[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
+        #b-s:
+        for n2 in range(0, N-2):
+            KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] #here we exclude n'=0 which is already included in the def. of bridge function
+        #changed 0->N-1 above
 
-    if params['save_enr0'] == True:
-        with open(params['job_directory'] + params['file_enr0'], "w") as energyfile:   
-            np.savetxt( energyfile, enr0 * CONSTANTS.au_to_ev , fmt='%10.5f' )
-
-
-
-
-def BUILD_DMAT(x,w):
-
-    N = x.size
-    print("Number of Gauss-Lobatto points = " + str(N))
-    #print(x)
-
-    DMAT = np.zeros( ( N , N ), dtype=float)
-    Dd = np.zeros( N , dtype=float)
-
-    for n in range(N):
-        for mu in range(N):
-            if mu != n:
-                Dd[n] += (x[n]-x[mu])**(-1)
-
-    for n in range(N):
-        DMAT[n,n] += Dd[n]/np.sqrt(w[n])
-
-        for k in range(N):
-            if n != k: 
-                DMAT[k,n]  =  1.0 / ( np.sqrt(w[n]) * (x[n]-x[k]) )
-
-                for mu in range(N):
-                    if mu != k and mu != n:
-                        DMAT[k,n] *= (x[k]-x[mu])/(x[n]-x[mu])
-
-    #print(Dd)
-
-    #plot_mat(DMAT)
-    #plt.spy(DMAT, precision=params['sph_quad_tol'], markersize=5, label="D-matrix")
-    #plt.legend()
-    #plt.show()
-    #exit()
-    return DMAT
-
-
-def BUILD_JMAT(D,w):
-
-    wdiag = np.zeros((w.size,w.size), dtype = float)
-    for k in range(w.size):
-        wdiag[k,k] = w[k] 
-    DT = np.copy(D)
-    DT = DT.T
-
-    return multi_dot([DT,wdiag,D])
-    #return np.dot( np.dot(DT,wdiag), D )
-
-
-def BUILD_KD(JMAT,w,N): #checked 1 May 2021
-    Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) ) #+ w[N-1]
-    
-    Ws = np.zeros(len(w), dtype = float)
-    Ws = 1.0 / np.sqrt(w)
-
-    KD = np.zeros( (N-1,N-1), dtype=float)
-    #elements below are invariant to boundary quadrature scaling
-    #b-b:
-    KD[N-2,N-2] = Wb * Wb * ( w[N-1] * JMAT[N-1, N-1] + w[0] * JMAT[0 , 0]  )
-
-
-    #b-s:
-    for n2 in range(0,N-2):
-        KD[N-2, n2] = np.sqrt(w[N-1]) * Wb *  JMAT[N-1, n2 + 1] #checked Ws[n2 + 1] *
-
-    #s-b:
-    for n1 in range(0,N-2):
-        KD[n1, N-2] = np.sqrt(w[N-1]) * Wb *  JMAT[n1 + 1, N-1] #Ws[n1 + 1] *
-
-    #s-s:
-    for n1 in range(0, N-2):
-        for n2 in range(n1, N-2):
-            KD[n1,n2] = JMAT[n1 + 1, n2 + 1] # Ws[n1 + 1] * Ws[n2 + 1] *  #checked. Note the shift between J-matrix and tss or Kd matrices.
-
-    return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)
-
-
-def BUILD_KC(JMAT,w,N):
-    Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) #+ w[N-1]
-    
-    Ws = np.zeros(len(w), dtype = float)
-    Ws = 1.0 / np.sqrt(w)
-
-    KC = np.zeros( (N-1), dtype=float)
-
-    #b-b:
-    KC[N-2] = Wb * Wb * JMAT[0, N-1] * np.sqrt(w[0] * w[N-1]) #invariant to quadrature weights scaling
-
-    #b-s:
-    for n2 in range(0, N-2):
-        KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] #here we exclude n'=0 which is already included in the def. of bridge function
-    #changed 0->N-1 above
-
-    return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
+        return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
 
 """ ============ KEOMAT - standard implementation ============ """
 def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
@@ -688,6 +607,102 @@ def fp(i,n,k,x):
                 if mu !=n:
                     fprime += (x[n]-x[mu])**(-1)
     return fprime
+
+
+def BUILD_HMAT0(params):
+
+    maparray, Nbas = mapping.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
+                                     params['map_type'], params['job_directory'] )
+
+    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
+
+    if params['hmat_format'] == 'csr':
+        hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
+    elif params['hmat_format'] == 'regular':
+        hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
+
+
+
+    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+   # plot_mat(keomat_fast)
+   # plt.show()
+
+    #start_time = time.time()
+    #keomat_standard = BUILD_KEOMAT( params, maparray, Nbas , Gr )
+    #end_time = time.time()
+    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    #plt.spy(keomat_fast, precision=params['sph_quad_tol'], markersize=5, label="KEO_fast")
+    #plt.legend()
+
+
+    #plot_mat(keomat_standard)
+    #plt.spy(keomat_standard, precision=params['sph_quad_tol'], markersize=5, label="KEO_standard")
+    #plt.legend()
+    #plt.show()
+
+
+    #rtol=1e-03
+    #atol=1e-04
+    #print(np.allclose(keomat_fast, keomat_standard, rtol=rtol, atol=atol))
+
+    #exit()
+
+    """ calculate hmat """
+    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
+        
+    for ielem, elem in enumerate(potmat0):
+        #print(potind[ielem][0],potind[ielem][1])
+        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0] #we can speed up this bit
+
+
+    start_time = time.time()
+    keomat = BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+    end_time = time.time()
+
+    #start_time = time.time()
+    #keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
+    #end_time = time.time()
+    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+    hmat += keomat 
+
+    #plot_mat(hmat)
+    #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
+    #plt.show()
+    
+    """ diagonalize hmat """
+    start_time = time.time()
+    enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
+    end_time = time.time()
+    print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+    #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
+
+    print("Normalization of the wavefunction: ")
+    for v in range(params['num_ini_vec']):
+        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs0[:,v] ) * coeffs0[:,v] ) )))
+
+    if params['save_ham0'] == True:
+        if params['hmat_format'] == 'csr':
+            sparse.save_npz(params['job_directory'] + params['file_hmat0'] , hmat , compressed = False )
+        elif params['hmat_format'] == 'regular':
+            with open( params['job_directory'] + params['file_hmat0'] , 'w') as hmatfile:   
+                np.savetxt(hmatfile, hmat, fmt = '%10.4e')
+
+    if params['save_psi0'] == True:
+        psi0file = open(params['job_directory'] + params['file_psi0'], 'w')
+        for ielem,elem in enumerate(maparray):
+            psi0file.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
+                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
+                            "\t\t ".join('{:10.5e}'.format(coeffs0[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
+
+    if params['save_enr0'] == True:
+        with open(params['job_directory'] + params['file_enr0'], "w") as energyfile:   
+            np.savetxt( energyfile, enr0 * CONSTANTS.au_to_ev , fmt='%10.5f' )
+
 
 
 """ ============ POTMAT0 ============ """
@@ -1724,7 +1739,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 def plot_mat(mat):
     """ plot 2D array with color-coded magnitude"""
     fig, ax = plt.subplots()
-    #mat = mat.todense()
+    mat = mat.todense()
     im, cbar = heatmap(mat, 0, 0, ax=ax, cmap="gnuplot", cbarlabel="Hij")
 
     fig.tight_layout()
@@ -1761,7 +1776,7 @@ def heatmap( data, row_labels, col_labels, ax=None,
     im = ax.imshow(np.abs(data), **kwargs)
 
     # Create colorbar
-    im.set_clim(0, 2.0 ) #np.max(np.abs(data))
+    im.set_clim(0,np.max(np.abs(data)) ) #np.max(np.abs(data))
     cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
