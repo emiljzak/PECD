@@ -227,18 +227,15 @@ class Hamiltonian():
                 klist: 1D list
                     list [i1,n1,i2,n2,l2,p1,p2]
         """
-
-
-        
+        maparray = np.asarray(self.maparray, dtype = int)
         klist = []
-        print(self.Nbas)
-        exit()
+
         for p1 in range(self.Nbas):
             for p2 in range(p1, self.Nbas):
-                if self.maparray[p1][3] == self.maparray[p2][3] and self.maparray[p1][4] == self.maparray[p2][4]:
-                    if self.maparray[p1][0] == self.maparray[p2][0] or self.maparray[p1][0] == self.maparray[p2][0] - 1 or self.maparray[p1][0] == self.maparray[p2][0] + 1: 
-                        klist.append([ self.maparray[p1][0], self.maparray[p1][1], self.maparray[p2][0], \
-                        self.maparray[p2][1], self.maparray[p2][3], p1, p2 ])
+                if maparray[p1,3] == maparray[p2,3] and maparray[p1,4] == maparray[p2,4]:
+                    if maparray[p1,0] == maparray[p2,0] or maparray[p1,0] == maparray[p2,0] - 1 or maparray[p1,0] == maparray[p2,0] + 1: 
+                        klist.append([ maparray[p1,0], maparray[p1,1], maparray[p2,0], \
+                        maparray[p2,1], maparray[p2,3], p1, p2 ])
 
         return klist
 
@@ -257,19 +254,22 @@ class Hamiltonian():
         x = self.params['x']
         w = self.params['w']
 
-
-        start_time = time.time()
-        klist = self.call_gen_klist_jit(2)
-
+        #start_time = time.time()
         #klist = self.gen_klist()
-        end_time = time.time()
-        print("Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        #end_time = time.time()
+        #print("Python: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
         start_time = time.time()
         klist = self.call_gen_klist_jit(self.Nbas)
         end_time = time.time()
-        print("Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        print("JIT First run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        start_time = time.time()
+        klist = self.call_gen_klist_jit(self.Nbas)
+        end_time = time.time()
+        print("JIT Second run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
         #print(klist)
