@@ -33,9 +33,8 @@ def read_input():
 
 
     params['job_label']    = "daytest" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
-    #Clebsch_split_17
-
-    """====== Basis set parameters for BOUND ======"""
+    
+    """====== Basis set parameters ======"""
     """ 
         Set up basis set parameters for the calculation of the stationary Hamiltonian matrix. 
         Bound states are calculated with these parameters.

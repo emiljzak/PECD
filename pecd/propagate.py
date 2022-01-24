@@ -1059,49 +1059,83 @@ if __name__ == "__main__":
     print("Building the kinetic energy operator matrix for the bound Hamiltonian...")
     print("\n")
 
-    KEO_bound = HamObj.build_keo_bound()
+    start_time = time.time()
+    keo_bound = HamObjBound.build_keo()
+    end_time = time.time()
+    print("Time for construction of the kinetic energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
 
     print("\n")
     print("Building the potential energy operator matrix for the bound Hamiltonian...")
     print("\n")
 
-    KEO_bound = HamObj.build_keo_bound()
+    start_time = time.time()
+    pot_bound = HamObjBound.build_pot()
+    end_time = time.time()
+    print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
 
 
     print("\n")
     print("Building the bound Hamiltonian operator matrix...")
     print("\n")
 
+    start_time = time.time()
+    ham_bound = HamObjBound.build_ham(keo_bound,pot_bound)
+    end_time = time.time()
+    print("Time for construction of the bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
 
     print("\n")
     print("Calculating eigenvalues and eigenvectors of the bound Hamiltonian operator matrix...")
     print("\n")
+
+    start_time = time.time()
+    E0, psi0 = call_eigensolver(ham_bound, params)
+    end_time = time.time()
+    print("Time for diagonalization of the bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
     print("\n")
     print("Building the kinetic energy operator matrix for the propagation Hamiltonian...")
     print("\n")
 
-    KEO_prop = HamObj.build_keo_prop()
+    keo_prop = HamObjProp.build_keo()
 
     print("\n")
     print("Building the interaction matrix...")
     print("\n")
 
-    intmat =  HamObj.build_intmat() 
+    intmat =  HamObjProp.build_intmat() 
+
+
 
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
-        #print(grid_euler[irun])
+        start_time = time.time()
+        pot_prop = HamObjProp.build_potmat(params, grid_euler, irun)
+        end_time = time.time()
+        print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        ham0, psi0 = HamObj.BUILD_HMAT0_ROT(params, grid_euler, irun)
 
-        Nbas, psi_init  = PsiObj.PROJECT_PSI_GLOBAL(params,psi0) 
-        ham_init        = HamObjPROJECT_HAM_GLOBAL(params, ham0 ,grid_euler, irun)
+        start_time = time.time()
+        ham_init = HamObjProp.build_ham(keo_prop,pot_prop)
+        end_time = time.time()
+        print("Time for construction of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        print("\n")
+        print("Setting up rotated wavefunction...")
+        print("\n")
+
+        PsiObj = wavefunction.Psi(params,grid_euler,irun)
+        psi0_rot = PsiObj.rotate_psi(psi0[params['ivec']])
+        psi_init = PsiObj.project_psi_global(psi0_rot)
+
+        
 
         PropObj = Propagator(params,irun)
-
         PropObj.prop_wf(params, ham_init, psi_init, irun)
 
 

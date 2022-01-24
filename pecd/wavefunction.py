@@ -25,6 +25,12 @@ from sympy.polys.rootoftools import RootOf
 #from numba import jit, prange
 #jitcache = False
 
+class Psi():
+
+    def __init__(self, params):
+
+        self.params  = params
+
 
 class Map():
     """Map class keeps methods for generating and manipulating index mapping for the wavefunction and matrices.
