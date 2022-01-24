@@ -140,7 +140,7 @@ class Map():
         Examples:
                 ibin  n     ipoint l    m   id 
 
-        Status: tested
+        Status: tested vs analytic formula. OK.
         """
 
         imap = -1
