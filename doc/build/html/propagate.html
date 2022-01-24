@@ -44,8 +44,9 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Public API: CHIRALEX package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#electric-field-field">Electric field (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#propagation-of-the-wavepacket-propagate">Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wavefunction-module-wavefunction">Wavefunction module (<code class="code docutils literal notranslate"><span class="pre">wavefunction</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#electric-field-module-field">Electric field module (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)</a></li>
 </ul>
 </li>
 </ul>
@@ -100,19 +101,176 @@
 </style>
 <section id="public-api-chiralex-package">
 <h1>Public API: CHIRALEX package<a class="headerlink" href="#public-api-chiralex-package" title="Permalink to this headline"></a></h1>
-<section id="electric-field-field">
-<h2>Electric field (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)<a class="headerlink" href="#electric-field-field" title="Permalink to this headline"></a></h2>
+<section id="propagation-of-the-wavepacket-propagate">
+<h2>Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)<a class="headerlink" href="#propagation-of-the-wavepacket-propagate" title="Permalink to this headline"></a></h2>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.field.Field" title="pecd.field.Field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.field.Field</span></code></a>(params)</p></td>
-<td><p>Class representing electric field</p></td>
+</tbody>
+</table>
+<p>pecd.propagate.Propagator</p>
+</section>
+<section id="wavefunction-module-wavefunction">
+<h2>Wavefunction module (<code class="code docutils literal notranslate"><span class="pre">wavefunction</span></code>)<a class="headerlink" href="#wavefunction-module-wavefunction" title="Permalink to this headline"></a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.wavefunction.Map" title="pecd.wavefunction.Map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.Map</span></code></a>(femlist, map_type, job_dir)</p></td>
+<td><p>Map class keeps methods for generating and manipulating index mapping for the wavefunction and matrices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pecd.wavefunction.GridRad" title="pecd.wavefunction.GridRad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.GridRad</span></code></a>(nlobs, nbins, ...)</p></td>
+<td><p>Class contains methods related to the radial grid.</p></td>
 </tr>
 </tbody>
 </table>
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.wavefunction.Map">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">Map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">femlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Map" title="Permalink to this definition"></a></dt>
+<dd><p>Map class keeps methods for generating and manipulating index mapping for the wavefunction and matrices.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The characteristics of the photo-electron propagation using the FEM-DVR method suggests
+that a DVR-type mapping is suitable and natural.</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.wavefunction.Map.femlist">
+<span class="sig-name descname"><span class="pre">femlist</span></span><a class="headerlink" href="#pecd.wavefunction.Map.femlist" title="Permalink to this definition"></a></dt>
+<dd><p>keeps sizes of radial bins and the number of points/functions in each bin.
+Format: [ [nbins,nlobs,Rbin], … ].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.wavefunction.Map.map_type">
+<span class="sig-name descname"><span class="pre">map_type</span></span><a class="headerlink" href="#pecd.wavefunction.Map.map_type" title="Permalink to this definition"></a></dt>
+<dd><p>type of mapping function (‘DVR’ or ‘SPECT’)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.wavefunction.Map.job_dir">
+<span class="sig-name descname"><span class="pre">job_dir</span></span><a class="headerlink" href="#pecd.wavefunction.Map.job_dir" title="Permalink to this definition"></a></dt>
+<dd><p>path to current working directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>lmax</strong> (<em>int</em>) – maximum value of the l quantum number</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.wavefunction.Map.genmap_femlist">
+<span class="sig-name descname"><span class="pre">genmap_femlist</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Map.genmap_femlist" title="Permalink to this definition"></a></dt>
+<dd><p>Driver routine to call map generators</p>
+<dl class="simple">
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>maparray: list</dt><dd><p>[[ibin,n,ipoint,l,m,id],…]</p>
+</dd>
+<dt>Nbas: int</dt><dd><p>Number of basis functions</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.wavefunction.Map.map_dvr_femlist_nat">
+<span class="sig-name descname"><span class="pre">map_dvr_femlist_nat</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Map.map_dvr_femlist_nat" title="Permalink to this definition"></a></dt>
+<dd><p>Generates an index map for coupled basis with grid points as major dimension and bridge points/functions placed as last in the bin.</p>
+<dl class="simple">
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>maparray: list</dt><dd><p>[[ibin,n,ipoint,l,m,id],…]</p>
+</dd>
+<dt>Nbas: int</dt><dd><p>Number of basis functions</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Note:   the convention adopted to generate the index map assumes that all radial indices start with 0. This python-compatible convention helps to clear out any confusions. The resulting matrix structure is close to block-diagonal, with single-point sized bridges between bins, as shown in the image below:</p>
+<a class="reference internal image-reference" href="_images/ham_nat.png"><img alt="_images/ham_nat.png" src="_images/ham_nat.png" style="width: 500px;" /></a>
+<p class="rubric">Examples</p>
+<p>ibin  n     ipoint l    m   id</p>
+<p>Status: tested</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridRad">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">GridRad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlobs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binwidth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rshift</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridRad" title="Permalink to this definition"></a></dt>
+<dd><p>Class contains methods related to the radial grid.</p>
+<dl class="simple">
+<dt>Attrs:</dt><dd><dl class="simple">
+<dt>nlobs<span class="classifier">int</span></dt><dd><p>number of Gauss-Lobatto functions per bin</p>
+</dd>
+<dt>nbins<span class="classifier">int</span></dt><dd><p>number of bins</p>
+</dd>
+<dt>binwidth<span class="classifier">float</span></dt><dd><p>width (a.u.) of the bin</p>
+</dd>
+<dt>rshift<span class="classifier">float</span></dt><dd><p>shift of the grid (a.u.)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridRad.gen_grid">
+<span class="sig-name descname"><span class="pre">gen_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridRad.gen_grid" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Generates radial grid based on Gauss-Lobatto quadrature points</dt><dd><p>Three grids are returned: quadrature grid, primitive grid, coupled grid used in final calculation.</p>
+</dd>
+</dl>
+<p>Returns: tuple
+x: numpy 1D array (float, size = nlobs)</p>
+<blockquote>
+<div><p>Gauss-lobatto quadrature grid</p>
+</div></blockquote>
+<dl class="simple">
+<dt>w: numpy 1D array (float, size = nlobs)</dt><dd><p>Gauss-lobatto quadrature weights</p>
+</dd>
+<dt>rgrid_prim: numpy 1D array (float, size = nlobs * nbins)</dt><dd><p>Primitive radial grid containing all grid points, plus point values at bin boundries are duplicated i.e. first point in the bin has equal value to last point from previous bin.</p>
+</dd>
+<dt>rgrid: numpy 1D array (float, size = Nr = (nlobs - 1)*nbins - 1)</dt><dd><p>Coupled radial grid with boundary points excluded and no duplicate points at bin boundaries.</p>
+</dd>
+<dt>Nr: int</dt><dd><p>number of coupled grid points</p>
+</dd>
+</dl>
+<p>Todo: this function must be generalized to account for FEMLIST. Presently only constant bin size is possible.</p>
+<p>Status: tested</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="electric-field-module-field">
+<h2>Electric field module (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)<a class="headerlink" href="#electric-field-module-field" title="Permalink to this headline"></a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+<p>pecd.field.Field</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.field.Field">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.field.</span></span><span class="sig-name descname"><span class="pre">Field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.field.Field" title="Permalink to this definition"></a></dt>
@@ -135,106 +293,6 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 </dl>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="pecd.field.Field.gen_field">
-<span class="sig-name descname"><span class="pre">gen_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.field.Field.gen_field" title="Permalink to this definition"></a></dt>
-<dd><p>main program constructing the electric field at time t</p>
-<blockquote>
-<div><dl class="simple">
-<dt>Initial state vectors are eigenfunctions of Hamiltonian <cite>H</cite>. If</dt><dd><p><cite>temp</cite> is None, all eigenfunctions are returned unweighted. If
-<cite>temp</cite> is 0, only lowest energy eigenfunction is returned. If
-<cite>temp</cite> is &gt; 0, all eigenfunctions are returned Boltzmann-
--weighted.</p>
-</dd>
-</dl>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>H</strong> – <code class="xref py py-class docutils literal notranslate"><span class="pre">field.CarTens</span></code>
-Hamiltonian operator</p></li>
-<li><p><strong>temp</strong> – float
-Temperature in Kelvin</p></li>
-<li><p><strong>thresh</strong> – float
-Collective threshold below which to neglect higher energy
-states</p></li>
-<li><p><strong>zpe</strong> – float
-Zero-point energy, by default lowest eigenvalue of H is taken</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>numpy.ndarray</dt><dd><p>Initial state vectors (each row represents an initial state)</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>vecs</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="propagation-of-the-wavepacket-propagate">
-<h2>Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)<a class="headerlink" href="#propagation-of-the-wavepacket-propagate" title="Permalink to this headline"></a></h2>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.propagate.Propagator" title="pecd.propagate.Propagator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.propagate.Propagator</span></code></a>(params, irun)</p></td>
-<td><p>Class contains methods related to the time-propagation of the wavefunction.</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="py class">
-<dt class="sig sig-object py" id="pecd.propagate.Propagator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.propagate.</span></span><span class="sig-name descname"><span class="pre">Propagator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.propagate.Propagator" title="Permalink to this definition"></a></dt>
-<dd><p>Class contains methods related to the time-propagation of the wavefunction.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>filename</strong> – str
-fdsfsd</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>Kwargs:</dt><dd><dl class="simple">
-<dt>thresh<span class="classifier">float</span></dt><dd><p>fdsf</p>
-</dd>
-</dl>
-</dd>
-<dt>Attrs:</dt><dd><dl class="simple">
-<dt>params<span class="classifier">dict</span></dt><dd><p>Keeps relevant parameters.</p>
-</dd>
-<dt>irun<span class="classifier">int</span></dt><dd><p>id of the run over the Euler grid</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="pecd.propagate.Propagator.gen_timegrid">
-<span class="sig-name descname"><span class="pre">gen_timegrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ijifds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.propagate.Propagator.gen_timegrid" title="Permalink to this definition"></a></dt>
-<dd><p>fd
-Calculates equidistant time-grid for the wavefunction proapgation.
-Start and end points are included in the grid.</p>
-<dl class="simple">
-<dt>Returns: tuple</dt><dd><dl class="simple">
-<dt>tgrid: numpy 1D array</dt><dd><p>time grid array</p>
-</dd>
-<dt>dt: float</dt><dd><p>time step</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>If t0=0.0 and tmax = 10.0 and dt = 1.0 the grid has 11 elements:
-[ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10.]</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>

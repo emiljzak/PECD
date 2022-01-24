@@ -70,17 +70,12 @@ class Map():
             Nbas: int
                 Number of basis functions
         """
-        #generate mapping for general FEMLIST
+
         if self.map_type == 'DVR':
             maparray, Nbas = self.map_dvr_femlist_nat()
         elif self.map_type == 'SPECT':
             maparray, Nbas = self.map_spect_femlist()
 
-        #fl = open(working_dir + 'map.dat','w')
-        #for elem in maparray:   
-        #    fl.write("%5d"%elem[0]+"  %5d"%elem[1]+ "  %5d"%elem[2]+ "  %5d"%elem[3]+  " %5d"%elem[4]+" %5d"%elem[5]+"\n")
-        #fl.close()
-        
         return maparray, Nbas
 
 
@@ -96,7 +91,7 @@ class Map():
                 Number of basis functions
         """
 
-        imap        = 0
+        imap        = -1
         xi          = -1
         maparray    = []
         ibincount   = -1
@@ -138,18 +133,17 @@ class Map():
             Nbas: int
                 Number of basis functions
 
-        Note: the convention adopted to generate the index map assumes that all radial indices start with 0.
-                This python-compatible convention helps to clear out any confusions.
-                The resulting matrix structure is close to block-diagonal, with single-point sized bridges between bins, as shown in the image below:
+        Note:   the convention adopted to generate the index map assumes that all radial indices start with 0. This python-compatible convention helps to clear out any confusions. The resulting matrix structure is close to block-diagonal, with single-point sized bridges between bins, as shown in the image below:
+        
         .. image:: /_images/ham_nat.png
             :width: 500
         Examples:
-                ibin  n     ipoint l    m   id
+                ibin  n     ipoint l    m   id 
 
+        Status: tested
         """
 
-        #natural order of grid points and basis functions, including bridges
-        imap = 0
+        imap = -1
         xi = -1
         maparray = []
         ibincount = -1
@@ -210,8 +204,6 @@ class Map():
                                 maparray.append([l,m,ibincount,n,xi,imap])
 
         return maparray, imap
-
-
 
 
     def GEN_SPHLIST(self,lmax):
@@ -439,7 +431,10 @@ class GridRad():
         Nr: int
             number of coupled grid points
 
-        ToDo: this function must be generalized to account for FEMLIST. Presently only constant bin size is possible."""
+        Todo: this function must be generalized to account for FEMLIST. Presently only constant bin size is possible.
+
+        Status: tested
+        """
 
         nlobs           = self.nlobs
         nbins           = self.nbins
