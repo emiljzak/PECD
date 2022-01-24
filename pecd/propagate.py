@@ -29,7 +29,7 @@ import unittest
 
 
 import wavefunction
-#import hamiltonian
+import hamiltonian
 import field
 #import plots
 import constants
@@ -1052,13 +1052,30 @@ if __name__ == "__main__":
     print("Setting up Hamiltonians...")
     print("\n")
 
-    HamObj = hamiltonian.Hamiltonian(params)
+    HamObjBound = hamiltonian.Hamiltonian(params,'bound')
+    HamObjProp  = hamiltonian.Hamiltonian(params,'prop')
 
     print("\n")
     print("Building the kinetic energy operator matrix for the bound Hamiltonian...")
     print("\n")
 
     KEO_bound = HamObj.build_keo_bound()
+
+    print("\n")
+    print("Building the potential energy operator matrix for the bound Hamiltonian...")
+    print("\n")
+
+    KEO_bound = HamObj.build_keo_bound()
+
+
+    print("\n")
+    print("Building the bound Hamiltonian operator matrix...")
+    print("\n")
+
+
+    print("\n")
+    print("Calculating eigenvalues and eigenvectors of the bound Hamiltonian operator matrix...")
+    print("\n")
 
 
     print("\n")

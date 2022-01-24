@@ -181,8 +181,9 @@ def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
 
 class Hamiltonian():
 
-    def __init__(self,params):
+    def __init__(self,params,hamtype = 'bound'):
         self.params = params
+        self.hamtype = hamtype
 
 
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
