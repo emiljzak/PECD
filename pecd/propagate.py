@@ -29,9 +29,9 @@ import unittest
 
 
 import wavefunction
-import hamiltonian
+#import hamiltonian
 import field
-import plots
+#import plots
 import constants
 
 import time
@@ -994,12 +994,12 @@ if __name__ == "__main__":
     print("Generating index maps...")
     print("\n")
 
-    MapObjBound = wavefunction.Map( params['FEMLIST_bound'],
+    MapObjBound = wavefunction.Map( params['FEMLIST_BOUND'],
                                     params['bound_lmax'],
                                     params['map_type'],
                                     params['job_directory'])
 
-    MapObjBoundRad = wavefunction.Map(  params['FEMLIST_bound'],
+    MapObjBoundRad = wavefunction.Map(  params['FEMLIST_BOUND'],
                                         0,
                                         params['map_type'],
                                         params['job_directory'])
@@ -1011,15 +1011,15 @@ if __name__ == "__main__":
 
     # Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
     #       Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
-    params['maparray0'], params['Nbas0'] = MapObjBound.GENMAP_FEMLIST()
+    #params['maparray0'], params['Nbas0'] = MapObjBound.genmap_femlist()
 
-    params['maparray'], params['Nbas']  = MapObjProp.GENMAP_FEMLIST()
+    #params['maparray'], params['Nbas']  = MapObjProp.genmap_femlistT()
 
-    params['maparray0_rad'], params['Nbas0_rad'] = MapObjBoundRad.GENMAP_FEMLIST()
+    #params['maparray0_rad'], params['Nbas0_rad'] = MapObjBoundRad.genmap_femlist()
                                     
-    MapObjBound.save_map(params['maparray0'], 'map_bound.dat')
-    MapObjBoundRad.save_map(params['maparray0_rad'],  'map_bound_rad.dat')    
-    MapObjProp.save_map(params['maparray'], 'map_prop.dat')
+    #MapObjBound.save_map(params['maparray0'], 'map_bound.dat')
+    #MapObjBoundRad.save_map(params['maparray0_rad'],  'map_bound_rad.dat')    
+    #MapObjProp.save_map(params['maparray'], 'map_prop.dat')
 
 
     print("\n")

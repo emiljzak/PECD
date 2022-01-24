@@ -5,11 +5,11 @@
 #
 
 from scipy import special
-import input
-import MAPPING
-import POTENTIAL
-import GRID
-import CONSTANTS
+
+#import mapping
+#import POTENTIAL
+#import GRID
+#import CONSTANTS
 
 import numpy as np
 from numpy.linalg import multi_dot
@@ -188,7 +188,7 @@ class Hamiltonian():
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
 def BUILD_HMAT0(params):
 
-    maparray, Nbas = MAPPING.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
+    maparray, Nbas = mapping.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
                                      params['map_type'], params['job_directory'] )
 
     Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
@@ -334,7 +334,7 @@ def BUILD_KEOMAT_FAST(params, maparray, Nbas, Gr):
     #plt.show()
 
     """ Generate K-list """
-    klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
+    klist = mapping.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
     """ Fill up global KEO """
     klist = np.asarray(klist, dtype=int)
@@ -654,7 +654,7 @@ def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
     #print() 
 
     start_time = time.time()
-    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -957,7 +957,7 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     #print() 
 
     start_time = time.time()
-    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -1133,7 +1133,7 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
 
     # 1. Construct vlist
     start_time = time.time()
-    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -1220,12 +1220,12 @@ def BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun ):
     Nr = (params['bound_nlobs']-1) * params['bound_nbins']  
     # 1. Construct vlist
     start_time = time.time()
-    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     exit()
-    #klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
+    #klist = mapping.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
     #klist = np.asarray(klist)
     #vlist = np.asarray(vlist)
@@ -1306,12 +1306,12 @@ def BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
     # 1. Construct vlist
     start_time = time.time()
-    vlist = MAPPING.GEN_VLIST( maparray, Nbas, params['map_type'] )
+    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
     vlist = np.asarray(vlist,dtype=int)
     end_time = time.time()
     print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
-    #klist = MAPPING.GEN_KLIST(maparray, Nbas, params['map_type'] )
+    #klist = mapping.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
     #klist = np.asarray(klist)
     #vlist = np.asarray(vlist)
@@ -1437,7 +1437,7 @@ def gen_adaptive_quads(params, esp_interpolant, rgrid):
 
     print("Testing potential energy matrix elements using Lebedev quadratures")
 
-    sphlist = MAPPING.GEN_SPHLIST(lmax)
+    sphlist = mapping.GEN_SPHLIST(lmax)
 
     val =  np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
     val_prev = np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
@@ -1509,7 +1509,7 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 
     print("Adaptive quadratures generator with exact numerical potential")
 
-    sphlist = MAPPING.GEN_SPHLIST(lmax)
+    sphlist = mapping.GEN_SPHLIST(lmax)
 
     val =  np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
     val_prev = np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
