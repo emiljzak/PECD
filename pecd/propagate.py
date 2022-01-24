@@ -995,53 +995,47 @@ if __name__ == "__main__":
     print("\n")
 
     MapObjBound = wavefunction.Map( params['FEMLIST_BOUND'],
-                                    params['bound_lmax'],
                                     params['map_type'],
-                                    params['job_directory'])
+                                    params['job_directory'],
+                                    params['bound_lmax'])
 
     MapObjBoundRad = wavefunction.Map(  params['FEMLIST_BOUND'],
-                                        0,
                                         params['map_type'],
                                         params['job_directory'])
 
     MapObjProp = wavefunction.Map(  params['FEMLIST_PROP'],
-                                    params['bound_lmax'],
                                     params['map_type'],
-                                    params['job_directory'] )
+                                    params['job_directory'],
+                                    params['bound_lmax'] )
 
     # Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
     #       Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
-    #params['maparray0'], params['Nbas0'] = MapObjBound.genmap_femlist()
-
-    #params['maparray'], params['Nbas']  = MapObjProp.genmap_femlistT()
-
-    #params['maparray0_rad'], params['Nbas0_rad'] = MapObjBoundRad.genmap_femlist()
+    params['maparray0'], params['Nbas0']            = MapObjBound.genmap_femlist()
+    params['maparray'], params['Nbas']              = MapObjProp.genmap_femlist()
+    params['maparray0_rad'], params['Nbas0_rad']    = MapObjBoundRad.genmap_femlist()
                                     
-    #MapObjBound.save_map(params['maparray0'], 'map_bound.dat')
-    #MapObjBoundRad.save_map(params['maparray0_rad'],  'map_bound_rad.dat')    
-    #MapObjProp.save_map(params['maparray'], 'map_prop.dat')
+    MapObjBound.save_map(params['maparray0'], 'map_bound.dat')
+    MapObjBoundRad.save_map(params['maparray0_rad'],  'map_bound_rad.dat')    
+    MapObjProp.save_map(params['maparray'], 'map_prop.dat')
 
 
     print("\n")
     print("Generating grids...")
     print("\n")
 
-    GridObjBound = wavefunction.GridRad(   params['bound_nlobs'], 
-                                        params['bound_nbins'] , 
-                                        params['bound_binw'],  
-                                        params['bound_rshift']) 
+    GridObjBound = wavefunction.GridRad(    params['bound_nlobs'], 
+                                            params['bound_nbins'] , 
+                                            params['bound_binw'],  
+                                            params['bound_rshift']) 
 
-    GridObjProp = wavefunction.GridRad(    params['bound_nlobs'], 
-                                        params['prop_nbins'] , 
-                                        params['bound_binw'],  
-                                        params['bound_rshift'])
+    GridObjProp = wavefunction.GridRad(     params['bound_nlobs'], 
+                                            params['prop_nbins'] , 
+                                            params['bound_binw'],  
+                                            params['bound_rshift'])
 
-    params['Gr0'], params['Nr0']        = GridObjBound.gen_grid()
-    params['Gr'], params['Nr']          = GridObjProp.gen_grid()
-
-
-    exit()
-
+    params['x'], params['w'], params['rgrid0_prim'], params['rgrid0'], params['Nr0']    = GridObjBound.gen_grid()
+    _, _, params['rgrid_prim'], params['rgrid'], params['Nr']                           = GridObjProp.gen_grid()
+    
 
     print("\n")
     print("Reading grid of molecular orientations (Euler angles)...")

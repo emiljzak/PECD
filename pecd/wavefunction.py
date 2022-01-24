@@ -97,7 +97,7 @@ class Map():
         """
 
         imap        = 0
-        xi          = 0
+        xi          = -1
         maparray    = []
         ibincount   = -1
         nbins = 0
@@ -130,7 +130,7 @@ class Map():
 
     def map_dvr_femlist_nat(self):
         """ 
-        Generates an index map with grid points as major dimension and bridge points/functions placed as last in the bin.
+        Generates an index map for coupled basis with grid points as major dimension and bridge points/functions placed as last in the bin.
 
         Returns: tuple
             maparray: list
@@ -150,20 +150,20 @@ class Map():
 
         #natural order of grid points and basis functions, including bridges
         imap = 0
-        xi = 0
+        xi = -1
         maparray = []
         ibincount = -1
 
-        nbins = 0
+        nbins_tot = 0
         for elem in self.femlist:
-            nbins += elem[0]
-        print("total number of bins = " + str(nbins))
+            nbins_tot += elem[0]
+        print("total number of bins = " + str(nbins_tot))
 
         for elem in self.femlist:
             for i in range(elem[0]):
                 ibincount +=1
-                for n in range(1,elem[1]):
-                    if ibincount == nbins-1 and n == elem[1]-1:
+                for n in range(0,elem[1]-1):
+                    if ibincount == nbins_tot-1 and n == elem[1]-2:
                         continue     
                     else:
                         xi += 1
@@ -171,10 +171,11 @@ class Map():
                             for m in range(-l,l+1):
 
                                 imap += 1
-                                #print(ibincount,n,xi,l,m,imap)
+                                print(ibincount,n,xi,l,m,imap)
                                 maparray.append([ibincount,n,xi,l,m,imap])
 
         Nbas = imap
+
         return maparray, Nbas
 
 
@@ -426,31 +427,36 @@ class GridRad():
         x: numpy 1D array (float, size = nlobs)
             Gauss-lobatto quadrature grid
 
+        w: numpy 1D array (float, size = nlobs)
+            Gauss-lobatto quadrature weights
+
         rgrid_prim: numpy 1D array (float, size = nlobs * nbins)
             Primitive radial grid containing all grid points, plus point values at bin boundries are duplicated i.e. first point in the bin has equal value to last point from previous bin.
         
-        rgrid: numpy 1D array (float, size = (nlobs - 1)*nbins - 1)
+        rgrid: numpy 1D array (float, size = Nr = (nlobs - 1)*nbins - 1)
             Coupled radial grid with boundary points excluded and no duplicate points at bin boundaries.
+
+        Nr: int
+            number of coupled grid points
 
         ToDo: this function must be generalized to account for FEMLIST. Presently only constant bin size is possible."""
 
-        nlobs = self.nlobs
-        nbins = self.nbins
-        binwidth = self.binwidth
-        rshift = self.rshift
+        nlobs           = self.nlobs
+        nbins           = self.nbins
+        binwidth        = self.binwidth
+        rshift          = self.rshift
 
         #number of coupled radial grid points
-        Ngridcoupled = nbins*(nlobs-1)-1
+        Ngridcoupled    = nbins*(nlobs-1)-1
 
         #number of primitive radial grid points
-        Ngridprim = nbins * nlobs
+        Ngridprim       = nbins * nlobs
 
-
-        x       = np.zeros(nlobs, dtype = float)
-        w       = np.zeros(nlobs, dtype = float)
-        x, w    = self.gauss_lobatto(nlobs,14)
-        w       = np.array(w)
-        x       = np.array(x)
+        x               = np.zeros(nlobs, dtype = float)
+        w               = np.zeros(nlobs, dtype = float)
+        x, w            = self.gauss_lobatto(nlobs,14)
+        w               = np.array(w)
+        x               = np.array(x)
 
         xgrid_prim      = np.zeros((nbins, nlobs), dtype = float) 
         xgrid_coupled   = np.zeros((nbins, nlobs-1), dtype = float) 
@@ -467,8 +473,8 @@ class GridRad():
             Translvec[i] = float(i) * binwidth + rshift
 
         for ibin in range(nbins):
-            xgrid_prim[ibin,:] += Translvec[ibin]
-            xgrid_coupled[ibin,:] += Translvec[ibin]
+            xgrid_prim[ibin,:]      += Translvec[ibin]
+            xgrid_coupled[ibin,:]   += Translvec[ibin]
 
         #remove last point from coupled grid
         rgrid       = xgrid_coupled.flatten()[:Ngridcoupled]
@@ -477,39 +483,10 @@ class GridRad():
         #print("Coupled radial grid:")
         #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid_coupled]))
         #print("\n")
+        Nr = Ngridcoupled
+        return x, w, rgrid_prim, rgrid, Nr
 
-        return x, rgrid_prim, rgrid 
-
-    def r_grid_prim(self,nlobatto,nbins,binwidth,rshift):
-        """radial grid of Gauss-Lobatto quadrature points"""        
-        #return radial coordinate r_in for given i and n
-        #we double count joining points. It means we work in primitive basis/grid
-
-        """Note: this function must be generalized to account for FEMLIST"""
-
-        x = np.zeros(nlobatto)
-        w = np.zeros(nlobatto)
-        x, w = gauss_lobatto(nlobatto,14)
-        w = np.array(w)
-        x = np.array(x) # convert back to np arrays
-        xgrid = np.zeros( (nbins,nlobatto), dtype=float) 
-        
-        bingrid = np.zeros(nbins)
-        bingrid = x * 0.5 * binwidth + 0.5 * binwidth
-        xgrid[:,] = bingrid
-
-        Translvec = np.zeros(nbins)
-
-        for i in range(len(Translvec)):
-            Translvec[i] = float(i) * binwidth + rshift
-
-        for ibin in range(nbins):    
-            xgrid[ibin,:] += Translvec[ibin]
-
-        #print('\n'.join([' '.join(["  %12.4f"%item for item in row]) for row in xgrid]))
-
-        return xgrid, nlobatto * nbins
-
+  
     def gauss_lobatto(self,n, n_digits):
         """
         Computes the Gauss-Lobatto quadrature [1]_ points and weights.

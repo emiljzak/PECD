@@ -46,11 +46,11 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 20
+    params['bound_nbins']       = 4
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 30
+    params['prop_nbins']        = 6
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
