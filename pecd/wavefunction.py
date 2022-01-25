@@ -125,7 +125,7 @@ class Map():
                                 maparray.append([ibincount,n,xi,l,m,imap])
 
 
-        Nbas = imap
+        Nbas = imap + 1
         return maparray, Nbas
 
 
@@ -208,7 +208,7 @@ class Map():
                                 #print(l,m,ibincount,n,xi,imap)
                                 maparray.append([l,m,ibincount,n,xi,imap])
 
-        return maparray, imap
+        return maparray, imap +1
 
 
     def GEN_SPHLIST(self,lmax):

@@ -441,13 +441,22 @@ class Hamiltonian():
                     CFE[p] = l*(l+1)/Gr[ipoint]**2
                     print(p)
 
-        plt.plot(CFE)
-        plt.show()
+        #plt.plot(CFE)
+        #plt.show()
 
         return CFE
 
     def inflate(self,KD,KC):
-        
+        """
+        Inflates generic KD and KC matrices into the angular-radial basis in a single bin.
+
+        Returns: tuple
+                KD0: numpy 2D array, shape = ( (nlobs-1)*(lmax+1)**2 , (nlobs-1)*(lmax+1)**2 ) 
+                    Inflated KD matrix
+                KC0: numpy 2D array, shape = ( (lmax+1)**2, (nlobs-1)*(lmax+1)**2 ) 
+                    Inflated KC matrix
+        """
+
         lmax    = self.params['bound_lmax']
         nlobs   = self.params['bound_nlobs'] 
 
@@ -461,7 +470,7 @@ class Hamiltonian():
                 for l in range(lmax+1):
                     for m in range(-l,l+1):
 
-                        KD0[n1*(lmax+1)**2+l*(l+1)+m,n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
+                        KD0[n1*(lmax+1)**2+l*(l+1)+m, n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
 
 
         for n1 in range(nlobs-1):
@@ -470,9 +479,9 @@ class Hamiltonian():
                     KC0[l*(l+1)+m,n1*(lmax+1)**2+l*(l+1)+m] = KC[n1]
 
 
-        #plt.spy(K0, precision=1e-12, markersize=5, label="KEO")
-        #plt.legend()
-        #plt.show()
+        plt.spy(KC0, precision=1e-12, markersize=5, label="KEO")
+        plt.legend()
+        plt.show()
 
         return KD0, KC0
 
@@ -496,7 +505,7 @@ class Hamiltonian():
 
         print(KD0.shape)
         print(KC0.shape)
-
+        exit()
         for ibin in range(self.nbins-1):
             start_ind_kd.append(int(ibin*(nlobs-1)*(lmax+1)**2))
             end_ind_kd.append(int((ibin+1)*(nlobs-1)*(lmax+1)**2))
@@ -659,6 +668,16 @@ class Hamiltonian():
 
 
     def BUILD_KD(self,JMAT,w,N): #checked 1 May 2021
+        """
+        Calculates KD in coupled basis
+
+        Returns: numpy array
+                KD: numpy 1D array
+
+
+
+        """
+        
         Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) ) #+ w[N-1]
         
         Ws = np.zeros(len(w), dtype = float)
