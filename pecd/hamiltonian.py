@@ -383,13 +383,17 @@ class Hamiltonian():
 
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
         keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
-        #keomat_filt = self.filter_keomat(keomat.tocsr(copy=True))
-
+        #print("nnz of keomat = " + str(keomat.nnz))
+        #keomat_filt = self.filter_keomat(keomat.tocsr())
+        #print("nnz of keomat_filt = " + str(keomat_filt.nnz))
+        #exit()
         #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
 
 
-        #enr,coeffs =self.call_eigensolver(keomat)
-        #print(enr)
+        enr_old,coeffs =self.call_eigensolver(keomat_old)
+        enr,coeffs =self.call_eigensolver(keomat)
+        print(enr_old)
+        print(enr)
 
 
         #exit()
@@ -400,9 +404,9 @@ class Hamiltonian():
         #plot_mat(keomat)
         
         #print(keomat_filt-keomat_old)
-        #plt.spy(keomat, precision=1e-8, markersize=5, label="KEO")
+        plt.spy(keomat-keomat_old, precision=1e-8, markersize=5, label="KEO")
         #plt.legend()
-        #plt.show()
+        plt.show()
         #exit()
 
         #print size of KEO matrix
@@ -427,10 +431,10 @@ class Hamiltonian():
         CFE     = np.zeros(self.Nbas, dtype = float)
 
 
-        print(Gr)
+        #print(Gr)
 
-        print(self.Nbas)
-        print(Gr.shape[0])
+        #print(self.Nbas)
+        #print(Gr.shape[0])
        
 
         for ipoint in range(Gr.shape[0]):
@@ -439,7 +443,7 @@ class Hamiltonian():
                 for m in range(-l,l+1):
                     p = ipoint*(lmax+1)**2 + l*(l+1) + m
                     CFE[p] = l*(l+1)/Gr[ipoint]**2
-                    print(p)
+                    #print(p)
 
         #plt.plot(CFE)
         #plt.show()
@@ -510,18 +514,20 @@ class Hamiltonian():
         print(KD0.shape)
         print(KC0.shape)
 
+        Nang = (lmax+1)**2
+        Nu = (nlobs-1) * Nang
 
         #bins = 0,1,...,nbins-2
         for ibin in range(nbins-2):
             
-            start_ind_kd.append( ibin*(nlobs-1)*(lmax+1)**2 )
-            end_ind_kd.append( (ibin+1)*(nlobs-1)*(lmax+1)**2-1 )
+            start_ind_kd.append( ibin*Nu )
+            end_ind_kd.append( (ibin+1)*Nu-1 ) #checked manually. OK.
 
-            start_ind_row_kc.append(end_ind_kd[ibin] - (lmax+1)**2 +1 )
-            end_ind_row_kc.append( end_ind_kd[ibin]  )
+            start_ind_row_kc.append(( (ibin+1)*(nlobs-1)-1)*Nang )
+            end_ind_row_kc.append( (ibin+1)*Nu-1)
 
-            start_ind_col_kc.append( (ibin+1)*(nlobs-1)*(lmax+1)**2 )
-            end_ind_col_kc.append( (ibin+2)*(nlobs-1)*(lmax+1)**2 - 1 )
+            start_ind_col_kc.append( (ibin+1)*Nu )
+            end_ind_col_kc.append( (ibin+2)*Nu - 1 )
 
 
             print("start_ind_kd for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
@@ -542,16 +548,19 @@ class Hamiltonian():
 
 
 
+        #last two bins are special
 
-        start_ind_kd.append( (nbins-2)*(nlobs-1)*(lmax+1)**2 )
-        end_ind_kd.append( (nbins-1)*(nlobs-1)*(lmax+1)**2-1 )
+        #one to last has bridges but shorter by one grid point:
 
-        start_ind_row_kc.append(end_ind_kd[nbins-3] - (lmax+1)**2 +1 )
-        end_ind_row_kc.append( end_ind_kd[nbins-3]  )
+        start_ind_kd.append( (nbins-2)*Nu )
+        end_ind_kd.append( (nbins-1)*Nu-1 ) #checked manually. OK.
 
-        start_ind_col_kc.append( (nbins-1)*(nlobs-1)*(lmax+1)**2 )
-        end_ind_col_kc.append( (nbins)*(nlobs-1)*(lmax+1)**2 - 1 )
+        start_ind_row_kc.append( ((nbins-1)*(nlobs-1)-1)*Nang )
+        end_ind_row_kc.append( (nbins-1)*Nu-1)
 
+        start_ind_col_kc.append( (nbins-1)*Nu )
+        end_ind_col_kc.append( (nbins * (nlobs - 1) -1)*Nang -1 )
+    
 
         print("start_ind_kd for i = " + str(nbins-2) + " = " + str(start_ind_kd[nbins-2]))
         print("end_ind_kd for i = " + str(nbins-2) + " = " + str(end_ind_kd[nbins-2]))
@@ -562,52 +571,21 @@ class Hamiltonian():
         print("start_ind_col_kc for i = " + str(nbins-2) + " = " + str(start_ind_col_kc[nbins-2]))
         print("end_ind_col_kc for i = " + str(nbins-2) + " = " + str(end_ind_col_kc[nbins-2]))
 
-        keomat[ start_ind_kd[nbins-2]:end_ind_kd[nbins-2]+1, start_ind_kd[nbins-2]:end_ind_kd[nbins-2]+1 ] = KD0[:(nlobs-1)*(lmax+1)**2,:(nlobs-1)*(lmax+1)**2]
+        keomat[ start_ind_kd[nbins-2]:end_ind_kd[nbins-2]+1, start_ind_kd[nbins-2]:end_ind_kd[nbins-2]+1 ] = KD0
         
-        start_ind_row_kc.append(end_ind_kd[nbins-2] - (lmax+1)**2 +1 )
-        end_ind_row_kc.append( end_ind_kd[nbins-2]  )
-
-        start_ind_col_kc.append( (nbins-1)*(nlobs-1)*(lmax+1)**2 )
-        end_ind_col_kc.append( (nbins)*(nlobs-1)*(lmax+1)**2 - 1 )
-
-        keomat[ start_ind_row_kc[nbins-1]:end_ind_row_kc[nbins-1]+1, start_ind_col_kc[nbins-1]:end_ind_col_kc[nbins-1]+1 ] = KC0[:,:(nlobs-2)*(lmax+1)**2]
-        keomat[ start_ind_col_kc[nbins-1]:end_ind_col_kc[nbins-1]+1, start_ind_row_kc[nbins-1]:end_ind_row_kc[nbins-1]+1 ] = KC0.T[:(nlobs-2)*(lmax+1)**2,:]
+        keomat[ start_ind_row_kc[nbins-2]:end_ind_row_kc[nbins-2]+1, start_ind_col_kc[nbins-2]:end_ind_col_kc[nbins-2]+1 ] = KC0[:,:(nlobs-2)*(lmax+1)**2]
+        keomat[ start_ind_col_kc[nbins-2]:end_ind_col_kc[nbins-2]+1, start_ind_row_kc[nbins-2]:end_ind_row_kc[nbins-2]+1 ] = KC0.T[:(nlobs-2)*(lmax+1)**2,:] #Checked
     
         #last bin (no coupling with bridges)
       
-        start_ind_kd.append( (nbins-1)*(nlobs-1)*(lmax+1)**2 )
-        end_ind_kd.append( (nbins)*(nlobs-1)*(lmax+1)**2-1 )
+        start_ind_kd.append( (nbins-1)*(nlobs-1)*Nang )
+        end_ind_kd.append( ( nbins*(nlobs-1)-1)*Nang-1 )
 
         keomat[ start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1, start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1 ] = KD0[:(nlobs-2)*(lmax+1)**2,:(nlobs-2)*(lmax+1)**2]
         
         return keomat
 
-    @staticmethod
-    @jit(nopython=True)
-    def fillup_keo_jit(KD,KC,Gr,klist,nlobs,Nbas):
-
-        keomat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
-
-        for i in range(klist.shape[0]):
-            if klist[i,0] == klist[i,2]:
-                #diagonal blocks
-                #print(klist[i,1],klist[i,3])
-                keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
-
-                if klist[i,1] == klist[i,3]:
-                    rin = Gr[ klist[i,0]*(nlobs-1)+ klist[i,1]  ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
-                    #print(rin)
-                    keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
-
-            elif klist[i,0] == klist[i,2] - 1: # i = i' - 1
-                #off-diagonal blocks
-                if klist[i,1] == nlobs - 1 : #last n
-                    # u_bs and u_bb:
-                    keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
-                               
-        return keomat
-
-
+  
     def fillup_keo(self,KD,KC,Gr,klist):
 
         nlobs = self.params['bound_nlobs'] 
