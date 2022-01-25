@@ -5,11 +5,11 @@
 #
 
 from scipy import special
-
+from scipy.sparse.linalg import  eigsh
 #import mapping
 #import POTENTIAL
 #import GRID
-#import CONSTANTS
+import constants
 
 import numpy as np
 from numpy.linalg import multi_dot
@@ -211,6 +211,59 @@ class Hamiltonian():
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
 
+    
+    
+    
+    def call_eigensolver(self,A):
+        if self.params['ARPACK_enr_guess'] == None:
+            print("No eigenvalue guess defined")
+        else:
+            self.params['ARPACK_enr_guess'] /= constants.au_to_ev
+
+
+        if self.params['ARPACK_which'] == 'LA':
+            print("using which = LA option in ARPACK: changing sign of the Hamiltonian")
+            
+            #B = A.copy()
+            #B = B-A.getH()
+            #print(B.count_nonzero())
+            #if not B.count_nonzero()==0:
+            #    raise ValueError('expected symmetric or Hermitian matrix!')
+
+            enr, coeffs = eigsh(    -1.0 * A, k = self.params['num_ini_vec'], 
+                                    which=self.params['ARPACK_which'] , 
+                                    sigma=self.params['ARPACK_enr_guess'],
+                                    return_eigenvectors=True, 
+                                    mode='normal', 
+                                    tol = self.params['ARPACK_tol'],
+                                    maxiter = self.params['ARPACK_maxiter'])
+            enr *= -1.0
+            enr = np.sort(enr)
+
+            coeffs_sorted = np.copy(coeffs)
+
+            for i in range(self.params['num_ini_vec']):
+                coeffs_sorted[:,i] = coeffs[:,self.params['num_ini_vec']-i-1]
+            coeffs = coeffs_sorted
+
+
+        else:
+            enr, coeffs = eigsh(    A, k = self.params['num_ini_vec'], 
+                                    which=self.params['ARPACK_which'] , 
+                                    sigma=self.params['ARPACK_enr_guess'],
+                                    return_eigenvectors=True, 
+                                    mode='normal', 
+                                    tol = self.params['ARPACK_tol'],
+                                    maxiter = self.params['ARPACK_maxiter'])
+
+        print(coeffs.shape)
+        print(enr.shape)
+        #sort coeffs
+
+        return enr, coeffs
+    
+    
+    
     @staticmethod
     @jit(nopython=True,parallel=False,fastmath=False)
     def gen_klist_jit(Nbas,maparray):
@@ -257,13 +310,6 @@ class Hamiltonian():
 
         nlobs = self.params['bound_nlobs'] 
 
-        if self.params['hmat_format'] == 'numpy_arr':    
-            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
-        elif self.params['hmat_format'] == 'sparse_csr':
-            keomat = sparse.csr_matrix((self.Nbas, self.Nbas), dtype=float)
-        else:
-            raise ValueError("Incorrect format type for the Hamiltonian")
-
         x = self.params['x']
         w = self.params['w']
         #x = np.asarray(x, dtype = float)
@@ -277,7 +323,7 @@ class Hamiltonian():
 
         #using numba jit:
         start_time = time.time()
-        klist = self.call_gen_klist_jit(self.Nbas)
+        #klist = self.call_gen_klist_jit(self.Nbas)
         end_time = time.time()
         print("JIT First run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -322,9 +368,100 @@ class Hamiltonian():
         #plt.show()
 
         Gr = self.Gr
+       # klist = np.asarray(klist, dtype=int)
+
+
+        K0 = self.build_K0(KD,KC)
 
         """ Fill up global KEO """
-        klist = np.asarray(klist, dtype=int)
+        #keomat = self.fillup_keo(KD,KC,Gr,klist)
+        
+        #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
+        keomat = self.fillup_keo_lil_np(K0,Gr)
+
+
+        #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
+
+
+        #enr,coeffs =self.call_eigensolver(keomat)
+        #print(enr)
+
+
+        #exit()
+        #print("KEO matrix")
+        #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
+        #    print(0.5*keomat)
+    
+        #plot_mat(keomat)
+        #plt.spy(keomat, precision=1e-12, markersize=5, label="KEO")
+        #plt.legend()
+        #plt.show()
+        #exit()
+
+        #print size of KEO matrix
+        #keo_csr_size = keomat.data.size/(1024**2)
+        #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
+
+        return  0.5 * keomat 
+
+
+    def build_K0(self,KD,KC):
+        lmax = self.params['bound_lmax']
+        nlobs = self.params['bound_nlobs'] 
+        K0 = np.zeros( ((nlobs-1)*(lmax+1)**2, (nlobs-1)*(lmax+1)**2), dtype=float)
+
+        print((nlobs-1)*(lmax+1)**2)
+
+        for n1 in range(nlobs-1):
+            for n2 in range(nlobs-1):
+                for l in range(lmax+1):
+                    for m in range(-l,l+1):
+
+                        K0[n1*(lmax+1)**2+l*(l+1)+m,n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
+
+        #plt.spy(K0, precision=1e-12, markersize=5, label="KEO")
+        #plt.legend()
+        #plt.show()
+
+        return K0
+
+
+    def fillup_keo_lil_np(self,K0,Gr):
+        lmax = self.params['bound_lmax']
+        nlobs = self.params['bound_nlobs']
+
+        print("Nbas = " + str(self.Nbas))
+        print("predicted Nbas = " + str(int((self.nbins)*(nlobs-1)*(lmax+1)**2)))
+        if self.params['hmat_format'] == 'numpy_arr':    
+            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
+        elif self.params['hmat_format'] == 'sparse_csr':
+            keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+
+
+
+        start_ind_kd    = []
+        end_ind_kd      = []
+
+        print(K0.shape)
+
+        for ibin in range(self.nbins-1):
+            start_ind_kd.append(int(ibin*(nlobs-1)*(lmax+1)**2))
+            end_ind_kd.append(int((ibin+1)*(nlobs-1)*(lmax+1)**2))
+
+            #print("start_ind for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
+            #print("end_ind for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]-1))
+
+            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = K0
+
+        return keomat
+
+    @staticmethod
+    @jit(nopython=True)
+    def fillup_keo_jit(KD,KC,Gr,klist,nlobs,Nbas):
+
+        keomat = sparse.csr_matrix((Nbas, Nbas), dtype=float)
 
         for i in range(klist.shape[0]):
             if klist[i,0] == klist[i,2]:
@@ -342,28 +479,70 @@ class Hamiltonian():
                 if klist[i,1] == nlobs - 1 : #last n
                     # u_bs and u_bb:
                     keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
-                                    
-                # print("n = " + str(klist[i,1]) + ",  n' in u_bs = " + str(klist[i,3] ))
+                               
+        return keomat
+
+
+    def fillup_keo(self,KD,KC,Gr,klist):
+
+        nlobs = self.params['bound_nlobs'] 
+        if self.params['hmat_format'] == 'numpy_arr':    
+            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
+        elif self.params['hmat_format'] == 'sparse_csr':
+            keomat = sparse.csr_matrix((self.Nbas, self.Nbas), dtype=float)
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+
+        for i in range(klist.shape[0]):
+            if klist[i,0] == klist[i,2]:
+                #diagonal blocks
+                #print(klist[i,1],klist[i,3])
+                keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
+
+                if klist[i,1] == klist[i,3]:
+                    rin = Gr[ klist[i,0]*(nlobs-1)+ klist[i,1]  ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
+                    #print(rin)
+                    keomat[ klist[i,5], klist[i,6] ] +=  float(klist[i,4]) * ( float(klist[i,4]) + 1) / rin**2 
+
+            elif klist[i,0] == klist[i,2] - 1: # i = i' - 1
+                #off-diagonal blocks
+                if klist[i,1] == nlobs - 1 : #last n
+                    # u_bs and u_bb:
+                    keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
+                               
+        return keomat
 
 
 
-        #exit()
-        #print("KEO matrix")
-        #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-        #    print(0.5*keomat)
-    
-        plot_mat(keomat)
-        plt.spy(keomat, precision=1e-12, markersize=5, label="KEO")
-        #plt.legend()
-        plt.show()
-        exit()
+    def fillup_keo_lil(self,KD,KC,Gr,klist):
 
-        #print size of KEO matrix
-        #keo_csr_size = keomat.data.size/(1024**2)
-        #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
+        nlobs = self.params['bound_nlobs'] 
+        if self.params['hmat_format'] == 'numpy_arr':    
+            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
+        elif self.params['hmat_format'] == 'sparse_csr':
+            keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
 
-        return  0.5 * keomat 
+        start_ind_kd    = []
+        end_ind_kd      = []
 
+        start_ind_kc    = []
+        end_ind_kc      = []
+      
+
+        for ibin in range(self.nbins):
+            start_ind_kd.append(int(ibin*(nlobs-1)))
+            end_ind_kd.append(start_ind_kd[ibin]+nlobs-1)
+
+            print("start_ind for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
+            print("end_ind for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]-1))
+
+            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = KD
+            keomat[ end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = KC
+            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], end_ind_kd[ibin] ] = KC
+
+        return keomat
 
     def build_pot(self):
         return 0
@@ -447,7 +626,7 @@ class Hamiltonian():
 
         #s-s:
         for n1 in range(0, N-2):
-            for n2 in range(n1, N-2):
+            for n2 in range(0, N-2):
                 KD[n1,n2] = JMAT[n1 + 1, n2 + 1] # Ws[n1 + 1] * Ws[n2 + 1] *  #checked. Note the shift between J-matrix and tss or Kd matrices.
 
         return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)

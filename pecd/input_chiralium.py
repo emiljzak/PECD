@@ -32,7 +32,7 @@ def read_input():
 
 
 
-    params['job_label']    = "daytest" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "keotest" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     
     """====== Basis set parameters ======"""
     """ 
@@ -42,14 +42,14 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 10
+    params['bound_nbins']       = 50
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
-    params['prop_nbins']        = 20
+    params['prop_nbins']        = 30
 
 
     params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
