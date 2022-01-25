@@ -368,17 +368,21 @@ class Hamiltonian():
         #plt.show()
 
         Gr = self.Gr
+        #print(Gr.shape)
+        #exit()
        # klist = np.asarray(klist, dtype=int)
 
 
-        K0 = self.build_K0(KD,KC)
-
+        KD0,KC0 = self.build_K0(KD,KC)
+        CFE = self.build_CFE(Gr)
         """ Fill up global KEO """
         #keomat = self.fillup_keo(KD,KC,Gr,klist)
         
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
-        keomat = self.fillup_keo_lil_np(K0,Gr)
+        keomat = self.fillup_keo_lil_np(KD0,KC0,CFE)
 
+
+        keomat_filt = self.filter_keomat(keomat.tocsr(copy=True))
 
         #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
 
@@ -393,7 +397,8 @@ class Hamiltonian():
         #    print(0.5*keomat)
     
         #plot_mat(keomat)
-        #plt.spy(keomat, precision=1e-12, markersize=5, label="KEO")
+        
+        #plt.spy(keomat_filt, precision=1e-12, markersize=5, label="KEO")
         #plt.legend()
         #plt.show()
         #exit()
@@ -404,38 +409,78 @@ class Hamiltonian():
 
         return  0.5 * keomat 
 
+    def filter_keomat(self,keomat):
+
+        nonzero_mask        = np.array(np.abs(keomat[keomat.nonzero()]) < 1e-14)[0]
+        rows                = keomat.nonzero()[0][nonzero_mask]
+        cols                = keomat.nonzero()[1][nonzero_mask]
+        keomat[rows, cols]    = 0
+        keomat_filtered        = keomat.copy()
+
+        return keomat_filtered
+
+    def build_CFE(self,Gr):
+        lmax = self.params['bound_lmax']
+        CFE = np.zeros(self.Nbas, dtype = float)
+
+        for ipoint in range(Gr.shape[0]):
+            
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    p = ipoint*(lmax+1)**2 + l*(l+1) + m -1
+                    CFE[p] = l*(l+1)/Gr[ipoint]**2
+        return CFE
 
     def build_K0(self,KD,KC):
+        
         lmax = self.params['bound_lmax']
         nlobs = self.params['bound_nlobs'] 
-        K0 = np.zeros( ((nlobs-1)*(lmax+1)**2, (nlobs-1)*(lmax+1)**2), dtype=float)
+
+        KD0 = np.zeros( ((nlobs-1)*(lmax+1)**2, (nlobs-1)*(lmax+1)**2), dtype=float)
+        KC0 = np.zeros( ((lmax+1)**2, (nlobs-1)*(lmax+1)**2), dtype=float)
+
 
         print((nlobs-1)*(lmax+1)**2)
 
         for n1 in range(nlobs-1):
+
             for n2 in range(nlobs-1):
+                #put the indices below into a list and slice for vectorization
                 for l in range(lmax+1):
                     for m in range(-l,l+1):
 
-                        K0[n1*(lmax+1)**2+l*(l+1)+m,n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
+                        KD0[n1*(lmax+1)**2+l*(l+1)+m,n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
+
+
+
+        for n1 in range(nlobs-1):
+            for l in range(lmax+1):
+                for m in range(-l,l+1):
+                    KC0[l*(l+1)+m,n1*(lmax+1)**2+l*(l+1)+m] = KC[n1]
+
 
         #plt.spy(K0, precision=1e-12, markersize=5, label="KEO")
         #plt.legend()
         #plt.show()
 
-        return K0
+        return KD0, KC0
 
 
-    def fillup_keo_lil_np(self,K0,Gr):
+    def fillup_keo_lil_np(self,KD0,KC0,CFE):
+
         lmax = self.params['bound_lmax']
         nlobs = self.params['bound_nlobs']
+
+
 
         print("Nbas = " + str(self.Nbas))
         print("predicted Nbas = " + str(int((self.nbins)*(nlobs-1)*(lmax+1)**2)))
         if self.params['hmat_format'] == 'numpy_arr':    
             keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
         elif self.params['hmat_format'] == 'sparse_csr':
-            keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
+
+            keomat = sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float,format="lil")
+            #keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
 
@@ -444,16 +489,23 @@ class Hamiltonian():
         start_ind_kd    = []
         end_ind_kd      = []
 
-        print(K0.shape)
+        start_ind_kc    = []
+        end_ind_kc      = []
+
+        print(KD0.shape)
+        print(KC0.shape)
 
         for ibin in range(self.nbins-1):
             start_ind_kd.append(int(ibin*(nlobs-1)*(lmax+1)**2))
             end_ind_kd.append(int((ibin+1)*(nlobs-1)*(lmax+1)**2))
 
+            start_ind_kc.append(int((ibin)*(nlobs-1)*(lmax+1)**2))
+            end_ind_kc.append(int((ibin+1)*(nlobs-1)*(lmax+1)**2))
             #print("start_ind for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
             #print("end_ind for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]-1))
 
-            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = K0
+            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = KD0
+            keomat[ (end_ind_kd[ibin]-(lmax+1)**2+1):end_ind_kd[ibin]+1, start_ind_kc[ibin]:end_ind_kc[ibin] ] = KC0
 
         return keomat
 
