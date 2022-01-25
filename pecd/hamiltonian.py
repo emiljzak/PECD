@@ -323,7 +323,7 @@ class Hamiltonian():
 
         #using numba jit:
         start_time = time.time()
-        #klist = self.call_gen_klist_jit(self.Nbas)
+        klist = self.call_gen_klist_jit(self.Nbas)
         end_time = time.time()
         print("JIT First run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -370,18 +370,19 @@ class Hamiltonian():
         Gr = self.Gr
         #print(Gr.shape)
         #exit()
-       # klist = np.asarray(klist, dtype=int)
+        """ OLD implementation"""
+        klist = np.asarray(klist, dtype=int)
+        keomat_old = self.fillup_keo(KD,KC,Gr,klist)
 
 
-        KD0,KC0 = self.build_K0(KD,KC)
-        CFE = self.build_CFE(Gr)
-        """ Fill up global KEO """
-        #keomat = self.fillup_keo(KD,KC,Gr,klist)
-        
+        """ New implementation"""
+        #inflate KD, KC and CFE
+        KD_infl,KC_infl = self.inflate(KD,KC)
+        CFE             = self.build_CFE(Gr)
+
+
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
-        keomat = self.fillup_keo_lil_np(KD0,KC0,CFE)
-
-
+        keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
         keomat_filt = self.filter_keomat(keomat.tocsr(copy=True))
 
         #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
@@ -398,9 +399,10 @@ class Hamiltonian():
     
         #plot_mat(keomat)
         
-        #plt.spy(keomat_filt, precision=1e-12, markersize=5, label="KEO")
+        print(keomat_filt-keomat_old)
+        plt.spy(keomat-keomat_old, precision=1e-8, markersize=5, label="KEO")
         #plt.legend()
-        #plt.show()
+        plt.show()
         #exit()
 
         #print size of KEO matrix
@@ -420,37 +422,46 @@ class Hamiltonian():
         return keomat_filtered
 
     def build_CFE(self,Gr):
-        lmax = self.params['bound_lmax']
-        CFE = np.zeros(self.Nbas, dtype = float)
+
+        lmax    = self.params['bound_lmax']
+        CFE     = np.zeros(self.Nbas, dtype = float)
+
+
+        print(Gr)
+
+        print(self.Nbas)
+        print(Gr.shape[0])
+       
 
         for ipoint in range(Gr.shape[0]):
             
             for l in range(lmax+1):
                 for m in range(-l,l+1):
-                    p = ipoint*(lmax+1)**2 + l*(l+1) + m -1
+                    p = ipoint*(lmax+1)**2 + l*(l+1) + m
                     CFE[p] = l*(l+1)/Gr[ipoint]**2
+                    print(p)
+
+        plt.plot(CFE)
+        plt.show()
+
         return CFE
 
-    def build_K0(self,KD,KC):
+    def inflate(self,KD,KC):
         
-        lmax = self.params['bound_lmax']
-        nlobs = self.params['bound_nlobs'] 
+        lmax    = self.params['bound_lmax']
+        nlobs   = self.params['bound_nlobs'] 
 
         KD0 = np.zeros( ((nlobs-1)*(lmax+1)**2, (nlobs-1)*(lmax+1)**2), dtype=float)
         KC0 = np.zeros( ((lmax+1)**2, (nlobs-1)*(lmax+1)**2), dtype=float)
 
 
-        print((nlobs-1)*(lmax+1)**2)
-
         for n1 in range(nlobs-1):
-
             for n2 in range(nlobs-1):
                 #put the indices below into a list and slice for vectorization
                 for l in range(lmax+1):
                     for m in range(-l,l+1):
 
                         KD0[n1*(lmax+1)**2+l*(l+1)+m,n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
-
 
 
         for n1 in range(nlobs-1):
@@ -468,23 +479,14 @@ class Hamiltonian():
 
     def fillup_keo_lil_np(self,KD0,KC0,CFE):
 
-        lmax = self.params['bound_lmax']
-        nlobs = self.params['bound_nlobs']
-
-
+        lmax    = self.params['bound_lmax']
+        nlobs   = self.params['bound_nlobs']
 
         print("Nbas = " + str(self.Nbas))
-        print("predicted Nbas = " + str(int((self.nbins)*(nlobs-1)*(lmax+1)**2)))
-        if self.params['hmat_format'] == 'numpy_arr':    
-            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
-        elif self.params['hmat_format'] == 'sparse_csr':
+        print("predicted Nbas = " + str(int(((self.nbins)*(nlobs-1)-1)*(lmax+1)**2)))
 
-            keomat = sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float,format="lil")
-            #keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
-        else:
-            raise ValueError("Incorrect format type for the Hamiltonian")
-
-
+        keomat = sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil")
+        #keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
 
         start_ind_kd    = []
         end_ind_kd      = []

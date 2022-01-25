@@ -173,7 +173,7 @@ class Map():
                                 #print(ibincount,n,xi,l,m,imap)
                                 maparray.append([ibincount,n,xi,l,m,imap])
 
-        Nbas = imap
+        Nbas = imap + 1
 
         return maparray, Nbas
 
