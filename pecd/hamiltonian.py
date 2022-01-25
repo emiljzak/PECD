@@ -402,9 +402,9 @@ class Hamiltonian():
         #    print(0.5*keomat)
     
         #plot_mat(keomat)
-        
-        #print(keomat_filt-keomat_old)
-        plt.spy(keomat-keomat_old, precision=1e-8, markersize=5, label="KEO")
+        #plot_mat(keomat_old)
+        #print(keomatt_old)
+        #plt.spy(keomat, precision=1e-8, markersize=5, label="KEO")
         #plt.legend()
         plt.show()
         #exit()
@@ -498,8 +498,8 @@ class Hamiltonian():
         print("Nbas = " + str(self.Nbas))
         print("predicted Nbas = " + str(int(((self.nbins)*(nlobs-1)-1)*(lmax+1)**2)))
 
-        keomat = sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil")
-        #keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
+        #keomat_diag = sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil")
+        keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
 
         start_ind_kd    = []
         end_ind_kd      = []
@@ -583,6 +583,9 @@ class Hamiltonian():
 
         keomat[ start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1, start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1 ] = KD0[:(nlobs-2)*(lmax+1)**2,:(nlobs-2)*(lmax+1)**2]
         
+
+        keomat +=  sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil")
+
         return keomat
 
   
@@ -600,7 +603,7 @@ class Hamiltonian():
             if klist[i,0] == klist[i,2]:
                 #diagonal blocks
                 #print(klist[i,1],klist[i,3])
-                keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] - 1, klist[i,3] - 1 ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
+                keomat[ klist[i,5], klist[i,6] ] += KD[ klist[i,1] , klist[i,3]  ] #basis indices start from 1. But Kd array starts from 0 although its elems correspond to basis starting from n=1.
 
                 if klist[i,1] == klist[i,3]:
                     rin = Gr[ klist[i,0]*(nlobs-1)+ klist[i,1]  ] #note that grid contains all points, including n=0. Note that i=0,1,2,... and n=1,2,3... in maparray
@@ -611,41 +614,16 @@ class Hamiltonian():
                 #off-diagonal blocks
                 if klist[i,1] == nlobs - 1 : #last n
                     # u_bs and u_bb:
-                    keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3] - 1 ]
+                    keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3]  ]
                                
         return keomat
 
 
 
-    def fillup_keo_lil(self,KD,KC,Gr,klist):
+    def fillup_keo_csr_jit(self):
+        #build csr matrix from (data, (row,col))
+        
 
-        nlobs = self.params['bound_nlobs'] 
-        if self.params['hmat_format'] == 'numpy_arr':    
-            keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
-        elif self.params['hmat_format'] == 'sparse_csr':
-            keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
-        else:
-            raise ValueError("Incorrect format type for the Hamiltonian")
-
-        start_ind_kd    = []
-        end_ind_kd      = []
-
-        start_ind_kc    = []
-        end_ind_kc      = []
-      
-
-        for ibin in range(self.nbins):
-            start_ind_kd.append(int(ibin*(nlobs-1)))
-            end_ind_kd.append(start_ind_kd[ibin]+nlobs-1)
-
-            print("start_ind for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
-            print("end_ind for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]-1))
-
-            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = KD
-            keomat[ end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = KC
-            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], end_ind_kd[ibin] ] = KC
-
-        return keomat
 
     def build_pot(self):
         return 0
@@ -672,7 +650,7 @@ class Hamiltonian():
                 if mu != n:
                     Dd[n] += (x[n]-x[mu])**(-1)
 
-        print(type(w[N-1]))
+       
 
         for n in range(N):
             DMAT[n,n] += Dd[n]/np.sqrt(w[n])
@@ -2068,7 +2046,7 @@ def heatmap( data, row_labels, col_labels, ax=None,
     im = ax.imshow(np.abs(data), **kwargs)
 
     # Create colorbar
-    im.set_clim(0,np.max(np.abs(data)) ) #np.max(np.abs(data))
+    im.set_clim(0,2 ) #np.max(np.abs(data))
     cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
