@@ -383,7 +383,7 @@ class Hamiltonian():
 
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
         keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
-        keomat_filt = self.filter_keomat(keomat.tocsr(copy=True))
+        #keomat_filt = self.filter_keomat(keomat.tocsr(copy=True))
 
         #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
 
@@ -399,8 +399,8 @@ class Hamiltonian():
     
         #plot_mat(keomat)
         
-        print(keomat_filt-keomat_old)
-        plt.spy(keomat-keomat_old, precision=1e-8, markersize=5, label="KEO")
+        #print(keomat_filt-keomat_old)
+        plt.spy(keomat, precision=1e-8, markersize=5, label="KEO")
         #plt.legend()
         plt.show()
         #exit()
@@ -479,9 +479,9 @@ class Hamiltonian():
                     KC0[l*(l+1)+m,n1*(lmax+1)**2+l*(l+1)+m] = KC[n1]
 
 
-        plt.spy(KC0, precision=1e-12, markersize=5, label="KEO")
-        plt.legend()
-        plt.show()
+        #plt.spy(KD0, precision=1e-12, markersize=5, label="KEO")
+        #plt.legend()
+        #plt.show()
 
         return KD0, KC0
 
@@ -490,7 +490,7 @@ class Hamiltonian():
 
         lmax    = self.params['bound_lmax']
         nlobs   = self.params['bound_nlobs']
-
+        nbins   = self.nbins
         print("Nbas = " + str(self.Nbas))
         print("predicted Nbas = " + str(int(((self.nbins)*(nlobs-1)-1)*(lmax+1)**2)))
 
@@ -500,24 +500,70 @@ class Hamiltonian():
         start_ind_kd    = []
         end_ind_kd      = []
 
-        start_ind_kc    = []
-        end_ind_kc      = []
+        start_ind_col_kc    = []
+        end_ind_col_kc      = []
+
+        start_ind_row_kc    = []
+        end_ind_row_kc      = []
+
 
         print(KD0.shape)
         print(KC0.shape)
-        exit()
-        for ibin in range(self.nbins-1):
-            start_ind_kd.append(int(ibin*(nlobs-1)*(lmax+1)**2))
-            end_ind_kd.append(int((ibin+1)*(nlobs-1)*(lmax+1)**2))
 
-            start_ind_kc.append(int((ibin)*(nlobs-1)*(lmax+1)**2))
-            end_ind_kc.append(int((ibin+1)*(nlobs-1)*(lmax+1)**2))
-            #print("start_ind for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
-            #print("end_ind for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]-1))
 
-            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin], start_ind_kd[ibin]:end_ind_kd[ibin] ] = KD0
-            keomat[ (end_ind_kd[ibin]-(lmax+1)**2+1):end_ind_kd[ibin]+1, start_ind_kc[ibin]:end_ind_kc[ibin] ] = KC0
+        #bins = 0,1,...,nbins-2
+        for ibin in range(nbins-2):
+            
+            start_ind_kd.append( ibin*(nlobs-1)*(lmax+1)**2 )
+            end_ind_kd.append( (ibin+1)*(nlobs-1)*(lmax+1)**2-1 )
 
+            start_ind_row_kc.append(end_ind_kd[ibin] - (lmax+1)**2 +1 )
+            end_ind_row_kc.append( end_ind_kd[ibin]  )
+
+            start_ind_col_kc.append( (ibin+1)*(nlobs-1)*(lmax+1)**2 )
+            end_ind_col_kc.append( (ibin+2)*(nlobs-1)*(lmax+1)**2 - 1 )
+
+
+            print("start_ind_kd for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
+            print("end_ind_kd for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]))
+
+            print("start_ind_row_kc for i = " + str(ibin) + " = " + str(start_ind_row_kc[ibin]))
+            print("end_ind_row_kc for i = " + str(ibin) + " = " + str(end_ind_row_kc[ibin]))
+
+            print("start_ind_col_kc for i = " + str(ibin) + " = " + str(start_ind_col_kc[ibin]))
+            print("end_ind_col_kc for i = " + str(ibin) + " = " + str(end_ind_col_kc[ibin]))
+
+
+            keomat[ start_ind_kd[ibin]:end_ind_kd[ibin]+1, start_ind_kd[ibin]:end_ind_kd[ibin]+1 ] = KD0
+            
+            keomat[ start_ind_row_kc[ibin]:end_ind_row_kc[ibin]+1, start_ind_col_kc[ibin]:end_ind_col_kc[ibin]+1 ] = KC0
+            keomat[ start_ind_col_kc[ibin]:end_ind_col_kc[ibin]+1, start_ind_row_kc[ibin]:end_ind_row_kc[ibin]+1 ] = KC0.T
+
+
+
+
+
+        start_ind_kd.append( (nbins-2)*(nlobs-1)*(lmax+1)**2 )
+        end_ind_kd.append( (nbins-1)*(nlobs-1)*(lmax+1)**2-1 )
+
+        start_ind_row_kc.append(end_ind_kd[nbins-2] - (lmax+1)**2 +1 )
+        end_ind_row_kc.append( end_ind_kd[nbins-2]  )
+
+        start_ind_col_kc.append( (nbins-1)*(nlobs-1)*(lmax+1)**2 )
+        end_ind_col_kc.append( (nbins)*(nlobs-1)*(lmax+1)**2 - 1 )
+
+
+        print("start_ind_kd for i = " + str(ibin) + " = " + str(start_ind_kd[nbins-1]))
+        print("end_ind_kd for i = " + str(ibin) + " = " + str(end_ind_kd[nbins-1]))
+
+        print("start_ind_row_kc for i = " + str(ibin) + " = " + str(start_ind_row_kc[nbins-1]))
+        print("end_ind_row_kc for i = " + str(ibin) + " = " + str(end_ind_row_kc[nbins-1]))
+
+        print("start_ind_col_kc for i = " + str(ibin) + " = " + str(start_ind_col_kc[nbins-1]))
+        print("end_ind_col_kc for i = " + str(ibin) + " = " + str(end_ind_col_kc[nbins-1]))
+
+        keomat[ start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1, start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1 ] = KD0
+          
         return keomat
 
     @staticmethod
