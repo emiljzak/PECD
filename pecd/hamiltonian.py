@@ -645,13 +645,13 @@ class Hamiltonian():
         print("Shape of data: " + str(data.shape))
         #indices = np.empty((nbins*Nu*Nu),dtype=int)
         
-        ind_block = np.arange(0, Nu,dtype=int,step=1)
+        ind_block = np.empty(0)
         for i in range(nbins):
-            ind_block = np.vstack((ind_block,ind_block))
+            for n in range(Nu):
+                ind_block = np.append(ind_block,np.arange(i*Nu,(i+1)*Nu,dtype=int,step=1))
    
         indices = ind_block.flatten()
-        print(ind_block.flatten())
-    
+        
         print("Shape of indices: " + str(indices.shape))
     
         keo = sparse.csr_matrix((data, indices, indptr), shape=(Nbas,Nbas))
