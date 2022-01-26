@@ -41,11 +41,11 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
-    params['bound_binw_arr']    = (2.0,2.0,1)
+    params['bound_nlobs_arr']   = (4,4,1)
+    params['bound_lmax_arr']    = (1,1,1)
+    params['bound_binw_arr']    = (3.0,3.0,1)
 
-    params['bound_nbins']       = 6
+    params['bound_nbins']       = 3
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
@@ -176,7 +176,7 @@ def read_input():
         params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-15 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
 
-        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
+        params['num_ini_vec']           = 100 # number of initial wavefunctions (orbitals) stored in file
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         #params['']

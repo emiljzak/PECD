@@ -372,7 +372,7 @@ class Hamiltonian():
         #exit()
         """ OLD implementation"""
         klist = np.asarray(klist, dtype=int)
-        keomat_old = self.fillup_keo(KD,KC,Gr,klist)
+        #keomat_old = self.fillup_keo(KD,KC,Gr,klist)
 
 
         """ New implementation"""
@@ -380,6 +380,16 @@ class Hamiltonian():
         KD_infl,KC_infl = self.inflate(KD,KC)
         CFE             = self.build_CFE(Gr)
 
+        lmax    = self.params['bound_lmax']
+        nlobs   = self.params['bound_nlobs']
+        nbins   = self.nbins
+    
+        Nang = (lmax+1)**2
+        Nu = (nlobs-1) * Nang
+
+
+        self.fillup_keo_csr_jit(KD_infl,KC_infl,nbins,Nu)
+        exit()
 
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
         keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
@@ -390,12 +400,14 @@ class Hamiltonian():
         #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
 
 
-        enr_old,coeffs =self.call_eigensolver(keomat_old)
+        #enr_old,coeffs =self.call_eigensolver(keomat_old)
         enr,coeffs =self.call_eigensolver(keomat)
-        print(enr_old)
-        print(enr)
+        #print(enr_old)
+        print(enr*constants.au_to_ev )
 
-
+        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:10.4f}'.format}, linewidth=100):
+            print(enr*constants.au_to_ev)
+    
         #exit()
         #print("KEO matrix")
         #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
@@ -442,7 +454,8 @@ class Hamiltonian():
             for l in range(lmax+1):
                 for m in range(-l,l+1):
                     p = ipoint*(lmax+1)**2 + l*(l+1) + m
-                    CFE[p] = l*(l+1)/Gr[ipoint]**2
+                    CFE[p] = l*(l+1)/Gr[ipoint]**2 - 2.0/Gr[ipoint]
+
                     #print(p)
 
         #plt.plot(CFE)
@@ -576,15 +589,15 @@ class Hamiltonian():
         keomat[ start_ind_row_kc[nbins-2]:end_ind_row_kc[nbins-2]+1, start_ind_col_kc[nbins-2]:end_ind_col_kc[nbins-2]+1 ] = KC0[:,:(nlobs-2)*(lmax+1)**2]
         keomat[ start_ind_col_kc[nbins-2]:end_ind_col_kc[nbins-2]+1, start_ind_row_kc[nbins-2]:end_ind_row_kc[nbins-2]+1 ] = KC0.T[:(nlobs-2)*(lmax+1)**2,:] #Checked
     
-        #last bin (no coupling with bridges)
+        #last bin (no bridges)
       
         start_ind_kd.append( (nbins-1)*(nlobs-1)*Nang )
         end_ind_kd.append( ( nbins*(nlobs-1)-1)*Nang-1 )
 
         keomat[ start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1, start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1 ] = KD0[:(nlobs-2)*(lmax+1)**2,:(nlobs-2)*(lmax+1)**2]
         
-
-        keomat +=  sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil")
+        keomat /=2.0
+        keomat +=  sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil") /2.0
 
         return keomat
 
@@ -620,9 +633,23 @@ class Hamiltonian():
 
 
 
-    def fillup_keo_csr_jit(self):
-        #build csr matrix from (data, (row,col))
+    def fillup_keo_csr_jit(self,KD0,KC0,nbins,Nu):
+        #build csr matrix from (data, (indptr,indices))
+
+        indptr = np.arange(0,nbins*Nu**2,dtype=int,step=Nu)
+
+        data = np.array( [KD0[i,0:Nu] for i in range(Nu)], dtype=float ).repeat(2)
+
+        indices = np.empty((nbins*Nu*Nu),dtype=int)
+        ind_block = np.empty(nbins,dtype=int)
+
+        for ibin in range(nbins):
+            ind_block[ibin] = np.arange(ibin*Nu, (ibin+1)*Nu-1,dtype=int,step=1).repeat(Nu)
+
         
+        print(data)
+
+        return 0
 
 
     def build_pot(self):
