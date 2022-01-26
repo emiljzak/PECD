@@ -323,7 +323,7 @@ class Hamiltonian():
 
         #using numba jit:
         start_time = time.time()
-        klist = self.call_gen_klist_jit(self.Nbas)
+        #klist = self.call_gen_klist_jit(self.Nbas)
         end_time = time.time()
         print("JIT First run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -371,7 +371,7 @@ class Hamiltonian():
         #print(Gr.shape)
         #exit()
         """ OLD implementation"""
-        klist = np.asarray(klist, dtype=int)
+        #klist = np.asarray(klist, dtype=int)
         #keomat_old = self.fillup_keo(KD,KC,Gr,klist)
 
 
@@ -635,21 +635,29 @@ class Hamiltonian():
 
     def fillup_keo_csr_jit(self,KD0,KC0,nbins,Nu):
         #build csr matrix from (data, (indptr,indices))
-
-        indptr = np.arange(0,nbins*Nu**2,dtype=int,step=Nu)
-
-        data = np.array( [KD0[i,0:Nu] for i in range(Nu)], dtype=float ).repeat(2)
-
-        indices = np.empty((nbins*Nu*Nu),dtype=int)
-        ind_block = np.empty(nbins,dtype=int)
-
-        for ibin in range(nbins):
-            ind_block[ibin] = np.arange(ibin*Nu, (ibin+1)*Nu-1,dtype=int,step=1).repeat(Nu)
-
+        Nbas = nbins*Nu
         
-        print(data)
-
-        return 0
+        indptr = np.arange(0,(nbins)*Nu**2+Nu,dtype=int,step=Nu)
+        #print(indptr)
+        print("Shape of indptr: " + str(indptr.shape))
+        #exit()
+        data = KD0.flatten().repeat(nbins)
+        print("Shape of data: " + str(data.shape))
+        #indices = np.empty((nbins*Nu*Nu),dtype=int)
+        
+        ind_block = np.arange(0, Nu,dtype=int,step=1)
+        for i in range(nbins):
+            ind_block = np.vstack((ind_block,ind_block))
+   
+        indices = ind_block.flatten()
+        print(ind_block.flatten())
+    
+        print("Shape of indices: " + str(indices.shape))
+    
+        keo = sparse.csr_matrix((data, indices, indptr), shape=(Nbas,Nbas))
+        plt.spy(keo)
+        plt.show()
+        return data, indices, indptr
 
 
     def build_pot(self):
