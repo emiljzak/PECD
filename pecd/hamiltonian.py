@@ -636,28 +636,42 @@ class Hamiltonian():
     def fillup_keo_csr_jit(self,KD0,KC0,nbins,Nu):
         #build csr matrix from (data, (indptr,indices))
         Nbas = nbins*Nu
-        
-        indptr = np.arange(0,(nbins)*Nu**2+Nu,dtype=int,step=Nu)
-        #print(indptr)
+        plot_mat(KD0)
+        #indptr = np.arange(0,(nbins)*Nu**2,dtype=int,step=Nu)
+        indptr = np.linspace(0,(nbins)*Nu**2,dtype=int,num=nbins*Nu+1)
+        print(indptr)
         print("Shape of indptr: " + str(indptr.shape))
         #exit()
-        data = KD0.flatten().repeat(nbins)
-        print("Shape of data: " + str(data.shape))
-        #indices = np.empty((nbins*Nu*Nu),dtype=int)
-        
+        data = KD0.flatten()
+        data_temp = np.empty(np.shape(data))
+        #print(data)#
+        #exit() #.repeat(nbins)
+        #data = np.append(data,data)
+        #print(data)
+        #print(data.shape)
+        #exit()
         ind_block = np.empty(0)
+
+        for i in range(2):   
+            data_temp=np.append(data_temp,data)
+
+        #print(data_temp.shape)
+        #exit()
+
         for i in range(nbins):
+
             for n in range(Nu):
                 ind_block = np.append(ind_block,np.arange(i*Nu,(i+1)*Nu,dtype=int,step=1))
    
         indices = ind_block.flatten()
         
         print("Shape of indices: " + str(indices.shape))
-    
-        keo = sparse.csr_matrix((data, indices, indptr), shape=(Nbas,Nbas))
-        plt.spy(keo)
+        print("Shape of data: " + str(data.shape))
+        keo = sparse.csr_matrix((data_temp, indices, indptr), shape=(Nbas,Nbas))
+        #plt.spy(keo)
+        plot_mat(keo)
         plt.show()
-        return data, indices, indptr
+        return data_temp, indices, indptr
 
 
     def build_pot(self):
@@ -2044,7 +2058,8 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 def plot_mat(mat):
     """ plot 2D array with color-coded magnitude"""
     fig, ax = plt.subplots()
-    mat = mat.todense()
+    if sparse.issparse(mat):
+        mat = mat.todense()
     im, cbar = heatmap(mat, 0, 0, ax=ax, cmap="gnuplot", cbarlabel="Hij")
 
     fig.tight_layout()
