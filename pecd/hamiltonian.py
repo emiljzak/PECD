@@ -387,7 +387,7 @@ class Hamiltonian():
         Nang = (lmax+1)**2
         Nu = (nlobs-1) * Nang
 
-        keomat = self.fillup_keo_csr(KD_infl,KC_infl,nbins,Nu)
+        keomat = self.fillup_keo_csr(KD_infl,KC_infl,CFE,nbins,Nu,Nang)
         
         #keomat = self.fillup_keo_csr_jit(KD_infl,KC_infl,nbins,Nu)
         
@@ -637,7 +637,7 @@ class Hamiltonian():
         dens =  mat.getnnz() / (mat.shape[0]*mat.shape[1])
         print("The density of the sparse matrix = " + str(dens*100) + " %")
 
-    def fillup_keo_csr(self,KD0,KC0,nbins,Nu):
+    def fillup_keo_csr(self,KD0,KC0,CFE,nbins,Nu,Nang):
         """Create compressed sparse-row matrix from copies of the generic inflated KD matrix
         
         """
@@ -648,37 +648,32 @@ class Hamiltonian():
         KD_seq = [ KD_sparse for i in range(nbins)]
         K0 = sparse.block_diag(KD_seq,format='csr')
 
-        #form bridges
-        #plot_mat(KC0)
-       # KC_sparse = sparse.csr_matrix(KC0)
-       
         KC_sparse = sparse.lil_matrix(np.zeros((Nu,Nu)))
         KC_sparse[Nu-4:Nu,:] = KC0
         KC_sparse = KC_sparse.tocsr()
-        
-
-
         KC_seq = [ KC_sparse for i in range(nbins)]
-        #print(KC_seq[0].toarray())
-        #exit()
-        #print(np.shape(KC_seq))
-        nons = []
-        nons_1 = [None for i in range(nbins)]
-        
-        #for ibins in range(nbins):
-           
-        #    if ibins ==1:
-        #        nons.append(1)
-        #    else:
-        #        nons.append(None)
+        K0b = sparse.block_diag(KC_seq)
 
-      
 
+        print(K0b.shape)
+        print(K0.shape)
+
+       # K0b2 = sparse.vstack((np.zeros((nbins*Nu,Nu)),K0b))  
+        #plot_mat(K0b+K0)
+
+        keomat = K0b+K0
+
+        keomat /=2.0
+        #print(self.Nbas)
+        keomat +=  sparse.diags(np.ones(nbins*Nu),0,(nbins*Nu, nbins*Nu), dtype=float, format="lil") /2.0
+        return keomat
+
+        exit()
         nons_grid = []
 
-        for ibin1 in range(nbins):
+        for ibin1 in range(nbins-1):
             nons_grid1 = []
-            for ibin2 in range(nbins):
+            for ibin2 in range(nbins-1):
                 
                 if ibin2 == ibin1:
                     nons_grid1.append(KC_sparse)
@@ -688,17 +683,16 @@ class Hamiltonian():
 
             nons_grid.append(nons_grid1)
 
-        print(nons_grid)
-       
+        
+        K0b = sparse.bmat(nons_grid)
 
-            
+        K0b2 = sparse.hstack((np.zeros((K0b.shape[0],12)),K0b))    
+        #K0b = sparse.bmat([ [np.zeros((K0b.shape[0],Nu)),None],[None,K0b]])
 
-
-        #test_grid = [[KC_sparse,None,None],[None,KC_sparse,None],[None,None,KC_sparse]]
-
-        K0b = sparse.bmat(nons_grid)     
-       # K0b = sparse.bmat([[KC_sparse,None,None],[None,KC_sparse,None],[None,None,KC_sparse] ])
-        plot_mat(K0b)
+        print(K0b2.shape)
+        print(K0.shape)
+        
+        plot_mat(K0b2+K0)
         exit()
         #add CFE
 
