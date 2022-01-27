@@ -649,24 +649,39 @@ class Hamiltonian():
         K0 = sparse.block_diag(KD_seq,format='csr')
 
         KC_sparse = sparse.lil_matrix(np.zeros((Nu,Nu)))
-        KC_sparse[Nu-4:Nu,:] = KC0
+        KC_sparse[Nu-Nang:Nu,:] = KC0
         KC_sparse = KC_sparse.tocsr()
-        KC_seq = [ KC_sparse for i in range(nbins)]
+        KC_seq = [ KC_sparse for i in range(nbins-1)]
         K0b = sparse.block_diag(KC_seq)
 
 
         print(K0b.shape)
         print(K0.shape)
 
-       # K0b2 = sparse.vstack((np.zeros((nbins*Nu,Nu)),K0b))  
-        #plot_mat(K0b+K0)
+        K0b2 = sparse.vstack((K0b,np.zeros((Nu,(nbins-1)*Nu))))  
+        
+        print(K0b2.get_shape())
 
-        keomat = K0b+K0
 
-        keomat /=2.0
+        K0b3 = sparse.hstack((np.zeros((nbins*Nu,Nu)),K0b2))  
+        print(K0b3.get_shape())
+
+
+      
+        #plot_mat(K0b3)
+
+        keomat = K0b3+K0+K0b3.transpose()
+
         #print(self.Nbas)
-        keomat +=  sparse.diags(np.ones(nbins*Nu),0,(nbins*Nu, nbins*Nu), dtype=float, format="lil") /2.0
-        return keomat
+        #keomat +=  sparse.diags(np.ones(nbins*Nu),0,(nbins*Nu, nbins*Nu), dtype=float, format="lil") /2.0
+        keomat.resize((nbins*Nu-Nang,nbins*Nu-Nang))
+
+        print("Nbas = " + str(self.Nbas))
+        print("Nbas inferred from KEO construction = " + str(nbins*Nu-Nang))
+
+        keomat +=  sparse.diags(CFE,0,(self.Nbas,self.Nbas), dtype=float, format="lil") /2.0
+        plot_mat(keomat)
+        return keomat/2.0
 
         exit()
         nons_grid = []
