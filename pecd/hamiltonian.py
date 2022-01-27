@@ -877,12 +877,19 @@ class Hamiltonian():
         # 5. Return final potential matrix
         potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
         potind = np.asarray(potind,dtype=int)
+        #potmat0 = np.asarray(potmat0,dtype=complex)
         """ Put the indices and values back together in the Hamiltonian array"""
+        #print(potmat0.shape)
+        #print(self.Nbas)
+        #exit()
         for ielem, elem in enumerate(potmat0):
             #print(elem[0])
             potmat[ potind[ielem,0], potind[ielem,1] ] = elem[0]
-
-        return potmat
+        #plot_mat(potmat)
+        #plt.spy(potmat+potmat.getH(),precision=1e-4)
+        #plt.show()
+        
+        return potmat+potmat.getH()-potmat.diagonal()
 
 
     def build_ham(self):

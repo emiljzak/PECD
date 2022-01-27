@@ -1077,6 +1077,8 @@ if __name__ == "__main__":
     
     
     ham_bound = keo_bound + pot_bound
+    plt.spy(ham_bound,precision=1e-4)
+    plt.show()
     enr,coeffs = call_eigensolver(ham_bound,params)
     
     print("Energy levels:")
