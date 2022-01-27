@@ -7,7 +7,7 @@
 from scipy import special
 from scipy.sparse.linalg import  eigsh
 #import mapping
-#import POTENTIAL
+import potential
 #import GRID
 import constants
 
@@ -370,9 +370,9 @@ class Hamiltonian():
         #print(keomat_lil.get_shape())
         #print(keomat.get_shape())
  
-        enr1,coeffs =self.call_eigensolver(keomat.toarray())
+        #enr1,coeffs =self.call_eigensolver(keomat.toarray())
         #enr2,coeffs =self.call_eigensolver(keomat2.toarray())
-        print(enr1*constants.au_to_ev)
+        #print(enr1*constants.au_to_ev)
         #print(enr2*constants.au_to_ev )
         #print("eigenvalues difference:")
         #print(enr1-enr2)
@@ -421,7 +421,7 @@ class Hamiltonian():
             for l in range(lmax+1):
                 for m in range(-l,l+1):
                     p = ipoint*(lmax+1)**2 + l*(l+1) + m
-                    CFE[p] = l*(l+1)/Gr[ipoint]**2 - 2.0/Gr[ipoint]
+                    CFE[p] = l*(l+1)/Gr[ipoint]**2 #- 2.0/Gr[ipoint]
 
                     #print(p)
 
@@ -762,6 +762,30 @@ class Hamiltonian():
         """
         return pot, potind
 
+
+    #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+    def gen_vlist(self,maparray, Nbas, map_type):
+        #create a list of indices for matrix elements of the potential
+        vlist = []
+
+        #needs speed-up: convert maparray to numpy array and vectorize, add numpy
+
+        if map_type == 'DVR':
+            for p1 in range(Nbas):
+                for p2 in range(p1, Nbas):
+                    if maparray[p1][2] == maparray[p2][2]: 
+                        vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
+                            maparray[p2][3], maparray[p2][4], p1, p2  ])
+
+        elif map_type == 'SPECT':
+            for p1 in range(Nbas):
+                for p2 in range(p1, Nbas):
+                    if maparray[p1][2] == maparray[p2][2]:
+                        vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
+        return vlist
+
+
+
     def build_potmat(self,grid_euler=[0,0,0],irun=0):
 
 
@@ -780,11 +804,11 @@ class Hamiltonian():
         Nr = (self.params['bound_nlobs']-1) * self.params['bound_nbins']  
         # 1. Construct vlist
         start_time = time.time()
-        vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
+        vlist = self.gen_vlist( self.maparray, self.Nbas, self.params['map_type'] )
         vlist = np.asarray(vlist,dtype=int)
         end_time = time.time()
         print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
-        
+
         #klist = mapping.GEN_KLIST(maparray, Nbas, params['map_type'] )
 
         #klist = np.asarray(klist)
@@ -799,7 +823,7 @@ class Hamiltonian():
 
         # 2. Read the potential partial waves on the grid
         start_time = time.time()
-        vLM,rgrid_anton = POTENTIAL.read_potential(params,Nr,False)
+        vLM,rgrid_anton = potential.read_potential(self.params,Nr,False)
         end_time = time.time()
         print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
         
@@ -812,7 +836,7 @@ class Hamiltonian():
         #exit()
 
         # 3. Build array of 3-j symbols
-        tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
+        tjmat       = gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
         #tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with quadpy
         #tjmat       = gen_tjmat_leb(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with generic lebedev
 
@@ -835,11 +859,11 @@ class Hamiltonian():
         """    
         start_time = time.time()
         # 4. sum-up partial waves
-        if params['N_euler'] == 1:
-            potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
+        if self.params['N_euler'] == 1:
+            potmat0, potind = self.calc_potmat_anton_jit( vLM, vlist, tjmat )
         else:
             tjmat_rot       = rotate_tjmat(grid_euler,irun,tjmat)
-            potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
+            potmat0, potind = self.calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
 
         end_time = time.time()
         print("Time for calculation of the potential matrix elements: " +  str("%10.3f"%(end_time-start_time)) + "s")
@@ -851,7 +875,14 @@ class Hamiltonian():
         #print("Maximum imaginary part of the potential matrix = " + str(np.max(np.abs(potmat0.imag))))
         #exit()
         # 5. Return final potential matrix
-        return potmat0,potind
+        potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
+        potind = np.asarray(potind,dtype=int)
+        """ Put the indices and values back together in the Hamiltonian array"""
+        for ielem, elem in enumerate(potmat0):
+            #print(elem[0])
+            potmat[ potind[ielem,0], potind[ielem,1] ] = elem[0]
+
+        return potmat
 
 
     def build_ham(self):
@@ -1490,91 +1521,6 @@ def rotate_tjmat(grid_euler,irun,tjmat):
                                 tjmat_rot[l1,L,l2,M+L,l1+m1, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,L+Mp,l1+m1,l2+m2] 
 
     return tjmat_rot
-
-""" ============ POTMAT0 ROTATED with Anton's potential ============ """
-def BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun ):
-    """ Calculate potential matrix using projection onto spherical harmonics representation of 
-    the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
-    Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
-    
-    """
-    Nr = (params['bound_nlobs']-1) * params['bound_nbins']  
-    # 1. Construct vlist
-    start_time = time.time()
-    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist,dtype=int)
-    end_time = time.time()
-    print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
-    exit()
-    #klist = mapping.GEN_KLIST(maparray, Nbas, params['map_type'] )
-
-    #klist = np.asarray(klist)
-    #vlist = np.asarray(vlist)
-
-    #print(klist.shape[0])
-    #print(vlist.shape[0])
-
-    #print(np.vstack((klist,vlist)))
-
-    #exit()
-
-    # 2. Read the potential partial waves on the grid
-    start_time = time.time()
-    vLM,rgrid_anton = POTENTIAL.read_potential(params,Nr,True)
-    end_time = time.time()
-    print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
-
-    #test_vlm_symmetry(vLM)
-
-    #print("Maximum imaginary part of the potential:")
-    #print(vLM.imag.max())
-    #print(vLM.imag.min())
-    #exit()
-
-    # 3. Build array of 3-j symbols
-    tjmat       = gen_tjmat(params['bound_lmax'],params['multi_lmax'])
-    #tjmat       = gen_tjmat_quadpy(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with quadpy
-    #tjmat       = gen_tjmat_leb(params['bound_lmax'],params['multi_lmax']) #for tjmat generated with generic lebedev
-
-
-
-    #print("tjmat-tjmatrot")
-    #print(np.allclose(tjmat,tjmat_rot))
-    #print("tjmatrot")
-    #print(tjmat_rot)
-    #exit()
-
-    """ Testing of grid compatibility"""
-    """
-    print(Gr.ravel().shape)
-    print(rgrid_anton.shape) #the two grids agree
-    if np.allclose(Gr.ravel(), rgrid_anton, rtol=1e-6, atol=1e-6)==False:
-        raise ValueError('the radial grid does not match the grid of the potential')
-    print(max(abs(rgrid_anton-Gr.ravel())))
-    exit()
-    """    
-    start_time = time.time()
-    # 4. sum-up partial waves
-    if params['N_euler'] == 1:
-        potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat )
-    else:
-        tjmat_rot       = rotate_tjmat(grid_euler,irun,tjmat)
-        potmat0, potind = calc_potmat_anton_jit( vLM, vlist, tjmat_rot )
-
-    end_time = time.time()
-    print("Time for calculation of the potential matrix elements: " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
-
-    #potmat0 = np.asarray(potmat0)
-    #print(potmat0[:100])
-    #print("Maximum real part of the potential matrix = " + str(np.max(np.abs(potmat0.real))))
-    #print("Maximum imaginary part of the potential matrix = " + str(np.max(np.abs(potmat0.imag))))
-    #exit()
-    # 5. Return final potential matrix
-    return potmat0,potind
-
-
 
 
 

@@ -223,26 +223,6 @@ class Map():
         return sphlist
 
 
-    #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
-    def GEN_VLIST(self,maparray, Nbas, map_type):
-        #create a list of indices for matrix elements of the potential
-        vlist = []
-
-        #needs speed-up: convert maparray to numpy array and vectorize, add numpy
-
-        if map_type == 'DVR':
-            for p1 in range(Nbas):
-                for p2 in range(p1, Nbas):
-                    if maparray[p1][2] == maparray[p2][2]: 
-                        vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
-                            maparray[p2][3], maparray[p2][4], p1, p2  ])
-
-        elif map_type == 'SPECT':
-            for p1 in range(Nbas):
-                for p2 in range(p1, Nbas):
-                    if maparray[p1][2] == maparray[p2][2]:
-                        vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
-        return vlist
 
     def calc_p2(l,m,xi,lmax):
         return (xi-1)*(lmax+1)**2 + l*(l+1) + m

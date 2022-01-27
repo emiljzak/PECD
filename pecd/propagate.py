@@ -1073,6 +1073,14 @@ if __name__ == "__main__":
     pot_bound = HamObjBound.build_potmat()
     end_time = time.time()
     print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+    
+    
+    ham_bound = keo_bound + pot_bound
+    enr,coeffs = call_eigensolver(ham_bound,params)
+    
+    print("Energy levels:")
+    print(enr*constants.au_to_ev )
     exit()
 
     print("\n")
