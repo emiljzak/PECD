@@ -387,7 +387,7 @@ class Hamiltonian():
         Nang = (lmax+1)**2
         Nu = (nlobs-1) * Nang
 
-        keomat = self.fillup_keo_csr(KD_infl,nbins,Nu)
+        keomat = self.fillup_keo_csr(KD_infl,KC_infl,nbins,Nu)
         
         #keomat = self.fillup_keo_csr_jit(KD_infl,KC_infl,nbins,Nu)
         
@@ -632,18 +632,31 @@ class Hamiltonian():
                                
         return keomat
 
-    def fillup_keo_csr(self,KD0,nbins,Nu):
+    @staticmethod
+    def calc_mat_density(mat):
+        dens =  mat.getnnz() / (mat.shape[0]*mat.shape[1])
+        print("The density of the sparse matrix = " + str(dens*100) + " %")
+
+    def fillup_keo_csr(self,KD0,KC0,nbins,Nu):
         """Create compressed sparse-row matrix from copies of the generic inflated KD matrix
         
         """
+        #form the block-diagonal part
         KD_sparse = sparse.csr_matrix(KD0)
         KD_seq = [ KD_sparse for i in range(nbins)]
-
         K0 = sparse.block_diag(KD_seq,format='csr')
-        print(K0.nnz())
+
+        #form bridges
+        #plot_mat(KC0)
+        KC_sparse = sparse.csr_matrix(KC0)
+       
+        KC_seq = [ KC_sparse for i in range(nbins)]
+        print(np.shape(KC_seq))
+        K0b = sparse.bmat(KC_seq)
+        plot_mat(K0b)
         exit()
-        print(K0.shape)
-        #plot_mat(K0)
+        #add CFE
+
         return K0
 
     def fillup_keo_csr_jit(self,KD0,KC0,nbins,Nu):
