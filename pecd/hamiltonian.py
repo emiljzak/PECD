@@ -387,12 +387,13 @@ class Hamiltonian():
         Nang = (lmax+1)**2
         Nu = (nlobs-1) * Nang
 
-
-        self.fillup_keo_csr_jit(KD_infl,KC_infl,nbins,Nu)
-        exit()
+        keomat = self.fillup_keo_csr(KD_infl,nbins,Nu)
+        
+        #keomat = self.fillup_keo_csr_jit(KD_infl,KC_infl,nbins,Nu)
+        
 
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
-        keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
+        #keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
         #print("nnz of keomat = " + str(keomat.nnz))
         #keomat_filt = self.filter_keomat(keomat.tocsr())
         #print("nnz of keomat_filt = " + str(keomat_filt.nnz))
@@ -401,12 +402,12 @@ class Hamiltonian():
 
 
         #enr_old,coeffs =self.call_eigensolver(keomat_old)
-        enr,coeffs =self.call_eigensolver(keomat)
+        #enr,coeffs =self.call_eigensolver(keomat)
         #print(enr_old)
-        print(enr*constants.au_to_ev )
+        #print(enr*constants.au_to_ev )
 
-        with np.printoptions(precision=4, suppress=True, formatter={'float': '{:10.4f}'.format}, linewidth=100):
-            print(enr*constants.au_to_ev)
+        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:10.4f}'.format}, linewidth=100):
+        #    print(enr*constants.au_to_ev)
     
         #exit()
         #print("KEO matrix")
@@ -631,7 +632,19 @@ class Hamiltonian():
                                
         return keomat
 
+    def fillup_keo_csr(self,KD0,nbins,Nu):
+        """Create compressed sparse-row matrix from copies of the generic inflated KD matrix
+        
+        """
+        KD_sparse = sparse.csr_matrix(KD0)
+        KD_seq = [ KD_sparse for i in range(nbins)]
 
+        K0 = sparse.block_diag(KD_seq,format='csr')
+        print(K0.nnz())
+        exit()
+        print(K0.shape)
+        #plot_mat(K0)
+        return K0
 
     def fillup_keo_csr_jit(self,KD0,KC0,nbins,Nu):
         #build csr matrix from (data, (indptr,indices))
@@ -666,7 +679,7 @@ class Hamiltonian():
         indices = ind_block.flatten()
         
         print("Shape of indices: " + str(indices.shape))
-        print("Shape of data: " + str(data.shape))
+        print("Shape of data: " + str(data_temp.shape))
         keo = sparse.csr_matrix((data_temp, indices, indptr), shape=(Nbas,Nbas))
         #plt.spy(keo)
         plot_mat(keo)
