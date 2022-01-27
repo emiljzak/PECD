@@ -308,43 +308,28 @@ class Hamiltonian():
 
     def build_keo(self):
 
-        nlobs = self.params['bound_nlobs'] 
+        nlobs   = self.params['bound_nlobs'] 
+        lmax    = self.params['bound_lmax']
+        nlobs   = self.params['bound_nlobs']
+        nbins   = self.nbins
+    
+        Nang    = (lmax+1)**2
+        Nu      = (nlobs-1) * Nang
 
-        x = self.params['x']
-        w = self.params['w']
-        #x = np.asarray(x, dtype = float)
-   
-        #exit()
-        #pure python:
-        #start_time = time.time()
-        #klist = self.gen_klist()
-        #end_time = time.time()
-        #print("Python: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        x       = self.params['x']
+        w       = self.params['w']
 
-        #using numba jit:
-        start_time = time.time()
-        #klist = self.call_gen_klist_jit(self.Nbas)
-        end_time = time.time()
-        print("JIT First run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        #patching: (to consider/exclude)
 
+            #w[0] *= 2.0
+            #w[nlobs-1] *=2.0
 
-        #start_time = time.time()
-        #klist = self.call_gen_klist_jit(self.Nbas)
-        #end_time = time.time()
-        #print("JIT Second run: Time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
-        #fixes:
-
-        #w[0] *= 2.0
-        #w[nlobs-1] *=2.0
-
-        #print(w)
-        #exit()
-        #w /= np.sum(w[:])
-        #w *= 0.5 * params['bound_binw']
-        #scaling to quadrature range
-        #x *= 0.5 * params['bound_binw']
+            #print(w)
+            #exit()
+            #w /= np.sum(w[:])
+            #w *= 0.5 * params['bound_binw']
+            #scaling to quadrature range
+            #x *= 0.5 * params['bound_binw']
 
         """ Build D-matrix """
         DMAT = self.BUILD_DMAT(x,w)
@@ -358,21 +343,44 @@ class Hamiltonian():
         plt.legend()
         plt.show()
         """
+
         """ Build KD, KC matrices """
         KD  = self.BUILD_KD(JMAT,w,nlobs) / (0.5 * self.params['bound_binw'])**2 #### !!!! check
         KC  = self.BUILD_KC(JMAT,w,nlobs) / (0.5 * self.params['bound_binw'])**2
-
-        #plot_mat(KD)
-        #plt.spy(KD, precision=params['sph_quad_tol'], markersize=5, label="KD")
-        #plt.legend()
-        #plt.show()
-
+        
+        """
+        plot_mat(KD)
+        plt.spy(KD, precision=params['sph_quad_tol'], markersize=5, label="KD")
+        plt.legend()
+        plt.show()
+        """
+        
         Gr = self.Gr
-        #print(Gr.shape)
-        #exit()
-        """ OLD implementation"""
-        #klist = np.asarray(klist, dtype=int)
-        #keomat_old = self.fillup_keo(KD,KC,Gr,klist)
+
+        if self.params['keo_calc_method'] == "klist":
+
+            start_time  = time.time()
+            klist       = self.call_gen_klist_jit(self.Nbas)
+            end_time    = time.time()
+            print("jit's first run: time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+            klist       = np.asarray(klist, dtype=int)
+            keomat      = self.fillup_keo(KD,KC,Gr,klist)
+
+
+        elif self.params['keo_calc_method'] == "slices":
+
+
+
+        elif self.params['keo_calc_method'] == "vector":
+
+
+        else:
+            raise ValueError("Incorrect method name for calculating the KEO")
+
+
+
+
 
 
         """ New implementation"""
@@ -380,12 +388,7 @@ class Hamiltonian():
         KD_infl,KC_infl = self.inflate(KD,KC)
         CFE             = self.build_CFE(Gr)
 
-        lmax    = self.params['bound_lmax']
-        nlobs   = self.params['bound_nlobs']
-        nbins   = self.nbins
-    
-        Nang = (lmax+1)**2
-        Nu = (nlobs-1) * Nang
+      
 
         keomat = self.fillup_keo_csr(KD_infl,KC_infl,CFE,nbins,Nu,Nang)
         
@@ -393,18 +396,28 @@ class Hamiltonian():
         
 
         #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
-        #keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
+        #keomat_lil      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
         #print("nnz of keomat = " + str(keomat.nnz))
         #keomat_filt = self.filter_keomat(keomat.tocsr())
         #print("nnz of keomat_filt = " + str(keomat_filt.nnz))
         #exit()
         #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
 
+        #print("KEO difference:")
+        #print((keomat_lil-keomat).toarray())
 
-        #enr_old,coeffs =self.call_eigensolver(keomat_old)
-        #enr,coeffs =self.call_eigensolver(keomat)
-        #print(enr_old)
+
+        #print(keomat_lil.get_shape())
+        #print(keomat.get_shape())
+        #exit()
+        #enr_old,coeffs =self.call_eigensolver(keomat_lil.toarray())
+        #enr,coeffs =self.call_eigensolver(keomat.toarray())
+        #print(enr_old*constants.au_to_ev)
         #print(enr*constants.au_to_ev )
+        #print("eigenvalues difference:")
+        #print(enr_old-enr)
+
+        #exit()
 
         #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:10.4f}'.format}, linewidth=100):
         #    print(enr*constants.au_to_ev)
@@ -419,14 +432,14 @@ class Hamiltonian():
         #print(keomatt_old)
         #plt.spy(keomat, precision=1e-8, markersize=5, label="KEO")
         #plt.legend()
-        plt.show()
+        #plt.show()
         #exit()
 
         #print size of KEO matrix
         #keo_csr_size = keomat.data.size/(1024**2)
         #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
 
-        return  0.5 * keomat 
+        return  keomat
 
     def filter_keomat(self,keomat):
 
@@ -525,9 +538,6 @@ class Hamiltonian():
         end_ind_row_kc      = []
 
 
-        print(KD0.shape)
-        print(KC0.shape)
-
         Nang = (lmax+1)**2
         Nu = (nlobs-1) * Nang
 
@@ -544,14 +554,14 @@ class Hamiltonian():
             end_ind_col_kc.append( (ibin+2)*Nu - 1 )
 
 
-            print("start_ind_kd for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
-            print("end_ind_kd for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]))
+            #print("start_ind_kd for i = " + str(ibin) + " = " + str(start_ind_kd[ibin]))
+            #print("end_ind_kd for i = " + str(ibin) + " = " + str(end_ind_kd[ibin]))
 
-            print("start_ind_row_kc for i = " + str(ibin) + " = " + str(start_ind_row_kc[ibin]))
-            print("end_ind_row_kc for i = " + str(ibin) + " = " + str(end_ind_row_kc[ibin]))
+            #print("start_ind_row_kc for i = " + str(ibin) + " = " + str(start_ind_row_kc[ibin]))
+            #print("end_ind_row_kc for i = " + str(ibin) + " = " + str(end_ind_row_kc[ibin]))
 
-            print("start_ind_col_kc for i = " + str(ibin) + " = " + str(start_ind_col_kc[ibin]))
-            print("end_ind_col_kc for i = " + str(ibin) + " = " + str(end_ind_col_kc[ibin]))
+            #print("start_ind_col_kc for i = " + str(ibin) + " = " + str(start_ind_col_kc[ibin]))
+            #print("end_ind_col_kc for i = " + str(ibin) + " = " + str(end_ind_col_kc[ibin]))
 
 
             keomat[ start_ind_kd[ibin]:end_ind_kd[ibin]+1, start_ind_kd[ibin]:end_ind_kd[ibin]+1 ] = KD0
@@ -576,14 +586,14 @@ class Hamiltonian():
         end_ind_col_kc.append( (nbins * (nlobs - 1) -1)*Nang -1 )
     
 
-        print("start_ind_kd for i = " + str(nbins-2) + " = " + str(start_ind_kd[nbins-2]))
-        print("end_ind_kd for i = " + str(nbins-2) + " = " + str(end_ind_kd[nbins-2]))
+        #print("start_ind_kd for i = " + str(nbins-2) + " = " + str(start_ind_kd[nbins-2]))
+        #print("end_ind_kd for i = " + str(nbins-2) + " = " + str(end_ind_kd[nbins-2]))
 
-        print("start_ind_row_kc for i = " + str(nbins-2) + " = " + str(start_ind_row_kc[nbins-2]))
-        print("end_ind_row_kc for i = " + str(nbins-2) + " = " + str(end_ind_row_kc[nbins-2]))
+        #print("start_ind_row_kc for i = " + str(nbins-2) + " = " + str(start_ind_row_kc[nbins-2]))
+        #print("end_ind_row_kc for i = " + str(nbins-2) + " = " + str(end_ind_row_kc[nbins-2]))
 
-        print("start_ind_col_kc for i = " + str(nbins-2) + " = " + str(start_ind_col_kc[nbins-2]))
-        print("end_ind_col_kc for i = " + str(nbins-2) + " = " + str(end_ind_col_kc[nbins-2]))
+        #print("start_ind_col_kc for i = " + str(nbins-2) + " = " + str(start_ind_col_kc[nbins-2]))
+        #print("end_ind_col_kc for i = " + str(nbins-2) + " = " + str(end_ind_col_kc[nbins-2]))
 
         keomat[ start_ind_kd[nbins-2]:end_ind_kd[nbins-2]+1, start_ind_kd[nbins-2]:end_ind_kd[nbins-2]+1 ] = KD0
         
@@ -597,8 +607,9 @@ class Hamiltonian():
 
         keomat[ start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1, start_ind_kd[nbins-1]:end_ind_kd[nbins-1]+1 ] = KD0[:(nlobs-2)*(lmax+1)**2,:(nlobs-2)*(lmax+1)**2]
         
+        keomat = keomat.tocsr()
         keomat /=2.0
-        keomat +=  sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil") /2.0
+        keomat +=  sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="csr") /2.0
 
         return keomat
 
@@ -670,7 +681,7 @@ class Hamiltonian():
       
         #plot_mat(K0b3)
 
-        keomat = K0b3+K0+K0b3.transpose()
+        keomat = K0b3+K0b3.transpose()+K0
 
         #print(self.Nbas)
         #keomat +=  sparse.diags(np.ones(nbins*Nu),0,(nbins*Nu, nbins*Nu), dtype=float, format="lil") /2.0
@@ -678,10 +689,10 @@ class Hamiltonian():
 
         print("Nbas = " + str(self.Nbas))
         print("Nbas inferred from KEO construction = " + str(nbins*Nu-Nang))
-
-        keomat +=  sparse.diags(CFE,0,(self.Nbas,self.Nbas), dtype=float, format="lil") /2.0
-        plot_mat(keomat)
-        return keomat/2.0
+        keomat /= 2.0
+        keomat +=  sparse.diags(CFE,0,(self.Nbas,self.Nbas), dtype=float, format="csr") /2.0
+        #plot_mat(keomat)
+        return keomat
 
         exit()
         nons_grid = []
@@ -749,8 +760,8 @@ class Hamiltonian():
         print("Shape of data: " + str(data_temp.shape))
         keo = sparse.csr_matrix((data_temp, indices, indptr), shape=(Nbas,Nbas))
         #plt.spy(keo)
-        plot_mat(keo)
-        plt.show()
+        #plot_mat(keo)
+        #plt.show()
         return data_temp, indices, indptr
 
 

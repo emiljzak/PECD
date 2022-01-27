@@ -41,11 +41,11 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (5,5,1)
-    params['bound_lmax_arr']    = (1,1,1)
+    params['bound_nlobs_arr']   = (10,10,1)
+    params['bound_lmax_arr']    = (10,10,1)
     params['bound_binw_arr']    = (3.0,3.0,1)
 
-    params['bound_nbins']       = 5
+    params['bound_nbins']       = 200
     params['bound_rshift']      = 0.0
 
     """ CONTINUUM PART"""
@@ -131,6 +131,9 @@ def read_input():
 
         params['CEP0']          = 0.0 #CEP phase of the field
 
+
+        """===== kinetic energy matrix ====="""
+        params['keo_calc_method'] = "vector" #klist,slices,vector
 
         """===== Potential energy matrix ====="""
         
