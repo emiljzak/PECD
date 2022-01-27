@@ -643,16 +643,61 @@ class Hamiltonian():
         """
         #form the block-diagonal part
         KD_sparse = sparse.csr_matrix(KD0)
+
+
         KD_seq = [ KD_sparse for i in range(nbins)]
         K0 = sparse.block_diag(KD_seq,format='csr')
 
         #form bridges
         #plot_mat(KC0)
-        KC_sparse = sparse.csr_matrix(KC0)
+       # KC_sparse = sparse.csr_matrix(KC0)
        
+        KC_sparse = sparse.lil_matrix(np.zeros((Nu,Nu)))
+        KC_sparse[Nu-4:Nu,:] = KC0
+        KC_sparse = KC_sparse.tocsr()
+        
+
+
         KC_seq = [ KC_sparse for i in range(nbins)]
-        print(np.shape(KC_seq))
-        K0b = sparse.bmat(KC_seq)
+        #print(KC_seq[0].toarray())
+        #exit()
+        #print(np.shape(KC_seq))
+        nons = []
+        nons_1 = [None for i in range(nbins)]
+        
+        #for ibins in range(nbins):
+           
+        #    if ibins ==1:
+        #        nons.append(1)
+        #    else:
+        #        nons.append(None)
+
+      
+
+        nons_grid = []
+
+        for ibin1 in range(nbins):
+            nons_grid1 = []
+            for ibin2 in range(nbins):
+                
+                if ibin2 == ibin1:
+                    nons_grid1.append(KC_sparse)
+                else:
+                    nons_grid1.append(None)
+
+
+            nons_grid.append(nons_grid1)
+
+        print(nons_grid)
+       
+
+            
+
+
+        #test_grid = [[KC_sparse,None,None],[None,KC_sparse,None],[None,None,KC_sparse]]
+
+        K0b = sparse.bmat(nons_grid)     
+       # K0b = sparse.bmat([[KC_sparse,None,None],[None,KC_sparse,None],[None,None,KC_sparse] ])
         plot_mat(K0b)
         exit()
         #add CFE
