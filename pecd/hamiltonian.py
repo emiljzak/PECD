@@ -212,7 +212,11 @@ class Hamiltonian():
             raise ValueError("Incorrect format type for the Hamiltonian")
 
     
-    
+    @staticmethod
+    def calc_mat_density(mat):
+        dens =  mat.getnnz() / (mat.shape[0]*mat.shape[1])
+        print("The density of the sparse matrix = " + str(dens*100) + " %")
+
     
     def call_eigensolver(self,A):
         if self.params['ARPACK_enr_guess'] == None:
@@ -256,8 +260,8 @@ class Hamiltonian():
                                     tol = self.params['ARPACK_tol'],
                                     maxiter = self.params['ARPACK_maxiter'])
 
-        print(coeffs.shape)
-        print(enr.shape)
+        #print(coeffs.shape)
+        #print(enr.shape)
         #sort coeffs
 
         return enr, coeffs
@@ -355,7 +359,9 @@ class Hamiltonian():
         plt.show()
         """
         
-        Gr = self.Gr
+        #inflate KD, KC and CFE
+        KD_infl,KC_infl = self.inflate(KD,KC)
+        CFE             = self.build_CFE(self.Gr)
 
         if self.params['keo_calc_method'] == "klist":
 
@@ -365,79 +371,47 @@ class Hamiltonian():
             print("jit's first run: time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
             klist       = np.asarray(klist, dtype=int)
-            keomat      = self.fillup_keo(KD,KC,Gr,klist)
+            keomat      = self.fillup_keo_klist(KD,KC,self.Gr,klist)
 
 
         elif self.params['keo_calc_method'] == "slices":
 
-
+            keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
 
         elif self.params['keo_calc_method'] == "vector":
 
-
+            keomat      = self.fillup_keo_csr(KD_infl,KC_infl,CFE,nbins,Nu,Nang)
+        
         else:
             raise ValueError("Incorrect method name for calculating the KEO")
 
-
-
-
-
-
-        """ New implementation"""
-        #inflate KD, KC and CFE
-        KD_infl,KC_infl = self.inflate(KD,KC)
-        CFE             = self.build_CFE(Gr)
-
-      
-
-        keomat = self.fillup_keo_csr(KD_infl,KC_infl,CFE,nbins,Nu,Nang)
-        
-        #keomat = self.fillup_keo_csr_jit(KD_infl,KC_infl,nbins,Nu)
-        
-
-        #build K0 as numpy array and slice big K by appropriate index ranges, follow with filter
-        #keomat_lil      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
-        #print("nnz of keomat = " + str(keomat.nnz))
-        #keomat_filt = self.filter_keomat(keomat.tocsr())
-        #print("nnz of keomat_filt = " + str(keomat_filt.nnz))
-        #exit()
-        #keomat = self.fillup_keo_jit(KD,KC,Gr,klist,nlobs,self.Nbas)
-
+    
         #print("KEO difference:")
         #print((keomat_lil-keomat).toarray())
 
-
         #print(keomat_lil.get_shape())
         #print(keomat.get_shape())
-        #exit()
-        #enr_old,coeffs =self.call_eigensolver(keomat_lil.toarray())
-        #enr,coeffs =self.call_eigensolver(keomat.toarray())
-        #print(enr_old*constants.au_to_ev)
-        #print(enr*constants.au_to_ev )
+ 
+        #enr1,coeffs =self.call_eigensolver(keomat1.toarray())
+        #enr2,coeffs =self.call_eigensolver(keomat2.toarray())
+        #print(enr1*constants.au_to_ev)
+        #print(enr2*constants.au_to_ev )
         #print("eigenvalues difference:")
-        #print(enr_old-enr)
+        #print(enr1-enr2)
 
-        #exit()
 
-        #with np.printoptions(precision=4, suppress=True, formatter={'float': '{:10.4f}'.format}, linewidth=100):
-        #    print(enr*constants.au_to_ev)
-    
-        #exit()
-        #print("KEO matrix")
-        #with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-        #    print(0.5*keomat)
-    
         #plot_mat(keomat)
-        #plot_mat(keomat_old)
-        #print(keomatt_old)
         #plt.spy(keomat, precision=1e-8, markersize=5, label="KEO")
         #plt.legend()
         #plt.show()
         #exit()
 
+        print("KEO:\n")
+        self.calc_mat_density(keomat)
+
         #print size of KEO matrix
-        #keo_csr_size = keomat.data.size/(1024**2)
-        #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
+        keo_csr_size = keomat.data.size/(1024**2)
+        print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
 
         return  keomat
 
@@ -614,9 +588,10 @@ class Hamiltonian():
         return keomat
 
   
-    def fillup_keo(self,KD,KC,Gr,klist):
+    def fillup_keo_klist(self,KD,KC,Gr,klist):
 
-        nlobs = self.params['bound_nlobs'] 
+        nlobs = self.params['bound_nlobs']
+
         if self.params['hmat_format'] == 'numpy_arr':    
             keomat =  np.zeros((self.Nbas, self.Nbas), dtype=float)
         elif self.params['hmat_format'] == 'sparse_csr':
@@ -642,11 +617,6 @@ class Hamiltonian():
                     keomat[ klist[i,5], klist[i,6] ] += KC[ klist[i,3]  ]
                                
         return keomat
-
-    @staticmethod
-    def calc_mat_density(mat):
-        dens =  mat.getnnz() / (mat.shape[0]*mat.shape[1])
-        print("The density of the sparse matrix = " + str(dens*100) + " %")
 
     def fillup_keo_csr(self,KD0,KC0,CFE,nbins,Nu,Nang):
         """Create compressed sparse-row matrix from copies of the generic inflated KD matrix
@@ -677,7 +647,6 @@ class Hamiltonian():
         K0b3 = sparse.hstack((np.zeros((nbins*Nu,Nu)),K0b2))  
         print(K0b3.get_shape())
 
-
       
         #plot_mat(K0b3)
 
@@ -694,88 +663,20 @@ class Hamiltonian():
         #plot_mat(keomat)
         return keomat
 
-        exit()
-        nons_grid = []
-
-        for ibin1 in range(nbins-1):
-            nons_grid1 = []
-            for ibin2 in range(nbins-1):
-                
-                if ibin2 == ibin1:
-                    nons_grid1.append(KC_sparse)
-                else:
-                    nons_grid1.append(None)
-
-
-            nons_grid.append(nons_grid1)
-
-        
-        K0b = sparse.bmat(nons_grid)
-
-        K0b2 = sparse.hstack((np.zeros((K0b.shape[0],12)),K0b))    
-        #K0b = sparse.bmat([ [np.zeros((K0b.shape[0],Nu)),None],[None,K0b]])
-
-        print(K0b2.shape)
-        print(K0.shape)
-        
-        plot_mat(K0b2+K0)
-        exit()
-        #add CFE
-
-        return K0
-
-    def fillup_keo_csr_jit(self,KD0,KC0,nbins,Nu):
-        #build csr matrix from (data, (indptr,indices))
-        Nbas = nbins*Nu
-        plot_mat(KD0)
-        #indptr = np.arange(0,(nbins)*Nu**2,dtype=int,step=Nu)
-        indptr = np.linspace(0,(nbins)*Nu**2,dtype=int,num=nbins*Nu+1)
-        print(indptr)
-        print("Shape of indptr: " + str(indptr.shape))
-        #exit()
-        data = KD0.flatten()
-        data_temp = np.empty(np.shape(data))
-        #print(data)#
-        #exit() #.repeat(nbins)
-        #data = np.append(data,data)
-        #print(data)
-        #print(data.shape)
-        #exit()
-        ind_block = np.empty(0)
-
-        for i in range(2):   
-            data_temp=np.append(data_temp,data)
-
-        #print(data_temp.shape)
-        #exit()
-
-        for i in range(nbins):
-
-            for n in range(Nu):
-                ind_block = np.append(ind_block,np.arange(i*Nu,(i+1)*Nu,dtype=int,step=1))
-   
-        indices = ind_block.flatten()
-        
-        print("Shape of indices: " + str(indices.shape))
-        print("Shape of data: " + str(data_temp.shape))
-        keo = sparse.csr_matrix((data_temp, indices, indptr), shape=(Nbas,Nbas))
-        #plt.spy(keo)
-        #plot_mat(keo)
-        #plt.show()
-        return data_temp, indices, indptr
-
+    
 
     def build_pot(self):
         return 0
 
     def build_ham(self):
+
+        """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
+
         return 0
 
     def build_intmat(self):
         return 0
 
-
-        """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
 
 
 
@@ -881,124 +782,8 @@ class Hamiltonian():
 
         return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
 
-""" ============ KEOMAT - standard implementation ============ """
-def BUILD_KEOMAT( params, maparray, Nbas, Gr ):
-    nlobs = params['bound_nlobs']   
-    """call Gauss-Lobatto rule """
-    x   =   np.zeros(nlobs)
-    w   =   np.zeros(nlobs)
-    x,w =   GRID.gauss_lobatto(nlobs,14)
-    x   =   np.array(x)
-    w   =   np.array(w)
-
-    keomat =  np.zeros((Nbas, Nbas), dtype=np.float64)
-
-    for i in range(Nbas):
-        rin = Gr[maparray[i][0],maparray[i][1]]
-
-        for j in range(i,Nbas):
-            if maparray[i][3] == maparray[j][3] and maparray[i][4] == maparray[j][4]:
-                keomat[i,j] = calc_keomatel(maparray[i][0], maparray[i][1],\
-                                            maparray[i][3], maparray[j][0], maparray[j][1], x, w, rin, \
-                                            params['bound_rshift'],params['bound_binw']) #what a waste! Going over all bins!
-
-    print("KEO matrix")
-    with np.printoptions(precision=3, suppress=True, formatter={'float': '{:10.3f}'.format}, linewidth=400):
-        print(0.5*keomat)
 
 
-    return  0.5 * keomat
-
-def calc_keomatel(i1,n1,l1,i2,n2,x,w,rin,rshift,binwidth):
-    "calculate matrix element of the KEO"
-
-    if i1==i2 and n1==n2:
-        KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth) + KEO_matel_ang(i1,n1,l1,rin) 
-        return     KEO
-    else:
-        KEO     =  KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth)
-        return     KEO
-
-def KEO_matel_rad(i1,n1,i2,n2,x,w,rshift,binwidth):
-    #w /= sqrt(sum(w[:]))
-    w_i1     = w#/sum(w[:])
-    w_i2     = w#/sum(w[:]) 
-
-    nlobatto = x.size
-
-    if n1>0 and n2>0:
-        if i1==i2:
-            #single x single
-            KEO     =   KEO_matel_fpfp(i1,n1,n2,x,w_i1,rshift,binwidth) #checked
-            return      KEO/sqrt(w_i1[n1] * w_i2[n2])
-        else:
-            return      0.0
-
-    if n1==0 and n2>0:
-        #bridge x single
-        if i1==i2: 
-            KEO     =   KEO_matel_fpfp(i2,nlobatto-1,n2,x,w_i2,rshift,binwidth) # not nlobatto -2?
-            return      KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
-        elif i1==i2-1:
-            KEO     =   KEO_matel_fpfp(i2,0,n2,x,w_i2,rshift,binwidth) # i2 checked  Double checked Feb 12
-            return      KEO/sqrt(w_i2[n2]*(w_i1[nlobatto-1]+w_i1[0]))
-        else:
-            return      0.0
-
-    elif n1>0 and n2==0:
-        #single x bridge
-        if i1==i2: 
-            KEO     =   KEO_matel_fpfp(i1,n1,nlobatto-1,x,w_i1,rshift,binwidth) #check  Double checked Feb 12
-            return      KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
-        elif i1==i2+1:
-            KEO     =   KEO_matel_fpfp(i1,n1,0,x,w_i1,rshift,binwidth) #check  Double checked Feb 12
-            return      KEO/sqrt(w_i1[n1]*(w_i2[nlobatto-1]+w_i2[0]))
-        else:
-            return      0.0
-            
-    elif n1==0 and n2==0:
-        #bridge x bridge
-        if i1==i2: 
-            KEO     =   ( KEO_matel_fpfp(i1,nlobatto-1,nlobatto-1,x,w_i1,rshift,binwidth) + KEO_matel_fpfp( i1,0,0,x,w_i1,rshift,binwidth) ) / sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0])) #checked 10feb 2021   
-            return      KEO
-        elif i1==i2-1:
-            KEO     =   KEO_matel_fpfp(i2,nlobatto-1,0,x,w_i2,rshift,binwidth) #checked 10feb 2021 Double checked Feb 12
-            return      KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
-        elif i1==i2+1:
-            KEO     =   KEO_matel_fpfp(i1,nlobatto-1,0,x,w_i1,rshift,binwidth) #checked 10feb 2021. Double checked Feb 12
-            return      KEO/sqrt((w_i1[nlobatto-1]+w_i1[0])*(w_i2[nlobatto-1]+w_i2[0]))
-        else:
-            return      0.0
-
-def KEO_matel_rad_diag(i,n,x,w,rshift,binwidth):
-    #w /= sqrt(sum(w[:]))
-    w_i1     = w#/sum(w[:])
-    w_i2     = w#/sum(w[:]) 
-
-def KEO_matel_ang(i1,n1,l,rgrid):
-    """Calculate the anglar momentum part of the KEO"""
-    """ we pass full grid and return an array on the full grid. If needed we can calculate only singlne element r_i,n """ 
-    #r=0.5e00*(Rbin*x+Rbin*(i+1)+Rbin*i)+epsilon
-    return float(l)*(float(l)+1)/((rgrid)**2)
-
-def KEO_matel_fpfp(i,n1,n2,x,w,rshift,binwidth):
-    "Calculate int_r_i^r_i+1 f'(r)f'(r) dr in the radial part of the KEO"
-    # f'(r) functions from different bins are orthogonal
-    #scale the Gauss-Lobatto points
-    nlobatto    = x.size
-    x_new       = 0.5 * ( binwidth * x + binwidth * (i+1) + binwidth * i + rshift)  #checked
-    #no need for it, as we have differences everywhere
-    #scale the G-L quadrature weights
-    #w *= 0.5 * binwidth 
-
-    fpfpint=0.0e00
-    for k in range(0, nlobatto):
-        y1      = fp(i,n1,k,x_new)#*sqrt(w[n1])
-        y2      = fp(i,n2,k,x_new)#*sqrt(w[n2])
-        fpfpint += w[k] * y1 * y2 #*0.5 * binwidth # 
-
-    return fpfpint#sum(w[:])
-    
 def fp(i,n,k,x):
     "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) "
     npts = x.size 
@@ -1017,101 +802,6 @@ def fp(i,n,k,x):
                 if mu !=n:
                     fprime += (x[n]-x[mu])**(-1)
     return fprime
-
-
-def BUILD_HMAT0(params):
-
-    maparray, Nbas = mapping.GENMAP( params['bound_nlobs'], params['bound_nbins'], params['bound_lmax'], \
-                                     params['map_type'], params['job_directory'] )
-
-    Gr, Nr = GRID.r_grid( params['bound_nlobs'], params['bound_nbins'], params['bound_binw'],  params['bound_rshift'] )
-
-    if params['hmat_format'] == 'csr':
-        hmat = sparse.csr_matrix((Nbas, Nbas), dtype=np.float64)
-    elif params['hmat_format'] == 'regular':
-        hmat = np.zeros((Nbas, Nbas), dtype=np.float64)
-
-
-
-    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-   # plot_mat(keomat_fast)
-   # plt.show()
-
-    #start_time = time.time()
-    #keomat_standard = BUILD_KEOMAT( params, maparray, Nbas , Gr )
-    #end_time = time.time()
-    #print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
-    #plt.spy(keomat_fast, precision=params['sph_quad_tol'], markersize=5, label="KEO_fast")
-    #plt.legend()
-
-
-    #plot_mat(keomat_standard)
-    #plt.spy(keomat_standard, precision=params['sph_quad_tol'], markersize=5, label="KEO_standard")
-    #plt.legend()
-    #plt.show()
-
-
-    #rtol=1e-03
-    #atol=1e-04
-    #print(np.allclose(keomat_fast, keomat_standard, rtol=rtol, atol=atol))
-
-    #exit()
-
-    """ calculate hmat """
-    potmat0, potind = BUILD_POTMAT0( params, maparray, Nbas , Gr )
-        
-    for ielem, elem in enumerate(potmat0):
-        #print(potind[ielem][0],potind[ielem][1])
-        hmat[ potind[ielem][0],potind[ielem][1] ] = elem[0] #we can speed up this bit
-
-
-    start_time = time.time()
-    keomat = BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
-    end_time = time.time()
-
-    #start_time = time.time()
-    #keomat0 = BUILD_KEOMAT0( params, maparray, Nbas , Gr )
-    #end_time = time.time()
-    print("Time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-    hmat += keomat 
-
-    #plot_mat(hmat)
-    #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=1)
-    #plt.show()
-    
-    """ diagonalize hmat """
-    start_time = time.time()
-    enr0, coeffs0 = np.linalg.eigh(hmat, UPLO = 'U')
-    end_time = time.time()
-    print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
-    #plot_wf_rad(0.0, params['bound_binw'],1000,coeffs0,maparray,Gr,params['bound_nlobs'], params['bound_nbins'])
-
-    print("Normalization of the wavefunction: ")
-    for v in range(params['num_ini_vec']):
-        print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs0[:,v] ) * coeffs0[:,v] ) )))
-
-    if params['save_ham0'] == True:
-        if params['hmat_format'] == 'csr':
-            sparse.save_npz(params['job_directory'] + params['file_hmat0'] , hmat , compressed = False )
-        elif params['hmat_format'] == 'regular':
-            with open( params['job_directory'] + params['file_hmat0'] , 'w') as hmatfile:   
-                np.savetxt(hmatfile, hmat, fmt = '%10.4e')
-
-    if params['save_psi0'] == True:
-        psi0file = open(params['job_directory'] + params['file_psi0'], 'w')
-        for ielem,elem in enumerate(maparray):
-            psi0file.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
-                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
-                            "\t\t ".join('{:10.5e}'.format(coeffs0[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
-
-    if params['save_enr0'] == True:
-        with open(params['job_directory'] + params['file_enr0'], "w") as energyfile:   
-            np.savetxt( energyfile, enr0 * CONSTANTS.au_to_ev , fmt='%10.5f' )
 
 
 
