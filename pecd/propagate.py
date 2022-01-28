@@ -1079,7 +1079,7 @@ if __name__ == "__main__":
     ham_bound = keo_bound + pot_bound
 
 
-    ham_bound_filt = hamiltonian.Hamiltonian.filter_mat(ham_bound,params)
+    ham_bound_filt = hamiltonian.Hamiltonian.filter_mat(ham_bound,params['hmat_filter'])
     #print(ham_bound.shape)
     #plt.spy(ham_bound,precision=1e-4)
     #plt.show()

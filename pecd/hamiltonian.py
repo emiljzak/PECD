@@ -396,9 +396,18 @@ class Hamiltonian():
         return  keomat
 
     @staticmethod
-    def filter_mat(mat,params):
+    def filter_mat(mat,filter):
+        """
+        Removes elements of a sparse matrix whose magnitude is smaller than a given threshold.
 
-        nonzero_mask        = np.array(np.abs(mat[mat.nonzero()]) < params['hmat_filter'])[0]
+        Args:
+            mat: array (numpy or sparse)
+            filter (float): threshold value
+
+        Returns: array (the same array as put in)
+
+        """
+        nonzero_mask        = np.array(np.abs(mat[mat.nonzero()]) < filter)[0]
         rows                = mat.nonzero()[0][nonzero_mask]
         cols                = mat.nonzero()[1][nonzero_mask]
         mat[rows, cols]     = 0
@@ -406,34 +415,36 @@ class Hamiltonian():
         return mat
 
     def build_CFE(self,Gr):
+        """
+        Builds the vector of the centrifugal energy operator
+            CFE = l(l+1)/r^2
+
+        Args:
+            Gr: (1D numpy array): radial grid 
+
+        Returns: 
+            CFE: (1D numpy array): values of the centrifugal energy operator at grid points
+
+        """
 
         lmax    = self.params['bound_lmax']
         CFE     = np.zeros(self.Nbas, dtype = float)
 
-
-        #print(Gr)
-
-        #print(self.Nbas)
-        #print(Gr.shape[0])
-       
-
         for ipoint in range(Gr.shape[0]):
-            
             for l in range(lmax+1):
                 for m in range(-l,l+1):
                     p = ipoint*(lmax+1)**2 + l*(l+1) + m
                     CFE[p] = l*(l+1)/Gr[ipoint]**2 #- 2.0/Gr[ipoint]
-
-                    #print(p)
-
-        #plt.plot(CFE)
-        #plt.show()
 
         return CFE
 
     def inflate(self,KD,KC):
         """
         Inflates generic KD and KC matrices into the angular-radial basis in a single bin.
+
+        Args: 
+            KD (2D numpy array, shape=(nlobs-1,nlobs-1)): the t_ij array in the KEO
+            KC (1D numpy array, shape=(1,nlobs-1)): the u_ij array in the KEO coupling adjacent bins
 
         Returns: tuple
                 KD0: numpy 2D array, shape = ( (nlobs-1)*(lmax+1)**2 , (nlobs-1)*(lmax+1)**2 ) 
@@ -454,7 +465,6 @@ class Hamiltonian():
                 #put the indices below into a list and slice for vectorization
                 for l in range(lmax+1):
                     for m in range(-l,l+1):
-
                         KD0[n1*(lmax+1)**2+l*(l+1)+m, n2*(lmax+1)**2+l*(l+1)+m] = KD[n1,n2]
 
 
@@ -463,21 +473,27 @@ class Hamiltonian():
                 for m in range(-l,l+1):
                     KC0[l*(l+1)+m,n1*(lmax+1)**2+l*(l+1)+m] = KC[n1]
 
-
-        #plt.spy(KD0, precision=1e-12, markersize=5, label="KEO")
-        #plt.legend()
-        #plt.show()
-
         return KD0, KC0
 
 
     def fillup_keo_lil_np(self,KD0,KC0,CFE):
+        """
+        Fill up the KEO matrix with pre-calculated blocks of matrix elements. Use slicing of lil sparse matrix.
 
+        Args:
+            KD0 (2D numpy array): inflated KD matrix
+            KC0 (2D numpy array): inflated KC matrix
+            CFE (1D numpy array): The centrifugal term
+
+        Returns:
+            keomat (2D sparse csr array): the KEO operator matrix in csr format
+
+        """
         lmax    = self.params['bound_lmax']
         nlobs   = self.params['bound_nlobs']
         nbins   = self.nbins
-        print("Nbas = " + str(self.Nbas))
-        print("predicted Nbas = " + str(int(((self.nbins)*(nlobs-1)-1)*(lmax+1)**2)))
+        #print("Nbas = " + str(self.Nbas))
+        #print("predicted Nbas = " + str(int(((self.nbins)*(nlobs-1)-1)*(lmax+1)**2)))
 
         #keomat_diag = sparse.diags(CFE,0,(self.Nbas, self.Nbas), dtype=float, format="lil")
         keomat = sparse.lil_matrix((self.Nbas, self.Nbas), dtype=float)
@@ -522,9 +538,6 @@ class Hamiltonian():
             
             keomat[ start_ind_row_kc[ibin]:end_ind_row_kc[ibin]+1, start_ind_col_kc[ibin]:end_ind_col_kc[ibin]+1 ] = KC0
             keomat[ start_ind_col_kc[ibin]:end_ind_col_kc[ibin]+1, start_ind_row_kc[ibin]:end_ind_row_kc[ibin]+1 ] = KC0.T
-
-
-
 
         #last two bins are special
 
@@ -599,9 +612,19 @@ class Hamiltonian():
         return keomat
 
     def fillup_keo_csr(self,KD0,KC0,CFE,nbins,Nu,Nang):
-        """Create compressed sparse-row matrix from copies of the generic inflated KD matrix
-        
-        Todo: test performance
+        """Create compressed sparse-row matrix from copies of the generic inflated KD and KC matrices + the CFE term.
+
+        Args:
+            KD0 (2D numpy array): inflated KD matrix
+            KC0 (2D numpy array): inflated KC matrix
+            CFE (1D numpy array): The centrifugal term
+            nbins (float): number of bins
+            Nu (float): number of points per block (Nang*(nlobs-1))
+            Nang (float): size of the angular basis
+
+        Returns:
+            keomat (2D sparse csr array): the KEO operator matrix in csr format
+
         """
         #form the block-diagonal part
         KD_sparse = sparse.csr_matrix(KD0)
@@ -734,33 +757,31 @@ class Hamiltonian():
     @staticmethod
     #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
     def calc_potmat_anton_jit( vLM, vlist, tjmat):
+        """
+        Calculate indices and values for the non-zero elements of the potential energy matrix for the chiralium potential.
+
+        Args:
+            vLM (3D numpy array, shape=(Nr,Lmax+1,2Lmax+1)): array of values of the radial potential energy expanded in spherical harmonics basis
+            vlist (2D numpy array, shape=(No.nonzero elems,7)): list of non-zero matrix element
+            tjmat (6D numpy array): matrix elements of the respective spherical harmonics operators in the spherical harmonics basis
+
+        Returns: tuple
+            pot (list, shape=(Nbas)): a list of values
+            ind (list): a list of indices
+        """
         pot = []
         potind = []
-
         Lmax = vLM.shape[1]
-        #print("Lmax = " + str(Lmax-1))
-
         for p in range(vlist.shape[0]):
-            #print(vlist[p1,:])
+          
             v = 0.0+1j*0.0
             for L in range(Lmax):
                 for M in range(-L,L+1):
-                    #print(vlist[p,0], vlist[p,1], vlist[p,3], vlist[p,4], L, M, vlist[p,5], vlist[p,6] )
+                
                     v += vLM[vlist[p,0],L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,1] + vlist[p,2],vlist[p,3] + vlist[p,4]]
             pot.append( [v] )
             potind.append( [ vlist[p,5], vlist[p,6] ] )
-        """
-        #pre-derived expression using only positive M's and real part of vLM:
-        for p in range(vlist.shape[0]):
-            #print(vlist[p,:])
-            v = 0.0#+1j*0.0
-            for L in range(Lmax):
-                v += vLM[vlist[p,0]-1,L,L].real * tjmat[vlist[p,1], L, vlist[p,3], L , vlist[p,3] + vlist[p,4]]
-                for M in range(1,L+1):
-                    v += 2.0 * vLM[vlist[p,0]-1,L,L+M].real * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,3] + vlist[p,4]]
-            pot.append( [v] )
-            potind.append( [ vlist[p,5], vlist[p,6] ] )
-        """
+
         return pot, potind
 
 
@@ -786,17 +807,25 @@ class Hamiltonian():
         return vlist
 
     def map_tjmat(self,tjmat):
+        """Map the 6D tjmat onto a practical 3D numpy array.
+
+        Args:
+            tjmat (6D numpy array): matrix elements of the respective spherical harmonics operators in the spherical harmonics basis
+
+        Returns: array
+            tjmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
+        """
         lmax = self.params['bound_lmax']
         Lmax = self.params['multi_lmax']
 
         Nang = (lmax+1)**2
         Nmulti = (Lmax+1)**2
 
-        print("Nang = " + str(Nang))
-        print("Nmulti = " + str(Nmulti))
+        #print("Nang = " + str(Nang))
+        #print("Nmulti = " + str(Nmulti))
 
         tjmats = np.zeros((Nang,Nang,Nmulti),dtype=float)
-        tjmats2 = np.zeros((Nang,Nang,Nmulti),dtype=float)
+        #tjmats2 = np.zeros((Nang,Nang,Nmulti),dtype=float)
 
         """
         start_time = time.time()
@@ -820,10 +849,8 @@ class Hamiltonian():
         print("Time for the construction of tjmats using counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
         
         """
-    
         start_time = time.time()
         #using local basis indices without counters: a bit slower
-
         for l1 in range(lmax+1):
             for m1 in range(-l1,l1+1):
 
@@ -835,18 +862,23 @@ class Hamiltonian():
 
                                 tjmats[l1*(l1+1)+m1,l2*(l2+1)+m2,L*(L+1)+M] = tjmat[l1,L,l2,l1+m1,L+M,l2+m2]
         
-
         end_time = time.time()
         print("Time for the construction of tjmats withouts counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
         
-    
         #print(np.allclose(tjmats1,tjmats2))
         #exit()
         return tjmats
 
 
     def map_vmats(self,vLM,Nr):
+        """Map the 3D vLM array onto a practical 2D numpy array.
 
+        Args:
+            vLM (3D numpy array, shape=(Nr,Lmax+1,2Lmax+1)): array of values of the radial potential energy expanded in spherical harmonics basis
+        
+        Returns: array
+            vmats (2D numpy array, shape=(Nr,Nmulti)): Nmulti = (Lmax+1)^2
+        """
         Lmax = self.params['multi_lmax']
         Nmulti = (Lmax+1)**2
 
