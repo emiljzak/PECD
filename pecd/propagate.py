@@ -1077,11 +1077,19 @@ if __name__ == "__main__":
     
     
     ham_bound = keo_bound + pot_bound
+
+
+    ham_bound_filt = hamiltonian.Hamiltonian.filter_mat(ham_bound,params)
     #print(ham_bound.shape)
     #plt.spy(ham_bound,precision=1e-4)
     #plt.show()
     #exit()
-    enr,coeffs = call_eigensolver(ham_bound,params)
+    
+    start_time = time.time()
+    enr,coeffs = call_eigensolver(ham_bound_filt,params)
+    end_time = time.time()
+    print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
     
     print("Energy levels:")
     print(enr*constants.au_to_ev )

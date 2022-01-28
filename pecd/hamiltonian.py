@@ -395,15 +395,15 @@ class Hamiltonian():
 
         return  keomat
 
-    def filter_keomat(self,keomat):
+    @staticmethod
+    def filter_mat(mat,params):
 
-        nonzero_mask        = np.array(np.abs(keomat[keomat.nonzero()]) < 1e-14)[0]
-        rows                = keomat.nonzero()[0][nonzero_mask]
-        cols                = keomat.nonzero()[1][nonzero_mask]
-        keomat[rows, cols]    = 0
-        keomat_filtered        = keomat.copy()
-
-        return keomat_filtered
+        nonzero_mask        = np.array(np.abs(mat[mat.nonzero()]) < params['hmat_filter'])[0]
+        rows                = mat.nonzero()[0][nonzero_mask]
+        cols                = mat.nonzero()[1][nonzero_mask]
+        mat[rows, cols]     = 0
+        #mat_filtered        = mat.copy()
+        return mat
 
     def build_CFE(self,Gr):
 
@@ -873,8 +873,6 @@ class Hamiltonian():
         return vxi
 
     def build_potmat(self,grid_euler=[0,0,0],irun=0):
-
-
         """ 
         Driver routine for the calculation of the potential energy matrix.
         For now we use it to test Anton's potential.
@@ -887,13 +885,13 @@ class Hamiltonian():
   
         Nr = self.Gr.ravel().shape[0]
        
-        # 2. Read the potential partial waves on the grid
+        #  Read the potential partial waves on the grid
         start_time = time.time()
         vLM,rgrid_anton = potential.read_potential(self.params,Nr,False)
         end_time = time.time()
         print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        # 3. Build array of 3-j symbols
+        # Build array of 3-j symbols
         tjmat       = gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
 
 
@@ -901,6 +899,7 @@ class Hamiltonian():
 
         vmats = self.map_vmats(vLM,Nr)
 
+        #this part can probably be done in parallel
         potarr = []
         for ipoint in range(Nr):
             vxi = self.calc_vxi(vmats[ipoint],tmats)
@@ -910,16 +909,11 @@ class Hamiltonian():
 
         potmat = sparse.block_diag(potarr)
 
-        #plt.spy(np.abs(potmat),precision=1e-4)
-        #plt.show()
-        #exit()
 
-        return potmat#+potmat.getH()#-potmat.diagonal()
+        return potmat
 
 
     def build_potmat_standard(self,grid_euler=[0,0,0],irun=0):
-
-
         """ 
         Driver routine for the calculation of the potential energy matrix.
         For now we use it to test Anton's potential.
