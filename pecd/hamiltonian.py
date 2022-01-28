@@ -844,6 +844,32 @@ class Hamiltonian():
         #exit()
         return tjmats
 
+
+    def map_vmats(self,vLM,Nr):
+
+        Lmax = self.params['multi_lmax']
+        Nmulti = (Lmax+1)**2
+
+        vmats = np.zeros((Nr,Nmulti),dtype=complex)
+
+        for L in range(Lmax):
+            for M in range(-L,L+1):
+                vmats[:,L*(L+1)+M] = vLM[:,L,M]
+        
+        return vmats
+
+
+    def calc_vxi(self,vmat,tmats,ipoint):
+
+        Nmulti = vmat.shape[1]
+        vxi = np.zeros((Nmulti,Nmulti), dtype = complex)
+
+        for imulti in range(vmat.shape[1]):
+            vxi += vmat[ipoint,imulti] * tmats[:,:,imulti]
+        #vxi = np.dot(vmat[ipoint,:],tmats[,,:])
+
+        return vxi
+
     def build_potmat(self,grid_euler=[0,0,0],irun=0):
 
 
@@ -871,11 +897,11 @@ class Hamiltonian():
 
         tmats = self.map_tjmat(tjmat)
 
-        vmats = map_vmats(VLM)
+        vmats = self.map_vmats(vLM,Nr)
 
         potarr = []
         for ipoint in range(Nr):
-            vxi = calc_vxi(vmats[ipoint],tmats)
+            vxi = self.calc_vxi(vmats[ipoint],tmats)
             potarr.append(vxi)
 
         potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
