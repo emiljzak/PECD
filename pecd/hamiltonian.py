@@ -910,8 +910,8 @@ class Hamiltonian():
 
         potmat = sparse.block_diag(potarr)
 
-        plt.spy(np.abs(potmat))
-        plt.show()
+        #plt.spy(np.abs(potmat),precision=1e-4)
+        #plt.show()
         #exit()
 
         return potmat#+potmat.getH()#-potmat.diagonal()
