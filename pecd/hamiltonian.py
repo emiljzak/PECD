@@ -798,6 +798,51 @@ class Hamiltonian():
         Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
         
         """
+  
+        Nr = self.Gr.ravel().shape[0]
+       
+        # 2. Read the potential partial waves on the grid
+        start_time = time.time()
+        vLM,rgrid_anton = potential.read_potential(self.params,Nr,False)
+        end_time = time.time()
+        print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+        # 3. Build array of 3-j symbols
+        tjmat       = gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
+
+
+        tmats = map_tjmat(tjmat)
+
+        vmats = map_vmats(VLM)
+
+        potarr = []
+        for ipoint in range(Nr):
+            vxi = calc_vxi(vmats[ipoint],tmats)
+            potarr.append(vxi)
+
+        potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
+
+        potmat = sparse.block_diag(potarr)
+
+        plt.spy(potmat)
+        plt.show()
+        exit()
+
+        return potmat#+potmat.getH()#-potmat.diagonal()
+
+
+    def build_potmat_standard(self,grid_euler=[0,0,0],irun=0):
+
+
+        """ 
+        Driver routine for the calculation of the potential energy matrix.
+        For now we use it to test Anton's potential.
+        
+        Calculate potential matrix using projection onto spherical harmonics representation of 
+        the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
+        Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
+        
+        """
         #full
         Nr = self.Gr.ravel().shape[0]
         #bound
@@ -886,10 +931,10 @@ class Hamiltonian():
         for ielem, elem in enumerate(potmat0):
             #print(elem[0])
             potmat[ potind[ielem,0], potind[ielem,1] ] = elem[0]
-        #plot_mat(potmat)
-        #plt.spy(potmat+potmat.getH(),precision=1e-4)
-        #plt.show()
-        
+        plot_mat(potmat)
+        plt.spy(potmat,precision=1e-4)
+        plt.show()
+        exit()
         return potmat#+potmat.getH()#-potmat.diagonal()
 
 
