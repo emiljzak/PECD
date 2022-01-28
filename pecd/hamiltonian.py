@@ -892,7 +892,15 @@ class Hamiltonian():
 
 
     def calc_vxi(self,vmat,tmats):
+        """Calculate a block of the potential energy matrix for a single grid point.
 
+        Args:
+            vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
+            tmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
+        
+        Returns: array
+            vxi (2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
+        """
         Nang = tmats.shape[0]
         Nmulti = vmat.shape[0]
         #print("Nmulti in calc_vxi = " +str(Nmulti))
@@ -909,9 +917,6 @@ class Hamiltonian():
         Driver routine for the calculation of the potential energy matrix.
         For now we use it to test Anton's potential.
         
-        Calculate potential matrix using projection onto spherical harmonics representation of 
-        the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
-        Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
         
         """
   
@@ -950,10 +955,7 @@ class Hamiltonian():
         Driver routine for the calculation of the potential energy matrix.
         For now we use it to test Anton's potential.
         
-        Calculate potential matrix using projection onto spherical harmonics representation of 
-        the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist. 
-        Partial waves of the potential on the grid are read from files provided by Anton Artemyev.
-        
+
         """
         #full
         Nr = self.Gr.ravel().shape[0]
@@ -1054,13 +1056,19 @@ class Hamiltonian():
 
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
 
-        return 0
+        ham_bound = keo_bound + pot_bound
+
+
+        ham_bound_filt = Hamiltonian.filter_mat(ham_bound,self.params['hmat_filter'])
+        #print(ham_bound.shape)
+        #plt.spy(ham_bound,precision=1e-4)
+        #plt.show()
+        #exit()
+        
+        return ham_bound_filt
 
     def build_intmat(self):
         return 0
-
-
-
 
 
 

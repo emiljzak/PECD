@@ -1075,26 +1075,6 @@ if __name__ == "__main__":
     print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
     
     
-    
-    ham_bound = keo_bound + pot_bound
-
-
-    ham_bound_filt = hamiltonian.Hamiltonian.filter_mat(ham_bound,params['hmat_filter'])
-    #print(ham_bound.shape)
-    #plt.spy(ham_bound,precision=1e-4)
-    #plt.show()
-    #exit()
-    
-    start_time = time.time()
-    enr,coeffs = call_eigensolver(ham_bound_filt,params)
-    end_time = time.time()
-    print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
-    
-    print("Energy levels:")
-    print(enr*constants.au_to_ev )
-    exit()
-
     print("\n")
     print("Building the bound Hamiltonian operator matrix...")
     print("\n")
@@ -1110,10 +1090,14 @@ if __name__ == "__main__":
     print("\n")
 
     start_time = time.time()
-    E0, psi0 = call_eigensolver(ham_bound, params)
+    E0, psi0 = call_eigensolver(ham_bound,params)
     end_time = time.time()
-    print("Time for diagonalization of the bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
+    print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+    
+    print("Energy levels:")
+    print(E0*constants.au_to_ev )
+    exit()
 
     print("\n")
     print("Building the kinetic energy operator matrix for the propagation Hamiltonian...")
