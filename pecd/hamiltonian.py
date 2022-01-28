@@ -824,13 +824,13 @@ class Hamiltonian():
         start_time = time.time()
         #using local basis indices without counters: a bit slower
 
-        for l1 in range(lmax):
+        for l1 in range(lmax+1):
             for m1 in range(-l1,l1+1):
 
-                for l2 in range(lmax):
+                for l2 in range(lmax+1):
                     for m2 in range(-l2,l2+1):
        
-                        for L in range(Lmax):
+                        for L in range(Lmax+1):
                             for M in range(-L,L+1):
 
                                 tjmats[l1*(l1+1)+m1,l2*(l2+1)+m2,L*(L+1)+M] = tjmat[l1,L,l2,l1+m1,L+M,l2+m2]
@@ -852,20 +852,22 @@ class Hamiltonian():
 
         vmats = np.zeros((Nr,Nmulti),dtype=complex)
 
-        for L in range(Lmax):
+        for L in range(Lmax+1):
             for M in range(-L,L+1):
-                vmats[:,L*(L+1)+M] = vLM[:,L,M]
+                vmats[:,L*(L+1)+M] = vLM[:,L,L+M]
         
         return vmats
 
 
-    def calc_vxi(self,vmat,tmats,ipoint):
+    def calc_vxi(self,vmat,tmats):
 
-        Nmulti = vmat.shape[1]
-        vxi = np.zeros((Nmulti,Nmulti), dtype = complex)
+        Nang = tmats.shape[0]
+        Nmulti = vmat.shape[0]
+        #print("Nmulti in calc_vxi = " +str(Nmulti))
+        vxi = np.zeros((Nang,Nang), dtype = complex)
 
-        for imulti in range(vmat.shape[1]):
-            vxi += vmat[ipoint,imulti] * tmats[:,:,imulti]
+        for imulti in range(Nmulti):
+            vxi += vmat[imulti] * tmats[:,:,imulti]
         #vxi = np.dot(vmat[ipoint,:],tmats[,,:])
 
         return vxi
@@ -908,9 +910,9 @@ class Hamiltonian():
 
         potmat = sparse.block_diag(potarr)
 
-        plt.spy(potmat)
+        plt.spy(np.abs(potmat))
         plt.show()
-        exit()
+        #exit()
 
         return potmat#+potmat.getH()#-potmat.diagonal()
 
