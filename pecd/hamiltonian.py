@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
 #
 
+from numpy.core.numeric import NaN
 from scipy import special
 from scipy.sparse.linalg import  eigsh
 #import mapping
@@ -784,7 +785,64 @@ class Hamiltonian():
                         vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
         return vlist
 
+    def map_tjmat(self,tjmat):
+        lmax = self.params['bound_lmax']
+        Lmax = self.params['multi_lmax']
 
+        Nang = (lmax+1)**2
+        Nmulti = (Lmax+1)**2
+
+        print("Nang = " + str(Nang))
+        print("Nmulti = " + str(Nmulti))
+
+        tjmats = np.zeros((Nang,Nang,Nmulti),dtype=float)
+        tjmats2 = np.zeros((Nang,Nang,Nmulti),dtype=float)
+
+        """
+        start_time = time.time()
+        #using local basis indices with counters
+        s1 = -1
+        for l1 in range(lmax):
+            for m1 in range(-l1,l1+1):
+                s1+=1
+                s2=-1
+                for l2 in range(lmax):
+                    for m2 in range(-l2,l2+1):
+                        s2+=1
+                        imult = -1
+                        for L in range(Lmax):
+                            for M in range(-L,L+1):
+                                imult +=1
+                                tjmats1[s1,s2,imult] = tjmat[l1,L,l2,l1+m1,L+M,l2+m2]
+        
+        #using local basis indices without counters
+        end_time = time.time()
+        print("Time for the construction of tjmats using counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+        """
+    
+        start_time = time.time()
+        #using local basis indices without counters: a bit slower
+
+        for l1 in range(lmax):
+            for m1 in range(-l1,l1+1):
+
+                for l2 in range(lmax):
+                    for m2 in range(-l2,l2+1):
+       
+                        for L in range(Lmax):
+                            for M in range(-L,L+1):
+
+                                tjmats[l1*(l1+1)+m1,l2*(l2+1)+m2,L*(L+1)+M] = tjmat[l1,L,l2,l1+m1,L+M,l2+m2]
+        
+
+        end_time = time.time()
+        print("Time for the construction of tjmats withouts counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+    
+        #print(np.allclose(tjmats1,tjmats2))
+        #exit()
+        return tjmats
 
     def build_potmat(self,grid_euler=[0,0,0],irun=0):
 
@@ -811,7 +869,7 @@ class Hamiltonian():
         tjmat       = gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
 
 
-        tmats = map_tjmat(tjmat)
+        tmats = self.map_tjmat(tjmat)
 
         vmats = map_vmats(VLM)
 
@@ -1375,8 +1433,8 @@ def gen_tjmat(lmax_basis,lmax_multi):
     """precompute all necessary 3-j symbols for the matrix elements of the multipole moments"""
 
     #store in arrays:
-    # 2) tjmat[l,L,l',M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
-    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1, 2*lmax_multi + 1,  2 * lmax_basis + 1, 2 * lmax_basis + 1), dtype = float)
+    # 2) tjmat[l,L,l',m,M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
+    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1,  2 * lmax_basis + 1, 2*lmax_multi + 1, 2 * lmax_basis + 1), dtype = float)
     
     #l1 - ket, l2 - bra
 
@@ -1388,7 +1446,7 @@ def gen_tjmat(lmax_basis,lmax_multi):
                 for M in range(-L,L+1):
                     for m1 in range(-l1,l1+1):
                         for m2 in range(-l2,l2+1): 
-                            tjmat[l1,L,l2,L+M,l1+m1,l2+m2] = np.sqrt( (2.0*float(l2)+1) * (2.0*float(L)+1) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
+                            tjmat[l1,L,l2,l1+m1,L+M,l2+m2] = np.sqrt( (2.0*float(l2)+1) * (2.0*float(L)+1) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
                             # ( (-1.0)**(-M) ) * spherical.Wigner3j( l1,L, l2, m1, M, m2) * \
                             #                        spherical.Wigner3j( l1, L ,l2, 0, 0, 0) * \
                             #                        np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
