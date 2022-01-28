@@ -731,7 +731,7 @@ class Hamiltonian():
 
 
     @staticmethod
-    @jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
+    #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
     def calc_potmat_anton_jit( vLM, vlist, tjmat):
         pot = []
         potind = []
@@ -745,7 +745,7 @@ class Hamiltonian():
             for L in range(Lmax):
                 for M in range(-L,L+1):
                     #print(vlist[p,0], vlist[p,1], vlist[p,3], vlist[p,4], L, M, vlist[p,5], vlist[p,6] )
-                    v += vLM[vlist[p,0]-1,L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,1] + vlist[p,2],vlist[p,3] + vlist[p,4]]
+                    v += vLM[vlist[p,0],L,L+M] * tjmat[vlist[p,1], L, vlist[p,3], L + M, vlist[p,1] + vlist[p,2],vlist[p,3] + vlist[p,4]]
             pot.append( [v] )
             potind.append( [ vlist[p,5], vlist[p,6] ] )
         """
@@ -772,7 +772,7 @@ class Hamiltonian():
 
         if map_type == 'DVR':
             for p1 in range(Nbas):
-                for p2 in range(p1, Nbas):
+                for p2 in range(Nbas):
                     if maparray[p1][2] == maparray[p2][2]: 
                         vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
                             maparray[p2][3], maparray[p2][4], p1, p2  ])
@@ -799,9 +799,9 @@ class Hamiltonian():
         
         """
         #full
-        #Nr = Gr.ravel().shape[0]
+        Nr = self.Gr.ravel().shape[0]
         #bound
-        Nr = (self.params['bound_nlobs']-1) * self.params['bound_nbins']  
+        #Nr = (self.params['bound_nlobs']-1) * self.params['bound_nbins']  
         # 1. Construct vlist
         start_time = time.time()
         vlist = self.gen_vlist( self.maparray, self.Nbas, self.params['map_type'] )
@@ -827,7 +827,8 @@ class Hamiltonian():
         end_time = time.time()
         print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
         
-
+        #print(rgrid_anton-self.Gr)
+        #exit()
         #test_vlm_symmetry(vLM)
 
         #print("Maximum imaginary part of the potential:")
@@ -889,7 +890,7 @@ class Hamiltonian():
         #plt.spy(potmat+potmat.getH(),precision=1e-4)
         #plt.show()
         
-        return potmat+potmat.getH()-potmat.diagonal()
+        return potmat#+potmat.getH()#-potmat.diagonal()
 
 
     def build_ham(self):
