@@ -106,6 +106,9 @@
 <li><p>Consider using SciPy.sparse LinearOperator class with custom matrix-vector product (NUMBA?) in expm_multiply in prop_wf. Can it give speed-up?</p></li>
 <li><p>Implement variable bin sizes and numbers of basis functions in each bin based on femlist. Presently each bin must have equal size and equal number of basis functions.</p></li>
 <li><p>Move ‘params’ syntax into a secondary layer, leave pure keywords in the input file.</p></li>
+<li><p>Use scipy.sparse dia_matrix for constructing inflated KD and KC.</p></li>
+<li><p>Try numba jit (parallel = True) with prange when constructing the KEO with (indptr,indices,data)-&gt;csr. Loop over bins, loop over points. Any gain vs scipy.sparse.block_diag? Consider cupyx.scipy.sparse for the same purpose.</p></li>
+<li><p>Parallelize calc_vxi part in potmat (loop over grid points).</p></li>
 </ol>
 </section>
 

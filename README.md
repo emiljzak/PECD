@@ -6,7 +6,7 @@
 
 [**Overview**](#overview)
 | [**Quick Start**](#quick-start)
-| [**Documentation**](https://pecd.readthedocs.io/en/latest/)
+| [**Documentation**](https://readthedocs.org/projects/pecd-personal/latest/)
 
 
 PECD is currently being developed and maintained by theory team of the Controlled Molecule Imaging group (https://www.controlled-molecule-imaging.org/), Center for Free-Electron Laser Science at Deutsches Elektronen-Synchrotron. This readme file is under construction with updates coming really soon.
