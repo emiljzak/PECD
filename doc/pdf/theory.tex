@@ -106,6 +106,9 @@ Each molecular-frame orientation gives different electrostatic potential as seen
 \section{Kinetic energy operator}
 
 \section{Hamiltonian}
+The current paradigm assumes calculation of the sparse Hamiltonian matrix and feeding this matrix into an eigensolver or propagator routine. In future versions, for better computational performance it may be useful not to calculate the Hamiltonian matrix, but rather code the matrix-vector product only, as part of an interface routine with appropriate iterative eigensolver.
+Due to high degree of sparsity of the Hamiltonians appearing in our calculations, it is sufficient to keep in memory the whole sparse matrix.
+
 We decided to keep the bound state Hamiltonian $H_0$ and the initial propagation Hamiltonian $H_{init}$ as separate entities, calculated independently. The computational overhead related to calculating the bound-state part twice is marginal, as we assume that the full propagation basis is much bigger than the basis for the bound Hamiltonian $Nbas \gg Nbas0$. Future releases might recycle the bound state KEO and POT and build only the outside region Hamiltonian.
 
 \section{Wavepacket propagation}

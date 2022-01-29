@@ -4,6 +4,18 @@ Public API: CHIRALEX package
 *****************************
 
 
+Hamiltonian module (:code:`hamiltonian`)
+------------------------------------------
+
+.. autosummary::
+
+	pecd.hamiltonian.Hamiltonian
+
+
+.. autoclass:: pecd.hamiltonian.Hamiltonian
+
+	.. automethod:: gen_klist
+
 
 
 Propagation of the wavepacket (:code:`propagate`)
@@ -11,7 +23,7 @@ Propagation of the wavepacket (:code:`propagate`)
 
 .. autosummary::
 
-pecd.propagate.Propagator
+	pecd.propagate.Propagator
 
 
 .. autoclass:: pecd.propagate.Propagator
@@ -25,7 +37,8 @@ Wavefunction module (:code:`wavefunction`)
 
 	pecd.wavefunction.Map
 	pecd.wavefunction.GridRad
-
+	pecd.wavefunction.GridEuler
+	
 .. autoclass:: pecd.wavefunction.Map
 
 	.. automethod:: genmap_femlist
@@ -38,6 +51,10 @@ Wavefunction module (:code:`wavefunction`)
 
 
 
+.. autoclass:: pecd.wavefunction.GridEuler
+
+	.. automethod:: gen_euler_grid
+	.. automethod:: gen_euler_grid_2D
 
 
 

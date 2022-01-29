@@ -44,6 +44,7 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Public API: CHIRALEX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hamiltonian-module-hamiltonian">Hamiltonian module (<code class="code docutils literal notranslate"><span class="pre">hamiltonian</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#propagation-of-the-wavepacket-propagate">Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wavefunction-module-wavefunction">Wavefunction module (<code class="code docutils literal notranslate"><span class="pre">wavefunction</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#electric-field-module-field">Electric field module (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)</a></li>
@@ -101,6 +102,17 @@
 </style>
 <section id="public-api-chiralex-package">
 <h1>Public API: CHIRALEX package<a class="headerlink" href="#public-api-chiralex-package" title="Permalink to this headline"></a></h1>
+<section id="hamiltonian-module-hamiltonian">
+<h2>Hamiltonian module (<code class="code docutils literal notranslate"><span class="pre">hamiltonian</span></code>)<a class="headerlink" href="#hamiltonian-module-hamiltonian" title="Permalink to this headline"></a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+</section>
 <section id="propagation-of-the-wavepacket-propagate">
 <h2>Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)<a class="headerlink" href="#propagation-of-the-wavepacket-propagate" title="Permalink to this headline"></a></h2>
 <table class="longtable docutils align-default">
@@ -111,7 +123,6 @@
 <tbody>
 </tbody>
 </table>
-<p>pecd.propagate.Propagator</p>
 </section>
 <section id="wavefunction-module-wavefunction">
 <h2>Wavefunction module (<code class="code docutils literal notranslate"><span class="pre">wavefunction</span></code>)<a class="headerlink" href="#wavefunction-module-wavefunction" title="Permalink to this headline"></a></h2>
@@ -126,6 +137,9 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#pecd.wavefunction.GridRad" title="pecd.wavefunction.GridRad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.GridRad</span></code></a>(nlobs, nbins, ...)</p></td>
 <td><p>Class contains methods related to the radial grid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.wavefunction.GridEuler" title="pecd.wavefunction.GridEuler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.GridEuler</span></code></a>(N_euler, ...)</p></td>
+<td><p>GridEuler class keeps methods for generating and manipulating the grid of molecular orientations</p></td>
 </tr>
 </tbody>
 </table>
@@ -209,7 +223,7 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 <a class="reference internal image-reference" href="_images/ham_nat.png"><img alt="_images/ham_nat.png" src="_images/ham_nat.png" style="width: 500px;" /></a>
 <p class="rubric">Examples</p>
 <p>ibin  n     ipoint l    m   id</p>
-<p>Status: tested</p>
+<p>Status: tested vs analytic formula. OK.</p>
 </dd></dl>
 
 </dd></dl>
@@ -255,6 +269,77 @@ x: numpy 1D array (float, size = nlobs)</p>
 </dl>
 <p>Todo: this function must be generalized to account for FEMLIST. Presently only constant bin size is possible.</p>
 <p>Status: tested</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">GridEuler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N_euler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_batches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridEuler" title="Permalink to this definition"></a></dt>
+<dd><p>GridEuler class keeps methods for generating and manipulating the grid of molecular orientations</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler.N_euler">
+<span class="sig-name descname"><span class="pre">N_euler</span></span><a class="headerlink" href="#pecd.wavefunction.GridEuler.N_euler" title="Permalink to this definition"></a></dt>
+<dd><p>number of molecular molecular orientations per dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler.N_batches">
+<span class="sig-name descname"><span class="pre">N_batches</span></span><a class="headerlink" href="#pecd.wavefunction.GridEuler.N_batches" title="Permalink to this definition"></a></dt>
+<dd><p>number of batches into which the full run is divided</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler.grid_type">
+<span class="sig-name descname"><span class="pre">grid_type</span></span><a class="headerlink" href="#pecd.wavefunction.GridEuler.grid_type" title="Permalink to this definition"></a></dt>
+<dd><p>2D or 3D grid type. For 2D the first Euler angle (alpha) is fixed at 0.0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler.gen_euler_grid">
+<span class="sig-name descname"><span class="pre">gen_euler_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridEuler.gen_euler_grid" title="Permalink to this definition"></a></dt>
+<dd><p>Generates the 3D Cartesian product of 1D grids of Euler angles.</p>
+<dl class="simple">
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>euler_grid: numpy 3D array</dt><dd><p>grid of euler angles [alpha,beta,gamma]</p>
+</dd>
+<dt>n_euler: int</dt><dd><p>the total number of grid points</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Status: tested</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler.gen_euler_grid_2D">
+<span class="sig-name descname"><span class="pre">gen_euler_grid_2D</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridEuler.gen_euler_grid_2D" title="Permalink to this definition"></a></dt>
+<dd><p>Generates the 2D Cartesian product of 1D grids of Euler angles.</p>
+<dl class="simple">
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>euler_grid: numpy 2D array</dt><dd><p>grid of euler angles [alpha=0.0,beta,gamma]</p>
+</dd>
+<dt>n_euler: int</dt><dd><p>the total number of grid points</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Status: tested.</p>
 </dd></dl>
 
 </dd></dl>
