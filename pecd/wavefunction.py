@@ -35,9 +35,11 @@ class Psi():
 
     def project_psi_global(self, psi0):
         Nbas = self.params['Nbas']   
-        Nbas0 = len(psi0)
+        Nbas0 = self.params['Nbas0']
         print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
 
+        #print(psi0.shape)
+        #exit()
         psi = np.zeros(Nbas, dtype = complex)    
         psi[:Nbas0] = psi0[:]
 

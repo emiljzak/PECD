@@ -31,7 +31,7 @@ import unittest
 import wavefunction
 import hamiltonian
 import field
-#import plots
+import plots
 import constants
 
 import time
@@ -1043,10 +1043,14 @@ if __name__ == "__main__":
         print("\n")
 
         PsiObj = wavefunction.Psi(params,grid_euler,irun)
-        psi0_rot = PsiObj.rotate_psi(psi0[params['ivec']])
+        #print("shape of psi" + str(psi0.shape))
+        #exit()
+        psi0_rot = PsiObj.rotate_psi(psi0[:,params['ivec']])
+        #print("shape of psi" + str(psi0_rot.shape))
+        #exit()
         Nbas, psi_init = PsiObj.project_psi_global(psi0_rot)
 
-         
+       
         PropObj = Propagator(params,irun)
         PropObj.prop_wf(ham_init, intmat, psi_init, irun)
 
