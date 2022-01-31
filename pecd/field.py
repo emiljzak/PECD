@@ -110,15 +110,20 @@ class Field():
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
 
-        Fvec = np.zeros(t.shape[0],dtype=complex)
-        Fvec[0], Fvec[1], Fvec[2] = field_m1 * fieldenv , field_0 * fieldenv, field_p1 * fieldenv
+        Fvec = np.zeros((t.shape[0],3),dtype=complex)
 
+
+        print(fieldenv.shape)
+        print(field_p1.shape)
+        #exit()
+        Fvec[:,0], Fvec[:,1], Fvec[:,2] = field_m1 * fieldenv , field_0 * fieldenv, field_p1 * fieldenv
+        
         print(Fvec.shape)
 
         Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
 
 
         print(Fvec.shape)
-        exit()
+        #exit()
         return Fvec 
 

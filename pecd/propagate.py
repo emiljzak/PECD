@@ -120,7 +120,7 @@ class Propagator():
         return flwavepacket
 
 
-    def gen_timegrid(self,ijifds):
+    def gen_timegrid(self):
 
         """ 
         Calculates equidistant time-grid for the wavefunction proapgation.
@@ -147,19 +147,21 @@ class Propagator():
         return tgrid, dt
 
     def normalize_psi(self,psi):
-        return psi/np.sqrt( np.sum( np.conj(psi) * psi ) )
+        print(psi.shape)
+        norm = np.sqrt( np.sum( np.conjugate(psi[:]) * psi[:] ) )
+        return psi/norm
  
 
-    def prop_wf(self, ham_init, psi_init, intmat ):
+    def prop_wf(self, ham_init,intmat , psi_init, irun):
 
         """ This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.
         
         
         """
 
-        self.calc_mat_density(ham_init)
-        self.spy_mat(ham_init)
-        self.plot_mat(ham_init)
+        #self.calc_mat_density(ham_init)
+        ##self.spy_mat(ham_init)
+        #self.plot_mat(ham_init)
 
         print("\n")
         print("Setting up time-grid...")
@@ -191,7 +193,8 @@ class Propagator():
             plots.plot_elfield(Fvec,tgrid,self.time_to_au)
 
 
-
+        #print(Fvec.shape)
+        #exit()
         start_time_global = time.time()
         for itime, t in enumerate(tgrid): 
 
@@ -203,7 +206,7 @@ class Propagator():
                 print("t = " + str( "%10.1f"%(t/self.time_to_au)) + " as")
         
             # building the electric dipole interaction matrix
-            dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat.H #+ Fvec[itime,0] * intmat
+            dip = Fvec[0,itime] * intmat - Fvec[2,itime] * intmat.H #+ Fvec[itime,0] * intmat
            
             #dip = sparse.csr_matrix(dip)
             #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
@@ -217,7 +220,7 @@ class Propagator():
             #psi                 = wavepacket[itime,:]
 
 
-            if itime%wfn_saverate == 0:
+            if itime%self.wfn_saverate == 0:
 
                 if self.params['wavepacket_format'] == "dat":
                     
@@ -1041,11 +1044,11 @@ if __name__ == "__main__":
 
         PsiObj = wavefunction.Psi(params,grid_euler,irun)
         psi0_rot = PsiObj.rotate_psi(psi0[params['ivec']])
-        psi_init = PsiObj.project_psi_global(psi0_rot)
+        Nbas, psi_init = PsiObj.project_psi_global(psi0_rot)
 
-        
+         
         PropObj = Propagator(params,irun)
-        PropObj.prop_wf(params, ham_init, intmat, psi_init, irun)
+        PropObj.prop_wf(ham_init, intmat, psi_init, irun)
 
 
     end_time_total = time.time()

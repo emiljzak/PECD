@@ -27,18 +27,19 @@ from sympy.polys.rootoftools import RootOf
 
 class Psi():
 
-    def __init__(self, params):
+    def __init__(self, params,grid_euler,irun):
 
         self.params  = params
+        self.grid_euler = grid_euler
+        self.irun = irun
 
-
-    def project_psi_global(self, maparray, psi0):
-        Nbas = len(maparray)
+    def project_psi_global(self, psi0):
+        Nbas = self.params['Nbas']   
         Nbas0 = len(psi0)
         print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
 
         psi = np.zeros(Nbas, dtype = complex)    
-        psi[:Nbas0] = psi0[:,self.params['ivec']]
+        psi[:Nbas0] = psi0[:]
 
         return Nbas, psi
 
