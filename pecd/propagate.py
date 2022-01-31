@@ -203,7 +203,7 @@ class Propagator():
                 print("t = " + str( "%10.1f"%(t/self.time_to_au)) + " as")
         
             # building the electric dipole interaction matrix
-            dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat_hc #+ Fvec[itime,0] * intmat
+            dip = Fvec[itime,0] * intmat - Fvec[itime,2] * intmat.H #+ Fvec[itime,0] * intmat
            
             #dip = sparse.csr_matrix(dip)
             #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
@@ -341,15 +341,7 @@ def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
     return ham_filtered
 
 
-def PROJECT_PSI_GLOBAL(params, maparray, psi0):
-    Nbas = len(maparray)
-    Nbas0 = len(psi0)
-    print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
 
-    psi = np.zeros(Nbas, dtype = complex)    
-    psi[:Nbas0] = psi0[:,params['ivec']]
-
-    return Nbas, psi
 
 def TEST_boundARY_HAM(params,ham,Nbas0):
     """ diagonalize hmat """
@@ -863,56 +855,6 @@ def gen_euler_grid_theta_chi(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
-def rotate_coefficients(ind_euler,coeffs,WDMATS,lmax,Nr):
-    """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
-    #ind_euler - index of euler angles in global 3D grid
-
-    Dsize = (lmax+1)**2 
-    Dmat = np.zeros((Dsize,Dsize), dtype = complex)
-
-    #fill up the D super-matrix
-    ind_start = np.zeros(lmax+1, dtype=Integer)
-    ind_end = np.zeros(lmax+1, dtype=Integer)
-
-    ind_start[0] = 0
-    ind_end[0] = 0
-
-    for l in range(0,lmax):
-        ind_start[l+1] = ind_start[l] +  2 * l +1
-        ind_end[l+1] = ind_start[l+1] + 2 * (l+1) +1  #checked by hand 5 Jun 2021
-
-    for l in range(0,lmax+1):
-        #print(WDMATS[l][:,:,ind_euler].shape)
-        #print(l, ind_start[l], ind_end[l])
-        Dmat[ind_start[l]:ind_end[l],ind_start[l]:ind_end[l]] = WDMATS[l][:,:,ind_euler]
-
-    #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
-    #    print(Dmat)
-
-    coeffs_rotated = np.zeros(coeffs.shape[0], dtype = complex)
-
-    #print("number of radial basis points/functions: " + str(Nr))
-
-    xi_start    = np.zeros(Nr, dtype=Integer)
-    xi_end      = np.zeros(Nr, dtype=Integer)
-    xi_start[0] = 0 
-    xi_end[0]   = Dsize
-
-    for xi in range(Nr-1):
-        xi_start[xi+1] = xi_start[xi] + Dsize
-        xi_end[xi+1]   = xi_end[xi] +  Dsize
-        
-
-    print("size of single D-mat block: " + str(-xi_start[1]+xi_end[1]))
-
-    for xi in range(Nr):
-        #print(xi, xi_start[xi], xi_end[xi]) #checked by hand 5 Jun 2021
-        coeffs_rotated[xi_start[xi]:xi_end[xi]] = np.matmul(Dmat,coeffs[xi_start[xi]:xi_end[xi]])
-
-    #print(coeffs_rotated)
-
-    return coeffs_rotated
-
 
 
 if __name__ == "__main__":   
@@ -1060,8 +1002,8 @@ if __name__ == "__main__":
     #print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
     
     
-    #print("Energy levels:")
-    #print(E0*constants.au_to_ev )
+    print("Energy levels:")
+    print(E0*constants.au_to_ev )
     #exit()
 
     print("\n")
@@ -1082,7 +1024,7 @@ if __name__ == "__main__":
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
         start_time = time.time()
-        pot_prop = HamObjProp.build_potmat(params, grid_euler, irun)
+        pot_prop = HamObjProp.build_potmat(grid_euler, irun)
         end_time = time.time()
         print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -1092,7 +1034,7 @@ if __name__ == "__main__":
         end_time = time.time()
         print("Time for construction of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        exit()
+        
         print("\n")
         print("Setting up rotated wavefunction...")
         print("\n")

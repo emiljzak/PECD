@@ -32,6 +32,73 @@ class Psi():
         self.params  = params
 
 
+    def project_psi_global(self, maparray, psi0):
+        Nbas = len(maparray)
+        Nbas0 = len(psi0)
+        print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
+
+        psi = np.zeros(Nbas, dtype = complex)    
+        psi[:Nbas0] = psi0[:,self.params['ivec']]
+
+        return Nbas, psi
+
+
+    def rotate_psi(self,psi):
+        return psi
+
+
+    def rotate_coefficients(self,ind_euler,coeffs,WDMATS,lmax,Nr):
+        """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
+        #ind_euler - index of euler angles in global 3D grid
+
+        Dsize = (lmax+1)**2 
+        Dmat = np.zeros((Dsize,Dsize), dtype = complex)
+
+        #fill up the D super-matrix
+        ind_start = np.zeros(lmax+1, dtype=Integer)
+        ind_end = np.zeros(lmax+1, dtype=Integer)
+
+        ind_start[0] = 0
+        ind_end[0] = 0
+
+        for l in range(0,lmax):
+            ind_start[l+1] = ind_start[l] +  2 * l +1
+            ind_end[l+1] = ind_start[l+1] + 2 * (l+1) +1  #checked by hand 5 Jun 2021
+
+        for l in range(0,lmax+1):
+            #print(WDMATS[l][:,:,ind_euler].shape)
+            #print(l, ind_start[l], ind_end[l])
+            Dmat[ind_start[l]:ind_end[l],ind_start[l]:ind_end[l]] = WDMATS[l][:,:,ind_euler]
+
+        #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
+        #    print(Dmat)
+
+        coeffs_rotated = np.zeros(coeffs.shape[0], dtype = complex)
+
+        #print("number of radial basis points/functions: " + str(Nr))
+
+        xi_start    = np.zeros(Nr, dtype=Integer)
+        xi_end      = np.zeros(Nr, dtype=Integer)
+        xi_start[0] = 0 
+        xi_end[0]   = Dsize
+
+        for xi in range(Nr-1):
+            xi_start[xi+1] = xi_start[xi] + Dsize
+            xi_end[xi+1]   = xi_end[xi] +  Dsize
+            
+
+        print("size of single D-mat block: " + str(-xi_start[1]+xi_end[1]))
+
+        for xi in range(Nr):
+            #print(xi, xi_start[xi], xi_end[xi]) #checked by hand 5 Jun 2021
+            coeffs_rotated[xi_start[xi]:xi_end[xi]] = np.matmul(Dmat,coeffs[xi_start[xi]:xi_end[xi]])
+
+        #print(coeffs_rotated)
+
+        return coeffs_rotated
+
+
+
 class Map():
     """Map class keeps methods for generating and manipulating index mapping for the wavefunction and matrices.
 

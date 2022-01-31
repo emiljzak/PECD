@@ -1052,20 +1052,18 @@ class Hamiltonian():
         return potmat#+potmat.getH()#-potmat.diagonal()
 
 
-    def build_ham(self):
+    def build_ham(self,keo,pot):
 
         """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
 
-        ham_bound = keo_bound + pot_bound
-
-
-        ham_bound_filt = Hamiltonian.filter_mat(ham_bound,self.params['hmat_filter'])
+        ham = keo + pot
+        ham_filt = Hamiltonian.filter_mat(ham,self.params['hmat_filter'])
         #print(ham_bound.shape)
         #plt.spy(ham_bound,precision=1e-4)
         #plt.show()
         #exit()
         
-        return ham_bound_filt
+        return ham_filt
 
     def map_tjmat_dip(self,tjmat):
         """Map the 6D tjmat onto a practical 3D numpy array.
