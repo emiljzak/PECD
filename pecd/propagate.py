@@ -914,41 +914,6 @@ def rotate_coefficients(ind_euler,coeffs,WDMATS,lmax,Nr):
     return coeffs_rotated
 
 
-def gen_3j_dip(lmax,mode):
-    """precompute all necessary 3-j symbols for dipole matrix elements"""
-
-    # 2) tjmat[l1,l2,m1,m2,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
-    tjmat = np.zeros( (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3), dtype = float)
-    #Both modes checked with textbooks and verified that produce identical matrix elements. 15 Dec 2021.
-
-    if mode == "CG":
-
-        for mu in range(0,3):
-            for l1 in range(lmax+1):
-                for l2 in range(lmax+1):
-                    for m1 in range(-l1,l1+1):
-                        for m2 in range(-l2,l2+1):
-
-                            tjmat[l1,l2,l1+m1,l2+m2,mu] = np.sqrt( (2.0*float(l2)+1) * (3.0) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,1,mu-1,l1,m1) * spherical.clebsch_gordan(l2,0,1,0,l1,0)
-                        #tjmat[l1,l2,l1+m1,l2+m2,mu] = spherical.Wigner3j(l1, 1, l2, m, mu-1, -(m+mu-1)) * spherical.Wigner3j(l1, 1, l2, 0, 0, 0)
-                        #tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m+mu-1)
-
-    elif mode == "tj":
-        for mu in range(0,3):
-            for l1 in range(lmax+1):
-                for l2 in range(lmax+1):
-                    for m1 in range(-l1,l1+1):
-                        for m2 in range(-l2,l2+1):
-
-                            tjmat[l1,l2,l1+m1,l2+m2,mu] = spherical.Wigner3j(l2, 1, l1, m2, mu-1, -m1) * spherical.Wigner3j(l2, 1, l1, 0, 0, 0) *\
-                                                            np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m1)
-
-
-
-    #print("3j symbols in array:")
-    #print(tjmat)
-    return tjmat
-
 
 if __name__ == "__main__":   
 
@@ -1089,15 +1054,21 @@ if __name__ == "__main__":
     print("Calculating eigenvalues and eigenvectors of the bound Hamiltonian operator matrix...")
     print("\n")
 
-    start_time = time.time()
+    #start_time = time.time()
     E0, psi0 = call_eigensolver(ham_bound,params)
-    end_time = time.time()
-    print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
+    #end_time = time.time()
+    #print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
     
     
-    print("Energy levels:")
-    print(E0*constants.au_to_ev )
-    exit()
+    #print("Energy levels:")
+    #print(E0*constants.au_to_ev )
+    #exit()
+
+    print("\n")
+    print("Building the interaction matrix...")
+    print("\n")
+
+    intmat =  HamObjProp.build_intmat() 
 
     print("\n")
     print("Building the kinetic energy operator matrix for the propagation Hamiltonian...")
@@ -1105,11 +1076,7 @@ if __name__ == "__main__":
 
     keo_prop = HamObjProp.build_keo()
 
-    print("\n")
-    print("Building the interaction matrix...")
-    print("\n")
 
-    intmat =  HamObjProp.build_intmat() 
 
     # loop over molecular orientations in the present batch
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
@@ -1125,7 +1092,7 @@ if __name__ == "__main__":
         end_time = time.time()
         print("Time for construction of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
+        exit()
         print("\n")
         print("Setting up rotated wavefunction...")
         print("\n")

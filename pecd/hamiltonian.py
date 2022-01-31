@@ -1067,10 +1067,165 @@ class Hamiltonian():
         
         return ham_bound_filt
 
+    def map_tjmat_dip(self,tjmat):
+        """Map the 6D tjmat onto a practical 3D numpy array.
+
+        Args:
+            tjmat (6D numpy array): matrix elements of the respective spherical harmonics operators in the spherical harmonics basis
+
+        Returns: array
+            tjmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
+        """
+        lmax = self.params['bound_lmax']
+
+
+        Nang = (lmax+1)**2
+        #print("Nang = " + str(Nang))
+        #print("Nmulti = " + str(Nmulti))
+
+        tjmats = np.zeros((Nang,Nang,3),dtype=float)
+        #tjmats2 = np.zeros((Nang,Nang,Nmulti),dtype=float)
+
+        """
+        start_time = time.time()
+        #using local basis indices with counters
+        s1 = -1
+        for l1 in range(lmax):
+            for m1 in range(-l1,l1+1):
+                s1+=1
+                s2=-1
+                for l2 in range(lmax):
+                    for m2 in range(-l2,l2+1):
+                        s2+=1
+                        imult = -1
+                        for L in range(Lmax):
+                            for M in range(-L,L+1):
+                                imult +=1
+                                tjmats1[s1,s2,imult] = tjmat[l1,L,l2,l1+m1,L+M,l2+m2]
+        
+        #using local basis indices without counters
+        end_time = time.time()
+        print("Time for the construction of tjmats using counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+        """
+        start_time = time.time()
+        #using local basis indices without counters: a bit slower
+        for l1 in range(lmax+1):
+            for m1 in range(-l1,l1+1):
+
+                for l2 in range(lmax+1):
+                    for m2 in range(-l2,l2+1):
+       
+                      for mu in range(3):
+                                tjmats[l1*(l1+1)+m1,l2*(l2+1)+m2,mu] = tjmat[l1,l2,l1+m1,l2+m2,mu]
+        
+        end_time = time.time()
+        print("Time for the construction of tjmats_dip withouts counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+        #print(np.allclose(tjmats1,tjmats2))
+        #exit()
+        return tjmats
+
+
+
+    def calc_dipxi(self,rin,tmats):
+        """Calculate a block of the electric dipole interaction matrix for a single grid point.
+
+        Args:
+            vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
+            tmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
+        
+        Returns: array
+            vxi (2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
+        """
+        Nang = tmats.shape[0]
+        vxi = np.zeros((Nang,Nang), dtype = complex)
+
+        vxi = rin * tmats[:,:]
+ 
+        return vxi
+
+
+
+    def gen_3j_dip(self,lmax,mode):
+        """precompute all necessary 3-j symbols for dipole matrix elements"""
+
+        # 2) tjmat[l1,l2,m1,m2,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
+        tjmat = np.zeros( (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3), dtype = float)
+        #Both modes checked with textbooks and verified that produce identical matrix elements. 15 Dec 2021.
+
+        if mode == "CG":
+
+            for mu in range(0,3):
+                for l1 in range(lmax+1):
+                    for l2 in range(lmax+1):
+                        for m1 in range(-l1,l1+1):
+                            for m2 in range(-l2,l2+1):
+
+                                tjmat[l1,l2,l1+m1,l2+m2,mu] = np.sqrt( (2.0*float(l2)+1) * (3.0) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,1,mu-1,l1,m1) * spherical.clebsch_gordan(l2,0,1,0,l1,0)
+                            #tjmat[l1,l2,l1+m1,l2+m2,mu] = spherical.Wigner3j(l1, 1, l2, m, mu-1, -(m+mu-1)) * spherical.Wigner3j(l1, 1, l2, 0, 0, 0)
+                            #tjmat[l1,l2,l1+m,mu] *= np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m+mu-1)
+
+        elif mode == "tj":
+            for mu in range(0,3):
+                for l1 in range(lmax+1):
+                    for l2 in range(lmax+1):
+                        for m1 in range(-l1,l1+1):
+                            for m2 in range(-l2,l2+1):
+
+                                tjmat[l1,l2,l1+m1,l2+m2,mu] = spherical.Wigner3j(l2, 1, l1, m2, mu-1, -m1) * spherical.Wigner3j(l2, 1, l1, 0, 0, 0) *\
+                                                                np.sqrt((2*float(l1)+1) * (2.0*float(1.0)+1) * (2*float(l2)+1)/(4.0*np.pi)) * (-1)**(m1)
+
+
+
+        #print("3j symbols in array:")
+        #print(tjmat)
+        return tjmat
+
+
     def build_intmat(self):
-        return 0
+        """ 
+        Driver routine for the calculation of the dipole interaction energy matrix.
 
+    
+        """
+  
+        Nr = self.Gr.ravel().shape[0]
 
+        rgrid = self.Gr.ravel()
+
+        """precompute all necessary 3-j symbols"""
+        #generate arrays of 3j symbols with 'spherical':
+        start_time = time.time()
+        tjmat = self.gen_3j_dip(self.params['bound_lmax'], "CG")
+        end_time = time.time()
+        print("Time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
+        
+
+        tmats = self.map_tjmat_dip(tjmat)
+
+        if self.params['field_func_name'] == "RCPL" or self.params['field_func_name'] == "LCPL":
+            tmat = tmats[:,:,2]
+        elif self.params['field_func_name'] == "LP":
+            tmat = tmats[:,:,1]
+        else:
+            raise NotImplementedError("Incorrect field name") 
+
+        #this part can probably be done in parallel
+        diparr = []
+        for ipoint in range(Nr):
+            dipxi = self.calc_dipxi(rgrid[ipoint],tmat)
+            diparr.append(dipxi)
+
+        intmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
+
+        intmat = sparse.block_diag(diparr)
+
+        #plot_mat(intmat)
+        #plt.spy(intmat+intmat.H,precision=1e-12)
+        #plt.show()
+        #exit()
+        return (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat
 
 def fp(i,n,k,x):
     "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) "
