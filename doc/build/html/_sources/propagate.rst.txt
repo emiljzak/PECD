@@ -37,6 +37,7 @@ Wavefunction module (:code:`wavefunction`)
 	pecd.wavefunction.Map
 	pecd.wavefunction.GridRad
 	pecd.wavefunction.GridEuler
+	pecd.wavefunction.Psi
 	
 .. autoclass:: pecd.wavefunction.Map
 
@@ -53,6 +54,10 @@ Wavefunction module (:code:`wavefunction`)
 	.. automethod:: gen_euler_grid
 	.. automethod:: gen_euler_grid_2D
 
+
+.. autoclass:: pecd.wavefunction.Psi
+
+	.. automethod:: project_psi_global
 
 
 Electric field module (:code:`field`)

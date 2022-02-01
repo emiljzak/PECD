@@ -36,7 +36,9 @@
         [i for t in self.tgrid for a in tgrid[i]]
 
 
-    Raises: `NotImplementedError` because it is an error
+    Raises: 
+    
+        NotImplementedError: because it is an error
 
     .. figure:: _images/ham_nat.png
         :height: 200
@@ -44,7 +46,16 @@
         :align: center
 
     Some text
+    Table:
 
+        ==========   =============   ================================
+        Parameter    Type            Description
+        ==========   =============   ================================
+        a            float/complex   coefficient for quadratic term
+        b            float/complex   coefficient for linear term
+        c            float/complex   coefficient for constant term
+        r1, r2       float/complex   return: the two roots of
+        ==========   =============   ================================
 
 """
 
