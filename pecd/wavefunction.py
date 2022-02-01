@@ -34,76 +34,35 @@ class Psi():
         self.irun = irun
 
     def project_psi_global(self, psi0):
-        """Summary line.
+        """Projects the bound wavefunction onto the propagation Hilbert space. 
 
-            Extended description of function.
+            We assume that the bound wavefunction is zero outside the inner region defined by :math:`R_{bound}`.
 
             .. math::
-                ax^2 + bx + c = 0
-                :label: my_label
-            Args:
-                grid_type : str
-                    type of time grid
+                \psi(r \geq R_{bound},t=0) = 0
 
-            Returns: tuple
-                fdsf :math:`\mu`: fdsfsd numpy.ndarray
-                    times at which to evaluate `Hamiltonian` in :py:func:`Map.genmap_femlist` function in :eq:`my_label`    
+            .. math::
+                \psi(r,t=0)|_{r<R_{bound}} = \psi_0
+                :label: psi_init
 
-                dt: numpy.ndarray
-                    Something to write about :py:class:`Map` class
+            Arguments: numpy.ndarray
+                psi0: numpy.ndarray, dtype = `float`, shape = (`Nbas0`,)
+                    Bound state wavefunction stored in 1D numpy array.
 
-            .. note:: This is a **note** box
-            .. warning:: This is a **warning** box.
+            Returns: numpy.ndarray
+                psi: initial wavefunction in the propagation space
 
-            Example:
-
-            .. code-block:: python
-
-                def roots(a, b, c):
-                    q = b**2 - 4*a*c
-                    root1 = -b + sqrt(q)/float(2*a)
-                    root2 = -b - sqrt(q)/float(2*a)
-                    return root1, root2
-
-            .. code-block:: python
-
-                [i for t in self.tgrid for a in tgrid[i]]
-
-
-            Raises: 
-            
-                NotImplementedError: because it is an error
-
-            .. figure:: _images/ham_nat.png
-                :height: 200
-                :width: 200
-                :align: center
-
-            Some text
-            Table:
-
-                ==========   =============   ================================
-                Parameter    Type            Description
-                ==========   =============   ================================
-                a            float/complex   coefficient for quadratic term
-                b            float/complex   coefficient for linear term
-                c            float/complex   coefficient for constant term
-                r1, r2       float/complex   return: the two roots of
-                ==========   =============   ================================
+            .. warning:: The size of the inner space :math:`R_{bound}` must be **large enough**, such that no significant electron density leaks are observed in the field-free evolution of the initial wavefunciton.
 
         """
 
+        Nbas        = self.params['Nbas']   
+        Nbas0       = self.params['Nbas0']
 
-        Nbas = self.params['Nbas']   
-        Nbas0 = self.params['Nbas0']
-        print("Nbas = " + str(Nbas) + ", Nbas0 = " + str(Nbas0))
-
-        #print(psi0.shape)
-        #exit()
-        psi = np.zeros(Nbas, dtype = complex)    
+        psi         = np.zeros(Nbas, dtype = complex)    
         psi[:Nbas0] = psi0[:]
 
-        return Nbas, psi
+        return psi
 
 
     def rotate_psi(self,psi):
