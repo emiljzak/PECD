@@ -60,29 +60,27 @@ class Field():
 
     """ =================================== GENERATE FIELD =================================== """
     def gen_field(self,t):
-        """main program constructing the electric field at time t
-    
-        
-            Initial state vectors are eigenfunctions of Hamiltonian `H`. If
-                `temp` is None, all eigenfunctions are returned unweighted. If
-                `temp` is 0, only lowest energy eigenfunction is returned. If
-                `temp` is > 0, all eigenfunctions are returned Boltzmann-
-                -weighted.
+        """Main routine for the generation of the electric field.
 
-        Args:
-            H : :py:class:`field.CarTens`
-                Hamiltonian operator
-            temp : float
-                Temperature in Kelvin
-            thresh : float
-                Collective threshold below which to neglect higher energy
-                states
-            zpe : float
-                Zero-point energy, by default lowest eigenvalue of H is taken
 
-        Returns:
-            vecs : numpy.ndarray
-                Initial state vectors (each row represents an initial state). we return spherical tensor components -1, 0, 1
+            Arguments: numpy.ndarray
+                t : numpy.ndarray, dtype=float, shape=(Ntime,)
+                    time grid
+
+            Returns: numpy.ndarray
+                Fvec: numpy.ndarray, dtype = complex, shape = (Ntime,3)
+                    Vector of the electric field components (-1,0,+1)    
+
+            Table of quantities:
+
+                ==========   =============   =====================
+                Component    Type            Description
+                ==========   =============   =====================
+                Fvec[:,0]    complex         :math:`F_{-1}(t)`
+                Fvec[:,1]    complex         :math:`F_{0}(t)`
+                Fvec[:,2]    complex         :math:`F_{+1}(t)`
+                ==========   =============   =====================
+
         """
 
         

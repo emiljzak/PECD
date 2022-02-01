@@ -53,7 +53,7 @@ class Psi():
                 psi: initial wavefunction in the propagation space
 
             .. warning:: The size of the inner space :math:`R_{bound}` must be **large enough**, such that no significant electron density leaks are observed in the field-free evolution of the initial wavefunciton.
-
+            .. note:: Future implementations may consider linking an externally calculated bound wavefunction, which is projected onto the FEM-DVR basis.
         """
 
         Nbas        = self.params['Nbas']   
@@ -156,14 +156,13 @@ class Map():
 
 
     def genmap_femlist(self):
-        """ 
-        Driver routine to call map generators
+        """Driver routine to call map generators.
 
         Returns: tuple
             maparray: list
                 [[ibin,n,ipoint,l,m,id],...]
             Nbas: int
-                Number of basis functions
+                Total number of basis functions
         """
 
         if self.map_type == 'DVR':
@@ -172,7 +171,6 @@ class Map():
             maparray, Nbas = self.map_spect_femlist()
 
         return maparray, Nbas
-
 
 
     def map_dvr_femlist(self):
@@ -219,62 +217,18 @@ class Map():
 
 
     def map_dvr_femlist_nat(self):
-        """Summary line.
+        """ Generates an index map with grid points as major dimension and bridge points/functions placed as last in the bin.
 
-            Extended description of function.
+        Returns: tuple
+            maparray: list
 
             .. math::
-                ax^2 + bx + c = 0
-                :label: my_label
-            Args:
-                grid_type : str
-                    type of time grid
+                i,n,l,m -> M(i,n,l,m)
 
-            Returns: tuple
-                fdsf :math:`\mu`: fdsfsd numpy.ndarray
-                    times at which to evaluate `Hamiltonian` in :py:func:`Map.genmap_femlist` function in :eq:`my_label`    
-
-                dt: numpy.ndarray
-                    Something to write about :py:class:`Map` class
-
-            .. note:: This is a **note** box
-            .. warning:: This is a **warning** box.
-
-            Example:
-
-            .. code-block:: python
-
-                def roots(a, b, c):
-                    q = b**2 - 4*a*c
-                    root1 = -b + sqrt(q)/float(2*a)
-                    root2 = -b - sqrt(q)/float(2*a)
-                    return root1, root2
-
-            .. code-block:: python
-
-                [i for t in self.tgrid for a in tgrid[i]]
-
-        
-            Raises: 
+            in the following format [[`ibin`,`n`,`ipoint`,`l`,`m`,`id`],...]
             
-                NotImplementedError: because it is an error
-
-            .. figure:: _images/ham_nat.png
-                :height: 200
-                :width: 200
-                :align: center
-
-            Some text
-            Table:
-
-                ==========   =============   ================================
-                Parameter    Type            Description
-                ==========   =============   ================================
-                a            float/complex   coefficient for quadratic term
-                b            float/complex   coefficient for linear term
-                c            float/complex   coefficient for constant term
-                r1, r2       float/complex   return: the two roots of
-                ==========   =============   ================================
+            Nbas: int
+                Total number of basis functions
 
         """
         imap = -1
@@ -306,41 +260,15 @@ class Map():
         return maparray, Nbas
 
 
-    def map_spect_femlist(self,femlist,lmax):
-        ##### NEEDS VERIFICATION #########
-        imap = 0
-        xi = 0
-        maparray = []
-        ibincount = -1
-
-        nbins = 0
-        for elem in femlist:
-            nbins += elem[0]
-        print("total number of bins = " + str(nbins))
+    def gen_sphlist(self,lmax):
+        """ Generates a list of basis set indices for adaptive quadratures.
         
-        for l in range(0,lmax+1):
-            for m in range(-l,l+1):
-                xi = 0
-                ibinscound = -1
-                for elem in femlist:
-                    for i in range(elem[0]):
-                        ibincount +=1
-                        for n in range(elem[1]):
-                            if n == elem[1]-1:
-                                continue   
-                            elif n == 0 and ibincount == nbins-1:
-                                continue     
-                            else:
-                                xi += 1
-                                imap += 1
-                                #print(l,m,ibincount,n,xi,imap)
-                                maparray.append([l,m,ibincount,n,xi,imap])
+        Returns: list
+            sphlist: list
+                list of angular indices [l,m]
 
-        return maparray, imap +1
-
-
-    def GEN_SPHLIST(self,lmax):
-        #create list of basis set indices for adaptive quadratures
+        """
+        #create
         sphlist = []
         if lmax == 0:
             raise ValueError("lmax = 0 makes no sense in the generation of adaptive quadratures")
@@ -352,88 +280,7 @@ class Map():
 
 
 
-    def calc_p2(l,m,xi,lmax):
-        return (xi-1)*(lmax+1)**2 + l*(l+1) + m
 
-
-    def GEN_DIPLIST_opt1(self,maparray, Nbas, lmax, map_type ):
-        """
-        create a list of indices for matrix elements of the dipole interaction matrix. In the future: vectorize by copying the core array. 
-        """
-        sigma = 1 #we always calculate h_ll'mm',+1 element and generate h_ll'mm',-1 with the hermitian conjugate (regardless of the light's helicity) 
-        diplist = []
-        if map_type == 'DVR':
-            for p1 in range(Nbas):
-
-                xi = maparray[p1][2] 
-                l1 = maparray[p1][3]
-                m1 = maparray[p1][4]
-
-                if l1+1 <= lmax:
-                    p2 = calc_p2(l1+1,m1-sigma,xi,lmax)
-                    diplist.append([ xi, l1, m1, l1+1, m1-sigma, p1, p2 ])
-                if l1-1 >= 0:
-                    p2 = calc_p2(l1-1,m1-sigma,xi,lmax)
-                    diplist.append([ xi, l1, m1, l1-1, m1-sigma, p1, p2 ])
-        else:
-            ValueError("Incorrect map type")
-
-        return diplist
-
-
-    def GEN_DIPLIST(self,maparray, Nbas, map_type, sigma ):
-        """
-        Old O(n**2) implementation.
-        create a list of indices for matrix elements of the dipole interaction matrix. 
-        Generates full square matrix for sigma = -1 or 0. 
-        sigma = +1 can be generated using symmetries.
-        
-        """
-        
-        diplist = []
-        if map_type == 'DVR':
-
-            #set up indices for block-listing
-
-            if sigma == 0:
-
-                for p1 in range(Nbas):
-                    for p2 in range(Nbas):
-                        if maparray[p1][2] == maparray[p2][2]: 
-
-                            if maparray[p1][3] == maparray[p2][3] - 1 or maparray[p1][3] == maparray[p2][3] + 1:
-                                if maparray[p1][4] == maparray[p2][4]: 
-                                    diplist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
-                                    maparray[p2][3], maparray[p2][4], p1, p2 ])
-
-            elif sigma == +1:
-
-                #for xi in range(Nr-1):
-                #    for i1 in range(block_size):
-                for p1 in range(Nbas):          
-                    for p2 in range(Nbas):
-                        if maparray[p1][2] == maparray[p2][2]: 
-
-                            if maparray[p1][3] == maparray[p2][3] - 1 or maparray[p1][3] == maparray[p2][3] + 1:
-                                if maparray[p2][4] == maparray[p1][4] + 1: 
-                                    diplist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
-                                    maparray[p2][3], maparray[p2][4], p1, p2 ])
-
-            elif sigma == -1:
-                for p1 in range(Nbas):
-                    for p2 in range(Nbas):
-                        if maparray[p1][2] == maparray[p2][2]: 
-
-                            if maparray[p1][3] == maparray[p2][3] - 1 or maparray[p1][3] == maparray[p2][3] + 1:
-                                if maparray[p2][4] == maparray[p1][4] - 1: 
-                                    diplist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], \
-                                    maparray[p2][3], maparray[p2][4], p1, p2 ])
-        else:
-            ValueError("Incorrect map type")
-
-
-
-        return diplist
 
 class GridEuler():
     """GridEuler class keeps methods for generating and manipulating the grid of molecular orientations

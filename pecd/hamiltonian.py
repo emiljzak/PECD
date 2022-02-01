@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; fill-column: 120 -*-
 #
-# Copyright (C) 2021 Emil Zak <emil.zak@cfel.de>
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>
 #
 
 from numpy.core.numeric import NaN
 from scipy import special
-from scipy.sparse.linalg import  eigsh
-#import mapping
+from scipy.sparse.linalg import eigsh
+
 import potential
-#import GRID
 import constants
 
 import numpy as np

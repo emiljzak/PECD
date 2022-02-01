@@ -43,7 +43,7 @@ Wavefunction module (:code:`wavefunction`)
 
 	.. automethod:: genmap_femlist
 	.. automethod:: map_dvr_femlist_nat
-
+	.. automethod:: gen_sphlist
 
 .. autoclass:: pecd.wavefunction.GridRad
 

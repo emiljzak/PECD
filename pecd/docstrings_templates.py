@@ -7,7 +7,8 @@
     .. math::
         ax^2 + bx + c = 0
         :label: my_label
-    Args:
+    
+    Arguments: tuple
         grid_type : str
             type of time grid
 
