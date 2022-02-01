@@ -236,7 +236,9 @@ class Map():
                 [i for t in self.tgrid for a in tgrid[i]]
 
         
-            Raises: `NotImplementedError` because it is an error
+            Raises: 
+            
+                NotImplementedError: because it is an error
 
             .. figure:: _images/ham_nat.png
                 :height: 200
@@ -244,17 +246,16 @@ class Map():
                 :align: center
 
             Some text
+            Table:
 
-            .. table::
-                    :align: center
-                    :widths: auto
-
-                    +--------------------------------------+---------------------------------+
-                    | .. image:: _images/ham_nat.png       |                                 |
-                    |     :align: center                   |                                 |
-                    |     :width: 300px                    |                                 |
-                    |     :alt: alternate text             | A description can go here       |
-                    +--------------------------------------+---------------------------------+
+                ==========   =============   ================================
+                Parameter    Type            Description
+                ==========   =============   ================================
+                a            float/complex   coefficient for quadratic term
+                b            float/complex   coefficient for linear term
+                c            float/complex   coefficient for constant term
+                r1, r2       float/complex   return: the two roots of
+                ==========   =============   ================================
 
         """
         imap = -1
