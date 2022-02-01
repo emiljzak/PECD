@@ -21,7 +21,6 @@ class Field():
     def __init__(self,params):
         self.params = params
 
-    """ =================================== FIELD TYPES =================================== """
     def fieldRCPL(self, t, function_name, omega, E0, CEP0, spherical):
         #all vectors are returned in spherical tensor form -1, 0, 1 order. Adopted convention used in Artemyev et al., J. Chem. Phys. 142, 244105 (2015).
         if spherical == True:
@@ -46,8 +45,6 @@ class Field():
         #print(np.shape(np.cos( omega * t + CEP0 )))
         return 0.0, E0 * np.cos( omega * t + CEP0 ), 0.0
 
-
-    """ =================================== FIELD ENVELOPES =================================== """
     def envgaussian(self,t,function_name,FWHM,t0):
         fieldenv = np.exp(-4*np.log(2)*(t-t0)**2/FWHM**2)
         return fieldenv
@@ -58,7 +55,6 @@ class Field():
         
         return fieldenv
 
-    """ =================================== GENERATE FIELD =================================== """
     def gen_field(self,t):
         """Main routine for the generation of the electric field.
 

@@ -861,9 +861,7 @@ def gen_euler_grid_theta_chi(n_euler):
 
 
 if __name__ == "__main__":   
-
-
-    
+  
     start_time_total = time.time()
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -891,14 +889,6 @@ if __name__ == "__main__":
 
     for key, value in params.items():
         print(key, ":", value)
-
-    #PropObj = Propagator(params,0)
-    #tgrid,dt = PropObj.gen_timegrid()
-    
-    #print(len(tgrid))
-    #print(tgrid/constants.time_to_au[ params['time_units'] ])
-    #print(tgrid[1]-tgrid[0])
-    #exit()
 
     print("\n")
     print("Generating index maps...")
@@ -999,10 +989,10 @@ if __name__ == "__main__":
     print("Calculating eigenvalues and eigenvectors of the bound Hamiltonian operator matrix...")
     print("\n")
 
-    #start_time = time.time()
+    start_time = time.time()
     E0, psi0 = call_eigensolver(ham_bound,params)
-    #end_time = time.time()
-    #print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
+    end_time = time.time()
+    print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
     
     
     print("Energy levels:")
@@ -1013,15 +1003,22 @@ if __name__ == "__main__":
     print("Building the interaction matrix...")
     print("\n")
 
+
+    start_time = time.time()
     intmat =  HamObjProp.build_intmat() 
+    end_time = time.time()
+    print("Time for the calculation of the electric dipole interaction matrix in propagation space = " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
 
     print("\n")
     print("Building the kinetic energy operator matrix for the propagation Hamiltonian...")
     print("\n")
 
+    start_time = time.time()
     keo_prop = HamObjProp.build_keo()
-
-
+    end_time = time.time()
+    print("Time for the calculation of the kinetic energy matrix for the propagatino Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
 
     # loop over molecular orientations in the present batch
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
@@ -1029,7 +1026,7 @@ if __name__ == "__main__":
         start_time = time.time()
         pot_prop = HamObjProp.build_potmat(grid_euler, irun)
         end_time = time.time()
-        print("Time for construction of the potential energy matrix for bound Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
         start_time = time.time()
@@ -1039,7 +1036,7 @@ if __name__ == "__main__":
 
         
         print("\n")
-        print("Setting up rotated wavefunction...")
+        print("Setting up initial wavefunction...")
         print("\n")
 
         PsiObj = wavefunction.Psi(params,grid_euler,irun)
