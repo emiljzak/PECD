@@ -200,25 +200,31 @@ class Map():
 
 
     def map_dvr_femlist_nat(self):
-        """ 
-        Generates an index map for coupled basis with grid points as major dimension and bridge points/functions placed as last in the bin.
+        """Summary line.
 
-        Returns: tuple
-            maparray: list
-                [[ibin,n,ipoint,l,m,id],...]
-            Nbas: int
-                Number of basis functions
+            Extended description of function.
 
-        Note:   the convention adopted to generate the index map assumes that all radial indices start with 0. This python-compatible convention helps to clear out any confusions. The resulting matrix structure is close to block-diagonal, with single-point sized bridges between bins, as shown in the image below:
-        
-        .. image:: /_images/ham_nat.png
-            :width: 500
-        Examples:
-                ibin  n     ipoint l    m   id 
+            .. math::
+                
+                ax^2 + bx + c = 0
+            Args:
+                grid_type : str
+                    type of time grid
 
-        Status: tested vs analytic formula. OK.
+            Returns: tuple
+                t_c : numpy.ndarray
+                    times at which to evaluate `Hamiltonian` in :py:func:`Map.genmap_femlist` function
+
+                dt: numpy.ndarray
+                    Something to write about :py:class:`Map` class
+
+            Example:
+
+            .. code-block:: python
+
+                [sym for J in self.Jlist1 for sym in symlist1[J]]
+
         """
-
         imap = -1
         xi = -1
         maparray = []

@@ -900,6 +900,9 @@ class Hamiltonian():
         
         Returns: array
             vxi (2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
+            .. math::
+
+            ax^2 + bx + c = 0
         """
         Nang = tmats.shape[0]
         Nmulti = vmat.shape[0]
