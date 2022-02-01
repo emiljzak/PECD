@@ -11,8 +11,11 @@
         grid_type : str
             type of time grid
 
+        arg2: numpy.ndarray, shape = (Nbas,Nbas), dtype = int
+            some ``important`` variable
+            
     Returns: tuple
-        t_c : numpy.ndarray
+        ``t_c`` : numpy.ndarray
             times at which to evaluate `Hamiltonian` in :py:func:`Map.genmap_femlist` function
 
         dt: numpy.ndarray
@@ -22,7 +25,7 @@
 
     .. code-block:: python
 
-        [sym for J in self.Jlist1 for sym in symlist1[J]]
+        [i for t in self.tgrid for a in tgrid[i]]
 
 """
 

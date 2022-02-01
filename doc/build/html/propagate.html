@@ -16,6 +16,8 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -48,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#propagation-of-the-wavepacket-propagate">Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wavefunction-module-wavefunction">Wavefunction module (<code class="code docutils literal notranslate"><span class="pre">wavefunction</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#electric-field-module-field">Electric field module (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#analysis-module-analyze">Analysis module (<code class="code docutils literal notranslate"><span class="pre">analyze</span></code>)</a></li>
 </ul>
 </li>
 </ul>
@@ -209,21 +212,57 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pecd.wavefunction.Map.map_dvr_femlist_nat">
 <span class="sig-name descname"><span class="pre">map_dvr_femlist_nat</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Map.map_dvr_femlist_nat" title="Permalink to this definition"></a></dt>
-<dd><p>Generates an index map for coupled basis with grid points as major dimension and bridge points/functions placed as last in the bin.</p>
+<dd><p>Summary line.</p>
+<p>Extended description of function.</p>
+<div class="math notranslate nohighlight" id="equation-my-label">
+<span class="eqno">(1)<a class="headerlink" href="#equation-my-label" title="Permalink to this equation"></a></span>\[ax^2 + bx + c = 0\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>grid_type</strong> – str
+type of time grid</p>
+</dd>
+</dl>
 <dl class="simple">
 <dt>Returns: tuple</dt><dd><dl class="simple">
-<dt>maparray: list</dt><dd><p>[[ibin,n,ipoint,l,m,id],…]</p>
+<dt>fdsf <span class="math notranslate nohighlight">\(\mu\)</span>: fdsfsd numpy.ndarray</dt><dd><p>times at which to evaluate <cite>Hamiltonian</cite> in <a class="reference internal" href="#pecd.wavefunction.Map.genmap_femlist" title="pecd.wavefunction.Map.genmap_femlist"><code class="xref py py-func docutils literal notranslate"><span class="pre">Map.genmap_femlist()</span></code></a> function in <a class="reference internal" href="#equation-my-label">(1)</a></p>
 </dd>
-<dt>Nbas: int</dt><dd><p>Number of basis functions</p>
-</dd>
-</dl>
+<dt>dt: numpy.ndarray</dt><dd><p>Something to write about <a class="reference internal" href="#pecd.wavefunction.Map" title="pecd.wavefunction.Map"><code class="xref py py-class docutils literal notranslate"><span class="pre">Map</span></code></a> class</p>
 </dd>
 </dl>
-<p>Note:   the convention adopted to generate the index map assumes that all radial indices start with 0. This python-compatible convention helps to clear out any confusions. The resulting matrix structure is close to block-diagonal, with single-point sized bridges between bins, as shown in the image below:</p>
-<a class="reference internal image-reference" href="_images/ham_nat.png"><img alt="_images/ham_nat.png" src="_images/ham_nat.png" style="width: 500px;" /></a>
-<p class="rubric">Examples</p>
-<p>ibin  n     ipoint l    m   id</p>
-<p>Status: tested vs analytic formula. OK.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is a <strong>note</strong> box</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is a <strong>warning</strong> box.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">roots</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">b</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">a</span><span class="o">*</span><span class="n">c</span>
+    <span class="n">root1</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">root2</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span> <span class="o">-</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">root1</span><span class="p">,</span> <span class="n">root2</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tgrid</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tgrid</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>Raises: <cite>NotImplementedError</cite> because it is an error</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/ham_nat.png"><img alt="_images/ham_nat.png" src="_images/ham_nat.png" style="width: 200px; height: 200px;" /></a>
+</figure>
+<p>Some text</p>
+<table class="colwidths-auto docutils align-center">
+<tbody>
+<tr class="row-odd"><td><a class="reference internal image-reference" href="_images/ham_nat.png"><img alt="alternate text" class="align-center" src="_images/ham_nat.png" style="width: 300px;" /></a>
+</td>
+<td><p>A description can go here</p></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -353,9 +392,11 @@ x: numpy 1D array (float, size = nlobs)</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.field.Field" title="pecd.field.Field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.field.Field</span></code></a>(params)</p></td>
+<td><p>Class representing electric field</p></td>
+</tr>
 </tbody>
 </table>
-<p>pecd.field.Field</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.field.Field">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.field.</span></span><span class="sig-name descname"><span class="pre">Field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.field.Field" title="Permalink to this definition"></a></dt>
@@ -378,8 +419,59 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 </dl>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.field.Field.gen_field">
+<span class="sig-name descname"><span class="pre">gen_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.field.Field.gen_field" title="Permalink to this definition"></a></dt>
+<dd><p>main program constructing the electric field at time t</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Initial state vectors are eigenfunctions of Hamiltonian <cite>H</cite>. If</dt><dd><p><cite>temp</cite> is None, all eigenfunctions are returned unweighted. If
+<cite>temp</cite> is 0, only lowest energy eigenfunction is returned. If
+<cite>temp</cite> is &gt; 0, all eigenfunctions are returned Boltzmann-
+-weighted.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>H</strong> – <code class="xref py py-class docutils literal notranslate"><span class="pre">field.CarTens</span></code>
+Hamiltonian operator</p></li>
+<li><p><strong>temp</strong> – float
+Temperature in Kelvin</p></li>
+<li><p><strong>thresh</strong> – float
+Collective threshold below which to neglect higher energy
+states</p></li>
+<li><p><strong>zpe</strong> – float
+Zero-point energy, by default lowest eigenvalue of H is taken</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>numpy.ndarray</dt><dd><p>Initial state vectors (each row represents an initial state). we return spherical tensor components -1, 0, 1</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>vecs</p>
+</dd>
+</dl>
 </dd></dl>
 
+</dd></dl>
+
+</section>
+<section id="analysis-module-analyze">
+<h2>Analysis module (<code class="code docutils literal notranslate"><span class="pre">analyze</span></code>)<a class="headerlink" href="#analysis-module-analyze" title="Permalink to this headline"></a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
 </section>
 </section>
 

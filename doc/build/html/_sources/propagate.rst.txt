@@ -11,11 +11,10 @@ Hamiltonian module (:code:`hamiltonian`)
 
 	pecd.hamiltonian.Hamiltonian
 
-
 .. autoclass:: pecd.hamiltonian.Hamiltonian
 
 	.. automethod:: gen_klist
-
+	.. automethod:: calc_vxi
 
 
 Propagation of the wavepacket (:code:`propagate`)
@@ -25,10 +24,10 @@ Propagation of the wavepacket (:code:`propagate`)
 
 	pecd.propagate.Propagator
 
-
 .. autoclass:: pecd.propagate.Propagator
 
 	.. automethod:: gen_timegrid
+
 
 Wavefunction module (:code:`wavefunction`)
 ------------------------------------------
@@ -49,13 +48,10 @@ Wavefunction module (:code:`wavefunction`)
 
 	.. automethod:: gen_grid
 
-
-
 .. autoclass:: pecd.wavefunction.GridEuler
 
 	.. automethod:: gen_euler_grid
 	.. automethod:: gen_euler_grid_2D
-
 
 
 
@@ -64,11 +60,20 @@ Electric field module (:code:`field`)
 
 .. autosummary::
 
-pecd.field.Field
-
+	pecd.field.Field
 
 .. autoclass:: pecd.field.Field
 
-.. automethod:: gen_field
+	.. automethod:: gen_field
 
 
+Analysis module (:code:`analyze`)
+-------------------------------------
+
+.. autosummary::
+
+	pecd.analyze.analysis
+
+.. autoclass:: pecd.analyze.analysis
+
+	.. automethod:: read_wavepacket

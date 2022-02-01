@@ -19,3 +19,8 @@ To run the code type `python3 slurm_grid_run.py`. Choose `jobtype` 	= "local" or
 Input file is given in xxx_input.py, where xxx is molecule name, e.g. n2, d2s, etc. Initially choose     `params['mode']      = 'propagate_grid' ` in input file to run TDSE propagation. Next re-run with `    params['mode']      = 'analyze_grid'` to analyse the created wavepackets. Finally run `ANALYZE_MPAD.py` to calculate PECD and other quantities.
 
 ## Documentation
+
+.. |Docs Badge| image:: https://pecd-personal.readthedocs.io/en/latest/badge/
+	:alt: Documentation Status
+	:scale: 100%
+	:target: https://pecd-personal.readthedocs.io
