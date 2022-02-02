@@ -173,14 +173,16 @@ class Hamiltonian():
     """
 
     def __init__(self,params,hamtype = 'bound'):
-        self.params = params
-        self.hamtype = hamtype
+
+        self.params         = params
+        self.hamtype        = hamtype
 
         if hamtype == "bound":
             self.Nbas       = params['Nbas0']
             self.maparray   = params['maparray0']  
             self.Gr         = params['rgrid0']  
             self.nbins      = params['bound_nbins']
+
         elif hamtype == "prop":
             self.Nbas       = params['Nbas']
             self.maparray   = params['maparray'] 

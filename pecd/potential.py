@@ -7,8 +7,6 @@ import numpy as np
 from scipy import interpolate
 from scipy.special import sph_harm
 
-import grid
-
 import os
 import time
 import json

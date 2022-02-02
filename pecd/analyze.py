@@ -17,11 +17,6 @@ import os
 import sys
 import warnings
 
-import MAPPING
-import GRID
-import CONSTANTS
-import PLOTS
-import GRAPHICS
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt

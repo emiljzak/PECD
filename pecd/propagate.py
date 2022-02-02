@@ -1023,32 +1023,29 @@ if __name__ == "__main__":
     # loop over molecular orientations in the present batch
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
-        start_time = time.time()
+        start_time  = time.time()
         pot_prop = HamObjProp.build_potmat(grid_euler, irun)
-        end_time = time.time()
+        end_time    = time.time()
         print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
-        start_time = time.time()
+        start_time  = time.time()
         ham_init = HamObjProp.build_ham(keo_prop,pot_prop)
-        end_time = time.time()
+        end_time    = time.time()
         print("Time for construction of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
+   
+        print("\n")
+        print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
+        print("\n")
 
-        
+        PsiObj   = wavefunction.Psi(params,grid_euler,irun)
+        psi0_rot = PsiObj.rotate_psi(psi0[:,params['ivec']])
+        psi_init = PsiObj.project_psi_global(psi0_rot)
+
         print("\n")
         print("Setting up initial wavefunction...")
         print("\n")
-
-        PsiObj = wavefunction.Psi(params,grid_euler,irun)
-        #print("shape of psi" + str(psi0.shape))
-        #exit()
-        psi0_rot = PsiObj.rotate_psi(psi0[:,params['ivec']])
-        #print("shape of psi" + str(psi0_rot.shape))
-        #exit()
-        Nbas, psi_init = PsiObj.project_psi_global(psi0_rot)
-
-       
-        PropObj = Propagator(params,irun)
+        PropObj  = Propagator(params,irun)
         PropObj.prop_wf(ham_init, intmat, psi_init, irun)
 
 
