@@ -1062,7 +1062,7 @@ class Hamiltonian():
 
         ham = keo + pot
         ham_filt = Hamiltonian.filter_mat(ham,self.params['hmat_filter'])
-        #print(ham_bound.shape)
+        
         #plt.spy(ham_bound,precision=1e-4)
         #plt.show()
         #exit()

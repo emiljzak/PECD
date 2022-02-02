@@ -49,11 +49,11 @@ class Psi():
                 psi0: numpy.ndarray, dtype = `float`, shape = (`Nbas0`,)
                     Bound state wavefunction stored in 1D numpy array.
 
-            Returns: numpy.ndarray
+            Returns: numpy.ndarray, dtype = complex, shape = (Nbas,)
                 psi: initial wavefunction in the propagation space
 
             .. warning:: The size of the inner space :math:`R_{bound}` must be **large enough**, such that no significant electron density leaks are observed in the field-free evolution of the initial wavefunciton.
-            .. note:: Future implementations may consider linking an externally calculated bound wavefunction, which is projected onto the FEM-DVR basis.
+            .. note:: Future implementations may consider linking an externally calculated bound electron wavefunction projected onto the FEM-DVR basis.
         """
 
         Nbas        = self.params['Nbas']   

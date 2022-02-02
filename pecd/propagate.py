@@ -152,13 +152,32 @@ class Propagator():
         return psi/norm
  
 
-    def prop_wf(self, ham_init,intmat , psi_init, irun):
+    def prop_wf(self, ham_init, intmat, psi_init):
+        """This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.
 
-        """ This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.
-        
-        
+            Here the time-grid and the electric fields are constructed. The wavefunction is propagated by an iterative
+            calculation of the product of the time-dependent Hamiltonian matrix exponential and the wavefunction vector:
+
+            .. math::
+                \psi(t_{i+1}) = \exp(-i\cdot H(t) \cdot dt) \psi(t_i)
+                :label: wf_propagation
+            
+            Arguments: tuple
+                ham_init : scipy.sparse.csr_matrix, dtype = complex/float, shape = (Nbas,Nbas)
+                    Initial Hamiltonian matrix
+
+                intmat : scipy.sparse.csr_matrix, dtype = complex, shape = (Nbas,Nbas)
+                    electric dipole interaction matrix (with no field included)
+                
+                psi_init : numpy.ndarray, dtype = complex, shape = (Nbas,)
+                    initial wavefunction
+
+            Returns: None
+
+            .. note:: The initial Hamiltonian `ham_init` :py:func:`Hamiltonian.build_ham` has complex matrix elements in general. However the kinetic energy matrix constructed in :py:func:`Hamiltonian.build_keo` is real by construction. Therefore when the potential matrix calculated in :py:func:`Hamiltonian.build_potmat` is real, the Hamiltonian matrix is real too.
+
+
         """
-
         #self.calc_mat_density(ham_init)
         ##self.spy_mat(ham_init)
         #self.plot_mat(ham_init)
@@ -1024,13 +1043,13 @@ if __name__ == "__main__":
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
         start_time  = time.time()
-        pot_prop = HamObjProp.build_potmat(grid_euler, irun)
+        pot_prop    = HamObjProp.build_potmat(grid_euler, irun)
         end_time    = time.time()
         print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
 
         start_time  = time.time()
-        ham_init = HamObjProp.build_ham(keo_prop,pot_prop)
+        ham_init    = HamObjProp.build_ham(keo_prop,pot_prop)
         end_time    = time.time()
         print("Time for construction of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
    
@@ -1038,15 +1057,15 @@ if __name__ == "__main__":
         print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
         print("\n")
 
-        PsiObj   = wavefunction.Psi(params,grid_euler,irun)
-        psi0_rot = PsiObj.rotate_psi(psi0[:,params['ivec']])
-        psi_init = PsiObj.project_psi_global(psi0_rot)
+        PsiObj      = wavefunction.Psi(params,grid_euler,irun)
+        psi0_rot    = PsiObj.rotate_psi(psi0[:,params['ivec']])
+        psi_init    = PsiObj.project_psi_global(psi0_rot)
 
         print("\n")
         print("Setting up initial wavefunction...")
         print("\n")
-        PropObj  = Propagator(params,irun)
-        PropObj.prop_wf(ham_init, intmat, psi_init, irun)
+        PropObj     = Propagator(params,irun)
+        PropObj.prop_wf(ham_init, intmat, psi_init)
 
 
     end_time_total = time.time()
