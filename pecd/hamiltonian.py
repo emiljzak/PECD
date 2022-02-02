@@ -1057,11 +1057,13 @@ class Hamiltonian():
 
 
     def build_ham(self,keo,pot):
+        """Build the bound Hamiltonian from the KEO and POT matrices provided. Return a filtered Hamiltonian. 
+        
+        
+        """
 
-        """ Build the bound Hamiltonian with rotated electrostatic potential in unrotated basis """
-
-        ham = keo + pot
-        ham_filt = Hamiltonian.filter_mat(ham,self.params['hmat_filter'])
+        ham         = keo + pot
+        ham_filt    = Hamiltonian.filter_mat(ham,self.params['hmat_filter'])
         
         #plt.spy(ham_bound,precision=1e-4)
         #plt.show()

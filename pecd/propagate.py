@@ -12,8 +12,6 @@ from scipy.sparse.linalg import expm, expm_multiply, eigsh
 from scipy.special import sph_harm
 from scipy.special import eval_legendre
 
-#import quaternionic
-#import spherical
 from sympy.core.numbers import Integer
 
 from sympy.physics.wigner import gaunt
@@ -24,8 +22,6 @@ from sympy import N
 import itertools
 import json
 import h5py
-
-import unittest 
 
 
 import wavefunction
@@ -87,6 +83,11 @@ class Propagator():
         plt.show()
 
     def pull_helicity(self):
+        """Pulls helicity of the laser pulse.
+
+            Returns: str
+                helicity = "R","L" or "0" for right-,left- circularly polarized light and linearly polarized light, respectively.
+        """
         if self.params['field_type']['function_name'] == "fieldRCPL":
             helicity = "R"
         elif self.params['field_type']['function_name'] == "fieldLCPL":
@@ -147,7 +148,6 @@ class Propagator():
         return tgrid, dt
 
     def normalize_psi(self,psi):
-        print(psi.shape)
         norm = np.sqrt( np.sum( np.conjugate(psi[:]) * psi[:] ) )
         return psi/norm
  
@@ -175,7 +175,6 @@ class Propagator():
             Returns: None
 
             .. note:: The initial Hamiltonian `ham_init` :py:func:`Hamiltonian.build_ham` has complex matrix elements in general. However the kinetic energy matrix constructed in :py:func:`Hamiltonian.build_keo` is real by construction. Therefore when the potential matrix calculated in :py:func:`Hamiltonian.build_potmat` is real, the Hamiltonian matrix is real too.
-
 
         """
         #self.calc_mat_density(ham_init)
@@ -206,14 +205,11 @@ class Propagator():
         print("\n")
 
         FieldObj = field.Field(self.params)
-        Fvec    = FieldObj.gen_field(tgrid) 
+        Fvec     = FieldObj.gen_field(tgrid) 
         
         if params['plot_elfield'] == True:
             plots.plot_elfield(Fvec,tgrid,self.time_to_au)
 
-
-        #print(Fvec.shape)
-        #exit()
         start_time_global = time.time()
         for itime, t in enumerate(tgrid): 
 
@@ -225,18 +221,14 @@ class Propagator():
                 print("t = " + str( "%10.1f"%(t/self.time_to_au)) + " as")
         
             # building the electric dipole interaction matrix
-            dip = Fvec[0,itime] * intmat - Fvec[2,itime] * intmat.H #+ Fvec[itime,0] * intmat
+            dip = Fvec[0,itime] * intmat - Fvec[2,itime] * intmat.H #+ Fvec[itime,1] * intmat
            
             #dip = sparse.csr_matrix(dip)
             #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
             #exit()
             
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
-            psi = expm_multiply( -1.0j * ( ham_init + dip  ) * dt, psi ) 
-
-            #psi_out             = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
-            #wavepacket[itime,:] = psi_out
-            #psi                 = wavepacket[itime,:]
+            psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
 
 
             if itime%self.wfn_saverate == 0:
@@ -245,7 +237,7 @@ class Propagator():
                     
                     fl_wavepacket.write(    '{:10.3f}'.format(t) + 
                                             " ".join('{:15.5e}'.format(psi[i].real) + 
-                                            '{:15.5e}'.format(psi[i].imag) for i in range(0,Nbas)) +
+                                            '{:15.5e}'.format(psi[i].imag) for i in range(0,self.Nbas)) +
                                             '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
                                             "\n")
 
@@ -1047,11 +1039,10 @@ if __name__ == "__main__":
         end_time    = time.time()
         print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
         start_time  = time.time()
         ham_init    = HamObjProp.build_ham(keo_prop,pot_prop)
         end_time    = time.time()
-        print("Time for construction of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
+        print("Time for filtering of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
    
         print("\n")
         print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
