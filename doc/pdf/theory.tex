@@ -150,6 +150,7 @@ Note that the last point (tmax) is included in the grid.
 
 \section{Input file}
 
+\subsection{Molecule}
 
 \begin{itemize}
 	\item \textit{molec\_name}: name of the molecule (chiralium, h, h2s, etc.)
@@ -176,6 +177,19 @@ Note that the last point (tmax) is included in the grid.
 		\item \textit{blocks}  calls \textit{build\_keomat\_blocks}, which constructs the KEO using \textit{scipy.sparse.block\_diag} method. First a block-diagonal matrix formed from inflated $K_D$ matrices is formed. Next the inflated $K_C$ matrices are further inflated to the size of each $K_D$ block and a block-diagonal matrix is formed. The resulting matrix is then stacked with appropriate empty matrices to match the shape of the KEO. Hermitian conjugate of this matrix is calculated. All three matrices are then combined. The centrifugal energy term is added to the diagonal at the end using \textit{scipy.sparse.diags} method. 
 	\end{itemize}
 \end{itemize}
+
+
+\subsection{Field}
+ """ Available field types :
+1) RCPL   - right-circularly polarized field
+2) LCPL    - left-circularly polarized field
+3) LP      - linearly polarized field
+"""
+
+""" Available envelopes :
+1) gaussian
+2) sin2 
+"""
 \bibliography{theory}
 \end{document}
 

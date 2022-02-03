@@ -15,3 +15,4 @@ ToDo list
 6. Use scipy.sparse dia_matrix for constructing inflated KD and KC.
 7. Try numba jit (parallel = True) with prange when constructing the KEO with (indptr,indices,data)->csr. Loop over bins, loop over points. Any gain vs scipy.sparse.block_diag? Consider cupyx.scipy.sparse for the same purpose.
 8. Parallelize calc_vxi part in potmat (loop over grid points).
+9. Cleanup the Hamiltonian class

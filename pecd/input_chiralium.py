@@ -47,7 +47,7 @@ def read_input():
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 10
+    params['prop_nbins']        = 50
 
 
     params['map_type']      = 'DVR_NAT' #DVR, DVR_NAT, SPECT (mapping of basis set indices)
@@ -57,7 +57,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 6.0 
+    params['tmax']          = 100.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -106,12 +106,8 @@ def read_input():
 
 
         """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
-        params['hmat_format']           = "sparse_csr" # numpy_arr
         params['hmat_filter']           = 1e-8 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
-
         params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
-        params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         """ ===== ARPACK eigensolver parameters ===== """
         params['ARPACK_tol']        = 1e-8      # error tolerance (relative)
@@ -124,20 +120,7 @@ def read_input():
         params['freq_units']    = "ev"      # nm or ev
         params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
         params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
-
-        """ Available field types :
-            1) RCPL   - right-circularly polarized field
-            2) LCPL    - left-circularly polarized field
-            3) LP      - linearly polarized field
-        """
-
-        """ Available envelopes :
-            1) gaussian
-            2) sin2 
-        """
-        
         params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
-
         params['field_func_name']    = "RCPL"
         params['field_env_name']     = "gaussian" 
 
@@ -160,14 +143,11 @@ def read_input():
         params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
 
         """====  SAVING and PLOTTING ===="""
-        params['save_ham0']     = True #save the calculated bound state Hamiltonian?
         params['save_psi0']     = True #save psi0
         params['save_enr0']     = True #save eigenenergies for psi0
 
         params['wavepacket_format'] = "h5" #dat or h5
-
         params['plot_elfield']      = True
-        params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
 
 
     elif params['mode'] == "analyze":

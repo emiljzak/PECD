@@ -261,102 +261,6 @@ class Propagator():
 
 
 
-def PROJECT_HAM_GLOBAL(params, maparray, Nbas, Gr, ham0, grid_euler, irun):
-
-    ham = sparse.csr_matrix((Nbas, Nbas), dtype=complex) 
-    print("size of bound hamiltonian = " + str(Nbas0))
-    # 0. Append the bound hamiltonian
-    #ham[:Nbas0,:Nbas0] = ham0
-
-    #print(ham.todense())
-    #plt.spy(ham,precision=1e-8, markersize=2)
-    #plt.show()
-
-
-
-    #plt.spy(ham,precision=1e-4, markersize=2)
-    #plt.show()
-
-    #bound.plot_mat(ham.todense())
-
-    # 2. Optional: add "long-range potential" 
-    # Build the full potential in propagation space minus bound spac
-        # consider cut-offs for the electrostatic potential 
-
-    if params['molec_name'] == "chiralium": 
-        potmat, potind = bound.BUILD_POTMAT_ANTON_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
-
-        potind = np.asarray(potind,dtype=int)
-        """ Put the indices and values back together in the Hamiltonian array"""
-        for ielem, elem in enumerate(potmat):
-            #print(elem[0])
-            ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
-
-    elif params['molec_name'] == "h": # test case of shifted hydrogen
-        potmat, potind = bound.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun ) 
-
-        potind = np.asarray(potind,dtype=int)
-        """ Put the indices and values back together in the Hamiltonian array"""
-        for ielem, elem in enumerate(potmat):
-            #print(elem[0])
-            ham[ potind[ielem,0], potind[ielem,1] ] = elem[0]
-
-    # 1. Build the full KEO in propagation space minus bound space
- 
-    start_time = time.time()
-    keomat = bound.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
-    end_time = time.time()
-    print("Time for construction of KEO matrix in full propagation space is " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-    #plt.spy(keomat,precision=1e-8, markersize=2)
-    #plt.show()
-
-    #print("Shape of keomat: " + str(keomat.shape) )
-    #print("Shape of ham: " + str(ham.shape) )
-
-    #keomat_copy = keomat.copy()
-    #keomat_copy += keomat.getH()
-    #for i in range(keomat.shape[0]):
-    #    keomat_copy[i,i] /=2.0 #-= hmat.diagonal()[i]
-
-
-    #ham[:Nbas0,:Nbas0]  -= keomat_copy[:Nbas0, :Nbas0]
-    #plt.spy(ham,precision=1e-4, markersize=2)
-    #plt.show()
-
-    ham += keomat#_copy  
-
-
-    hmat_csr_size = ham.data.size/(1024**2)
-    print('Size of the sparse Hamiltonian csr_matrix: '+ '%3.2f' %hmat_csr_size + ' MB')
-    ham_copy = ham.copy()
-    ham_copy += ham.getH()
-    for i in range(ham.shape[0]):
-        ham_copy[i,i] /=2.0#-= hmat.diagonal()[i]
-
-
-    #apply filters
-
-    """ --- filter hamiltonian matrix  --- """
-
-    if params['hmat_format'] == 'numpy_arr':    
-        ham_filtered = np.where( np.abs(ham_copy) < params['hmat_filter'], 0.0, ham_copy)
-        #ham_filtered = sparse.csr_matrix(ham_filtered)
-
-    elif params['hmat_format'] == 'sparse_csr':
-        nonzero_mask        = np.array(np.abs(ham_copy[ham_copy.nonzero()]) < params['hmat_filter'])[0]
-        rows                = ham_copy.nonzero()[0][nonzero_mask]
-        cols                = ham_copy.nonzero()[1][nonzero_mask]
-        ham_copy[rows, cols]    = 0
-        ham_filtered        = ham_copy.copy()
-
-
-    #assert TEST_boundARY_HAM(params,ham_copy,Nbas0) == True, "Oh no! The bound Hamiltonian is incompatible with the full Hamiltonian."
-    
-
-    return ham_filtered
-
-
 
 
 def TEST_boundARY_HAM(params,ham,Nbas0):
@@ -807,8 +711,6 @@ if __name__ == "__main__":
     print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
     if params['save_psi0'] == True: HamObjBound.save_energies(enr0)
     if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0)
-
-    #exit()
 
     print("\n")
     print("Building the interaction matrix...")
