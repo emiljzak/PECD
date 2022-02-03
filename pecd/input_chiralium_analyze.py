@@ -18,7 +18,6 @@ def read_input():
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 20
-    params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART """
     params['prop_nbins']        = 50
@@ -30,6 +29,21 @@ def read_input():
     params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
     
 
+    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
+    params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
+
+    params['analyze_space']     = [rho2D]
+    params['analyze_momentum']  = [W2Dav]
+    
+
+    params['PECD']      = PECD
+    params['W2Dav']     = W2Dav
+    params['W2D']       = W2D
+    params['rho2D']     = rho2D
+    params['bcoeffs']   = bcoeffs
+
+
+    load_observables()
     
     rho2D = {   'name':         'rho2D',
                 'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
@@ -130,19 +144,6 @@ def read_input():
     #params['obs_params_W2Dav'] = W2Dav
     #params['obs_params_PECD'] = PECD
 
-
-    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
-    params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
-
-    params['analyze_space']     = [rho2D]
-    params['analyze_momentum']  = [W2Dav]
-    
-
-    params['PECD']      = PECD
-    params['W2Dav']     = W2Dav
-    params['W2D']       = W2D
-    params['rho2D']     = rho2D
-    params['bcoeffs']   = bcoeffs
 
 
     """ *** Momentum-space wavefunction *** """

@@ -376,7 +376,7 @@ if __name__ == "__main__":
     jobtype	    = "local" 
     mode        = sys.argv[1]
     inputfile 	= "input_chiralium" #input file name
-    input_module = importlib.import_module(inputfile)
+    input_module = importlib.import_module(inputfile+"_"+mode)
 
     print("input file: " + str(inputfile))
     print("mode: " + str(mode))

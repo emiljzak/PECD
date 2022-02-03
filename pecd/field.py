@@ -7,7 +7,7 @@
 import numpy as np
 
 class Field():
-    """Class representing electric field
+    """Class representing the electric field
 
     Args:
         filename : str
@@ -17,8 +17,8 @@ class Field():
             Threshold for neglecting matrix elements when reading from file
 
     Attrs:
-        rank : int
-            Rank of tensor operator.
+        params : dict
+            Dictionary of parameters
     """
 
     def __init__(self,params):
@@ -42,20 +42,14 @@ class Field():
         return fieldvec 
 
     def fieldLP(self, t, function_name, omega, E0, CEP0):
-        #fieldvec = t
-        #print("shapes in fieldLP")
-        #print(np.shape(t))
-        #print(np.shape(np.cos( omega * t + CEP0 )))
-        return 0.0, E0 * np.cos( omega * t + CEP0 ), 0.0
+        return np.array([0.0, E0 * np.cos( omega * t + CEP0 ), 0.0])
 
     def envgaussian(self,t,function_name,FWHM,t0):
         fieldenv = np.exp(-4*np.log(2)*(t-t0)**2/FWHM**2)
         return fieldenv
 
     def envsin2(self,t,function_name,Ncycles,t0,t_cycle):
-
-        fieldenv = np.sin(np.pi * (t) / (Ncycles * t_cycle))**2
-        
+        fieldenv = np.sin(np.pi * (t) / (Ncycles * t_cycle))**2  
         return fieldenv
 
     def gen_field(self,t):
@@ -118,7 +112,6 @@ class Field():
         print(Fvec.shape)
 
         Fvec = np.stack(( Fvec[i] for i in range(len(Fvec)) ), axis=1) 
-
 
         print(Fvec.shape)
         #exit()
