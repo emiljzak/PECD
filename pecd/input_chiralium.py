@@ -39,15 +39,15 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (10,10,1)
+    params['bound_nlobs_arr']   = (6,6,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 30
+    params['bound_nbins']       = 10
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 50
+    params['prop_nbins']        = 10
 
 
     params['map_type']      = 'DVR_NAT' #DVR, DVR_NAT, SPECT (mapping of basis set indices)
@@ -57,7 +57,7 @@ def read_input():
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 600.0 
+    params['tmax']          = 6.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -94,39 +94,18 @@ def read_input():
         params['ivec']          = 2 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
-
         """===== kinetic energy matrix ====="""
         params['keo_calc_method'] = "vector" #klist,slices,vector
 
-        """===== Potential energy matrix ====="""
-        #analytic, lebedev, lebedev_adaptive, quadpy, etc. Availability depends on the molecule.
+        """===== potential energy matrix ====="""
         params['matelem_method']    = "analytic" 
-        
         params['sph_quad_global']   = "lebedev_119" 
         params['sph_quad_tol']      = 1e-10     
 
         """==== electrostatic potential ===="""
-        params['esp_mode']           = "anton" #exact or multipoles or anton. 
-                                        # exact -> use Psi4. 
-                                        # multipoles -> perform multipole expansion of the potential from given charge distr.
-                                        # anton -> partial wave representation of the potential from A. Artemyev
-                                        # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 10, Lmax = 8. 1800 grid points. 217k basis size.
-      
-        """ **** parameters of the multipole moment expansion of the ESP **** """
-        params['multi_lmax']         = 8 #maximum l in the multipole expansion
-        params['multi_ncube_points'] = 201
-        params['multi_box_edge']     = 20
-
-        params['enable_cutoff']      = True #use cut-off for the ESP?
-        #params['r_cutoff']           = 40.0    
-
-        params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
-        params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
-        params['scf_method']         = 'UHF'
-
+        params['esp_mode']           = "anton" 
+        params['multi_lmax']         = 8 
         params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
-        params['plot_esp']           = False
-        params['integrate_esp']      = False #integrate ESP?
 
 
         """===== Hamiltonian parameters ====="""
@@ -138,7 +117,6 @@ def read_input():
         params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
 
         """ ===== ARPACK eigensolver parameters ===== """
-
         params['ARPACK_tol']        = 1e-8      # error tolerance (relative)
         params['ARPACK_maxiter']    = 60000     # maximum number of iterations
         params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
@@ -146,7 +124,6 @@ def read_input():
         params['ARPACK_mode']       = "normal"  # normal or inverse
 
         """ ====== FIELD PARAMETERS ====== """
-
         params['freq_units']    = "ev"      # nm or ev
         params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
         params['intensity']     = 5.0e+13   # W/cm^2: peak intensity

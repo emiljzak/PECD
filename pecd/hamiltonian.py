@@ -959,11 +959,36 @@ class Hamiltonian():
             print(str(self.params['molec_name']) + ": building the potential energy matrix elements numerical potential and numerical (quadratures) integrals")
 
 
-
-
-
     def build_potmat_chiralium_anton(self,grid_euler,irun):
+        """Build the potential energy matrix using the analytic method with the ESP read from files provided by A. Artemyev.
 
+            See theory docs for more detailes.
+
+            Returns: sparse matrix
+                potmat sparse matrix, dtype = complex, shape = (Nbas,Nbas)
+                    potential energy matrix
+
+            .. note:: For this function to work a set of ESP files in ./potential/ directory must be provided.
+            
+            Examples:
+                Below are given example structures of the potential energy matrix:
+
+                .. figure:: _images/potmat_example_zoom1.png
+                    :height: 400
+                    :width: 400
+                    :align: center
+
+                .. figure:: _images/potmat_example_zoom2.png
+                    :height: 400
+                    :width: 400
+                    :align: center
+
+                .. figure:: _images/potmat_example_zoom3.png
+                    :height: 400
+                    :width: 400
+                    :align: center          
+
+        """
         Nr = self.Gr.ravel().shape[0]
         # Read the potential partial waves on the grid
         start_time = time.time()
@@ -988,7 +1013,11 @@ class Hamiltonian():
 
         # build potmat from block-diagonal parts in each bin
         potmat = sparse.block_diag(potarr)
-
+        
+        #plot_mat(potmat,1.0,show=True,save=True,name="potmat_example",path="./")
+        #plt.spy(potmat.todense(),precision=1e-3,color='b', markersize=5)
+        #plt.show()
+        #exit()
         return potmat
 
 
@@ -2153,12 +2182,12 @@ def gen_adaptive_quads_exact_rot(params , rgrid, mol_xyz, irun ):
 
 
 """ ============ PLOTS ============ """
-def plot_mat(mat,show=True,save=False,name="fig",path="./"):
+def plot_mat(mat,vmax, show=True,save=False,name="fig",path="./"):
     """ plot 2D array with color-coded magnitude"""
     fig, ax = plt.subplots()
     if sparse.issparse(mat):
         mat = mat.todense()
-    im, cbar = heatmap(mat, 0, 0, ax=ax, cmap="gnuplot", cbarlabel="")
+    im, cbar = heatmap(mat, 0, 0, vmax, ax=ax, cmap="gnuplot", cbarlabel="")
     fig.tight_layout()
 
     if save == True:
@@ -2167,7 +2196,7 @@ def plot_mat(mat,show=True,save=False,name="fig",path="./"):
     if show == True:
         plt.show()
 
-def heatmap( data, row_labels, col_labels, ax=None,
+def heatmap( data, row_labels, col_labels,vmax, ax=None,
             cbar_kw={}, cbarlabel="", **kwargs ):
     """
     Create a heatmap from a numpy array and two lists of labels.
@@ -2198,7 +2227,7 @@ def heatmap( data, row_labels, col_labels, ax=None,
     im = ax.imshow(np.abs(data), **kwargs)
 
     # Create colorbar
-    im.set_clim(0,2 ) #np.max(np.abs(data))
+    im.set_clim(0,vmax ) #np.max(np.abs(data))
     cbar = ax.figure.colorbar(im, ax=ax,    **cbar_kw)
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
