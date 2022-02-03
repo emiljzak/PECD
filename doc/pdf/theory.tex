@@ -105,6 +105,10 @@ Each molecular-frame orientation gives different electrostatic potential as seen
 
 \section{Kinetic energy operator}
 
+\section{Potential energy operator}
+
+
+
 \section{Hamiltonian}
 The current paradigm assumes calculation of the sparse Hamiltonian matrix and feeding this matrix into an eigensolver or propagator routine. In future versions, for better computational performance it may be useful not to calculate the Hamiltonian matrix, but rather code the matrix-vector product only, as part of an interface routine with appropriate iterative eigensolver.
 Due to high degree of sparsity of the Hamiltonians appearing in our calculations, it is sufficient to keep in memory the whole sparse matrix.
@@ -142,7 +146,21 @@ Ntpts = \ceil[\Bigg]{\frac{t_{max}-t_0}{dt}}
 such that the array of time-points contains elements: $t[0],t[1],...,t[Ntpts]$.
 Note that the last point (tmax) is included in the grid. 
 
+\section{Input file}
 
+
+\begin{itemize}
+	\item \textit{molec\_name}: name of the molecule (chiralium, h, h2s, etc.)
+	\item \textit{matelem\_method}: method of choice for the calculation of the potential energy matrix elements. Availability of methods given below depends on the chosen molecule.
+	\begin{itemize}
+		\item \textit{analytic}: use analytic formulas for the matrix elements
+		\item \textit{lebedev}: use own implementation of the spherical Lebedev quadratures with fixed global quadrature level for all grid points defined in \textit{sph\_quad\_global} = "lebedev\_119", "lebedev\_131", etc.
+		\item \textit{lebedev\_adaptive}: use own implementation of the spherical Lebedev quadratures with adaptive quadrature level, optimized for each grid point. Stopping condition is based on convergence criteria defined in \textit{sph\_quad\_tol} tolerance (in a.u.) for the convergence of matrix elements with the maximal values of the $l$ quantum number. 
+		\item \textit{quadpy}: use the Quadpy library to calculate the spherical integrals with Lebedev quadratures.
+		\item \textit{others}: to be implemented.
+	\end{itemize}
+
+\end{itemize}
 \bibliography{theory}
 \end{document}
 

@@ -4,6 +4,19 @@ Public API: CHIRALEX package
 *****************************
 
 
+Propagation of the wavepacket (:code:`propagate`)
+-------------------------------------------------
+
+.. autosummary::
+
+	pecd.propagate.Propagator
+
+.. autoclass:: pecd.propagate.Propagator
+
+	.. automethod:: gen_timegrid
+	.. automethod:: prop_wf
+
+
 Hamiltonian module (:code:`hamiltonian`)
 ------------------------------------------
 
@@ -17,16 +30,10 @@ Hamiltonian module (:code:`hamiltonian`)
 	.. automethod:: calc_vxi
 
 
-Propagation of the wavepacket (:code:`propagate`)
--------------------------------------------------
+Potential module (:code:`potential`)
+-------------------------------------
 
 .. autosummary::
-
-	pecd.propagate.Propagator
-
-.. autoclass:: pecd.propagate.Propagator
-
-	.. automethod:: gen_timegrid
 
 
 Wavefunction module (:code:`wavefunction`)
@@ -38,7 +45,7 @@ Wavefunction module (:code:`wavefunction`)
 	pecd.wavefunction.GridRad
 	pecd.wavefunction.GridEuler
 	pecd.wavefunction.Psi
-	
+
 .. autoclass:: pecd.wavefunction.Map
 
 	.. automethod:: genmap_femlist
@@ -58,6 +65,7 @@ Wavefunction module (:code:`wavefunction`)
 .. autoclass:: pecd.wavefunction.Psi
 
 	.. automethod:: project_psi_global
+
 
 
 Electric field module (:code:`field`)
@@ -82,3 +90,8 @@ Analysis module (:code:`analyze`)
 .. autoclass:: pecd.analyze.analysis
 
 	.. automethod:: read_wavepacket
+	
+	
+	
+
+

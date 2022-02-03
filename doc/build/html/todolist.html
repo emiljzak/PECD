@@ -104,6 +104,7 @@
 <ol class="arabic simple">
 <li><p>Use jit for KEO, split filling up the sparse matrix into a separate function</p></li>
 <li><p>Consider using SciPy.sparse LinearOperator class with custom matrix-vector product (NUMBA?) in expm_multiply in prop_wf. Can it give speed-up?</p></li>
+<li><p>Parallelize matrix-exponential-vector products in prop_wf. Consider for the start quspin.tools.expm_multiplu_parallel,https://pypi.org/project/sparse-dot-mkl/ or quimb.linalg.base_linalg.expm_multiply or an implementation invoking CuPy or Numba written MVP with homemade lanczos propagator.</p></li>
 <li><p>Implement variable bin sizes and numbers of basis functions in each bin based on femlist. Presently each bin must have equal size and equal number of basis functions.</p></li>
 <li><p>Move ‘params’ syntax into a secondary layer, leave pure keywords in the input file.</p></li>
 <li><p>Use scipy.sparse dia_matrix for constructing inflated KD and KC.</p></li>

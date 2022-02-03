@@ -14,7 +14,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.setrecursionlimit(1500)
-
+sys.path.append('/home/emil/Desktop/projects/PECD_personal/PECD/pecd')
 
 # -- Project information -----------------------------------------------------
 

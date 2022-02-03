@@ -62,7 +62,6 @@ def read_input():
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
-
     """==== Molecule-field orientation ===="""
 
     params['N_euler'] 	        = 1    # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
@@ -83,7 +82,6 @@ def read_input():
     params['mol_masses']    = {"c":12.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
-    params['sph_quad_tol']       = 1e-10     # tolerance (in a.u.) for the convergence of matrix elements
 
 
     """ __________________________ PROPAGATE BLOCK __________________________"""
@@ -96,6 +94,56 @@ def read_input():
         params['ivec']          = 2 #ID of eigenstate to propagate
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
+
+        """===== kinetic energy matrix ====="""
+        params['keo_calc_method'] = "vector" #klist,slices,vector
+
+        """===== Potential energy matrix ====="""
+        #analytic, lebedev, lebedev_adaptive, quadpy, etc. Availability depends on the molecule.
+        params['matelem_method']    = "analytic" 
+        
+        params['sph_quad_global']   = "lebedev_119" 
+        params['sph_quad_tol']      = 1e-10     
+
+        """==== electrostatic potential ===="""
+        params['esp_mode']           = "anton" #exact or multipoles or anton. 
+                                        # exact -> use Psi4. 
+                                        # multipoles -> perform multipole expansion of the potential from given charge distr.
+                                        # anton -> partial wave representation of the potential from A. Artemyev
+                                        # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 10, Lmax = 8. 1800 grid points. 217k basis size.
+      
+        """ **** parameters of the multipole moment expansion of the ESP **** """
+        params['multi_lmax']         = 8 #maximum l in the multipole expansion
+        params['multi_ncube_points'] = 201
+        params['multi_box_edge']     = 20
+
+        params['enable_cutoff']      = True #use cut-off for the ESP?
+        #params['r_cutoff']           = 40.0    
+
+        params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
+        params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
+        params['scf_method']         = 'UHF'
+
+        params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
+        params['plot_esp']           = False
+        params['integrate_esp']      = False #integrate ESP?
+
+
+        """===== Hamiltonian parameters ====="""
+        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
+        params['hmat_format']           = "sparse_csr" # numpy_arr
+        params['hmat_filter']           = 1e-8 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
+
+        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
+        params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
+
+        """ ===== ARPACK eigensolver parameters ===== """
+
+        params['ARPACK_tol']        = 1e-8      # error tolerance (relative)
+        params['ARPACK_maxiter']    = 60000     # maximum number of iterations
+        params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
+        params['ARPACK_which']      = 'SA'      # LA, SM, SA, LM
+        params['ARPACK_mode']       = "normal"  # normal or inverse
 
         """ ====== FIELD PARAMETERS ====== """
 
@@ -130,68 +178,6 @@ def read_input():
         params['CEP0']          = 0.0 #CEP phase of the field
 
 
-        """===== kinetic energy matrix ====="""
-        params['keo_calc_method'] = "vector" #klist,slices,vector
-
-        """===== Potential energy matrix ====="""
-        
-      
-        params['gen_adaptive_quads'] = False # generate adaptive quadratures and save their parameters in a file?
-
-        params['use_adaptive_quads'] = False          # read adaptive quadrature parameters from file and use them
-        params['sph_quad_default']   = "lebedev_119" # global quadrature scheme in case we do not use adaptive quadratures.
-
-        params['calc_method']        = 'jit' #jit, quadpy, vec: use jit, quadpy or vector implementation of the matrix elements
-
-        """ **** parameters of the multipole moment expansion of the ESP **** """
-        params['multi_lmax']         = 8 #maximum l in the multipole expansion
-        params['multi_ncube_points'] = 201
-        params['multi_box_edge']     = 20
-
-        """==== electrostatic potential ===="""
-
-
-        params['esp_mode']           = "anton" #exact or multipoles or anton. 
-                                        # exact -> use Psi4. 
-                                        # multipoles -> perform multipole expansion of the potential from given charge distr.
-                                        # anton -> partial wave representation of the potential from A. Artemyev
-                                        # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 10, Lmax = 8. 1800 grid points. 217k basis size.
-
-        params['enable_cutoff']      = True #use cut-off for the ESP?
-        #params['r_cutoff']           = 40.0    
-
-        params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
-        params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
-        params['scf_method']         = 'UHF'
-
-        params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
-        params['plot_esp']           = False
-        params['integrate_esp']      = False #integrate ESP?
-
-
-        params['calc_free_energy']  = False #calculate instantaneous energy of the free electron wavepacket in the field
-
-
-        """===== Hamiltonian parameters ====="""
-        params['read_ham_init_file']    = False    # if available read the initial Hamiltonian from file
-        params['hmat_format']           = "sparse_csr" # numpy_arr
-        params['hmat_filter']           = 1e-8 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
-
-        params['num_ini_vec']           = 20 # number of initial wavefunctions (orbitals) stored in file
-        params['file_format']           = 'npz' #dat, npz, hdf5 (format for storage of the wavefunction and the Hamiltonian matrix)
-
-        #params['']
-
-        """ ===== ARPACK eigensolver parameters ===== """
-
-        params['ARPACK_tol']        = 1e-8      # error tolerance (relative)
-        params['ARPACK_maxiter']    = 60000     # maximum number of iterations
-        params['ARPACK_enr_guess']  = None      # energy guess for the shift inverse mode in (eV)
-        params['ARPACK_which']      = 'SA'      # LA, SM, SA, LM
-        params['ARPACK_mode']       = "normal"  # normal or inverse
-
-
-
         """ === ro-vibrational part ==== """ 
         params['density_averaging'] = False #use rotational proability density for orientation averageing. Otherwise uniform probability. 
 
@@ -199,7 +185,7 @@ def read_input():
         params['rv_wavepacket_time']= 50
         params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
 
-        """====  SAVING ===="""
+        """====  SAVING and PLOTTING ===="""
         params['save_ham0']     = True #save the calculated bound state Hamiltonian?
         params['save_psi0']     = True #save psi0
         params['save_enr0']     = True #save eigenenergies for psi0
@@ -208,8 +194,6 @@ def read_input():
 
         params['plot_elfield']      = True
         params['plot_ini_orb']      = False #plot initial orbitals? iorb = 0,1, ..., ivec + 1
-
-    
 
 
     elif params['mode'] == "analyze":

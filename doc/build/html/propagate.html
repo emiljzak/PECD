@@ -46,8 +46,9 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Public API: CHIRALEX package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#hamiltonian-module-hamiltonian">Hamiltonian module (<code class="code docutils literal notranslate"><span class="pre">hamiltonian</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#propagation-of-the-wavepacket-propagate">Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hamiltonian-module-hamiltonian">Hamiltonian module (<code class="code docutils literal notranslate"><span class="pre">hamiltonian</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#potential-module-potential">Potential module (<code class="code docutils literal notranslate"><span class="pre">potential</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wavefunction-module-wavefunction">Wavefunction module (<code class="code docutils literal notranslate"><span class="pre">wavefunction</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#electric-field-module-field">Electric field module (<code class="code docutils literal notranslate"><span class="pre">field</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#analysis-module-analyze">Analysis module (<code class="code docutils literal notranslate"><span class="pre">analyze</span></code>)</a></li>
@@ -105,6 +106,17 @@
 </style>
 <section id="public-api-chiralex-package">
 <h1>Public API: CHIRALEX package<a class="headerlink" href="#public-api-chiralex-package" title="Permalink to this headline"></a></h1>
+<section id="propagation-of-the-wavepacket-propagate">
+<h2>Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)<a class="headerlink" href="#propagation-of-the-wavepacket-propagate" title="Permalink to this headline"></a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+</section>
 <section id="hamiltonian-module-hamiltonian">
 <h2>Hamiltonian module (<code class="code docutils literal notranslate"><span class="pre">hamiltonian</span></code>)<a class="headerlink" href="#hamiltonian-module-hamiltonian" title="Permalink to this headline"></a></h2>
 <table class="longtable docutils align-default">
@@ -116,8 +128,8 @@
 </tbody>
 </table>
 </section>
-<section id="propagation-of-the-wavepacket-propagate">
-<h2>Propagation of the wavepacket (<code class="code docutils literal notranslate"><span class="pre">propagate</span></code>)<a class="headerlink" href="#propagation-of-the-wavepacket-propagate" title="Permalink to this headline"></a></h2>
+<section id="potential-module-potential">
+<h2>Potential module (<code class="code docutils literal notranslate"><span class="pre">potential</span></code>)<a class="headerlink" href="#potential-module-potential" title="Permalink to this headline"></a></h2>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -264,17 +276,14 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pecd.wavefunction.GridRad.gen_grid">
 <span class="sig-name descname"><span class="pre">gen_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridRad.gen_grid" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Generates radial grid based on Gauss-Lobatto quadrature points</dt><dd><p>Three grids are returned: quadrature grid, primitive grid, coupled grid used in final calculation.</p>
+<dd><p>Generates radial grid based on Gauss-Lobatto quadrature points,=.Three grids are returned: quadrature grid, primitive grid, coupled grid used in final calculation.</p>
+<dl class="simple">
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>x: numpy 1D array (float, size = nlobs)</dt><dd><p>Gauss-lobatto quadrature grid</p>
+</dd>
+<dt>w: numpy 1D array (float, size = nlobs)</dt><dd><p>Gauss-lobatto quadrature weights</p>
 </dd>
 </dl>
-<p>Returns: tuple
-x: numpy 1D array (float, size = nlobs)</p>
-<blockquote>
-<div><p>Gauss-lobatto quadrature grid</p>
-</div></blockquote>
-<dl class="simple">
-<dt>w: numpy 1D array (float, size = nlobs)</dt><dd><p>Gauss-lobatto quadrature weights</p>
 </dd>
 <dt>rgrid_prim: numpy 1D array (float, size = nlobs * nbins)</dt><dd><p>Primitive radial grid containing all grid points, plus point values at bin boundries are duplicated i.e. first point in the bin has equal value to last point from previous bin.</p>
 </dd>
@@ -378,7 +387,7 @@ x: numpy 1D array (float, size = nlobs)</p>
 </dd>
 </dl>
 </dd>
-<dt>Returns: numpy.ndarray</dt><dd><p>psi: initial wavefunction in the propagation space</p>
+<dt>Returns: numpy.ndarray, dtype = complex, shape = (Nbas,)</dt><dd><p>psi: initial wavefunction in the propagation space</p>
 </dd>
 </dl>
 <div class="admonition warning">
@@ -387,7 +396,7 @@ x: numpy 1D array (float, size = nlobs)</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Future implementations may consider linking an externally calculated bound wavefunction, which is projected onto the FEM-DVR basis.</p>
+<p>Future implementations may consider linking an externally calculated bound electron wavefunction projected onto the FEM-DVR basis.</p>
 </div>
 </dd></dl>
 
@@ -488,8 +497,21 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.analyze.analysis" title="pecd.analyze.analysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.analyze.analysis</span></code></a>(params)</p></td>
+<td><p></p></td>
+</tr>
 </tbody>
 </table>
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.analyze.analysis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.analyze.</span></span><span class="sig-name descname"><span class="pre">analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.analysis.read_wavepacket">
+<span class="sig-name descname"><span class="pre">read_wavepacket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgrid_plot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis.read_wavepacket" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 

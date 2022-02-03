@@ -988,9 +988,8 @@ class Hamiltonian():
     def build_potmat_standard(self,grid_euler=[0,0,0],irun=0):
         """ 
         Driver routine for the calculation of the potential energy matrix.
-        For now we use it to test Anton's potential.
-        
-
+        We keep it temporarily.
+    
         """
         #full
         Nr = self.Gr.ravel().shape[0]
