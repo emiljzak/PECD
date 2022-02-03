@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8; fill-column: 120 -*-
+#
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
+#
+
 import numpy as np
-import constants
-import os
-import itertools
 import graphics
 
 def read_input():
@@ -21,6 +24,14 @@ def read_input():
 
     """ PROPAGATION PART """
     params['prop_nbins']        = 50
+
+    """==== time-grid parameters ===="""
+    params['time_units']    = "as"
+    params['t0']            = 0.0 
+    params['tmax']          = 100.0 
+    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
+    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+
 
     """==== Molecule-field orientation ===="""
 

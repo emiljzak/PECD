@@ -4,33 +4,35 @@
 # Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 #
 
+#modules
+import constants
 
-from ctypes import pointer
-from logging import warning
-import numpy as np
-import json
-
-from numpy.core.fromnumeric import size
-from scipy.special import sph_harm
-from scipy.special import eval_legendre
-from scipy import integrate
-from scipy import interpolate   
-
-
-import h5py
-
+#standard python libraries
 import time
 import os
 import sys
 import warnings
 
+#scientific computing libraries
+import numpy as np
+import json
+from numpy.core.fromnumeric import size
+from scipy.special import sph_harm
+from scipy.special import eval_legendre
+from scipy import integrate
+from scipy import interpolate   
+import h5py
 
+#plotting libraries
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.ticker import FormatStrFormatter, LogLocator
 
+#custom libraries
 from pyhank import qdht, iqdht, HankelTransform
+
+
 
 class analysis:
 
@@ -2441,6 +2443,21 @@ class averagedobs:
         #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
         """
 
+def check_compatibility(params_prop,params_analyze):
+
+    if params_prop['tmax'] != params_analyze['tmax']:
+        raise ValueError("incompatible propagate and analyze inputs")
+    elif params_prop['t0'] != params_analyze['t0']:
+        raise ValueError("incompatible propagate and analyze inputs")
+    elif params_prop['dt'] != params_analyze['dt']:
+        raise ValueError("incompatible propagate and analyze inputs")
+    elif params_prop['wfn_saverate'] != params_analyze['wfn_saverate']:
+        raise ValueError("incompatible propagate and analyze inputs")
+    elif params_prop['N_euler'] != params_analyze['N_euler']:
+        raise ValueError("incompatible propagate and analyze inputs")
+
+    return 0
+
 if __name__ == "__main__":   
 
     start_time_total = time.time()
@@ -2451,22 +2468,20 @@ if __name__ == "__main__":
     print("---------------------- START ANALYZE --------------------")
     print(" ")
     
-
     ibatch = int(sys.argv[1]) # id of batch of Euler angles grid run
     os.chdir(sys.argv[2])
     path = os.getcwd()
 
-    print("dir: " + path)
-
     # read input_propagate
-
     with open('input_prop', 'r') as input_file:
         params_prop = json.load(input_file)
-
 
     #read input_analyze
     with open('input_analyze', 'r') as input_file:
         params_analyze = json.load(input_file)
+
+    #check compatibility
+    check_compatibility(params_prop,params_analyze)
 
     #combine inputs
     params = {}
@@ -2480,7 +2495,7 @@ if __name__ == "__main__":
     for key, value in params.items():
         print(key, ":", value)
 
-    time_to_au = CONSTANTS.time_to_au[ params['time_units'] ]
+    time_to_au = constants.time_to_au[ params['time_units'] ]
 
     """ generate maps and grids """
     params['maparray_global'], params['Nbas_global']    = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
