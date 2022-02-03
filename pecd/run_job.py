@@ -1,3 +1,4 @@
+from sys import modules
 import numpy as np
 import os
 import subprocess
@@ -8,6 +9,7 @@ import wavefunction
 import json
 import importlib
 import time
+import sys
 
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
@@ -44,10 +46,9 @@ def create_dirs(params):
     return path
 
 
-def gen_inputs_list(params_input):
+def gen_inputs_list(params_input,mode,jobtype):
 
     params_list = []
-
 
     lmin        = params_input['bound_lmax_arr'][0]
     lmax        = params_input['bound_lmax_arr'][1]
@@ -77,7 +78,7 @@ def gen_inputs_list(params_input):
                 print("l = " + str(l) + ", n = " + str(n) + ", Rb = " + str(r)+ ":\n")
                 params_input['bound_binw'] = r
 
-                params_list.append(setup_input(params_input))
+                params_list.append(setup_input(params_input,mode))
                
     return params_list
 
@@ -132,7 +133,7 @@ def field_params(params):
 
     return field_dict, env_dict
 
-def setup_input(params_input):
+def setup_input(params_input,mode):
     """ Note: All quantities are converted to atomic units"""
 
     params = {}
@@ -171,7 +172,7 @@ def setup_input(params_input):
                                 "_" + str(params['job_label']) +"/"
 
 
-    if params['mode'] == 'propagate':
+    if mode == 'propagate':
 
 
         params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
@@ -365,15 +366,25 @@ if __name__ == "__main__":
     print("***********************************************************")
     print("\n")
 
+
+    """ ===== job type ===== """ 
+    """
+        1) 'local':    local job 
+        2) 'slurm':    submission to a SLURM workload manager for an HPC job
+    """
+
+    jobtype	    = "local" 
+    mode        = sys.argv[1]
     inputfile 	= "input_chiralium" #input file name
     input_module = importlib.import_module(inputfile)
 
     print("input file: " + str(inputfile))
+    print("mode: " + str(mode))
 
     params_input = input_module.read_input()
-    print("jobtype: " + str(params_input['jobtype']))
+    print("jobtype: " + str(jobtype))
 
-    params_list = gen_inputs_list(params_input)
+    params_list = gen_inputs_list(params_input,mode,jobtype)
 
 
     run_array_job(params_list)

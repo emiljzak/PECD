@@ -22,13 +22,6 @@ def read_input():
         All other parameters are read from respective input files.
     """
     
-    """ ===== type of job ===== analyze""" 
-    """
-        1) 'local':    local job 
-        2) 'slurm':    submission to a SLURM workload manager for an HPC job
-    """
-
-    params['jobtype'] 	   = "local" 
 
     params['job_label']    = "proptest2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     
