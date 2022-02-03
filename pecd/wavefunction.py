@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; fill-column: 120 -*-
 #
-# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 #
 from logging import raiseExceptions
 import numpy as np
@@ -150,7 +150,7 @@ class Map():
         femlist (list): keeps sizes of radial bins and the number of points/functions in each bin.
                         Format: [ [nbins,nlobs,Rbin], ... ].
 
-        map_type (str): type of mapping function ('DVR' or 'SPECT')
+        map_type (str): type of mapping function ('DVR' , 'DVR_NAT' or 'SPECT')
 
         job_dir (str): path to current working directory
 

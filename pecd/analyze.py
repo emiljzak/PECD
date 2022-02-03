@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8; fill-column: 120 -*-
+#
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
+#
+
+
 from ctypes import pointer
 from logging import warning
 import numpy as np

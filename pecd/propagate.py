@@ -8,10 +8,10 @@ from h5py._hl import datatype
 import numpy as np
 from scipy import sparse
 from scipy.fftpack import fftn
-from scipy.sparse.linalg import expm, expm_multiply, eigsh
+from scipy.sparse.linalg import expm_multiply
+from scipy.sparse.linalg import eigsh
 from scipy.special import sph_harm
 from scipy.special import eval_legendre
-import quimb
 from sympy.core.numbers import Integer
 
 from sympy.physics.wigner import gaunt
@@ -229,8 +229,8 @@ class Propagator():
             
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
             
-            psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
-            #psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+            #psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
+            psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
 
 
             if itime%self.wfn_saverate == 0:
@@ -799,22 +799,20 @@ if __name__ == "__main__":
     print("\n")
 
     start_time = time.time()
-    E0, psi0 = call_eigensolver(ham_bound,params)
+    enr0, psi0 = HamObjBound.call_eigensolver(ham_bound)
     end_time = time.time()
     print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
     
     
-    print("Saving energy levels and wavefunctions for the bound Hamiltonian:")
-      if params['save_psi0'] == True:
+    print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
+    if params['save_psi0'] == True: HamObjBound.save_energies(enr0)
+    if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0)
 
-          if params['save_psi0'] == True:
-    print(E0*constants.au_to_ev )
     #exit()
 
     print("\n")
     print("Building the interaction matrix...")
     print("\n")
-
 
     start_time = time.time()
     intmat =  HamObjProp.build_intmat() 

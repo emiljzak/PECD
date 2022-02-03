@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; fill-column: 120 -*-
 #
-# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 #
 
 #modules
@@ -193,17 +193,28 @@ class Hamiltonian():
         """
 
         if self.params['save_enr0'] == True:
-            with open(self.params['job_directory'] + self.params['file_enr0'] + "_"+str(irun), "w") as energyfile:   
+            with open(self.params['job_directory'] + self.params['file_enr0'] + "_" + str(irun), "w") as energyfile:   
                 np.savetxt( energyfile, enr * constants.au_to_ev , fmt='%10.5f' )
     
 
-    def save_wavefunctions(self,psi):
-         
-        psifile = open(self.params['job_directory']  + self.params['file_psi0']+ "_"+str(irun), 'w')
+    def save_wavefunctions(self,psi,irun=0):
+        """Saves the wavefunctions a file
+        
+            Arguments: 
+                psi: numpy.ndarray, dtype = complex, shape = (num_ini_vec,)
+                    array of energy levels
+            Args:
+                irun: int, default = 0
+                    id of the run for a given molecular orientation in the lab frame.
+        
+        """
+
+        psifile = open(self.params['job_directory']  + self.params['file_psi0'] + "_" + str(irun), 'w')
+
         for ielem,elem in enumerate(self.maparray):
             psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                             " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
-                            "\t\t ".join('{:10.5e}'.format(coeffs[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
+                            "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
 
 
     @staticmethod
