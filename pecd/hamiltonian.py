@@ -191,6 +191,24 @@ class Hamiltonian():
             self.nbins      = params['prop_nbins']
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
+    
+    @staticmethod
+    def filter_mat(mat,filter):
+        """
+        Removes elements of a sparse matrix whose magnitude is smaller than a given threshold.
+
+        Args:
+            mat: array (numpy or sparse)
+            filter (float): threshold value
+
+        Returns: array (numpy.ndarray or scipy.sparse) , dtype = mat.dtype, shape = mat.shape
+
+        """
+        nonzero_mask        = np.array(np.abs(mat[mat.nonzero()]) < filter)[0]
+        rows                = mat.nonzero()[0][nonzero_mask]
+        cols                = mat.nonzero()[1][nonzero_mask]
+        mat[rows, cols]     = 0
+        return mat
 
     
     @staticmethod
@@ -246,13 +264,15 @@ class Hamiltonian():
         #sort coeffs
 
         return enr, coeffs
-    
-    
-    
+      
     @staticmethod
     @jit(nopython=True,parallel=False,fastmath=False)
     def gen_klist_jit(Nbas,maparray):
-
+        """Calculate a list of all KEO indices, for which matrix elements can be non-zero 
+        
+        Returns: list
+            klist: a list of indices
+        """
         klist = []
 
         for p1 in range(Nbas):
@@ -263,7 +283,6 @@ class Hamiltonian():
                         maparray[p2,1], maparray[p2,3], p1, p2 ])
 
         return klist
-
 
     def call_gen_klist_jit(self,Nbas):
         maparray = np.asarray(self.maparray, dtype = int)
@@ -289,7 +308,6 @@ class Hamiltonian():
                         maparray[p2,1], maparray[p2,3], p1, p2 ])
 
         return klist
-
 
     def build_keo(self):
 
@@ -397,24 +415,6 @@ class Hamiltonian():
 
         return  keomat
 
-    @staticmethod
-    def filter_mat(mat,filter):
-        """
-        Removes elements of a sparse matrix whose magnitude is smaller than a given threshold.
-
-        Args:
-            mat: array (numpy or sparse)
-            filter (float): threshold value
-
-        Returns: array (numpy.ndarray or scipy.sparse) , dtype = mat.dtype, shape = mat.shape
-
-        """
-        nonzero_mask        = np.array(np.abs(mat[mat.nonzero()]) < filter)[0]
-        rows                = mat.nonzero()[0][nonzero_mask]
-        cols                = mat.nonzero()[1][nonzero_mask]
-        mat[rows, cols]     = 0
-        return mat
-
     def build_CFE(self,Gr):
         """
         Builds the vector of the centrifugal energy operator
@@ -475,7 +475,6 @@ class Hamiltonian():
                     KC0[l*(l+1)+m,n1*(lmax+1)**2+l*(l+1)+m] = KC[n1]
 
         return KD0, KC0
-
 
     def fillup_keo_lil_np(self,KD0,KC0,CFE):
         """
@@ -581,7 +580,6 @@ class Hamiltonian():
 
         return keomat
 
-  
     def fillup_keo_klist(self,KD,KC,Gr,klist):
 
         nlobs = self.params['bound_nlobs']
@@ -650,8 +648,6 @@ class Hamiltonian():
 
         return keomat
 
-    
-
     def BUILD_DMAT(self,x,w):
 
         N       = x.shape[0]
@@ -685,7 +681,6 @@ class Hamiltonian():
         #exit()
         return DMAT
 
-
     def BUILD_JMAT(self,D,w):
 
         wdiag = np.zeros((w.size,w.size), dtype = float)
@@ -696,7 +691,6 @@ class Hamiltonian():
 
         return multi_dot([DT,wdiag,D])
         #return np.dot( np.dot(DT,wdiag), D )
-
 
     def BUILD_KD(self,JMAT,w,N): #checked 1 May 2021
         """
@@ -735,7 +729,6 @@ class Hamiltonian():
 
         return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)
 
-
     def BUILD_KC(self,JMAT,w,N):
         Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) #+ w[N-1]
         
@@ -758,10 +751,11 @@ class Hamiltonian():
     @staticmethod
     #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
     def calc_potmat_anton_jit( vLM, vlist, tjmat):
-        """
-        Calculate indices and values for the non-zero elements of the potential energy matrix for the chiralium potential.
+        """Obsolete function.
+            
+            Calculate indices and values for the non-zero elements of the potential energy matrix for the chiralium potential.
 
-        Args:
+        Arguments:
             vLM (3D numpy array, shape=(Nr,Lmax+1,2Lmax+1)): array of values of the radial potential energy expanded in spherical harmonics basis
             vlist (2D numpy array, shape=(No.nonzero elems,7)): list of non-zero matrix element
             tjmat (6D numpy array): matrix elements of the respective spherical harmonics operators in the spherical harmonics basis
@@ -895,15 +889,12 @@ class Hamiltonian():
     def calc_vxi(self,vmat,tmats):
         """Calculate a block of the potential energy matrix for a single grid point.
 
-        Args:
+        Arguments:
             vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
             tmats (3D numpy array, shape=(Nang,Nang,Nmulti)): tjmat reduced to 3 dimensions
         
-        Returns: array
-            vxi (2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
-            .. math::
-
-            ax^2 + bx + c = 0
+        Returns: numpy.ndarray, dtype = complex, shape = (Nang,Nang)
+            vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point
         """
         Nang = tmats.shape[0]
         Nmulti = vmat.shape[0]
@@ -917,7 +908,7 @@ class Hamiltonian():
         return vxi
 
     def build_potmat(self,grid_euler=[0,0,0],irun=0):
-        """ Driver routine for the calculation of the potential energy matrix.
+        """Driver routine for the calculation of the potential energy matrix.
 
             Here it is decided which routine to call. We have a choice of different routines depending on the molecule and the type of method used to calculate matrix elements.
 
@@ -949,15 +940,18 @@ class Hamiltonian():
                 else:
                     raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
                 
-        elif self.params['molec_name'] == "h":        
+        elif self.params['molec_name'] == "h":
+
             if self.params['matelem_method'] == "analytic":
+                
                 if self.params['esp_mode'] == "analytic":
                     print("Hydrogen atom: building the potential energy matrix elements using analytic potential and analytic integrals")
                 else:
                     raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
         else: 
             print(str(self.params['molec_name']) + ": building the potential energy matrix elements numerical potential and numerical (quadratures) integrals")
-
+        
+        return potmat
 
     def build_potmat_chiralium_anton(self,grid_euler,irun):
         """Build the potential energy matrix using the analytic method with the ESP read from files provided by A. Artemyev.
@@ -969,8 +963,8 @@ class Hamiltonian():
                     potential energy matrix
 
             .. note:: For this function to work a set of ESP files in ./potential/ directory must be provided.
-            
-            Examples:
+
+            Examples:   
                 Below are given example structures of the potential energy matrix:
 
                 .. figure:: _images/potmat_example_zoom1.png
@@ -1014,6 +1008,7 @@ class Hamiltonian():
         # build potmat from block-diagonal parts in each bin
         potmat = sparse.block_diag(potarr)
         
+        #plot the matrix:
         #plot_mat(potmat,1.0,show=True,save=True,name="potmat_example",path="./")
         #plt.spy(potmat.todense(),precision=1e-3,color='b', markersize=5)
         #plt.show()
