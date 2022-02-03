@@ -165,8 +165,10 @@ class Map():
                 Total number of basis functions
         """
 
-        if self.map_type == 'DVR':
+        if self.map_type == 'DVR_NAT':
             maparray, Nbas = self.map_dvr_femlist_nat()
+        elif self.map_type == 'DVR':
+            maparray, Nbas = self.map_dvr_femlist()
         elif self.map_type == 'SPECT':
             maparray, Nbas = self.map_spect_femlist()
 

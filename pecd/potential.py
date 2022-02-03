@@ -214,7 +214,7 @@ def calc_multipoles(params):
     return qlm
 
 
-def read_potential(params,Nr,bound):
+def read_potential_anton(params,Nr,bound):
     #read the partial waves representation of the electrostatic potential. A. Artemyev's potential.
     #vLM[xi, L, M]
 

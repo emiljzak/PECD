@@ -28,11 +28,9 @@ def read_input():
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
     """
 
-    params['jobtype'] 	= "local" 
+    params['jobtype'] 	   = "local" 
 
-
-
-    params['job_label']    = "pottest" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "proptest" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     
     """====== Basis set parameters ======"""
     """ 
@@ -45,21 +43,21 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 20
+    params['bound_nbins']       = 30
     params['bound_rshift']      = 0.0
 
-    """ CONTINUUM PART"""
-    params['prop_nbins']        = 20
+    """ PROPAGATION PART"""
+    params['prop_nbins']        = 50
 
 
-    params['map_type']      = 'DVR' #DVR, SPECT (mapping of basis set indices)
+    params['map_type']      = 'DVR_NAT' #DVR, DVR_NAT, SPECT (mapping of basis set indices)
 
     """==== time-grid parameters ===="""
 
     params['time_units']    = "as"
 
     params['t0']            = 0.0 
-    params['tmax']          = 6000.0 
+    params['tmax']          = 600.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -157,7 +155,7 @@ def read_input():
                                         # exact -> use Psi4. 
                                         # multipoles -> perform multipole expansion of the potential from given charge distr.
                                         # anton -> partial wave representation of the potential from A. Artemyev
-                                        # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 9, Lmax = 8. 1800 grid points. 160k basis size.
+                                        # use anton with nlobs = 10, nbins = 200, Rbin = 2.0, lmax = 10, Lmax = 8. 1800 grid points. 217k basis size.
 
         params['enable_cutoff']      = True #use cut-off for the ESP?
         #params['r_cutoff']           = 40.0    

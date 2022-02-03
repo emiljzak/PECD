@@ -405,14 +405,13 @@ class Hamiltonian():
             mat: array (numpy or sparse)
             filter (float): threshold value
 
-        Returns: array (the same array as put in)
+        Returns: array (numpy.ndarray or scipy.sparse) , dtype = mat.dtype, shape = mat.shape
 
         """
         nonzero_mask        = np.array(np.abs(mat[mat.nonzero()]) < filter)[0]
         rows                = mat.nonzero()[0][nonzero_mask]
         cols                = mat.nonzero()[1][nonzero_mask]
         mat[rows, cols]     = 0
-        #mat_filtered        = mat.copy()
         return mat
 
     def build_CFE(self,Gr):
@@ -917,30 +916,62 @@ class Hamiltonian():
         return vxi
 
     def build_potmat(self,grid_euler=[0,0,0],irun=0):
-        """ 
-        Driver routine for the calculation of the potential energy matrix.
-        For now we use it to test Anton's potential.
-        
+        """ Driver routine for the calculation of the potential energy matrix.
+
+            Here it is decided which routine to call. We have a choice of different routines depending on the molecule and the type of method used to calculate matrix elements.
+
+        Args: tuple
+            grid_euler: full grid or Euler angles
+            irun:   id of the run when doing orientation-averaging
+
+        Returns: sparse array
+            potmat: sparse array, dtype = complex, shape = (Nbas, Nbas)      
         
         """
   
+        if self.params['molec_name'] == "chiralium":
+
+            if self.params['esp_mode'] == "anton":
+
+                print("Chiralium: building the potential energy matrix elements using multipole expansion of the potential and analytic integrals")
+
+                potmat = self.build_potmat_chiralium_anton(grid_euler,irun)
+            
+            elif self.params['esp_mode'] == "numerical":
+         
+                print("Chiralium: building the potential energy matrix elements using multipole expansion of the potential and numerical (quadratures) integrals")
+
+                potmat = self.build_potmat_chiralium_anton_num(grid_euler,irun)
+
+        elif self.params['molec_name'] == "h":        
+
+            if self.params['esp_mode'] == "analytic":
+                print("Hydrogen atom: building the potential energy matrix elements using analytic potential and analytic integrals")
+
+        else: 
+            print(str(self.params['molec_name']) + ": building the potential energy matrix elements numerical potential and numerical (quadratures) integrals")
+
+
+
+
+
+    def build_potmat_chiralium_anton(self,grid_euler,irun):
+
         Nr = self.Gr.ravel().shape[0]
-       
-        #  Read the potential partial waves on the grid
+        # Read the potential partial waves on the grid
         start_time = time.time()
-        vLM,rgrid_anton = potential.read_potential(self.params,Nr,False)
+        vLM,rgrid_anton = potential.read_potential_anton(self.params,Nr,False)
         end_time = time.time()
         print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        # Build array of 3-j symbols
+        # Build an array of 3-j symbols
         tjmat       = gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
-
 
         tmats = self.map_tjmat(tjmat)
 
         vmats = self.map_vmats(vLM,Nr)
 
-        #this part can probably be done in parallel
+        # This part can probably be done in parallel
         potarr = []
         for ipoint in range(Nr):
             vxi = self.calc_vxi(vmats[ipoint],tmats)
@@ -948,8 +979,8 @@ class Hamiltonian():
 
         potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
 
+        # build potmat from block-diagonal parts in each bin
         potmat = sparse.block_diag(potarr)
-
 
         return potmat
 

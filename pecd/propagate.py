@@ -11,7 +11,7 @@ from scipy.fftpack import fftn
 from scipy.sparse.linalg import expm, expm_multiply, eigsh
 from scipy.special import sph_harm
 from scipy.special import eval_legendre
-
+import quimb
 from sympy.core.numbers import Integer
 
 from sympy.physics.wigner import gaunt
@@ -228,7 +228,9 @@ class Propagator():
             #exit()
             
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
-            psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+            
+            psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
+            #psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
 
 
             if itime%self.wfn_saverate == 0:
