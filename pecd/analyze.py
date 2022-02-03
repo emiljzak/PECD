@@ -675,17 +675,17 @@ class spacefuncs(analysis):
         self.params = params
 
     def read_psi0(self):
-        coeffs = []
-        indices = []
-        start_time = time.time()
+        coeffs      = []
+        indices     = []
+        start_time  = time.time()
 
-        irun = self.params['irun']
-        filename = self.params['job_directory'] + self.params['file_psi0'] + "_" + str(irun)
+        irun        = self.params['irun']
+        filename    = self.params['job_directory'] + self.params['file_psi0'] + "_" + str(irun)
+
         with open(filename, 'r', ) as f:
             for line in f:
                 words   = line.split()
                 indices.append( [ int(words[i]) for i in range(5) ] ) 
-           
                 coeffs.append( [ complex(words[5+ivec]) for ivec in range(self.params['num_ini_vec']) ] )
 
         end_time = time.time()
@@ -2496,7 +2496,7 @@ if __name__ == "__main__":
         print(key, ":", value)
 
     time_to_au = constants.time_to_au[ params['time_units'] ]
-
+    exit()
     """ generate maps and grids """
     params['maparray_global'], params['Nbas_global']    = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
                                                                                     params['bound_lmax'],

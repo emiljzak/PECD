@@ -42,8 +42,9 @@ def read_input():
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
-
-    params['analyze_space']     = [rho2D]
+    params['molec_name']    = "chiralium"
+    
+params['analyze_space']     = [rho2D]
     params['analyze_momentum']  = [W2Dav]
     
 
@@ -55,7 +56,41 @@ def read_input():
 
 
     load_observables()
-    
+
+
+        rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
+                            'plot':         (True, GRAPHICS.gparams_rho1D_ini_rad()),
+                            'show':         True, # show image on screen                    
+                            'save':         True,
+                            'scale':        "log", #unit or log
+                            'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                                'npts': 999,    #ignored when automatic (2*rmax)
+                                                'rmin': 0.0,    #ignored when automatic
+                                                'rmax': 30.0  #ignored when automatic
+                                            #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                            },                   
+                            'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
+                            'vecs':         (0,10)  #(i_min, i_max): which of the initial eigenvectors to plot
+                        }
+
+
+        rho1D_wf_rad = {   'name':         'rho1D_wf_rad',
+                        'plot':         (True, GRAPHICS.gparams_rho1D_wf_rad()),
+                        'show':         True, # show image on screen                    
+                        'save':         True,
+                        'scale':        "log", #unit or log
+                        'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                            'npts': 500,    #ignored when automatic (2*rmax)
+                                            'rmin': 0.0,    #ignored when automatic
+                                            'rmax': 10.0  #ignored when automatic
+                                        #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                        },                   
+                        'coeff_thr':    1e-12, #threshold for the wavefunction coefficients in the calculation of rho
+                        'ini_vecs':     ( True,(0,2) ) #Plot initial vectors? If True then (i_min, i_max): which of the initial eigenvectors to plot
+                    }
+
+
+
     rho2D = {   'name':         'rho2D',
                 'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_rho2D_polar()), #specify parameters of the plot to load
@@ -182,7 +217,6 @@ def read_input():
     """ *** PECD *** """
     params['pecd_lmax']       = 4               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['pecd_momenta']    = [1.15]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
-
 
     return params
 
