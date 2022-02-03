@@ -7,6 +7,7 @@
 from numpy.core.numeric import NaN
 from scipy import special
 from scipy.sparse.linalg import eigsh
+from sympy.multipledispatch.dispatcher import RaiseNotImplementedError
 
 import potential
 import constants
@@ -896,7 +897,7 @@ class Hamiltonian():
 
         Args:
             vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
-            tmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
+            tmats (3D numpy array, shape=(Nang,Nang,Nmulti)): tjmat reduced to 3 dimensions
         
         Returns: array
             vxi (2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
@@ -931,23 +932,29 @@ class Hamiltonian():
   
         if self.params['molec_name'] == "chiralium":
 
-            if self.params['esp_mode'] == "anton":
+            if self.params['matelem_method'] == "analytic":
 
                 print("Chiralium: building the potential energy matrix elements using multipole expansion of the potential and analytic integrals")
+                
+                if self.params['esp_mode'] == "anton":
+                    potmat = self.build_potmat_chiralium_anton(grid_euler,irun)
+                else:
+                    raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
 
-                potmat = self.build_potmat_chiralium_anton(grid_euler,irun)
-            
-            elif self.params['esp_mode'] == "numerical":
+            elif self.params['matelem_method'] == "lebedev":
          
                 print("Chiralium: building the potential energy matrix elements using multipole expansion of the potential and numerical (quadratures) integrals")
-
-                potmat = self.build_potmat_chiralium_anton_num(grid_euler,irun)
-
+                if self.params['esp_mode'] == "anton":
+                    potmat = self.build_potmat_chiralium_anton_num(grid_euler,irun)
+                else:
+                    raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
+                
         elif self.params['molec_name'] == "h":        
-
-            if self.params['esp_mode'] == "analytic":
-                print("Hydrogen atom: building the potential energy matrix elements using analytic potential and analytic integrals")
-
+            if self.params['matelem_method'] == "analytic":
+                if self.params['esp_mode'] == "analytic":
+                    print("Hydrogen atom: building the potential energy matrix elements using analytic potential and analytic integrals")
+                else:
+                    raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
         else: 
             print(str(self.params['molec_name']) + ": building the potential energy matrix elements numerical potential and numerical (quadratures) integrals")
 

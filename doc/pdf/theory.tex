@@ -159,7 +159,14 @@ Note that the last point (tmax) is included in the grid.
 		\item \textit{quadpy}: use the Quadpy library to calculate the spherical integrals with Lebedev quadratures.
 		\item \textit{others}: to be implemented.
 	\end{itemize}
-
+	\item \textit{esp\_mode}: method of choice for the calculation of the cationic's core electrostatic potential.
+	\begin{itemize}
+		\item \textit{analytic}: available only for the hydrogen atom and some model systems.
+		\item \textit{psi4}: use psi4 quantum chemistry package for calculate the ESP for all required points.
+		\item \textit{anton}: only available for the chiralium molecule. Read the precomputed potential kindly provided by A. Artemyev.
+		\item \textit{psi4\_interpolated}: produce an interpolated ESP based on psi4 points.
+		\item \textit{others}: to be implemented. Any method one can imagine, including the use of other quantum chemistry software. 
+	\end{itemize}
 \end{itemize}
 \bibliography{theory}
 \end{document}
