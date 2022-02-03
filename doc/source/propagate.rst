@@ -28,7 +28,7 @@ Hamiltonian module (:code:`hamiltonian`)
 
 	.. automethod:: gen_klist
 	.. automethod:: calc_vxi
-
+	.. automethod:: build_potmat_chiralium_anton
 
 Potential module (:code:`potential`)
 -------------------------------------

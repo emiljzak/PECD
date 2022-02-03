@@ -104,6 +104,8 @@ with $p(0,0,0,0) =0 $. For $l_{max} = 0$ we have $p(Nb-1,Nl-3,0,0) =  Nb \times 
 Each molecular-frame orientation gives different electrostatic potential as seen from the laboratory frame, in which the basis set is defined. This means that for each orientation one must generate generally a different Lebedev quadrature grid. Even if a global scheme is used, the values of the electrostatic potential will be different at these points for each orientation. This is because the lebedev grid is defined in the laboratory frame. Therefore at this stage, a separate Psi4 calculation must be initialized for each orientation. I do not see a way around it at the moment, other than performing multipole expansion and calculating the angular part (spherical tensor form) of the potential analytically. But finding this expansion is costly, even more than running Psi4 for every orientation.
 
 \section{Kinetic energy operator}
+\label{sec:keo}
+
 
 \section{Potential energy operator}
 
@@ -153,7 +155,7 @@ Note that the last point (tmax) is included in the grid.
 	\item \textit{molec\_name}: name of the molecule (chiralium, h, h2s, etc.)
 	\item \textit{matelem\_method}: method of choice for the calculation of the potential energy matrix elements. Availability of methods given below depends on the chosen molecule.
 	\begin{itemize}
-		\item \textit{analytic}: use analytic formulas for the matrix elements
+		\item \textit{analytic}: use analytic formulas for the matrix elements. When the potential is given as an expansion in the spherical harmonics basis, utilize 3j symbols to calculate the matrix elements.
 		\item \textit{lebedev}: use own implementation of the spherical Lebedev quadratures with fixed global quadrature level for all grid points defined in \textit{sph\_quad\_global} = "lebedev\_119", "lebedev\_131", etc.
 		\item \textit{lebedev\_adaptive}: use own implementation of the spherical Lebedev quadratures with adaptive quadrature level, optimized for each grid point. Stopping condition is based on convergence criteria defined in \textit{sph\_quad\_tol} tolerance (in a.u.) for the convergence of matrix elements with the maximal values of the $l$ quantum number. 
 		\item \textit{quadpy}: use the Quadpy library to calculate the spherical integrals with Lebedev quadratures.
@@ -161,11 +163,17 @@ Note that the last point (tmax) is included in the grid.
 	\end{itemize}
 	\item \textit{esp\_mode}: method of choice for the calculation of the cationic's core electrostatic potential.
 	\begin{itemize}
-		\item \textit{analytic}: available only for the hydrogen atom and some model systems.
+		\item \textit{analytic}: available only for the hydrogen atom and some model systems. 
 		\item \textit{psi4}: use psi4 quantum chemistry package for calculate the ESP for all required points.
 		\item \textit{anton}: only available for the chiralium molecule. Read the precomputed potential kindly provided by A. Artemyev.
 		\item \textit{psi4\_interpolated}: produce an interpolated ESP based on psi4 points.
 		\item \textit{others}: to be implemented. Any method one can imagine, including the use of other quantum chemistry software. 
+	\end{itemize}
+	\item \textit{keo\_method = klist,slices,blocks}. Method of choice for the calculation of the kinetic energy matrix elements. See \ref{sec:keo} for more details. Three main methods are considered so far:
+	\begin{itemize}
+		\item \textit{klist} calls \textit{build\_keomat\_klist}, which uses a precomputed list (\textit{klist}) of all matrix indices for which the matrix elements can be non-zero. It is by far the slowest method, even when Numba jit acceleration is used.
+		\item \textit{slices}  calls \textit{build\_keomat\_slices}, which utilizes the fact that identical copies of the $K_D$ and $K_C$ matrices are distributed over the KEO matrix. The respective function loops over FEM-DVR bins and in each bin appropriately indexed matrix elements of the KEO matrix have the respective elements of $K_D$ and $K_C$ assigned. The algorithm relies on slicing a scipy.sparse.lil\_matrix. The centrifugal energy term is added to the diagonal at the end using \textit{scipy.sparse.diags} method.
+		\item \textit{blocks}  calls \textit{build\_keomat\_blocks}, which constructs the KEO using \textit{scipy.sparse.block\_diag} method. First a block-diagonal matrix formed from inflated $K_D$ matrices is formed. Next the inflated $K_C$ matrices are further inflated to the size of each $K_D$ block and a block-diagonal matrix is formed. The resulting matrix is then stacked with appropriate empty matrices to match the shape of the KEO. Hermitian conjugate of this matrix is calculated. All three matrices are then combined. The centrifugal energy term is added to the diagonal at the end using \textit{scipy.sparse.diags} method. 
 	\end{itemize}
 \end{itemize}
 \bibliography{theory}
