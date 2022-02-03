@@ -1,30 +1,41 @@
-from sys import modules
-import numpy as np
-import os
-import subprocess
+#!/usr/bin/env python3
+# -*- coding: utf-8; fill-column: 120 -*-
+#
+# Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
+#
 
+#modules
 import constants
 import wavefunction
 
-import json
+#standard python libraries
+from sys import modules
 import importlib
 import time
 import sys
+import os
+import subprocess
+
+#scientific computing libraries
+import numpy as np
+import json
+
 
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
     raise TypeError
 
 def save_input_file(params,filename):
-    with open(params['job_directory']+ "input_"+filename, 'w') as input_file: 
+    with open(params['job_directory'] + "input_" + filename, 'w') as input_file: 
         json.dump(params, input_file, indent=4, default=convert)
 
 def create_dirs(params):
 
     os.chdir(params['working_dir'])
+    
     path =  params['job_directory']
+    isdir = os.path.isdir(path)
 
-    isdir = os.path.isdir(path) 
     if isdir:
         print("job directory exists: " + str(isdir) + ", " + path) 
     else:
@@ -78,7 +89,7 @@ def gen_inputs_list(params_input,mode,jobtype):
                 print("l = " + str(l) + ", n = " + str(n) + ", Rb = " + str(r)+ ":\n")
                 params_input['bound_binw'] = r
 
-                params_list.append(setup_input(params_input,mode))
+                params_list.append(setup_input(params_input,mode,jobtype))
                
     return params_list
 
@@ -133,36 +144,28 @@ def field_params(params):
 
     return field_dict, env_dict
 
-def setup_input(params_input,mode):
+def setup_input(params_input,mode,jobtype):
     """ Note: All quantities are converted to atomic units"""
 
     params = {}
     params.update(params_input)
 
+    params['jobtype']   = jobtype
+    params['mode']      = mode
+
     """ === molecule directory ==== """ 
-    if params_input['jobtype'] == "slurm":
-        params['main_dir']      = "/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/PECD/pecd/" 
-        params['working_dir']   = "/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/PECD/tests/molecules/" + params['molec_name'] + "/"
-    elif params_input['jobtype'] == "local":
-        params['main_dir']      = "/home/emil/Desktop/projects/PECD_personal/PECD/pecd/"
-        params['working_dir']   = "/home/emil/Desktop/projects/PECD_personal/PECD/tests/molecules/" + params['molec_name'] + "/"
-
-    """ !!!In this version we are using uniform sized bins, allowing for an array of jobs
-        Later expand to general radial basis defined by FEMLIST + array of input parameters!!!"""
-
-    #params['bound_nbins'], params['bound_nlobs'], params['bound_binw'] =  params_input['bound_nbins'], params_input['bound_nlobs'], params_input['bound_binw']
-    #params['nbins'], params['nlobs'], params['binw'] = params_input['bound_nbins'], params_input['bound_nlobs'], params_input['bound_binw']
-    #params['nbins_cont'] = 0
-
-    """ list defining the radial grid"""
-
+    if jobtype == "slurm":
+        params['main_dir']      = os.getcwd() #"/beegfs/desy/group/cfel/cmi/zakemil/PECD_personal/PECD/pecd/" 
+        params['working_dir']   = os.path.dirname(os. getcwd()) +"/tests/molecules/" + params['molec_name'] + "/"
+    elif jobtype == "local":
+        params['main_dir']      = os.getcwd()
+        params['working_dir']   = os.path.dirname(os. getcwd()) +"/tests/molecules/" + params['molec_name'] + "/"
 
     params['FEMLIST_BOUND']   = [     [params['bound_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
                                 [0, params['bound_nlobs'], params['bound_binw']] ] 
 
     params['FEMLIST_PROP']   = [ [params['prop_nbins'], params['bound_nlobs'], params['bound_binw']] ,\
                                 [0, params['bound_nlobs'], params['bound_binw']] ] 
-
 
     params['job_directory'] =  params['working_dir'] + params['molec_name']   + \
                                 "_" + str(params['bound_lmax'])    + \
@@ -174,7 +177,6 @@ def setup_input(params_input,mode):
 
     if mode == 'propagate':
 
-
         params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
         params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
 
@@ -182,7 +184,6 @@ def setup_input(params_input,mode):
 
 
         """==== file paths and names ===="""
-
 
         params['file_psi0']         =   "psi0_" + params['molec_name']   + \
                                         "_" + str(params['bound_lmax'])    + \
@@ -205,16 +206,12 @@ def setup_input(params_input,mode):
                                         "_" + str(params['bound_nbins'])   + \
                                         "_" + str(params['job_label'])   + ".dat"
 
-
-
         params['file_esp']          =   "esp_" + params['molec_name']   + \
                                         "_" + str(params['bound_lmax'])    + \
                                         "_" + str(params['bound_nlobs'])   + \
                                         "_" + str('{:4.2f}'.format(params['bound_binw']))    + \
                                         "_" + str(params['bound_nbins'])   + \
                                         "_" + str(params['job_label'])    + ".dat"
-
-
 
         params['file_quad_levels']  =   "quad_levels_" + params['molec_name']   + \
                                         "_" + str(params['bound_lmax'])    + \
@@ -259,7 +256,6 @@ def setup_input(params_input,mode):
         params['E0']        *= constants.field_to_au[field_units] 
 
 
-
         """ ******** Create field dictionaries *********"""
         params['field_type'], params['field_env'] = field_params(params)  
 
@@ -274,6 +270,7 @@ def run_array_job(params_list):
         path = create_dirs(iparams)
 
         if iparams['mode'] == 'propagate':
+
             """ Save input file and euler angles grid """
             print("mode = propagate")
             save_input_file(iparams,"prop")
@@ -378,7 +375,7 @@ if __name__ == "__main__":
     inputfile 	= "input_chiralium" #input file name
     input_module = importlib.import_module(inputfile+"_"+mode)
 
-    print("input file: " + str(inputfile))
+    print("input file: " + str(inputfile+"_"+mode))
     print("mode: " + str(mode))
 
     params_input = input_module.read_input()
@@ -386,5 +383,5 @@ if __name__ == "__main__":
 
     params_list = gen_inputs_list(params_input,mode,jobtype)
 
-
+   
     run_array_job(params_list)
