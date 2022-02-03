@@ -95,7 +95,7 @@ def read_input():
                                 #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
 
         """===== kinetic energy matrix ====="""
-        params['keo_calc_method'] = "vector" #klist,slices,vector
+        params['keo_method']        = "blocks"
 
         """===== potential energy matrix ====="""
         params['matelem_method']    = "analytic" 

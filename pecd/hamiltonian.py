@@ -4,36 +4,36 @@
 # Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>
 #
 
-from numpy.core.numeric import NaN
-from scipy import special
-from scipy.sparse.linalg import eigsh
-from sympy.multipledispatch.dispatcher import RaiseNotImplementedError
-
+#modules
 import potential
 import constants
 
+#standard python libraries
+import os.path
+import time
+
+#scientific computing libraries
 import numpy as np
 from numpy.linalg import multi_dot
+
+from scipy.sparse.linalg import eigsh
 from scipy import sparse
 from scipy.special import sph_harm
 import scipy.integrate as integrate
 from scipy import interpolate
 from scipy.spatial.transform import Rotation as R
+
+#custom libraries
 import quadpy
-
-from sympy.functions.elementary.miscellaneous import sqrt
-
 import quaternionic
 import spherical
 
-import sys
-import os.path
-import time
-
+#special acceleration libraries
 from numba import jit, prange
 
+#plotting libraries
 import matplotlib.pyplot as plt
-from matplotlib import cm, colors
+from matplotlib import cm
 
 """ start of @jit section """
 jitcache = False
@@ -132,8 +132,6 @@ def calc_potmat_multipoles_jit( vlist, tjmat, qlm, Lmax, rlmat ):
     return pot, potind
 
 
-
-
 @jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
 def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
     #calculate matrix elements from sphlist at point xi with V and Gs calculated at a given quadrature grid.
@@ -144,18 +142,7 @@ def calc_potmatelem_xi( V, Gs, l1, m1, l2, m2 ):
     f = V[:]
     return np.dot(w,f.T) * 4.0 * np.pi 
 
-
-
-
-
-
-
-
-
 """ end of @jit section """
-
-
-
 
 
 class Hamiltonian():
@@ -362,7 +349,7 @@ class Hamiltonian():
         KD_infl,KC_infl = self.inflate(KD,KC)
         CFE             = self.build_CFE(self.Gr)
 
-        if self.params['keo_calc_method'] == "klist":
+        if self.params['keo_method'] == "klist":
 
             start_time  = time.time()
             klist       = self.call_gen_klist_jit(self.Nbas)
@@ -370,50 +357,35 @@ class Hamiltonian():
             print("jit's first run: time for construction of the klist: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
             klist       = np.asarray(klist, dtype=int)
-            keomat      = self.fillup_keo_klist(KD,KC,self.Gr,klist)
+            keomat      = self.build_keomat_klist(KD,KC,self.Gr,klist)
 
 
-        elif self.params['keo_calc_method'] == "slices":
+        elif self.params['keo_method'] == "slices":
 
-            keomat      = self.fillup_keo_lil_np(KD_infl,KC_infl,CFE)
+            keomat      = self.build_keomat_slices(KD_infl,KC_infl,CFE)
 
-        elif self.params['keo_calc_method'] == "vector":
+        elif self.params['keo_method'] == "blocks":
 
-            keomat      = self.fillup_keo_csr(KD_infl,KC_infl,CFE,nbins,Nu,Nang)
+            keomat      = self.build_keomat_blocks(KD_infl,KC_infl,CFE,nbins,Nu,Nang)
         
         else:
             raise ValueError("Incorrect method name for calculating the KEO")
 
-    
-        #print("KEO difference:")
-        #print((keomat_lil-keomat).toarray())
-
-        #print(keomat_lil.get_shape())
-        #print(keomat.get_shape())
- 
-        #enr1,coeffs =self.call_eigensolver(keomat.toarray())
-        #enr2,coeffs =self.call_eigensolver(keomat2.toarray())
-        #print(enr1*constants.au_to_ev)
-        #print(enr2*constants.au_to_ev )
-        #print("eigenvalues difference:")
-        #print(enr1-enr2)
-
-
-        #plot_mat(keomat,show=False,save=True,name="KEO")
-        
+        #plot the KEO matrix
+        #plot_mat(keomat,1.0,show=False,save=True,name="KEO")
         #plt.spy(keomat, precision=1e-8, markersize=5, label="KEO")
-        #plt.legend()
         #plt.show()
         #exit()
 
-        print("KEO:\n")
-        self.calc_mat_density(keomat)
+        #calculate the density of the KEO matrix
+        #print("KEO:\n")
+        #self.calc_mat_density(keomat)
 
-        #print size of KEO matrix
-        keo_csr_size = keomat.data.size/(1024**2)
-        print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
+        #print the size of  the KEO matrix
+        #keo_csr_size = keomat.data.size/(1024**2)
+        #print('Size of the sparse KEO csr_matrix: '+ '%3.2f' %keo_csr_size + ' MB')
 
-        return  keomat
+        return keomat
 
     def build_CFE(self,Gr):
         """
@@ -476,7 +448,7 @@ class Hamiltonian():
 
         return KD0, KC0
 
-    def fillup_keo_lil_np(self,KD0,KC0,CFE):
+    def build_keomat_slices(self,KD0,KC0,CFE):
         """
         Fill up the KEO matrix with pre-calculated blocks of matrix elements. Use slicing of lil sparse matrix.
 
@@ -580,7 +552,7 @@ class Hamiltonian():
 
         return keomat
 
-    def fillup_keo_klist(self,KD,KC,Gr,klist):
+    def build_keomat_klist(self,KD,KC,Gr,klist):
 
         nlobs = self.params['bound_nlobs']
 
@@ -610,7 +582,7 @@ class Hamiltonian():
                                
         return keomat
 
-    def fillup_keo_csr(self,KD0,KC0,CFE,nbins,Nu,Nang):
+    def build_keomat_blocks(self,KD0,KC0,CFE,nbins,Nu,Nang):
         """Create compressed sparse-row matrix from copies of the generic inflated KD and KC matrices + the CFE term.
 
         Args:
