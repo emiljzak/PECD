@@ -88,11 +88,8 @@ def read_input():
 
     if params['mode'] == "propagate":
 
-
         """ ====== Initial wavefunction ====="""
-
-        params['ivec']          = 2 #ID of eigenstate to propagate
-                                #Later extend to arbitrary linear combination of eigenvector or basis set vectors.
+        params['ivec']              = 2 
 
         """===== kinetic energy matrix ====="""
         params['keo_method']        = "blocks"

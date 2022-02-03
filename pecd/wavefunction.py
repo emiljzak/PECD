@@ -119,6 +119,24 @@ class Psi():
 
         return coeffs_rotated
 
+    def fp(self,i,n,k,x):
+        "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) "
+        npts = x.size 
+        if n!=k: #issue with vectorization here.
+            fprime  =   (x[n]-x[k])**(-1)
+            prod    =   1.0e00
+
+            for mu in range(npts):
+                if mu !=k and mu !=n:
+                    prod *= (x[k]-x[mu])/(x[n]-x[mu])
+            fprime  *=  prod
+
+        elif n==k:
+            fprime  =   0.0
+            for mu in range(npts):
+                    if mu !=n:
+                        fprime += (x[n]-x[mu])**(-1)
+        return fprime
 
 
 class Map():

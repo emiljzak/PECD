@@ -178,7 +178,34 @@ class Hamiltonian():
             self.nbins      = params['prop_nbins']
         else:
             raise ValueError("Incorrect format type for the Hamiltonian")
+
+
+    def save_energies(self,enr,irun=0):
+        """Saves the energy levels in a file
+        
+            Arguments: 
+                enr: numpy.ndarray, dtype = float, shape = (num_ini_vec,)
+                    array of energy levels
+            Args:
+                irun: int, default = 0
+                    id of the run for a given molecular orientation in the lab frame.
+        
+        """
+
+        if self.params['save_enr0'] == True:
+            with open(self.params['job_directory'] + self.params['file_enr0'] + "_"+str(irun), "w") as energyfile:   
+                np.savetxt( energyfile, enr * constants.au_to_ev , fmt='%10.5f' )
     
+
+    def save_wavefunctions(self,psi):
+         
+        psifile = open(self.params['job_directory']  + self.params['file_psi0']+ "_"+str(irun), 'w')
+        for ielem,elem in enumerate(self.maparray):
+            psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
+                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
+                            "\t\t ".join('{:10.5e}'.format(coeffs[ielem,v]) for v in range(0,params['num_ini_vec'])) + "\n")
+
+
     @staticmethod
     def filter_mat(mat,filter):
         """
@@ -251,7 +278,8 @@ class Hamiltonian():
         #sort coeffs
 
         return enr, coeffs
-      
+    
+    """======================== KINETIC ENERGY MATRIX ========================""" 
     @staticmethod
     @jit(nopython=True,parallel=False,fastmath=False)
     def gen_klist_jit(Nbas,maparray):
@@ -719,7 +747,7 @@ class Hamiltonian():
 
         return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
 
-
+    """======================== POTENTIAL ENERGY MATRIX ========================"""
     @staticmethod
     #@jit( nopython=True, parallel=False, cache = jitcache, fastmath=False) 
     def calc_potmat_anton_jit( vLM, vlist, tjmat):
@@ -1092,7 +1120,6 @@ class Hamiltonian():
     def build_ham(self,keo,pot):
         """Build the bound Hamiltonian from the KEO and POT matrices provided. Return a filtered Hamiltonian. 
         
-        
         """
 
         ham         = keo + pot
@@ -1103,6 +1130,10 @@ class Hamiltonian():
         #exit()
         
         return ham_filt
+
+
+
+    """======================== ELECTRIC DIPOLE MATRIX ========================"""
 
     def map_tjmat_dip(self,tjmat):
         """Map the 6D tjmat onto a practical 3D numpy array.
@@ -1163,8 +1194,6 @@ class Hamiltonian():
         #exit()
         return tjmats
 
-
-
     def calc_dipxi(self,rin,tmats):
         """Calculate a block of the electric dipole interaction matrix for a single grid point.
 
@@ -1181,8 +1210,6 @@ class Hamiltonian():
         vxi = rin * tmats[:,:]
  
         return vxi
-
-
 
     def gen_3j_dip(self,lmax,mode):
         """precompute all necessary 3-j symbols for dipole matrix elements"""
@@ -1218,7 +1245,6 @@ class Hamiltonian():
         #print("3j symbols in array:")
         #print(tjmat)
         return tjmat
-
 
     def build_intmat(self):
         """ 
@@ -1264,332 +1290,204 @@ class Hamiltonian():
         #exit()
         return (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat
 
-def fp(i,n,k,x):
-    "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) "
-    npts = x.size 
-    if n!=k: #issue with vectorization here.
-        fprime  =   (x[n]-x[k])**(-1)
-        prod    =   1.0e00
-
-        for mu in range(npts):
-            if mu !=k and mu !=n:
-                prod *= (x[k]-x[mu])/(x[n]-x[mu])
-        fprime  *=  prod
-
-    elif n==k:
-        fprime  =   0.0
-        for mu in range(npts):
-                if mu !=n:
-                    fprime += (x[n]-x[mu])**(-1)
-    return fprime
 
 
 
-""" ============ POTMAT0 ============ """
-def BUILD_POTMAT0( params, maparray, Nbas , Gr ):
-
-    if params['esp_mode'] == "interpolation":
-        print("Interpolating electrostatic potential")
-        esp_interpolant = POTENTIAL.INTERP_POT(params)
-
-        if  params['gen_adaptive_quads'] == True:
-            sph_quad_list = gen_adaptive_quads( params, esp_interpolant, Gr )
-        elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
-            sph_quad_list = read_adaptive_quads(params)
-        elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
-            print("using global quadrature scheme")
-            sph_quad_list = [params['sph_quad_global']]
-
-    elif params['esp_mode'] == "exact":
-        if  params['gen_adaptive_quads'] == True:
-            sph_quad_list = gen_adaptive_quads_exact( params,  Gr ) #checked 30 Apr 2021
-        elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == True:
-            sph_quad_list = read_adaptive_quads(params)
-        elif params['gen_adaptive_quads'] == False and params['use_adaptive_quads'] == False:
-            print("using global quadrature scheme")
-
-
-
-    start_time = time.time()
-    Gs = GRID.GEN_GRID( sph_quad_list, params['main_dir'] )
-    end_time = time.time()
-    print("Time for grid generation: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-    if params['esp_mode'] == "interpolate":
-        start_time = time.time()
-        VG = POTENTIAL.BUILD_ESP_MAT( Gs, Gr, esp_interpolant, params['r_cutoff'] )
-        end_time = time.time()
-        print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-    elif params['esp_mode'] == "exact":
-        start_time = time.time()
-        VG = POTENTIAL.BUILD_ESP_MAT_EXACT(params, Gs, Gr)
-        end_time = time.time()
-        print("Time for construction of ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-    #if params['enable_cutoff'] == True: 
-    #print() 
-
-    start_time = time.time()
-    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist,dtype=int)
-    end_time = time.time()
-    print("Time for construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
+def BUILD_HMAT0_ROT(params, grid_euler, irun):
+    """ Build the bound Hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file 
     
-    """we can cut vlist  to set cut-off for the ESP"""
-
-    if params['calc_method'] == 'jit':
-        start_time = time.time()
-        potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
-        end_time = time.time()
-        print("First call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-        #start_time = time.time()
-        #potmat0, potind = calc_potmat_jit( vlist, VG, Gs )
-        #end_time = time.time()
-        #print("Second call: Time for construction of potential matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+    
+    
+    
+    
+    
     """
-    if params['hmat_format'] == "regular":
-        potmat = convert_lists_to_regular(potmat0,potind)
-    elif params['hmat_format'] == "csr":
-        potmat = convert_lists_to_csr(potmat0,potind)
-    """
-    return potmat0, potind
-
-def euler_rot(chi, theta, phi, xyz):
-    """Rotates Cartesian vector xyz[ix] (ix=x,y,z) by an angle phi around Z,
-    an angle theta around new Y, and an angle chi around new Z.
-    Input values of chi, theta, and phi angles are in radians.
-    """
-    amat = np.zeros((3,3), dtype=np.float64)
-    bmat = np.zeros((3,3), dtype=np.float64)
-    cmat = np.zeros((3,3), dtype=np.float64)
-    rot = np.zeros((3,3), dtype=np.float64)
-
-    amat[0,:] = [np.cos(chi), np.sin(chi), 0.0]
-    amat[1,:] = [-np.sin(chi), np.cos(chi), 0.0]
-    amat[2,:] = [0.0, 0.0, 1.0]
-
-    bmat[0,:] = [np.cos(theta), 0.0, -np.sin(theta)]
-    bmat[1,:] = [0.0, 1.0, 0.0]
-    bmat[2,:] = [np.sin(theta), 0.0, np.cos(theta)]
-
-    cmat[0,:] = [np.cos(phi), np.sin(phi), 0.0]
-    cmat[1,:] = [-np.sin(phi), np.cos(phi), 0.0]
-    cmat[2,:] = [0.0, 0.0, 1.0]
-
-    rot = np.transpose(np.dot(amat, np.dot(bmat, cmat)))
-    xyz_rot = np.dot(rot, xyz)
-    return xyz_rot
-
-def rotate_mol_xyz(params, grid_euler, irun):
-    """ Generate raw cartesian coordinates of atoms from Z-matrix,
-        followed by shift to the centre of mass,
-        followed by rotation by appropriate rotation matrix associated with elements of the Euler angles grid
-    """
-
-    print("generating rotated cartesian coordinates of atoms...")
-    print("irun = " + str(irun))
-    print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
-
-    if params['molec_name'] == "d2s":
-
-        mol_xyz = np.zeros( (3,3), dtype = float) #
-        mol_xyz_rotated = np.zeros( (3,3), dtype = float) #
-
-        # Sx D1x D2x
-        # Sy D1y D2y
-        # Sz D1z D2z
-
-        ang_au = CONSTANTS.angstrom_to_au
-        # create raw cartesian coordinates from input molecular geometry and embedding
-        rSD1 = params['mol_geometry']["rSD1"] * ang_au
-        rSD2 = params['mol_geometry']["rSD2"] * ang_au
-        alphaDSD = params['mol_geometry']["alphaDSD"] * np.pi / 180.0
-
-        mS = params['mol_masses']["S"]    
-        mD = params['mol_masses']["D"]
-
-        mVec = np.array ( [mS, mD, mD])
-
-        Sz = 1.1 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
-
-        mol_xyz[2,0] = Sz
-
-        mol_xyz[1,1] = -1.0 * rSD1 * np.sin(alphaDSD / 2.0)
-        mol_xyz[2,1] = -1.0 * rSD1 * np.cos(alphaDSD / 2.0 ) + Sz #checked
-
-        mol_xyz[1,2] = 1.0 * rSD2 * np.sin(alphaDSD / 2.0)
-        mol_xyz[2,2] = -1.0 * rSD2 * np.cos(alphaDSD / 2.0 ) + Sz #checked
-
-
-        print("raw cartesian molecular-geometry matrix")
-        print(mol_xyz)
-
-        
-        print("Centre-of-mass coordinates: ")
-        RCM = np.zeros(3, dtype=float)
-
-        for iatom in range(3):
-            RCM[:] += mVec[iatom] * mol_xyz[:,iatom]
-
-        RCM /= np.sum(mVec)
-
-        print(RCM)
     
-        for iatom in range(3):
-            mol_xyz[:,iatom] -= RCM[:] 
-
-        print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
-        print(mol_xyz)
-        print("Rotation matrix:")
-        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    print("Nbas0 = " + str(Nbas0))
+    print("maparray0: ")
+    print(maparray)
     
-        #ALTErnatively use
-        #euler_rot(chi, theta, phi, xyz):
-    
-        #rmat = rotmat.as_matrix()
-        #print(rmat)
+    if params['read_ham_init_file'] == True:
 
-        for iatom in range(3):
-            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
-            #mol_xyz_rotated[:,iatom] = euler_rot(cgrid_euler[irun][2], grid_euler[irun][1], grid_euler[irun][0], mol_xyz[:,iatom]):
-        print("rotated molecular cartesian matrix:")
-        print(mol_xyz_rotated)
-
-
-    elif params['molec_name'] == "n2":
+        if params['hmat_format']   == "numpy_arr":
+            if os.path.isfile(params['job_directory'] + params['file_hmat0'] + "_" + str(irun) + ".dat"  ):
         
-        mol_xyz = np.zeros( (3,2), dtype = float) #
-        mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
+                print (params['file_hmat0'] + " file exist")
+                hmat = read_ham_init_rot(params,irun)
+                """ diagonalize hmat """
+                start_time = time.time()
+                enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
+                end_time = time.time()
+                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        #  N1x N2x
-        #  N1y N2y
-        #  N1z N2z
+                #bound.plot_mat(hmat)
+                #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
+                #plt.show()
+                return hmat, coeffs
+            else:
+                raise ValueError("Incorrect file name for the Hamiltonian matrix")
+                exit()
 
-        ang_au = CONSTANTS.angstrom_to_au
+        elif params['hmat_format']   == "sparse_csr":
 
-        mol_xyz[2,0] = ang_au * params['mol_geometry']["rNN"] / 2.0 
-        mol_xyz[2,1] =  -1.0 * mol_xyz[2,0] 
-
-        print("Rotation matrix:")
-        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
-    
-        for iatom in range(2):
-            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
-        print("rotated molecular cartesian matrix:")
-        print(mol_xyz_rotated)
-
-
-    elif params['molec_name'] == "co":
+            if os.path.isfile(params['job_directory'] + params['file_hmat0'] + "_" + str(irun) + ".npz" ):
+                print (params['file_hmat0'] + "_" + str(irun) + ".npz" + " file exist")
+                ham0 =  read_ham_init_rot(params,irun)
+                #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+                #plt.legend()
+                #plt.show()
         
-        mol_xyz = np.zeros( (3,2), dtype = float) # initial embedding coordinates (0 degrees rotation)
-        mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
-        mol_xyz_MF= np.zeros( (3,2), dtype = float) #rotated coordinates: molecular frame embedding
+                """ Alternatively we can read enr and coeffs from file"""
 
-        ang_au = CONSTANTS.angstrom_to_au
+                """ diagonalize hmat """
+                start_time = time.time()
+                enr, coeffs = call_eigensolver(ham0, params)
+                end_time = time.time()
+                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        mC = params['mol_masses']["C"]    
-        mO = params['mol_masses']["O"]
-        rCO = params['mol_geometry']["rCO"] 
-
-        # C = O   in ----> positive direction of z-axis.
-        #coordinates for vanishing electric dipole moment in psi4 calculations is z_C = -0.01 a.u. , z_O = 2.14 a.u
-        mol_xyz[2,0] = - 1.0 * ang_au * mO * rCO / (mC + mO) #z_C
-        mol_xyz[2,1] =  1.0 * ang_au * mC * rCO / (mC + mO) #z_O
-
-        """rotation associated with MF embedding"""
-        rotmatMF = R.from_euler('zyz', [0.0, params['mol_embedding'], 0.0], degrees=True)
-
-        for iatom in range(2):
-            mol_xyz_MF[:,iatom] = rotmatMF.apply(mol_xyz[:,iatom])
-        print("rotated MF cartesian matrix:")
-        print(mol_xyz_MF)
-
-
-        print("Rotation matrix:")
-        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
-    
-        for iatom in range(2):
-            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz_MF[:,iatom])
-        print("rotated molecular cartesian matrix:")
-        print(mol_xyz_rotated)
-
-    elif params['molec_name'] == "h":
-        
-        mol_xyz = np.zeros( (3,1), dtype = float) #
-        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
-
-        #  Hx
-        #  Hy 
-        #  Hz 
-
-    elif params['molec_name'] == "c":
-        
-        mol_xyz = np.zeros( (3,1), dtype = float) #
-        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
-
-        #  Cx
-        #  Cy 
-        #  Cz 
-
-    elif params['molec_name'] == "h2o":
-        mol_xyz = np.zeros( (3,1), dtype = float) #
-        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
+                return ham0, coeffs
+            else:
+                raise ValueError("Incorrect file name for the Hamiltonian matrix or file does not exists")
+                exit()
     else:
-        print("Warning: molecule name not found")
-        mol_xyz_rotated = np.zeros( (3,1), dtype = float) 
+
+        if params['hmat_format'] == 'numpy_arr':    
+            hmat =  np.zeros((Nbas, Nbas), dtype=float)
+        elif params['hmat_format'] == 'sparse_csr':
+            if params['esp_mode']  == 'anton':
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #complex potential in Demekhin's work
+            else:
+                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #if
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+            exit()
+
+        """ calculate POTMAT """
+        if params['esp_mode'] == "exact":
+            """ Use Psi4 to generate values of the ESP at quadrature grid points. 
+                Use jit for fast calculation of the matrix elements """
+            potmat, potind = bound.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
+
+
+        elif params['esp_mode'] == "multipoles":
+            potmat, potind = bound.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
+        
+        elif params['esp_mode'] == "anton":
+            potmat, potind = bound.BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun )
+
+        """ Put the indices and values back together in the Hamiltonian array"""
+        for ielem, elem in enumerate(potmat):
+            #print(elem[0])
+            hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
+
+
+        #print("plot of hmat")
+
+        #bound.plot_mat(hmat.todense())
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
         #exit()
 
-    #veryfiy rotated geometry by plots
-    """
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    ax.set_xlim(-2.0,2.0)
-    ax.set_ylim(-2.0,2.0)
-    ax.set_zlim(-2.0,2.0)
-    ax.scatter(mol_xyz_rotated[0,:], mol_xyz_rotated[1,:], mol_xyz_rotated[2,:])
-    ax.scatter(mol_xyz[0,:], mol_xyz[1,:], mol_xyz[2,:])
-    plt.show()
-    exit()
+        """ calculate KEO """
+        start_time = time.time()
+        #print(Gr.ravel())
+        #exit()
+        keomat = bound.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
+        end_time = time.time()
+        print("New implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    mlab.figure(1, bgcolor=(0, 0, 0), size=(350, 350))
-    mlab.clf()
+        #start_time = time.time()
+        #keomat = bound.BUILD_KEOMAT( params, maparray, Nbas , Gr )
+        #end_time = time.time()
+        #print("Old implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+        hmat += keomat 
+        #bound.plot_mat(hmat.todense())
+        #print("plot of hmat")
+        #bound.plot_mat(hmat)
+        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
+        
+        """ --- make the hamiltonian matrix hermitian --- """
+        if params['hmat_format'] == 'numpy_arr':    
+            ham0    = np.copy(hmat)
+            ham0    += np.transpose(hmat.conjugate()) 
+            for i in range(ham0.shape[0]):
+                ham0[i,i] -= hmat.diagonal()[i]
+            print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
 
-    # The position of the atoms
-    atoms_x = mol_xyz_rotated[0,:]
-    atoms_y = mol_xyz_rotated[1,:]
-    atoms_z = mol_xyz_rotated[2,:]
-    axes = mlab.axes(color=(0, 0, 0), nb_labels=5)
-    mlab.orientation_axes()
-    O = mlab.points3d(atoms_x[1:-1], atoms_y[1:-1], atoms_z[1:-1],
-                    scale_factor=3,
-                    resolution=20,
-                    color=(1, 0, 0),
-                    scale_mode='none')
+        elif params['hmat_format'] == 'sparse_csr':
+            #hmat = sparse.csr_matrix(hmat)
+            hmat_csr_size = hmat.data.size/(1024**2)
+            print('Size of the sparse Hamiltonian csr_matrix: '+ '%3.2f' %hmat_csr_size + ' MB')
+            ham0 = hmat.copy()
+            ham0 += hmat.getH()
+            for i in range(ham0.shape[0]):
+                ham0[i,i] /=2.0#-= hmat.diagonal()[i]
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+            exit()
 
-    H1 = mlab.points3d(atoms_x[:1], atoms_y[:1], atoms_z[:1],
-                    scale_factor=2,
-                    resolution=20,
-                    color=(1, 1, 1),
-                    scale_mode='none')
+        """ --- filter hamiltonian matrix  --- """
 
-    H2 = mlab.points3d(atoms_x[-1:], atoms_y[-1:], atoms_z[-1:],
-                    scale_factor=2,
-                    resolution=20,
-                    color=(1, 1, 1),
-                    scale_mode='none')
+        if params['hmat_format'] == 'numpy_arr':    
+            ham_filtered = np.where( np.abs(ham0) < params['hmat_filter'], 0.0, ham0)
+            #ham_filtered = sparse.csr_matrix(ham_filtered)
 
-    # The bounds between the atoms, we use the scalar information to give
-    # color
-    mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
-                tube_radius=0.4, colormap='Reds')
+        elif params['hmat_format'] == 'sparse_csr':
+            nonzero_mask        = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
+            rows                = ham0.nonzero()[0][nonzero_mask]
+            cols                = ham0.nonzero()[1][nonzero_mask]
+            ham0[rows, cols]    = 0
+            ham_filtered        = ham0.copy()
 
 
-    mlab.show()
-    """
+        #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
+        #plt.legend()
+        #plt.show()
+        #exit()
+        #print("Maximum real part of the hamiltonian matrix = " + str(np.max(ham_filtered.real)))
+        #print("Maximum imaginary part of the hamiltonian matrix = " + str(np.max(ham_filtered.imag)))
+        #exit()
 
-    return mol_xyz_rotated
+        if params['save_ham0'] == True:
+            if params['hmat_format'] == 'sparse_csr':
+                sparse.save_npz( params['job_directory']  + params['file_hmat0'] + "_" + str(irun) , ham_filtered , compressed = False )
+            elif params['hmat_format'] == 'numpy_arr':
+                with open( params['job_directory'] + params['file_hmat0']+ "_" + str(irun) , 'w') as hmatfile:   
+                    np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
+            print("Hamiltonian matrix saved.")
+
+        """ diagonalize hmat """
+        if params['hmat_format'] == 'numpy_arr':    
+            start_time = time.time()
+            enr, coeffs = np.linalg.eigh(ham_filtered , UPLO = 'U')
+            end_time = time.time()
+        elif params['hmat_format'] == 'sparse_csr':
+            start_time = time.time()
+            enr, coeffs = call_eigensolver(ham_filtered, params)
+            end_time = time.time()
+
+   
+        print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+
+        print("Normalization of initial wavefunctions: ")
+        for v in range(params['num_ini_vec']):
+            print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
+
+
+
+        """ Plot initial orbitals """
+        if params['plot_ini_orb'] == True:
+            plots.plot_initial_orbitals(params,maparray,coeffs)
+
+
+        return ham_filtered, coeffs
+
+
 
 """ ============ POTMAT0 ROTATED ============ """
 def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):

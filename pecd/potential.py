@@ -301,6 +301,249 @@ def calc_interp_sph(interpolant,r,theta,phi):
     z = r * np.cos(theta)
     return interpolant(x,y,z)
 
+
+def euler_rot(chi, theta, phi, xyz):
+    """Rotates Cartesian vector xyz[ix] (ix=x,y,z) by an angle phi around Z,
+    an angle theta around new Y, and an angle chi around new Z.
+    Input values of chi, theta, and phi angles are in radians.
+    """
+    amat = np.zeros((3,3), dtype=np.float64)
+    bmat = np.zeros((3,3), dtype=np.float64)
+    cmat = np.zeros((3,3), dtype=np.float64)
+    rot = np.zeros((3,3), dtype=np.float64)
+
+    amat[0,:] = [np.cos(chi), np.sin(chi), 0.0]
+    amat[1,:] = [-np.sin(chi), np.cos(chi), 0.0]
+    amat[2,:] = [0.0, 0.0, 1.0]
+
+    bmat[0,:] = [np.cos(theta), 0.0, -np.sin(theta)]
+    bmat[1,:] = [0.0, 1.0, 0.0]
+    bmat[2,:] = [np.sin(theta), 0.0, np.cos(theta)]
+
+    cmat[0,:] = [np.cos(phi), np.sin(phi), 0.0]
+    cmat[1,:] = [-np.sin(phi), np.cos(phi), 0.0]
+    cmat[2,:] = [0.0, 0.0, 1.0]
+
+    rot = np.transpose(np.dot(amat, np.dot(bmat, cmat)))
+    xyz_rot = np.dot(rot, xyz)
+    return xyz_rot
+
+def rotate_mol_xyz(params, grid_euler, irun):
+    """ Generate raw cartesian coordinates of atoms from Z-matrix,
+        followed by shift to the centre of mass,
+        followed by rotation by appropriate rotation matrix associated with elements of the Euler angles grid
+    """
+
+    print("generating rotated cartesian coordinates of atoms...")
+    print("irun = " + str(irun))
+    print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
+
+    if params['molec_name'] == "d2s":
+
+        mol_xyz = np.zeros( (3,3), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,3), dtype = float) #
+
+        # Sx D1x D2x
+        # Sy D1y D2y
+        # Sz D1z D2z
+
+        ang_au = CONSTANTS.angstrom_to_au
+        # create raw cartesian coordinates from input molecular geometry and embedding
+        rSD1 = params['mol_geometry']["rSD1"] * ang_au
+        rSD2 = params['mol_geometry']["rSD2"] * ang_au
+        alphaDSD = params['mol_geometry']["alphaDSD"] * np.pi / 180.0
+
+        mS = params['mol_masses']["S"]    
+        mD = params['mol_masses']["D"]
+
+        mVec = np.array ( [mS, mD, mD])
+
+        Sz = 1.1 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
+
+        mol_xyz[2,0] = Sz
+
+        mol_xyz[1,1] = -1.0 * rSD1 * np.sin(alphaDSD / 2.0)
+        mol_xyz[2,1] = -1.0 * rSD1 * np.cos(alphaDSD / 2.0 ) + Sz #checked
+
+        mol_xyz[1,2] = 1.0 * rSD2 * np.sin(alphaDSD / 2.0)
+        mol_xyz[2,2] = -1.0 * rSD2 * np.cos(alphaDSD / 2.0 ) + Sz #checked
+
+
+        print("raw cartesian molecular-geometry matrix")
+        print(mol_xyz)
+
+        
+        print("Centre-of-mass coordinates: ")
+        RCM = np.zeros(3, dtype=float)
+
+        for iatom in range(3):
+            RCM[:] += mVec[iatom] * mol_xyz[:,iatom]
+
+        RCM /= np.sum(mVec)
+
+        print(RCM)
+    
+        for iatom in range(3):
+            mol_xyz[:,iatom] -= RCM[:] 
+
+        print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
+        print(mol_xyz)
+        print("Rotation matrix:")
+        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    
+        #ALTErnatively use
+        #euler_rot(chi, theta, phi, xyz):
+    
+        #rmat = rotmat.as_matrix()
+        #print(rmat)
+
+        for iatom in range(3):
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+            #mol_xyz_rotated[:,iatom] = euler_rot(cgrid_euler[irun][2], grid_euler[irun][1], grid_euler[irun][0], mol_xyz[:,iatom]):
+        print("rotated molecular cartesian matrix:")
+        print(mol_xyz_rotated)
+
+
+    elif params['molec_name'] == "n2":
+        
+        mol_xyz = np.zeros( (3,2), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
+
+        #  N1x N2x
+        #  N1y N2y
+        #  N1z N2z
+
+        ang_au = CONSTANTS.angstrom_to_au
+
+        mol_xyz[2,0] = ang_au * params['mol_geometry']["rNN"] / 2.0 
+        mol_xyz[2,1] =  -1.0 * mol_xyz[2,0] 
+
+        print("Rotation matrix:")
+        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    
+        for iatom in range(2):
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz[:,iatom])
+        print("rotated molecular cartesian matrix:")
+        print(mol_xyz_rotated)
+
+
+    elif params['molec_name'] == "co":
+        
+        mol_xyz = np.zeros( (3,2), dtype = float) # initial embedding coordinates (0 degrees rotation)
+        mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
+        mol_xyz_MF= np.zeros( (3,2), dtype = float) #rotated coordinates: molecular frame embedding
+
+        ang_au = CONSTANTS.angstrom_to_au
+
+        mC = params['mol_masses']["C"]    
+        mO = params['mol_masses']["O"]
+        rCO = params['mol_geometry']["rCO"] 
+
+        # C = O   in ----> positive direction of z-axis.
+        #coordinates for vanishing electric dipole moment in psi4 calculations is z_C = -0.01 a.u. , z_O = 2.14 a.u
+        mol_xyz[2,0] = - 1.0 * ang_au * mO * rCO / (mC + mO) #z_C
+        mol_xyz[2,1] =  1.0 * ang_au * mC * rCO / (mC + mO) #z_O
+
+        """rotation associated with MF embedding"""
+        rotmatMF = R.from_euler('zyz', [0.0, params['mol_embedding'], 0.0], degrees=True)
+
+        for iatom in range(2):
+            mol_xyz_MF[:,iatom] = rotmatMF.apply(mol_xyz[:,iatom])
+        print("rotated MF cartesian matrix:")
+        print(mol_xyz_MF)
+
+
+        print("Rotation matrix:")
+        rotmat = R.from_euler('zyz', [grid_euler[irun][0], grid_euler[irun][1], grid_euler[irun][2]], degrees=False)
+    
+        for iatom in range(2):
+            mol_xyz_rotated[:,iatom] = rotmat.apply(mol_xyz_MF[:,iatom])
+        print("rotated molecular cartesian matrix:")
+        print(mol_xyz_rotated)
+
+    elif params['molec_name'] == "h":
+        
+        mol_xyz = np.zeros( (3,1), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
+
+        #  Hx
+        #  Hy 
+        #  Hz 
+
+    elif params['molec_name'] == "c":
+        
+        mol_xyz = np.zeros( (3,1), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
+
+        #  Cx
+        #  Cy 
+        #  Cz 
+
+    elif params['molec_name'] == "h2o":
+        mol_xyz = np.zeros( (3,1), dtype = float) #
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
+    else:
+        print("Warning: molecule name not found")
+        mol_xyz_rotated = np.zeros( (3,1), dtype = float) 
+        #exit()
+
+    #veryfiy rotated geometry by plots
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim(-2.0,2.0)
+    ax.set_ylim(-2.0,2.0)
+    ax.set_zlim(-2.0,2.0)
+    ax.scatter(mol_xyz_rotated[0,:], mol_xyz_rotated[1,:], mol_xyz_rotated[2,:])
+    ax.scatter(mol_xyz[0,:], mol_xyz[1,:], mol_xyz[2,:])
+    plt.show()
+    exit()
+
+    mlab.figure(1, bgcolor=(0, 0, 0), size=(350, 350))
+    mlab.clf()
+
+    # The position of the atoms
+    atoms_x = mol_xyz_rotated[0,:]
+    atoms_y = mol_xyz_rotated[1,:]
+    atoms_z = mol_xyz_rotated[2,:]
+    axes = mlab.axes(color=(0, 0, 0), nb_labels=5)
+    mlab.orientation_axes()
+    O = mlab.points3d(atoms_x[1:-1], atoms_y[1:-1], atoms_z[1:-1],
+                    scale_factor=3,
+                    resolution=20,
+                    color=(1, 0, 0),
+                    scale_mode='none')
+
+    H1 = mlab.points3d(atoms_x[:1], atoms_y[:1], atoms_z[:1],
+                    scale_factor=2,
+                    resolution=20,
+                    color=(1, 1, 1),
+                    scale_mode='none')
+
+    H2 = mlab.points3d(atoms_x[-1:], atoms_y[-1:], atoms_z[-1:],
+                    scale_factor=2,
+                    resolution=20,
+                    color=(1, 1, 1),
+                    scale_mode='none')
+
+    # The bounds between the atoms, we use the scalar information to give
+    # color
+    mlab.plot3d(atoms_x, atoms_y, atoms_z, [1, 2, 1],
+                tube_radius=0.4, colormap='Reds')
+
+
+    mlab.show()
+    """
+
+    return mol_xyz_rotated
+
+
+
+
+
+
+
+
 def BUILD_ESP_MAT(Gs,rgrid,esp_interpolant,r_cutoff):
     VG = []
     Gr = rgrid.flatten()
