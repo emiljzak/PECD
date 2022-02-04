@@ -12,82 +12,57 @@ def read_input():
     params = {}
  
     params['job_label']    = "proptest2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
-    
-    """====== Basis set parameters ======"""
-   
-    """ BOUND PART """
+    params['molec_name']   = "chiralium"
+
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
-
     params['bound_nbins']       = 20
-
-    """ PROPAGATION PART """
     params['prop_nbins']        = 50
 
-    """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
     params['tmax']          = 100.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['dt']            = 2.0
+    params['wfn_saverate']  = 1 
 
-
-    """==== Molecule-field orientation ===="""
-
-    params['N_euler'] 	        = 1    # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
-    params['N_batches'] 	    = 1    # number of batches for orientation averaging
-    params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['N_euler'] 	        = 1    
+    params['N_batches'] 	    = 1    
+    params['orient_grid_type']  = "3D"  
     
-
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
-    params['molec_name']    = "chiralium"
-    
-params['analyze_space']     = [rho2D]
-    params['analyze_momentum']  = [W2Dav]
-    
-
-    params['PECD']      = PECD
-    params['W2Dav']     = W2Dav
-    params['W2D']       = W2D
-    params['rho2D']     = rho2D
-    params['bcoeffs']   = bcoeffs
-
-
-    load_observables()
-
-
-        rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
-                            'plot':         (True, GRAPHICS.gparams_rho1D_ini_rad()),
-                            'show':         True, # show image on screen                    
-                            'save':         True,
-                            'scale':        "log", #unit or log
-                            'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                                'npts': 999,    #ignored when automatic (2*rmax)
-                                                'rmin': 0.0,    #ignored when automatic
-                                                'rmax': 30.0  #ignored when automatic
-                                            #Automatic means that we choose ranges based on maximum range given by the basis set.   
-                                            },                   
-                            'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
-                            'vecs':         (0,10)  #(i_min, i_max): which of the initial eigenvectors to plot
-                        }
-
-
-        rho1D_wf_rad = {   'name':         'rho1D_wf_rad',
-                        'plot':         (True, GRAPHICS.gparams_rho1D_wf_rad()),
+   
+    rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
+                        'plot':         (True, graphics.gparams_rho1D_ini_rad()),
                         'show':         True, # show image on screen                    
                         'save':         True,
                         'scale':        "log", #unit or log
                         'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                            'npts': 500,    #ignored when automatic (2*rmax)
+                                            'npts': 999,    #ignored when automatic (2*rmax)
                                             'rmin': 0.0,    #ignored when automatic
-                                            'rmax': 10.0  #ignored when automatic
+                                            'rmax': 30.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                         },                   
-                        'coeff_thr':    1e-12, #threshold for the wavefunction coefficients in the calculation of rho
-                        'ini_vecs':     ( True,(0,2) ) #Plot initial vectors? If True then (i_min, i_max): which of the initial eigenvectors to plot
+                        'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
+                        'vecs':         (0,10)  #(i_min, i_max): which of the initial eigenvectors to plot
                     }
+
+
+    rho1D_wf_rad = {   'name':         'rho1D_wf_rad',
+                    'plot':         (True, graphics.gparams_rho1D_wf_rad()),
+                    'show':         True, # show image on screen                    
+                    'save':         True,
+                    'scale':        "log", #unit or log
+                    'r_grid':       {   'type':'manual', #manual or automatic grid type. 
+                                        'npts': 500,    #ignored when automatic (2*rmax)
+                                        'rmin': 0.0,    #ignored when automatic
+                                        'rmax': 10.0  #ignored when automatic
+                                    #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                    },                   
+                    'coeff_thr':    1e-12, #threshold for the wavefunction coefficients in the calculation of rho
+                    'ini_vecs':     ( True,(0,2) ) #Plot initial vectors? If True then (i_min, i_max): which of the initial eigenvectors to plot
+                }
 
 
 
@@ -185,14 +160,17 @@ params['analyze_space']     = [rho2D]
                 'show':     False,
                 }
 
-    #params['obs_params_rho'] = rho2D
-    #params['obs_params_W2D'] = W2D
-    #params['obs_params_W2Dav'] = W2Dav
-    #params['obs_params_PECD'] = PECD
+
+    params['analyze_space']     = [rho2D]
+    params['analyze_momentum']  = [W2Dav]
+    
+    params['PECD']      = PECD
+    params['W2Dav']     = W2Dav
+    params['W2D']       = W2D
+    params['rho2D']     = rho2D
+    params['bcoeffs']   = bcoeffs
 
 
-
-    """ *** Momentum-space wavefunction *** """
     params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
     # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
     params['npts_r_ft']       = 1000             # number of radial points over which the Hankel Transform is evaluated.
@@ -201,7 +179,7 @@ params['analyze_space']     = [rho2D]
     params['plot_Plm']        = False           # plot and save photoelectron partial waves?
     params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
-    """ *** Legendre expansion *** """
+
     params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
     params['Leg_plot_reconst']  = False   # plot and compare the reconstructed distribution
     params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
@@ -209,14 +187,15 @@ params['analyze_space']     = [rho2D]
     params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
     params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
         
-    """ *** PES *** """
+
     params['pes_npts']       = 1000   # numer of points for PES evaluation
     params['pes_max_k']      = 3.0     # maximum momentum in a.u. Must be lower than the momentum range for W2D
     params['pes_lmax']       = 100
 
-    """ *** PECD *** """
+
     params['pecd_lmax']       = 4               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
     params['pecd_momenta']    = [1.15]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
+    
 
     return params
 

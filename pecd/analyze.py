@@ -1026,7 +1026,7 @@ class spacefuncs(analysis):
             file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas'])
 
         for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
   
@@ -1040,7 +1040,7 @@ class spacefuncs(analysis):
                                         polargrid, 
                                         self.params['chilist'],
                                         funcpars,  
-                                        self.params['Nbas_chi'], 
+                                        self.params['Nbas_rad'], 
                                         self.params['bound_lmax'])
 
             if funcpars['plot'][0] == True:
@@ -2516,11 +2516,17 @@ if __name__ == "__main__":
                                     params['map_type'],
                                     params['job_directory'],
                                     params['bound_lmax'] )
+    
+    MapObjPropRad = wavefunction.Map(  params['FEMLIST_PROP'],
+                                        params['map_type'],
+                                        params['job_directory'])
+
 
     # Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
     #       Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
     params['maparray0'], params['Nbas0']            = MapObjBound.genmap_femlist()
     params['maparray'], params['Nbas']              = MapObjProp.genmap_femlist()
+    params['maparray_rad'], params['Nbas_rad']      = MapObjPropRad.genmap_femlist()
     params['maparray0_rad'], params['Nbas0_rad']    = MapObjBoundRad.genmap_femlist()
                                     
     print("\n")
@@ -2552,20 +2558,11 @@ if __name__ == "__main__":
     grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
 
 
+    PsiObjProp                  = wavefunction.Psi(params,grid_euler,0,"prop")
+    PsiObjBound                 = wavefunction.Psi(params,grid_euler,0,"bound")
 
-    # generate radial functions interpolated over the bound Hamiltonian grid
-    params['chilist']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
-                                                                                    params['bound_nlobs'], 
-                                                                                    params['prop_nbins'], 
-                                                                                    params['bound_binw'], 
-                                                                                    params['maparray_chi'])
-    params['chilist_bound']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
-                                                                                    params['bound_nlobs'], 
-                                                                                    params['bound_nbins'], 
-                                                                                    params['bound_binw'], 
-                                                                                    params['maparray_chi_bound'])
-
-
+    params['chilist']           = PsiObjProp.interpolate_chi()
+    params['chilist_bound']     = PsiObjBound.interpolate_chi()
 
 
     print("=====================================")

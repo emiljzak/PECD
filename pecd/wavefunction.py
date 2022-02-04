@@ -24,17 +24,43 @@ from sympy.polys.orthopolys import (legendre_poly, laguerre_poly,
                                     hermite_poly, jacobi_poly)
 from sympy.polys.rootoftools import RootOf
 
+#plotting libraries
+import matplotlib.pyplot as plt
 
 #from numba import jit, prange
 #jitcache = False
 
 class Psi():
 
-    def __init__(self, params,grid_euler,irun):
+    def __init__(self, params, grid_euler, irun, psitype="bound"):
 
-        self.params     = params
+        self.params         = params
+        self.hamtype        = psitype
         self.grid_euler = grid_euler
         self.irun       = irun
+
+        if psitype == "bound":
+                
+            self.Nbas       = params['Nbas0']
+            self.maparray   = params['maparray0']
+            self.maparray_rad = params['maparray0_rad']  
+            self.Gr         = params['rgrid0']
+            self.Gr_prim         = params['rgrid0_prim']  
+            self.nbins      = params['bound_nbins']
+            self.nlobs      = params['bound_nlobs']
+
+        elif psitype == "prop":
+            self.Nbas       = params['Nbas']
+            self.maparray   = params['maparray']
+            self.maparray_rad = params['maparray_rad'] 
+            self.Gr         = params['rgrid']
+            self.Gr_prim    = params['rgrid_prim']
+            self.nbins      = params['prop_nbins']
+            self.nlobs      = params['bound_nlobs']
+
+        else:
+            raise ValueError("Incorrect format type for the Hamiltonian")
+
 
     def project_psi_global(self, psi0):
         """Projects the bound wavefunction onto the propagation Hilbert space. 
@@ -122,6 +148,58 @@ class Psi():
 
         return coeffs_rotated
 
+
+    def chi(self,i,n,r,Gr,w,nlobs,nbins):
+        # r is the argument f(r)
+        # rgrid is the radial grid rgrid[i][n]
+        # w are the unscaled lobatto weights
+
+        #w /= sum(w[:]) #normalization!!!
+        val = np.zeros(np.size(r))
+        
+        if n == nlobs-1: #bridge functions
+            #print("bridge: ", n,i)
+
+            val = ( self.f(i,nlobs-1,r,Gr,nlobs,nbins) + self.f(i+1,0,r,Gr,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) +  float( w[0] ) )**(-1)
+        #print(type(val),np.shape(val))
+            return val
+
+        else:
+
+            val = self.f(i,n,r,Gr,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
+            #print(type(val),np.shape(val))
+            return val
+
+
+
+    def f(self,i,n,r,Gr,nlobs,nbins): 
+        """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
+        
+        #print("shape of r is", np.shape(r), "and type of r is", type(r))
+
+        if np.isscalar(r):
+            prod=1.0
+            if  r>= Gr[i][0] and r <= Gr[i][nlobs-1]:
+                for mu in range(0,nlobs):
+                    if mu !=n:
+                        prod*=(r-Gr[i][mu])/(Gr[i][n]-Gr[i][mu])
+                return prod
+            else:
+                return 0.0
+
+        else:
+            prod = np.ones(np.size(r), dtype=float)
+            for j in range(0,np.size(r)):
+                if r[j] >= Gr[i,0] and r[j] <= Gr[i,nlobs-1]:
+                    for mu in range(0,nlobs):
+                        if mu !=n:
+                            prod[j] *= (r[j] - Gr[i,mu]) / (Gr[i,n] - Gr[i,mu])
+                        else:
+                            prod[j] *= 1.0
+                else:
+                    prod[j] = 0.0
+        return prod
+
     def fp(self,i,n,k,x):
         "calculate d/dr f_in(r) at r_ik (Gauss-Lobatto grid) "
         npts = x.size 
@@ -144,23 +222,23 @@ class Psi():
 
     def interpolate_chi(self):
 
-        w       =  self.params['w']
-        x       = self.params['x']
-        binw    = self.params['bound_binw']
-        nbins   = self.params['nbins']
-        maparray = self.params['maparray']
-        nlobs = self.params['nlobs']
+        w           = self.params['w']
+        x           = self.params['x']
+        binw        = self.params['bound_binw']
+        Gr_prim_2D = self.Gr_prim.reshape(self.nbins,self.nlobs)
+        #print(Gr_prim_2D.shape)
+        #exit()
         interpolation_step = binw/200.0
-        x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
+        x = np.arange(0.0, self.nbins * binw + 0.10, interpolation_step)
 
         chilist  = []
 
-        for i, elem in enumerate(maparray):
-            chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
+        for i, elem in enumerate(self.maparray_rad):
+            chilist.append( interpolate.interp1d(x, self.chi(elem[0], elem[1], x, Gr_prim_2D, w, self.nlobs, self.nbins) ) )
 
-        #xnew  = np.arange(0.02, nbins * binw, 0.01)
+        #xnew  = np.arange(0.02, self.nbins * binw, 0.01)
         #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
-        #for s in range((nlobs-1) * nbins - 1):
+        #for s in range((self.nlobs-1) * self.nbins - 1):
         #    ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
         #    plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
         #plt.show()

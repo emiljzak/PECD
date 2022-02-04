@@ -620,11 +620,16 @@ if __name__ == "__main__":
                                     params['map_type'],
                                     params['job_directory'],
                                     params['bound_lmax'] )
+                                    
+    MapObjPropRad = wavefunction.Map(  params['FEMLIST_PROP'],
+                                        params['map_type'],
+                                        params['job_directory'])
 
     # Note: it is more convenient to store maps and grids in params dictionary than to set up as global variables generated in a separate module/function.
     #       Now we need to generate them only once, otherwise we would need to call the generating function in each separate module.
     params['maparray0'], params['Nbas0']            = MapObjBound.genmap_femlist()
     params['maparray'], params['Nbas']              = MapObjProp.genmap_femlist()
+    params['maparray_rad'], params['Nbas_rad']      = MapObjPropRad.genmap_femlist()
     params['maparray0_rad'], params['Nbas0_rad']    = MapObjBoundRad.genmap_femlist()
                                     
     MapObjBound.save_map(params['maparray0'], 'map_bound.dat')
@@ -749,7 +754,7 @@ if __name__ == "__main__":
         print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
         print("\n")
 
-        PsiObj      = wavefunction.Psi(params,grid_euler,irun)
+        PsiObj      = wavefunction.Psi(params,grid_euler,irun,"prop")
         psi0_rot    = PsiObj.rotate_psi(psi0[:,params['ivec']])
         psi_init    = PsiObj.project_psi_global(psi0_rot)
 

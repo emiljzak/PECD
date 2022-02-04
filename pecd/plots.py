@@ -56,56 +56,6 @@ def read_coeffs(filename,nvecs):
     return coeffs
 
 
-def chi(i,n,r,Gr,w,nlobs,nbins):
-    # r is the argument f(r)
-    # rgrid is the radial grid rgrid[i][n]
-    # w are the unscaled lobatto weights
-
-    #w /= sum(w[:]) #normalization!!!
-    val = np.zeros(np.size(r))
-    
-    if n == nlobs-1: #bridge functions
-        #print("bridge: ", n,i)
-
-        val = ( f(i,nlobs-1,r,Gr,nlobs,nbins) + f(i+1,0,r,Gr,nlobs,nbins) ) * np.sqrt( float( w[nlobs-1] ) +  float( w[0] ) )**(-1)
-    #print(type(val),np.shape(val))
-        return val
-
-    else:
-
-        val = f(i,n,r,Gr,nlobs,nbins) * np.sqrt( float( w[n] ) ) **(-1) 
-        #print(type(val),np.shape(val))
-        return val
-
-
-
-def f(i,n,r,Gr,nlobs,nbins): 
-    """calculate f_in(r). Input r can be a scalar or a vector (for quadpy quadratures) """
-    
-    #print("shape of r is", np.shape(r), "and type of r is", type(r))
-
-    if np.isscalar(r):
-        prod=1.0
-        if  r>= Gr[i][0] and r <= Gr[i][nlobs-1]:
-            for mu in range(0,nlobs):
-                if mu !=n:
-                    prod*=(r-Gr[i][mu])/(Gr[i][n]-Gr[i][mu])
-            return prod
-        else:
-            return 0.0
-
-    else:
-        prod = np.ones(np.size(r), dtype=float)
-        for j in range(0,np.size(r)):
-            if r[j] >= Gr[i,0] and r[j] <= Gr[i,nlobs-1]:
-                for mu in range(0,nlobs):
-                    if mu !=n:
-                        prod[j] *= (r[j] - Gr[i,mu]) / (Gr[i,n] - Gr[i,mu])
-                    else:
-                        prod[j] *= 1.0
-            else:
-                prod[j] = 0.0
-    return prod
 
 
 def plot_snapshot_int(params,psi,maparray,Gr,t,flist, irun):
