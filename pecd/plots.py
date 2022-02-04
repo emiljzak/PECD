@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy.special import sph_harm
-from scipy import interpolate
+
 
 import os
 
@@ -127,30 +127,6 @@ def plot_snapshot_int(params,psi,maparray,Gr,t,flist, irun):
 
     plot_wf_angrad_int_XZ(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
     plot_wf_angrad_int_XY(0.0, rmax, npoints, nlobs, nbins, psi, maparray, Gr, params, t, flist, irun)
-
-    
-def interpolate_chi(Gr,nlobs,nbins,binw,maparray):
-
-    w       =  np.zeros(nlobs)
-    xx,w    =  GRID.gauss_lobatto(nlobs,14)
-    w       =  np.array(w)
-
-    interpolation_step = binw/200.0
-    x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
-
-    chilist  = []
-
-    for i, elem in enumerate(maparray):
-        chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
-
-    #xnew  = np.arange(0.02, nbins * binw, 0.01)
-    #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
-    #for s in range((nlobs-1) * nbins - 1):
-    #    ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
-    #    plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
-    #plt.show()
-    
-    return chilist
 
 
 def plot_chi(rmin,rmax,npoints,rgrid,nlobs,nbins):

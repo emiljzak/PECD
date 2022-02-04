@@ -3,12 +3,15 @@
 #
 # Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 #
-from logging import raiseExceptions
-import numpy as np
 
+#modules
+
+#standard python libraries
 import itertools
 
-
+#scientific computing libraries
+import numpy as np
+from scipy import interpolate
 
 #For Gauss-Lobatto
 from sympy import symbols
@@ -29,9 +32,9 @@ class Psi():
 
     def __init__(self, params,grid_euler,irun):
 
-        self.params  = params
+        self.params     = params
         self.grid_euler = grid_euler
-        self.irun = irun
+        self.irun       = irun
 
     def project_psi_global(self, psi0):
         """Projects the bound wavefunction onto the propagation Hilbert space. 
@@ -137,6 +140,32 @@ class Psi():
                     if mu !=n:
                         fprime += (x[n]-x[mu])**(-1)
         return fprime
+
+
+    def interpolate_chi(self):
+
+        w       =  self.params['w']
+        x       = self.params['x']
+        binw    = self.params['bound_binw']
+        nbins   = self.params['nbins']
+        maparray = self.params['maparray']
+        nlobs = self.params['nlobs']
+        interpolation_step = binw/200.0
+        x = np.arange(0.0, nbins * binw + 0.10, interpolation_step)
+
+        chilist  = []
+
+        for i, elem in enumerate(maparray):
+            chilist.append( interpolate.interp1d(x, chi(elem[0], elem[1], x, Gr, w, nlobs, nbins) ) )
+
+        #xnew  = np.arange(0.02, nbins * binw, 0.01)
+        #ynew = chilist[1](xnew)   # use interpolation function returned by `interp1d`
+        #for s in range((nlobs-1) * nbins - 1):
+        #    ynew = chilist[s](xnew)   # use interpolation function returned by `interp1d`
+        #    plt.plot(x, chilist[s](x), 'o', xnew, ynew, '-')
+        #plt.show()
+        
+        return chilist
 
 
 class Map():

@@ -2553,32 +2553,6 @@ if __name__ == "__main__":
 
 
 
-
-    """ generate maps and grids """
-    params['maparray_global'], params['Nbas_global']    = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],
-                                                                                    params['bound_lmax'],
-                                                                                    params['map_type'],
-                                                                                    params['job_directory'] )
-
-    params['maparray_chi'], params['Nbas_chi']          = MAPPING.GENMAP_FEMLIST(   params['FEMLIST_PROP'],  
-                                                                                    0,
-                                                                                    params['map_type'], 
-                                                                                    path )
-
-    params['maparray_chi_bound'], params['Nbas_chi_bound']          = MAPPING.GENMAP_FEMLIST(   params['FEMLIST'],  
-                                                                                    0,
-                                                                                    params['map_type'], 
-                                                                                    path )
-
-    params['Gr'], params['Nr ']                         = GRID.r_grid(              params['bound_nlobs'], 
-                                                                                    params['prop_nbins'] , 
-                                                                                    params['bound_binw'],  
-                                                                                    params['bound_rshift'] )
-
-    params['Gr_prim'], params['Nr_prim']                = GRID.r_grid_prim(         params['bound_nlobs'], 
-                                                                                    params['prop_nbins'], 
-                                                                                    params['bound_binw'], 
-                                                                                    params['bound_rshift'] )
     # generate radial functions interpolated over the bound Hamiltonian grid
     params['chilist']                                   = PLOTS.interpolate_chi(    params['Gr_prim'], 
                                                                                     params['bound_nlobs'], 
