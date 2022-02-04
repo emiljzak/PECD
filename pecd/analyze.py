@@ -398,7 +398,7 @@ class analysis:
         irun                    = self.params['irun']
 
         # which grid point corresponds to the radial cut-off?
-        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['Gr'].ravel() - self.params['rcutoff']))
+        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['rgrid'].ravel() - self.params['rcutoff']))
         print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
         """ set up time grids for evaluating wfn """
@@ -414,15 +414,15 @@ class analysis:
 
         assert os.path.isfile(file_wavepacket)
         # we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
+        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas'])
 
 
 
         if self.params['FT_method']    == "FFT_cart":
 
             self.calc_fftcart_psi_3d(   self.params, 
-                                        self.params['maparray_global'], 
-                                        self.params['Gr'], 
+                                        self.params['maparrayl'], 
+                                        self.params['rgrid'], 
                                         wavepacket,
                                         self.params['chilist'])
 
@@ -472,8 +472,8 @@ class analysis:
 
         Plm = []
         lmax            = self.params['bound_lmax']
-        maparray_global = self.params['maparray_global']
-        maparray_chi    = self.params['maparray_chi']
+        maparray_global = self.params['maparray']
+        maparray_chi    = self.params['maparray_rad']
         chilist         = self.params['chilist']
         ipoint_cutoff   = self.params['ipoint_cutoff']
         
@@ -732,7 +732,7 @@ class spacefuncs(analysis):
                                                 rgrid1D, 
                                                 self.params['chilist_bound'],
                                                 funcpars,  
-                                                self.params['Nbas_chi'], 
+                                                self.params['Nbas0_rad'], 
                                                 self.params['bound_lmax'],
                                                 self.params['bound_nlobs'],
                                                 self.params['bound_nbins'])
@@ -2019,7 +2019,7 @@ class momentumfuncs(analysis):
         if funcpars['PES_params']['k-axis'] == 'momentum':
             grid_plot = kgrid#/(np.sqrt(4.0*np.pi))
         elif funcpars['PES_params']['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)*CONSTANTS.au_to_ev#/(4.0*np.pi)
+            grid_plot = (0.5*kgrid**2)*constants.au_to_ev#/(4.0*np.pi)
         else:
             raise ValueError("incorrect k-axis specification")
 
