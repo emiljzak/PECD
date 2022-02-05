@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "lanczos" 
+    params['job_label']    = "lanczos2" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -33,9 +33,9 @@ def read_input():
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 4000.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['tmax']          = 1000.0 
+    params['dt']            = 0.1 # replace with the calculated number for N points per cycle
+    params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
@@ -95,8 +95,8 @@ def read_input():
     params['field_env_name']     = "gaussian" 
 
     """ gaussian pulse """
-    params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
-    params['gauss_t0']      = 2000.0 #as: pulse centre
+    params['gauss_tau']     = 500.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
+    params['gauss_t0']      = 500.0 #as: pulse centre
 
     """ sin2 pulse """
     params['sin2_ncycles']  = 10

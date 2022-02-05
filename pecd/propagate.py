@@ -152,7 +152,7 @@ class Propagator():
         return psi/norm
  
     @staticmethod
-    def expv_lanczos(vec,m, t, matvec, maxorder=1000, tol=0):
+    def expv_lanczos(vec, t, matvec, maxorder=1000, tol=1e-12):
         """ Computes epx(t*a)*v using Lanczos with cupy mat-vec product """
 
         V, W = [], []
@@ -217,7 +217,7 @@ class Propagator():
         return matvec_
 
     @staticmethod
-    def expv_taylor(vec,m, t, matvec, maxorder=1000, tol=0):
+    def expv_taylor(vec, t, matvec, maxorder=1000, tol=0):
         """ Computes epx(t*a)*v using Taylor with cupy mat-vec product """
 
         V = []
@@ -320,7 +320,10 @@ class Propagator():
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
             
             #psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
-            psi = Propagator.expv_taylor(psi, -1.0j * ( ham_init + dip ), dt, Propagator.matvec_numpy(-1.0j * ( ham_init + dip )*dt, counter),maxorder=1000, tol=1e-10)
+            matvec_np = Propagator.matvec_numpy( ( ham_init + dip ), counter)
+            #psi_new = Propagator.expv_taylor(psi, dt, matvec_np,tol=1e-10)
+            psi = Propagator.expv_lanczos(psi, -1.0j *dt, matvec_np, tol=1e-10)
+            #psi = psi_new
             #psi = expm_multiply(-1.0j * ( ham_init + dip ) * dt , psi ) 
 
 

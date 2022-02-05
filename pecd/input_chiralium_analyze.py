@@ -11,20 +11,20 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "expm_multiply" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "lanczos2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
     params['prop_nbins']        = 100
 
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 4000.0 
-    params['dt']            = 2.0
-    params['wfn_saverate']  = 1
+    params['tmax']          = 1000.0 
+    params['dt']            = 0.1
+    params['wfn_saverate']  = 10
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
