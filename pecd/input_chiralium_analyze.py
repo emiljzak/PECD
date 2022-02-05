@@ -11,26 +11,26 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "g" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "expm_multiply" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
-    params['prop_nbins']        = 200
+    params['prop_nbins']        = 100
 
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 6000.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 2.0
-    params['wfn_saverate']  = 10
+    params['wfn_saverate']  = 1
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
+    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
@@ -73,13 +73,13 @@ def read_input():
                 'save':         True,
                 'scale':        "log", #unit or log
                 'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 200,    #ignored when automatic (2*rmax)
+                                    'npts': 400,    #ignored when automatic (2*rmax)
                                     'rmin': 0.0,    #ignored when automatic
-                                    'rmax': 100.0  #ignored when automatic
+                                    'rmax': 200.0  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
-                'coeff_thr':    1e-10 #threshold for the wavefunction coefficients in the calculation of rho
+                'coeff_thr':    1e-15 #threshold for the wavefunction coefficients in the calculation of rho
                 }
 
     W2D = {     'name':         'W2D',
@@ -89,9 +89,9 @@ def read_input():
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes
                 'k_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 500,    #ignored when automatic (2*rmax)
+                                    'npts': 800,    #ignored when automatic (2*rmax)
                                     'kmin': 0.0,    #ignored when automatic
-                                    'kmax': 2.0  #ignored when automatic
+                                    'kmax': 2.2  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
@@ -118,7 +118,7 @@ def read_input():
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes
                 'k_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 500,    #ignored when automatic (2*rmax)
+                                    'npts': 800,    #ignored when automatic (2*rmax)
                                     'kmin': 0.0,    #ignored when automatic
                                     'kmax': 2.2  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
@@ -127,7 +127,7 @@ def read_input():
                 
                 'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                 
-                'legendre':     True, # calculate Legendre decomposition
+                'legendre':     False, # calculate Legendre decomposition
 
 
 
@@ -173,7 +173,7 @@ def read_input():
 
     params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
     # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-    params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
+    params['npts_r_ft']       = 800             # number of radial points over which the Hankel Transform is evaluated.
     params['rcutoff']         = 30.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
     
     params['plot_Plm']        = False           # plot and save photoelectron partial waves?

@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "proptest2" 
+    params['job_label']    = "lanczos" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -23,7 +23,7 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 20
+    params['bound_nbins']       = 30
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
@@ -33,7 +33,7 @@ def read_input():
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 1000.0 
+    params['tmax']          = 4000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
@@ -117,7 +117,7 @@ def read_input():
     params['save_enr0']     = True #save eigenenergies for psi0
 
     params['wavepacket_format'] = "h5" #dat or h5
-    params['plot_elfield']      = True
+    params['plot_elfield']      = False
 
 
 

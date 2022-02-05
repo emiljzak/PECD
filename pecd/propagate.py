@@ -8,7 +8,7 @@ from h5py._hl import datatype
 import numpy as np
 from scipy import sparse
 from scipy.fftpack import fftn
-from scipy.sparse.linalg import expm_multiply
+from scipy.sparse.linalg import expm_multiply,expm
 from scipy.sparse.linalg import eigsh
 from scipy.special import sph_harm
 from scipy.special import eval_legendre
@@ -151,6 +151,94 @@ class Propagator():
         norm = np.sqrt( np.sum( np.conjugate(psi[:]) * psi[:] ) )
         return psi/norm
  
+    @staticmethod
+    def expv_lanczos(vec,m, t, matvec, maxorder=1000, tol=0):
+        """ Computes epx(t*a)*v using Lanczos with cupy mat-vec product """
+
+        V, W = [], []
+        T = np.zeros((maxorder, maxorder), dtype=vec.dtype)
+
+        # first Krylov basis vector
+        V.append(vec)
+        w = matvec(V[0])
+        T[0, 0] = np.vdot(w, V[0])
+        W.append(w - T[0, 0] * V[0])
+
+        # higher orders
+        u_kminus1, u_k, conv_k, k = {}, V[0], 1, 1
+        while k < maxorder and conv_k > tol:
+
+            # extend ONB of Krylov subspace by another vector
+            T[k - 1, k] = np.sqrt(np.sum(np.abs(W[k - 1])**2))
+            T[k, k - 1] = T[k - 1, k]
+            if not T[k - 1, k] == 0:
+                V.append(W[k - 1] / T[k - 1, k])
+
+            # reorthonormalize ONB of Krylov subspace, if neccesary
+            else:
+                v = np.ones(V[k - 1].shape, dtype=np.complex128)
+                for j in range(k):
+                    proj_j = np.vdot(V[j], v)
+                    v = v - proj_j * V[j]
+                norm_v = np.sqrt(np.sum(np.abs(v)**2))
+                V.append(v / norm_v)
+
+            w = matvec(V[k])
+            T[k, k] = np.vdot(w, V[k])
+            w = w - T[k, k] * V[k] - T[k - 1, k] * V[k - 1]
+            W.append(w)
+
+            # calculate current approximation and convergence
+            u_kminus1 = u_k
+            expT_k = expm(t * T[: k + 1, : k + 1])
+            u_k = sum([expT_k[i, 0] * v_i for i,v_i in enumerate(V)])
+            conv_k = np.sum(np.abs(u_k - u_kminus1)**2)
+
+            k += 1
+
+        if k == maxorder:
+            print("lanczos reached maximum order of {}".format(maxorder))
+
+        return u_k
+
+
+    @staticmethod
+    def matvec_numpy(matrix, counter):
+        """ Computes lambda function for mat-vec prodcut with numba """
+        # define mat-vec product with numpy
+        def matvec(v, counter_):
+            u = matrix.dot(v)
+            counter_ += 1
+            return u
+
+        # create lambda function of above mat-vec product
+        matvec_ = lambda v : matvec(v, counter)
+
+        return matvec_
+
+    @staticmethod
+    def expv_taylor(vec,m, t, matvec, maxorder=1000, tol=0):
+        """ Computes epx(t*a)*v using Taylor with cupy mat-vec product """
+
+        V = []
+
+        # zeroth order
+        V.append(vec)
+
+        # higher orders
+        conv_k, k = 1, 0
+        while k < maxorder and conv_k > tol:
+            k += 1
+            v = matvec(V[k - 1]) * t / k / 2**k
+            conv_k = np.sum(np.abs(v)**2)
+            V.append(v)
+
+        if k == maxorder:
+            print("taylor reached maximum order of {}".format(maxorder))
+
+        u = sum(V)
+
+        return u
 
     def prop_wf(self, ham_init, intmat, psi_init):
         """This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.
@@ -210,6 +298,8 @@ class Propagator():
         if params['plot_elfield'] == True:
             plots.plot_elfield(Fvec,tgrid,self.time_to_au)
 
+        counter = np.zeros(1)
+
         start_time_global = time.time()
         for itime, t in enumerate(tgrid): 
 
@@ -230,7 +320,8 @@ class Propagator():
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
             
             #psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
-            psi = expm_multiply( -1.0j * ( ham_init + dip ) * dt, psi ) 
+            psi = Propagator.expv_taylor(psi, -1.0j * ( ham_init + dip ), dt, Propagator.matvec_numpy(-1.0j * ( ham_init + dip )*dt, counter),maxorder=1000, tol=1e-10)
+            #psi = expm_multiply(-1.0j * ( ham_init + dip ) * dt , psi ) 
 
 
             if itime%self.wfn_saverate == 0:
@@ -579,6 +670,7 @@ if __name__ == "__main__":
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
+
     print("\n")
     print("----------------------------------------------------------- ")
     print("---------------------- START PROPAGATE --------------------")
@@ -620,7 +712,7 @@ if __name__ == "__main__":
                                     params['map_type'],
                                     params['job_directory'],
                                     params['bound_lmax'] )
-                                    
+
     MapObjPropRad = wavefunction.Map(  params['FEMLIST_PROP'],
                                         params['map_type'],
                                         params['job_directory'])
