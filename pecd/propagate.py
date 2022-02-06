@@ -42,6 +42,10 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.ticker as ticker
 
+
+#special acceleration libraries
+from numba import njit, prange
+
 #from pycallgraph import PyCallGraph
 #from pycallgraph.output import GraphvizOutput
 #from pycallgraph import Config
@@ -217,6 +221,30 @@ class Propagator():
         return matvec_
 
     @staticmethod
+    def matvec_numba(matrix):
+        """ Computes lambda function for mat-vec prodcut with numba """
+        # get components of sparse matrix
+        data = matrix.data
+        indices = matrix.indices
+        indptr = matrix.indptr
+
+        # define mat-vec product with numba
+        @njit(parallel=True)
+        def matvec(v):
+            u = np.zeros(v.size, dtype=v.dtype)
+            for i in prange(v.size):
+                for j in prange(indptr[i], indptr[i + 1]):
+                    u[i] += data[j] * v[indices[j]]
+            return u
+
+        # create lambda function of above mat-vec product
+        matvec_ = lambda v : matvec(v)
+
+        return matvec_
+
+
+
+    @staticmethod
     def expv_taylor(vec, t, matvec, maxorder=1000, tol=0):
         """ Computes epx(t*a)*v using Taylor with cupy mat-vec product """
 
@@ -320,9 +348,10 @@ class Propagator():
             #Note: we can use multiple time-points with expm_multiply and ham_init as linear operator. Also action on a collection of vectors is possible.
             
             #psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
-            matvec_np = Propagator.matvec_numpy( ( ham_init + dip ), counter)
+            matvec_nu = Propagator.matvec_numba(ham_init + dip)
+            #matvec_np = Propagator.matvec_numpy( ( ham_init + dip ), counter)
             #psi_new = Propagator.expv_taylor(psi, dt, matvec_np,tol=1e-10)
-            psi = Propagator.expv_lanczos(psi, -1.0j *dt, matvec_np, tol=1e-10)
+            psi = Propagator.expv_lanczos(psi, -1.0j *dt, matvec_nu, tol=1e-10)
             #psi = psi_new
             #psi = expm_multiply(-1.0j * ( ham_init + dip ) * dt , psi ) 
 
