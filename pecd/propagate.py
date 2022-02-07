@@ -130,7 +130,8 @@ class Propagator():
     def save_wavepacket_attrs(self,fl_wavepacket):
 
         wfn = fl_wavepacket.create_dataset( name        = "metadata", 
-                                            data        = {})
+                                            data        = np.zeros(1),
+                                            dtype       = int)
 
         wfn.attrs['t0']         = self.params['t0']
         wfn.attrs['tmax']       = self.params['tmax']
@@ -344,6 +345,12 @@ class Propagator():
         fl_wavepacket = self.allocate_wavepacket(helicity)
 
         print("\n")
+        print("Saving wavepacket attributes...")
+        print("\n")
+
+        self.save_wavepacket_attrs(fl_wavepacket)
+
+        print("\n")
         print("Normalizing initial wavepacket...")
         print("\n")
 
@@ -388,10 +395,7 @@ class Propagator():
             #psi = psi_new
             #psi = expm_multiply(-1.0j * ( ham_init + dip ) * dt , psi ) 
 
-
-            if itime%self.wfn_saverate == 0:
-
-                assert self.save_wavepacket(itime)
+            if itime%self.wfn_saverate == 0: self.save_wavepacket(fl_wavepacket,itime,psi)
 
             end_time = time.time()
             print("time per timestep =  " + str("%10.3f"%(end_time-start_time)) + "s")

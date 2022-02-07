@@ -102,10 +102,12 @@ class analysis:
         return plot_index
 
 
-    def setup_timegrids(self, momentum_analyze_times):
+    def setup_timegrids(self, analyze_times):
+
+
         tgrid,dt            = self.calc_tgrid()
 
-        tgrid_plot_index    =  self.calc_plot_times(tgrid,dt,momentum_analyze_times) #plot time indices
+        tgrid_plot_index    =  self.calc_plot_times(tgrid,dt,analyze_times) #plot time indices
 
         tgrid_plot          = tgrid[tgrid_plot_index]
 
@@ -139,7 +141,7 @@ class analysis:
             start_time = time.time()
 
             wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
-            print(wavepacket.shape)
+            #print(wavepacket.shape)
             with h5py.File(filename, 'r') as h5:
                 for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
                     #wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
@@ -150,7 +152,7 @@ class analysis:
                     #data = list(h5[a_group_key])
                     #print(data)
                     #exit()
-                    wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
+                    wavepacket[i,:] = h5[str(i)][:]
             end_time = time.time()
             print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
@@ -674,6 +676,37 @@ class spacefuncs(analysis):
 
     def __init__(self,params):
         self.params = params
+        self.helicity = self.pull_helicity()
+        self.read_wavepacket_metadata()
+        #1. read metadata from the wavepacket
+        """
+        self.t0,self.tmax,self.dt,self.saverate,self.time_units = 
+
+        tgrid,dt            = self.calc_tgrid()
+
+        tgrid_plot_index    =  self.calc_plot_times(tgrid,dt,analyze_times) #plot time indices
+
+        tgrid_plot          = tgrid[tgrid_plot_index]
+        """
+        #2. setup time grid
+
+        #3. setup time grid indices to analyze - they correspond to the respective analyze times
+
+        #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
+
+
+        params['tgrid_plot_space'], params['tgrid_plot_index_space'] = analysis_obj.setup_timegrids(params['space_analyze_times'])
+
+
+    def read_wavepacket_metadata(self):
+         
+        file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
+
+        with h5py.File(file_wavepacket, 'r') as h5:
+            for k in h5.attrs.keys():
+                print('{} => {}'.format(k, h5.attrs[k]))
+        exit()
+
 
     def read_psi0(self):
         coeffs      = []
@@ -2482,7 +2515,7 @@ if __name__ == "__main__":
         params_analyze = json.load(input_file)
 
     #check compatibility
-    check_compatibility(params_prop,params_analyze)
+    #check_compatibility(params_prop,params_analyze)
 
     #combine inputs
     params = {}
@@ -2582,8 +2615,6 @@ if __name__ == "__main__":
 
         params['irun']  = irun 
         analysis_obj    = analysis(params)
-        params['tgrid_plot_space'], params['tgrid_plot_index_space'] = analysis_obj.setup_timegrids(params['space_analyze_times'])
-
         spaceobs        = spacefuncs(params)
 
         for elem in params['analyze_space']:
