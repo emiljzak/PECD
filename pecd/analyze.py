@@ -89,10 +89,11 @@ class analysis:
     def calc_tgrid_save(self,tgrid,saverate):
         """calculate time-grid, which is saved in the wavepacket at a given saverate"""
 
-        tgrid_saved = []
-        ind_saved = []
+        tgrid_saved     = []
+        ind_saved       = []
+
         for itime in range(tgrid.shape[0]):
-            if tgrid[itime]%saverate ==0: 
+            if itime%saverate ==0: 
                 tgrid_saved.append(tgrid[itime])
                 ind_saved.append(itime)
 
@@ -683,37 +684,40 @@ class spacefuncs(analysis):
         print("space_analyze_times:")
         print(params['space_analyze_times'])
 
-
-
+        #in au
         inds_saved, times_saved = self.calc_tgrid_save(self.tgrid,params['wfn_saverate'])
 
-        
+        #print(times_saved)
+        #exit()
         tplot_ind_new = []
         for itime,T in enumerate(params['space_analyze_times']):
             print(T)
-            val, ind = self.find_nearest(times_saved,T)
+            val, ind = self.find_nearest(times_saved/time_to_au,T)
             tplot_ind_new.append(ind)
 
+        print("times at which we read/plot wavepacket")
+        print(times_saved[tplot_ind_new]/time_to_au)
 
-        print("tplot_ind_new:")
-        print(tplot_ind_new)
-        exit()
+        print("wavepacket indices at which we read/plot wavepacket")
+        print(inds_saved[tplot_ind_new])
+
 
         #3. setup time grid indices to analyze - they correspond to the respective analyze times
-        self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['space_analyze_times']) 
+        #self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['space_analyze_times']) 
 
-        print("tgrid_plot_index:")
-        print(self.tgrid_plot_index)
+        #print("tgrid_plot_index:")
+        #print(self.tgrid_plot_index)
         #xit()
 
-        self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
-        print("times at which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
+        #self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
+        #print("times at which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
 
 
-
+        self.tgrid_plot_time = times_saved[tplot_ind_new]/time_to_au
+        self.tgrid_plot_index = inds_saved[tplot_ind_new]
         #exit()
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
-        self.wavepacket     = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index , self.tgrid_plot_time, self.params['Nbas'])
+        self.wavepacket     = self.read_wavepacket(file_wavepacket, inds_saved[tplot_ind_new] , times_saved[tplot_ind_new]/time_to_au, self.params['Nbas'])
 
 
 
