@@ -1504,7 +1504,7 @@ class momentumfuncs(analysis):
         print("helicity = " + str(helicity))
         self.params['helicity'] =  helicity
 
-        Flm, kgrid = analysis_obj.calc_Flm(helicity)
+        Flm, kgrid = self.calc_Flm(helicity)
 
         print("Calculating 2D electron momentum probability density phi-averaged")
 
