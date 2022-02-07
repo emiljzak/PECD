@@ -389,11 +389,12 @@ class analysis:
                 plt.show()
                 plt.close()
         
+            if self.params['save_bcoeffs'] == True:
+                print(0)
+
            
             #plot Legendre-reconstructed distribution on test grid 
-
-
-            
+     
             kgrid_leg_mesh, thetagrid_leg_mesh = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
 
             if self.params['Leg_plot_reconst'] == True:
@@ -583,7 +584,7 @@ class analysis:
         
                                 barray[irun,il+4] = float(words[il+1])
 
-        with open( params['job_directory'] +  "barray.dat" , 'w') as barfile:   
+        with open( self.params['job_directory'] +  "barray.dat" , 'w') as barfile:   
             np.savetxt(barfile, barray, fmt = '%12.8f')
 
 
@@ -1758,9 +1759,6 @@ class momentumfuncs(analysis):
         plt.close()
 
 
-
-
-
     def W2D(self,funcpars):
 
         Flm     = self.params['Flm']
@@ -1859,8 +1857,6 @@ class momentumfuncs(analysis):
             W2Ddir[elem]    = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
 
         return W2Ddir
-
-
 
     def W2D_plot(self,funcpars,polargrid,W2D): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
@@ -1990,7 +1986,6 @@ class momentumfuncs(analysis):
         plt.close()
 
 
-
     def PES(self,funcpars,grid,fdir,irun):
 
         for elem in fdir.items():
@@ -2024,7 +2019,6 @@ class momentumfuncs(analysis):
             
             self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
-
     def PESav(self,funcpars,grid,Wav,irun):
         """ photo-electron spectrum from phi-averaged momentum distribution"""
     
@@ -2053,7 +2047,6 @@ class momentumfuncs(analysis):
             spectrum[ipoint] = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
         
         self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
-
 
     def PES_plot(self,funcpars,spectrum,kgrid,irun):
 
@@ -2249,9 +2242,6 @@ class momentumfuncs(analysis):
         plt.legend()   
         plt.show()  
 
-
-
-
     def plot_W_3D_num(self,params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0):
         ncontours = 100
         grid_theta, grid_r = calc_grid_for_FT(params)
@@ -2280,10 +2270,6 @@ class momentumfuncs(analysis):
         
         plt.legend()   
         plt.show()  
-
-
-
-
 
     def calc_W_3D_analytic(self,lmax, grid_theta, grid_r, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0 ):
         """ returns: square modulus of fourier transform inside a ball grid (r,theta,phi) calculated with an analytic expression"""
@@ -2322,7 +2308,6 @@ class momentumfuncs(analysis):
         print(W)
         return W, kgrid
 
-
     def plot_W_3D_analytic(self,params, maparray_chi, maparray_global, psi, chilist, phi0 = 0.0):
         ncontours = 100
         grid_theta, grid_r = calc_grid_for_FT(params)
@@ -2345,11 +2330,6 @@ class momentumfuncs(analysis):
         
         plt.legend()   
         plt.show()  
-
-
-
-
-
 
     def calc_W_av_phi_analytic(self,params, maparray_chi, maparray_global, psi, chilist):
         """ returns: square modulus of fourier transform inside a disk (r,theta) calculated with analytic expression
@@ -2403,7 +2383,6 @@ class momentumfuncs(analysis):
         
         plt.legend()   
         plt.show()  
-
 
     def calc_ftpsi_2d(self,params, maparray, Gr, psi, chilist):
     
@@ -2465,10 +2444,6 @@ class momentumfuncs(analysis):
         plt.show()  
 
         return fty, yftgrid, zftgrid 
-
-
-
-
 
 
 class averagedobs:

@@ -26,9 +26,9 @@ def read_input():
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['helicity']          = "L"
+    params['helicity']          = "R"
 
-    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
+    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
@@ -179,12 +179,12 @@ def read_input():
 
 
     params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
-    params['Leg_plot_reconst']  = False   # plot and compare the reconstructed distribution
-    params['Leg_test_interp']   = False  # test interpolation of W2D by plotting
+    params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
+    params['Leg_test_interp']   = True  # test interpolation of W2D by plotting
     params['plot_bcoeffs']      = True  # plot b-coefficients
     params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
     params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
-        
+    params['save_bcoeffs']      = True        
 
     params['pes_npts']       = 1000   # numer of points for PES evaluation
     params['pes_max_k']      = 2.2     # maximum momentum in a.u. Must be lower than the momentum range for W2D
