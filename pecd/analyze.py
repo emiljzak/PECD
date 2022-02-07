@@ -390,7 +390,16 @@ class analysis:
                 plt.close()
         
             if self.params['save_bcoeffs'] == True:
-                print(0)
+
+                with open(  self.params['job_directory'] +  "bcoeffs" +\
+                    "_" + str(irun) + ".dat" , 'w') as bcoeffile:
+                    
+                    for ielem, k in enumerate(kgrid1D):
+                    
+                        bcoeffile.write(   str('{:8.2f}'.format(k)) +\
+                        " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(self.params['Leg_lmax'] ))) 
+
+
 
            
             #plot Legendre-reconstructed distribution on test grid 

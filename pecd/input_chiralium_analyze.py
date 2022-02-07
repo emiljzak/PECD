@@ -160,7 +160,7 @@ def read_input():
 
 
     params['analyze_space']     = [rho2D]
-    params['analyze_momentum']  = [W2Dav]
+    params['analyze_momentum']  = [PECD]
     
     params['PECD']      = PECD
     params['W2Dav']     = W2Dav
