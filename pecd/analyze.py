@@ -713,11 +713,11 @@ class spacefuncs(analysis):
         #print("times at which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
 
 
-        self.tgrid_plot_time = times_saved[tplot_ind_new]/time_to_au
+        self.tgrid_plot_time = times_saved[tplot_ind_new]#/time_to_au
         self.tgrid_plot_index = inds_saved[tplot_ind_new]
-        #exit()
+        #exit();mn
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
-        self.wavepacket     = self.read_wavepacket(file_wavepacket, inds_saved[tplot_ind_new] , times_saved[tplot_ind_new]/time_to_au, self.params['Nbas'])
+        self.wavepacket     = self.read_wavepacket(file_wavepacket, inds_saved[tplot_ind_new] , times_saved[tplot_ind_new], self.params['Nbas'])
 
 
 

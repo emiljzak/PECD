@@ -26,7 +26,7 @@ def read_input():
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
+    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 7 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
