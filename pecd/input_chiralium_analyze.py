@@ -11,16 +11,16 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_wavepacket_save" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "b_dt6" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
-    params['bound_nbins']       = 10
-    params['prop_nbins']        = 10
+    params['bound_nbins']       = 30
+    params['prop_nbins']        = 50
 
-    params['tmax']              = 100.0 
+    params['tmax']              = 1000.0 
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
@@ -35,9 +35,9 @@ def read_input():
                         'save':         True,
                         'scale':        "log", #unit or log
                         'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                            'npts': 100,    #ignored when automatic (2*rmax)
+                                            'npts': 200,    #ignored when automatic (2*rmax)
                                             'rmin': 0.0,    #ignored when automatic
-                                            'rmax': 20.0  #ignored when automatic
+                                            'rmax': 100.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                         },                   
                         'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
@@ -69,9 +69,9 @@ def read_input():
                 'save':         True,
                 'scale':        "log", #unit or log
                 'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 40,    #ignored when automatic (2*rmax)
+                                    'npts': 200,    #ignored when automatic (2*rmax)
                                     'rmin': 0.0,    #ignored when automatic
-                                    'rmax': 20.0  #ignored when automatic
+                                    'rmax': 100.0  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
@@ -170,7 +170,7 @@ def read_input():
     params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
     # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
     params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
-    params['rcutoff']         = 0.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
+    params['rcutoff']         = 10.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
     
     params['plot_Plm']        = False           # plot and save photoelectron partial waves?
     params['plot_Flm']        = False           # plot and save individual Hankel transforms?

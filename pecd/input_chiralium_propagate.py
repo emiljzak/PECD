@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_wavepacket_save" 
+    params['job_label']    = "b_dt6" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -23,19 +23,19 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 10
+    params['bound_nbins']       = 30
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 10
+    params['prop_nbins']        = 50
 
 
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 100.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['tmax']          = 1000.0 
+    params['dt']            = 6.0 # replace with the calculated number for N points per cycle
+    params['wfn_saverate']  = 2 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
@@ -95,8 +95,8 @@ def read_input():
     params['field_env_name']     = "gaussian" 
 
     """ gaussian pulse """
-    params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
-    params['gauss_t0']      = 2000.0 #as: pulse centre
+    params['gauss_tau']     = 500.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
+    params['gauss_t0']      = 500.0 #as: pulse centre
 
     """ sin2 pulse """
     params['sin2_ncycles']  = 10
