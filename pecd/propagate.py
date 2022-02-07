@@ -125,6 +125,39 @@ class Propagator():
         return flwavepacket
 
 
+
+
+    def save_wavepacket_attrs(self,fl_wavepacket):
+
+        wfn = fl_wavepacket.create_dataset( name        = "metadata", 
+                                            data        = {})
+
+        wfn.attrs['t0']         = self.params['t0']
+        wfn.attrs['tmax']       = self.params['tmax']
+        wfn.attrs['dt']         = self.params['dt']
+        wfn.attrs['saverate']   = self.params['wfn_saverate']
+        wfn.attrs['units']      = self.params['time_units']
+
+
+    def save_wavepacket(self,fl_wavepacket,itime,psi):
+
+        if self.params['wavepacket_format'] == "dat":
+                        
+            fl_wavepacket.write(    '{:10d}'.format(itime) + 
+                                    " ".join('{:15.5e}'.format(psi[i].real) + 
+                                    '{:15.5e}'.format(psi[i].imag) for i in range(0,self.Nbas)) +
+                                    '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
+                                    "\n")
+
+        elif self.params['wavepacket_format'] == "h5":
+
+            fl_wavepacket.create_dataset(   name        = str(itime), 
+                                            data        = psi,
+                                            dtype       = complex,
+                                            compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
+                                        )
+
+
     def gen_timegrid(self):
 
         """ 
@@ -358,22 +391,8 @@ class Propagator():
 
             if itime%self.wfn_saverate == 0:
 
-                if self.params['wavepacket_format'] == "dat":
-                    
-                    fl_wavepacket.write(    '{:10.3f}'.format(t) + 
-                                            " ".join('{:15.5e}'.format(psi[i].real) + 
-                                            '{:15.5e}'.format(psi[i].imag) for i in range(0,self.Nbas)) +
-                                            '{:15.8f}'.format(np.sqrt(np.sum((psi[:].real)**2+(psi[:].imag)**2))) +
-                                            "\n")
+                assert self.save_wavepacket(itime)
 
-                elif self.params['wavepacket_format'] == "h5":
-
-                    fl_wavepacket.create_dataset(   name        = str('{:10.3f}'.format(t)), 
-                                                    data        = psi,
-                                                    dtype       = complex,
-                                                    compression = 'gzip' #no-loss compression. Compression with loss is possible and can save space.
-                                                )
-            
             end_time = time.time()
             print("time per timestep =  " + str("%10.3f"%(end_time-start_time)) + "s")
     
