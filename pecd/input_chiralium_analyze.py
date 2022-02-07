@@ -11,11 +11,11 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_nu_dt2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_legendre" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
     params['prop_nbins']        = 100
@@ -26,7 +26,9 @@ def read_input():
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 7 ))
+    params['helicity']          = "L"
+
+    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
@@ -65,7 +67,7 @@ def read_input():
     rho2D = {   'name':         'rho2D',
                 'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_rho2D_polar()), #specify parameters of the plot to load
-                'show':         True, # show image on screen                    
+                'show':         False, # show image on screen                    
                 'save':         True,
                 'scale':        "log", #unit or log
                 'r_grid':       {   'type':'manual', #manual or automatic grid type. 
@@ -110,7 +112,7 @@ def read_input():
 
     W2Dav = {   'name':         'W2Dav',
                 'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                'show':         True, # show image on screen
+                'show':         False, # show image on screen
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes
                 'k_grid':       {   'type':'manual', #manual or automatic grid type. 
@@ -123,7 +125,7 @@ def read_input():
                 
                 'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
                 
-                'legendre':     False, # calculate Legendre decomposition
+                'legendre':     True, # calculate Legendre decomposition
 
 
 
@@ -131,7 +133,7 @@ def read_input():
                 'PES_params': {     
                                 'name':         'PES',
                                 'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
-                                'show':         True, # show image on screen
+                                'show':         False, # show image on screen
                                 'save':         True, # save array in file
                             
                                 'k-axis':       "energy", # energy (eV) or momentum (a.u.)
@@ -170,7 +172,7 @@ def read_input():
     params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
     # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
     params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
-    params['rcutoff']         = 10.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
+    params['rcutoff']         = 30.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
     
     params['plot_Plm']        = False           # plot and save photoelectron partial waves?
     params['plot_Flm']        = False           # plot and save individual Hankel transforms?
@@ -190,7 +192,7 @@ def read_input():
 
 
     params['pecd_lmax']       = 4               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['pecd_momenta']    = [0.62]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
+    params['pecd_energies']   = [0.62]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
     
 
     return params

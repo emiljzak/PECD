@@ -389,11 +389,11 @@ class Propagator():
             
             #psi = quimb.linalg.base_linalg.expm_multiply(-1.0j * ( ham_init + dip ) * dt, psi, backend='SCIPY')
             #matvec_nu = Propagator.matvec_numba(ham_init + dip)
-            #matvec_np = Propagator.matvec_numpy( ( ham_init + dip ), counter)
+            matvec_np = Propagator.matvec_numpy( ( ham_init + dip ), counter)
             #psi_new = Propagator.expv_taylor(psi, dt, matvec_np,tol=1e-10)
-            #psi = Propagator.expv_lanczos(psi, -1.0j *dt, matvec_nu, tol=1e-10)
+            psi = Propagator.expv_lanczos(psi, -1.0j *dt, matvec_np, tol=1e-10)
             #psi = psi_new
-            psi = expm_multiply(-1.0j * ( ham_init + dip ) * dt , psi ) 
+            #psi = expm_multiply(-1.0j * ( ham_init + dip ) * dt , psi ) 
 
             if itime%self.wfn_saverate == 0: self.save_wavepacket(fl_wavepacket,itime,psi)
 

@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_nu_dt2" 
+    params['job_label']    = "test_legendre" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -20,7 +20,7 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 30
@@ -34,8 +34,8 @@ def read_input():
     params['time_units']    = "as"
     params['t0']            = 0.0 
     params['tmax']          = 4000.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 2 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['dt']            = 4.0 # replace with the calculated number for N points per cycle
+    params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
@@ -91,7 +91,7 @@ def read_input():
     params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
     params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
-    params['field_func_name']    = "RCPL"
+    params['field_func_name']    = "LCPL"
     params['field_env_name']     = "gaussian" 
 
     """ gaussian pulse """

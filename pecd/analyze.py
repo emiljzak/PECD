@@ -39,6 +39,8 @@ class analysis:
 
     def __init__(self,params):
         self.params = params
+        self.helicity = params['helicity']
+
 
     def find_nearest(self,array, value):
         array   = np.asarray(array)
@@ -142,8 +144,7 @@ class analysis:
         return [char for char in word]
 
 
-     
-
+    
     def read_wavepacket_metadata(self):
          
         file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
@@ -184,7 +185,7 @@ class analysis:
             wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
 
             with h5py.File(filename, 'r') as h5:
-                print("Keys: %s" % h5.keys())
+                #print("Keys: %s" % h5.keys())
                 for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
                    
                     #print(ind)
@@ -674,7 +675,7 @@ class spacefuncs(analysis):
         self.params         = params
 
         #1. read metadata from the wavepacket
-        self.helicity       = self.pull_helicity()
+        self.helicity       = params['helicity'] #self.pull_helicity()
         self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
         #2. setup time grid
@@ -701,21 +702,9 @@ class spacefuncs(analysis):
         print("wavepacket indices at which we read/plot wavepacket")
         print(inds_saved[tplot_ind_new])
 
-
-        #3. setup time grid indices to analyze - they correspond to the respective analyze times
-        #self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['space_analyze_times']) 
-
-        #print("tgrid_plot_index:")
-        #print(self.tgrid_plot_index)
-        #xit()
-
-        #self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
-        #print("times at which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
-
-
-        self.tgrid_plot_time = times_saved[tplot_ind_new]#/time_to_au
+        self.tgrid_plot_time = times_saved[tplot_ind_new]
         self.tgrid_plot_index = inds_saved[tplot_ind_new]
-        #exit();mn
+  
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
         self.wavepacket     = self.read_wavepacket(file_wavepacket, inds_saved[tplot_ind_new] , times_saved[tplot_ind_new], self.params['Nbas'])
 
@@ -797,8 +786,6 @@ class spacefuncs(analysis):
             
         irun = self.params['irun']
 
-        helicity  = self.pull_helicity()
-        params['helicity'] = helicity
 
         """ set up 1D grids """
 
@@ -826,10 +813,10 @@ class spacefuncs(analysis):
         #read wavepacket from file
 
         if params['wavepacket_format'] == "dat":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".dat"
         
         elif params['wavepacket_format'] == "h5":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
 
         #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
         wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas_global'])
@@ -860,7 +847,7 @@ class spacefuncs(analysis):
             if funcpars['save'] == True:
 
                 with open( params['job_directory'] +  "rho1D_rad" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    "_" + self.helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho1D, fmt = '%10.4e')
 
 
@@ -1023,9 +1010,6 @@ class spacefuncs(analysis):
 
         irun = self.params['irun']
 
-        helicity  = self.pull_helicity()
-        params['helicity'] = helicity
-
         """ set up 1D grids """
 
         if funcpars['r_grid']['type'] == "manual":
@@ -1088,7 +1072,7 @@ class spacefuncs(analysis):
             if funcpars['save'] == True:
 
                 with open( params['job_directory'] +  "rho2D" + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    "_" + self.helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, rho, fmt = '%10.4e')
 
 
@@ -1233,7 +1217,7 @@ class spacefuncs(analysis):
                                             funcpars['plane_split'][0]+ "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            params['helicity'] + "_" + str(irun) +
+                                            self.helicity + "_" + str(irun) +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],
@@ -1298,7 +1282,7 @@ class momentumfuncs(analysis):
         self.params = params
 
         #1. read metadata from the wavepacket
-        self.helicity       = self.pull_helicity()
+        self.helicity       = params['helicity']#self.pull_helicity()
         self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
         #2. setup time grid
@@ -1540,7 +1524,7 @@ class momentumfuncs(analysis):
                                             plot_params['save_name'] + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            self.params['helicity'] +
+                                            self.helicity +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],
@@ -1557,11 +1541,9 @@ class momentumfuncs(analysis):
     def W2Dav(self,funcpars):
         
         irun                    = self.params['irun']
-        helicity                = self.pull_helicity()
-        print("helicity = " + str(helicity))
-        self.params['helicity'] =  helicity
 
-        Flm, kgrid = self.calc_Flm(helicity)
+
+        Flm, kgrid = self.calc_Flm(self.helicity)
 
         print("Calculating 2D electron momentum probability density phi-averaged")
 
@@ -1627,7 +1609,7 @@ class momentumfuncs(analysis):
             if funcpars['save'] == True:
    
                 with open( self.params['job_directory'] +  "W2Dav" + "_" + str(irun) + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + helicity + ".dat" , 'w') as rhofile:   
+                    "_" + self.helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, Wav, fmt = '%10.4e')
 
             if funcpars['legendre'] == True:
@@ -1765,7 +1747,7 @@ class momentumfuncs(analysis):
                                             plot_params['save_name'] + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            self.params['helicity'] +
+                                            self.helicity +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],
@@ -1790,10 +1772,7 @@ class momentumfuncs(analysis):
         print("Calculating 2D electron momentum probability density")
         
         irun = self.params['irun']
-        helicity  = self.pull_helicity()
-        self.params['helicity'] = helicity
-        print("helicity = " + str(helicity))
-        #exit()
+       
         """ set up 1D momentum grids """
 
         if funcpars['k_grid']['type'] == "manual":
@@ -1856,7 +1835,7 @@ class momentumfuncs(analysis):
             if funcpars['save'] == True:
                 for elem in W2Ddir.items():
                     with open( self.params['job_directory'] +  "W2D" + str(irun)  + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                        "_" + helicity + ".dat" , 'w') as rhofile:   
+                        "_" + self.helicity + ".dat" , 'w') as rhofile:   
                         np.savetxt(rhofile, elem[1], fmt = '%10.4e')
 
             if funcpars['legendre'] == True:
@@ -2000,7 +1979,7 @@ class momentumfuncs(analysis):
                                             funcpars['plane_split'][0]+ "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            params['helicity'] +
+                                            self.helicity +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],
@@ -2184,7 +2163,7 @@ class momentumfuncs(analysis):
                                             funcpars['plane_split'][0]+ "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            params['helicity'] +
+                                            self.helicity +
                                             ".pdf",
                                             
                                             dpi         =   plot_params['save_dpi'],
@@ -2197,7 +2176,7 @@ class momentumfuncs(analysis):
                                             plot_params['save_name'] + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            params['helicity'] +
+                                            self.helicity +
                                             ".pdf",
                                             
                                             dpi         =   plot_params['save_dpi'],
