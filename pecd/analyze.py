@@ -1540,9 +1540,7 @@ class momentumfuncs(analysis):
 
     def W2Dav(self,funcpars):
         
-        irun                    = self.params['irun']
-
-
+        irun       = self.params['irun']
         Flm, kgrid = self.calc_Flm(self.helicity)
 
         print("Calculating 2D electron momentum probability density phi-averaged")
@@ -1551,15 +1549,15 @@ class momentumfuncs(analysis):
 
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
-            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktulpe'] = ktuple
-            kgrid1D         =    kgrid1D = kgrid#np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
+            ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktulpe']  = ktuple
+            kgrid1D             = kgrid#np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
 
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
-            kgrid1D = kgrid
-            ktuple  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
-            funcpars['ktulpe'] = ktuple
+            kgrid1D             = kgrid
+            ktuple              = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
+            funcpars['ktulpe']  = ktuple
 
 
         print("kgrid from Flm: ")
@@ -1584,12 +1582,10 @@ class momentumfuncs(analysis):
         obs_dict = {}
         obs_list = []
 
-        """ set up time grids for evaluating wfn """
-
-
+        """ loop over evaluation times """
         for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
   
-            print(  "Generating W2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+            print(  "Generating W2Dav at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                 " " + str( self.params['time_units']) + " ----- " +\
                 "time index = " + str(itime) )
 
@@ -1597,11 +1593,12 @@ class momentumfuncs(analysis):
 
             Flm_t = Flm[i*(self.params['bound_lmax']+1)**2:(i+1)*(self.params['bound_lmax']+1)**2 ]
 
-            Wav = self.W2Dav_calc( funcpars,
+            Wav = self.W2Dav_calc(  funcpars,
                                     Flm_t,
                                     polargrid)
         
             obs_dict['Wav'] = Wav
+
             if funcpars['plot'][0] == True:
 
                 self.W2Dav_plot(funcpars,polargrid,Wav,irun)
@@ -1614,13 +1611,13 @@ class momentumfuncs(analysis):
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
-                bcoeff, kgrid = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
+                bcoeff, kgrid       = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
                 obs_dict['bcoeff']  = bcoeff
                 obs_dict['kgrid']   = kgrid
 
             if funcpars['PES']  == True:
-                PES_av = self.PESav(funcpars,polargrid,Wav,irun)
-                obs_dict['PES_av'] = PES_av
+                PES_av              = self.PESav(funcpars,polargrid,Wav,irun)
+                obs_dict['PES_av']  = PES_av
 
             obs_list.append([i,t,obs_dict])
 
