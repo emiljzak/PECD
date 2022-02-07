@@ -116,7 +116,22 @@ class analysis:
 
     def split_word(self,word):
         return [char for char in word]
-      
+
+
+     
+
+    def read_wavepacket_metadata(self):
+         
+        file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
+
+        with h5py.File(file_wavepacket, 'r') as h5:
+            t0          = h5["metadata"].attrs['t0']
+            tmax        = h5["metadata"].attrs['tmax']
+            dt          = h5["metadata"].attrs['dt']
+            saverate    = h5["metadata"].attrs['saverate']
+            units       = h5["metadata"].attrs['units']
+
+        return t0,tmax,dt,saverate,units,file_wavepacket 
   
     def read_wavepacket(self, filename, plot_index, tgrid_plot, Nbas):
 
@@ -398,53 +413,6 @@ class analysis:
 
 
 
-    def calc_Flm(self,helicity):
-
-        irun                    = self.params['irun']
-
-        # which grid point corresponds to the radial cut-off?
-        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['rgrid'].ravel() - self.params['rcutoff']))
-        print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
-
-        """ set up time grids for evaluating wfn """
-        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
-        
-        # read wavepacket from file
-        if self.params['wavepacket_format'] == "dat":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
-        
-        elif self.params['wavepacket_format'] == "h5":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
-
-
-        assert os.path.isfile(file_wavepacket)
-        # we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas'])
-
-
-
-        if self.params['FT_method']    == "FFT_cart":
-
-            self.calc_fftcart_psi_3d(   self.params, 
-                                        self.params['maparrayl'], 
-                                        self.params['rgrid'], 
-                                        wavepacket,
-                                        self.params['chilist'])
-
-        elif self.params['FT_method']  == "FFT_hankel":
-
-            grid_theta, grid_r = self.calc_rgrid_for_FT()
-
-            #calculate partial waves on radial grid
-            Plm         = self.calc_partial_waves(      grid_r,
-                                                        wavepacket)
-
-            #return Hankel transforms on the appropriate k-vector grid identical to grid_r
-            Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
-                                                        grid_r)
-           
-        return Flm, kgrid
-    
 
     def calc_FT_3D_hankel(self, Flm,  Ymat):
         """ returns: fourier transform inside a ball grid (r,theta,phi), or disk (r,theta,phi0) or disk (r,theta0,phi)  """
@@ -685,30 +653,17 @@ class spacefuncs(analysis):
         self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
         #2. setup time grid
-        tgrid               = self.calc_tgrid()
+        self.tgrid               = self.calc_tgrid()
         #3. setup time grid indices to analyze - they correspond to the respective analyze times
-        tgrid_plot_index    =  self.calc_plot_times(tgrid,params['space_analyze_times']) 
-        tgrid_plot_time     = tgrid[tgrid_plot_index]
-        print("times for which space functions are analyzed: " + str(tgrid_plot_time/time_to_au))
+        self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['space_analyze_times']) 
+        self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
+        print("times for which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
         
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
-        self.wavepacket     = self.read_wavepacket(file_wavepacket, tgrid_plot_index , tgrid_plot_time, self.params['Nbas'])
+        self.wavepacket     = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index , self.tgrid_plot_time, self.params['Nbas'])
 
 
 
-
-    def read_wavepacket_metadata(self):
-         
-        file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
-
-        with h5py.File(file_wavepacket, 'r') as h5:
-            t0          = h5["metadata"].attrs['t0']
-            tmax        = h5["metadata"].attrs['tmax']
-            dt          = h5["metadata"].attrs['dt']
-            saverate    = h5["metadata"].attrs['saverate']
-            units       = h5["metadata"].attrs['units']
-
-        return t0,tmax,dt,saverate,units,file_wavepacket
 
     def read_psi0(self):
         coeffs      = []
@@ -1008,7 +963,7 @@ class spacefuncs(analysis):
 
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
-        
+
         irun = self.params['irun']
 
         helicity  = self.pull_helicity()
@@ -1045,25 +1000,7 @@ class spacefuncs(analysis):
         """ generate 2D meshgrid for storing rho2D """
         polargrid = np.meshgrid(rgrid1D, thgrid1D)
 
-        """ set up time grids for evaluating rho2D """
-        tgrid,dt = self.calc_tgrid()
-
-        plot_index = self.calc_plot_times(tgrid,dt,self.params['space_analyze_times']) #plot time indices
-
-        tgrid_plot = tgrid[plot_index]
-
-        #read wavepacket from file
-
-        if params['wavepacket_format'] == "dat":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
-        
-        elif params['wavepacket_format'] == "h5":
-            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
-
-        #we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
-        wavepacket           = self.read_wavepacket(file_wavepacket, plot_index, tgrid_plot, self.params['Nbas'])
-
-        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+        for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
   
             print(  "Generating rho2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                 " " + str( self.params['time_units']) + " ----- " +\
@@ -1071,7 +1008,7 @@ class spacefuncs(analysis):
 
             funcpars['t'] = t
 
-            rhodir = self.rho2D_calc(   wavepacket[i,:], 
+            rhodir = self.rho2D_calc(   self.wavepacket[i,:], 
                                         polargrid, 
                                         self.params['chilist'],
                                         funcpars,  
@@ -1303,7 +1240,66 @@ class momentumfuncs(analysis):
     def __init__(self,params):
         self.params = params
 
+        #1. read metadata from the wavepacket
+        self.helicity       = self.pull_helicity()
+        self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
+        #2. setup time grid
+        self.tgrid               = self.calc_tgrid()
+        #3. setup time grid indices to analyze - they correspond to the respective analyze times
+        self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['momentum_analyze_times']) 
+        self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
+        print("times for which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
+        
+        #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
+        self.wavepacket     = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index , self.tgrid_plot_time, self.params['Nbas'])
+
+
+
+    def calc_Flm(self,helicity):
+
+        irun                    = self.params['irun']
+
+        # which grid point corresponds to the radial cut-off?
+        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['rgrid'].ravel() - self.params['rcutoff']))
+        print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
+
+        # read wavepacket from file
+        if self.params['wavepacket_format'] == "dat":
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".dat"
+        
+        elif self.params['wavepacket_format'] == "h5":
+            file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + helicity + "_" + str(irun) + ".h5"
+
+
+        assert os.path.isfile(file_wavepacket)
+        # we pull the wavepacket at times specified in tgrid_plot and store it in wavepacket array
+         
+       # wavepacket           = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index, self.tgrid_plot_time, self.params['Nbas'])
+
+
+        if self.params['FT_method']    == "FFT_cart":
+
+            self.calc_fftcart_psi_3d(   self.params, 
+                                        self.params['maparray'], 
+                                        self.params['rgrid'], 
+                                        self.wavepacket,
+                                        self.params['chilist'])
+
+        elif self.params['FT_method']  == "FFT_hankel":
+
+            grid_theta, grid_r = self.calc_rgrid_for_FT()
+
+            #calculate partial waves on radial grid
+            Plm         = self.calc_partial_waves(      grid_r,
+                                                        self.wavepacket)
+
+            #return Hankel transforms on the appropriate k-vector grid identical to grid_r
+            Flm, kgrid  = self.calc_hankel_transforms(  Plm, 
+                                                        grid_r)
+           
+        return Flm, kgrid
+    
     def PECD(self,funcpars):
         
        
@@ -1514,9 +1510,6 @@ class momentumfuncs(analysis):
 
         """ set up 1D momentum grids """
 
-        print(helicity)
-        #exit()
-
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
             ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
@@ -1551,10 +1544,11 @@ class momentumfuncs(analysis):
 
         obs_dict = {}
         obs_list = []
+
         """ set up time grids for evaluating wfn """
-        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
-        
-        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+
+
+        for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
   
             print(  "Generating W2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                 " " + str( self.params['time_units']) + " ----- " +\

@@ -37,7 +37,7 @@ def read_input():
                         'r_grid':       {   'type':'manual', #manual or automatic grid type. 
                                             'npts': 100,    #ignored when automatic (2*rmax)
                                             'rmin': 0.0,    #ignored when automatic
-                                            'rmax': 30.0  #ignored when automatic
+                                            'rmax': 20.0  #ignored when automatic
                                         #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                         },                   
                         'coeff_thr':    1e-15, #threshold for the wavefunction coefficients in the calculation of rho
@@ -69,9 +69,9 @@ def read_input():
                 'save':         True,
                 'scale':        "log", #unit or log
                 'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 400,    #ignored when automatic (2*rmax)
+                                    'npts': 40,    #ignored when automatic (2*rmax)
                                     'rmin': 0.0,    #ignored when automatic
-                                    'rmax': 200.0  #ignored when automatic
+                                    'rmax': 20.0  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
@@ -158,7 +158,7 @@ def read_input():
 
 
     params['analyze_space']     = [rho2D]
-    params['analyze_momentum']  = [PECD]
+    params['analyze_momentum']  = [W2Dav]
     
     params['PECD']      = PECD
     params['W2Dav']     = W2Dav
