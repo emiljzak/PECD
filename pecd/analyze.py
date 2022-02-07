@@ -84,18 +84,19 @@ class analysis:
                                     self.params['tmax'] * time_to_au, 
                                     int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
                                     endpoint = True )
-        dt      = self.params['dt'] * time_to_au
-        return tgrid, dt
+        return tgrid
 
 
-    def calc_plot_times(self,tgrid,dt,plot_times):
+    def calc_plot_times(self,tgrid,plot_times):
 
         plot_index = []
+
         for index,item in enumerate(plot_times):
-            if int( item * time_to_au / dt ) > len(tgrid):
+            if int( item  / self.params['dt'] ) > len(tgrid):
                 print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
             else:
-                plot_index.append( int(item * time_to_au / dt) )
+                plot_index.append( int(item / self.params['dt']) )
+        
         print("Final list of plottime indices in tgrid:")
         print(plot_index)
 
@@ -138,10 +139,11 @@ class analysis:
             print("time for reading .dat wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
         elif self.params['wavepacket_format'] == "h5":
+
             start_time = time.time()
 
             wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
-            #print(wavepacket.shape)
+
             with h5py.File(filename, 'r') as h5:
                 for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
                     #wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
@@ -152,7 +154,8 @@ class analysis:
                     #data = list(h5[a_group_key])
                     #print(data)
                     #exit()
-                    wavepacket[i,:] = h5[str(i)][:]
+                    #read wavepacket based on integer index 
+                    wavepacket[i,:] = h5[str(plot_index[i])][:]
             end_time = time.time()
             print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
@@ -675,26 +678,23 @@ class spacefuncs(analysis):
     """ Class of real space functions"""
 
     def __init__(self,params):
-        self.params = params
+        self.params         = params
 
         #1. read metadata from the wavepacket
-        self.helicity = self.pull_helicity()
-        self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'] = self.read_wavepacket_metadata()
+        self.helicity       = self.pull_helicity()
+        self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
-       
-        """
-        tgrid_plot_index    =  self.calc_plot_times(tgrid,dt,analyze_times) #plot time indices
-
-        tgrid_plot          = tgrid[tgrid_plot_index]
-        """
         #2. setup time grid
-        tgrid           = self.calc_tgrid()
+        tgrid               = self.calc_tgrid()
         #3. setup time grid indices to analyze - they correspond to the respective analyze times
-
+        tgrid_plot_index    =  self.calc_plot_times(tgrid,params['space_analyze_times']) 
+        tgrid_plot_time     = tgrid[tgrid_plot_index]
+        print("times for which space functions are analyzed: " + str(tgrid_plot_time/time_to_au))
+        
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
+        self.wavepacket     = self.read_wavepacket(file_wavepacket, tgrid_plot_index , tgrid_plot_time, self.params['Nbas'])
 
 
-        params['tgrid_plot_space'], params['tgrid_plot_index_space'] = analysis_obj.setup_timegrids(params['space_analyze_times'])
 
 
     def read_wavepacket_metadata(self):
@@ -708,7 +708,7 @@ class spacefuncs(analysis):
             saverate    = h5["metadata"].attrs['saverate']
             units       = h5["metadata"].attrs['units']
 
-        return t0,tmax,dt,saverate,units
+        return t0,tmax,dt,saverate,units,file_wavepacket
 
     def read_psi0(self):
         coeffs      = []
