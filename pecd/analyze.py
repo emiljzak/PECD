@@ -676,20 +676,19 @@ class spacefuncs(analysis):
 
     def __init__(self,params):
         self.params = params
-        self.helicity = self.pull_helicity()
-        self.read_wavepacket_metadata()
+
         #1. read metadata from the wavepacket
+        self.helicity = self.pull_helicity()
+        self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'] = self.read_wavepacket_metadata()
+
+       
         """
-        self.t0,self.tmax,self.dt,self.saverate,self.time_units = 
-
-        tgrid,dt            = self.calc_tgrid()
-
         tgrid_plot_index    =  self.calc_plot_times(tgrid,dt,analyze_times) #plot time indices
 
         tgrid_plot          = tgrid[tgrid_plot_index]
         """
         #2. setup time grid
-
+        tgrid           = self.calc_tgrid()
         #3. setup time grid indices to analyze - they correspond to the respective analyze times
 
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
@@ -703,10 +702,13 @@ class spacefuncs(analysis):
         file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
 
         with h5py.File(file_wavepacket, 'r') as h5:
-            for k in h5.attrs.keys():
-                print('{} => {}'.format(k, h5.attrs[k]))
-        exit()
+            t0          = h5["metadata"].attrs['t0']
+            tmax        = h5["metadata"].attrs['tmax']
+            dt          = h5["metadata"].attrs['dt']
+            saverate    = h5["metadata"].attrs['saverate']
+            units       = h5["metadata"].attrs['units']
 
+        return t0,tmax,dt,saverate,units
 
     def read_psi0(self):
         coeffs      = []
