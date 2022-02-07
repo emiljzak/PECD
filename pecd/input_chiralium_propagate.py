@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "a_expm_dt2" 
+    params['job_label']    = "test_nu_dt2" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -20,14 +20,14 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (6,6,1)
+    params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 30
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 200
+    params['prop_nbins']        = 100
 
 
     """==== time-grid parameters ===="""

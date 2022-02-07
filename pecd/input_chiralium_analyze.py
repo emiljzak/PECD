@@ -11,22 +11,22 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "b_dt6" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_nu_dt2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
-    params['prop_nbins']        = 50
+    params['prop_nbins']        = 100
 
-    params['tmax']              = 1000.0 
+    params['tmax']              = 4000.0 
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
+    params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 4 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',

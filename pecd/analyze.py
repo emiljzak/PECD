@@ -86,11 +86,34 @@ class analysis:
                                     endpoint = True )
         return tgrid
 
+    def calc_tgrid_save(self,tgrid,saverate):
+        """calculate time-grid, which is saved in the wavepacket at a given saverate"""
+
+        tgrid_saved = []
+        ind_saved = []
+        for itime in range(tgrid.shape[0]):
+            if tgrid[itime]%saverate ==0: 
+                tgrid_saved.append(tgrid[itime])
+                ind_saved.append(itime)
+
+
+        tgrid_saved = np.asarray(tgrid_saved,dtype=float)
+        ind_saved = np.asarray(ind_saved,dtype=int)
+        return ind_saved,tgrid_saved
+
+
 
     def calc_plot_times(self,tgrid,plot_times):
 
         plot_index = []
 
+        #print("plot times in calc_plot times:")
+        #print(plot_times)
+        #print("tgrid in calc_plot_times:")
+        #print(tgrid)
+        #print("dt in calc_plot_times:")
+        #print(self.params['dt'])
+        #exit()
         for index,item in enumerate(plot_times):
             if int( item  / self.params['dt'] ) > len(tgrid):
                 print("removing time: " + str(item) + " from plotting list. Time exceeds the propagation time-grid!")
@@ -160,9 +183,10 @@ class analysis:
             wavepacket = np.zeros( (tgrid_plot.shape[0],Nbas), dtype=complex)
 
             with h5py.File(filename, 'r') as h5:
+                print("Keys: %s" % h5.keys())
                 for i,(ind,t) in enumerate(zip(plot_index,list(tgrid_plot))):
-                    #wavepacket[i,:] = h5[str('{:10.3f}'.format(t))][:]
-                    #print("Keys: %s" % h5.keys())
+                   
+                    #print(ind)
                     #a_group_key = list(h5.keys())[0]
 
                     # Get the data
@@ -170,7 +194,7 @@ class analysis:
                     #print(data)
                     #exit()
                     #read wavepacket based on integer index 
-                    wavepacket[i,:] = h5[str(plot_index[i])][:]
+                    wavepacket[i,:] = h5[str(ind)][:]
             end_time = time.time()
             print("time for reading .h5 wavepacket file =  " + str("%10.3f"%(end_time - start_time)) + "s")
 
@@ -654,11 +678,40 @@ class spacefuncs(analysis):
 
         #2. setup time grid
         self.tgrid               = self.calc_tgrid()
+        print("tgrid:")
+        print(self.tgrid)
+        print("space_analyze_times:")
+        print(params['space_analyze_times'])
+
+
+
+        inds_saved, times_saved = self.calc_tgrid_save(self.tgrid,params['wfn_saverate'])
+
+        
+        tplot_ind_new = []
+        for itime,T in enumerate(params['space_analyze_times']):
+            print(T)
+            val, ind = self.find_nearest(times_saved,T)
+            tplot_ind_new.append(ind)
+
+
+        print("tplot_ind_new:")
+        print(tplot_ind_new)
+        exit()
+
         #3. setup time grid indices to analyze - they correspond to the respective analyze times
         self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['space_analyze_times']) 
+
+        print("tgrid_plot_index:")
+        print(self.tgrid_plot_index)
+        #xit()
+
         self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
-        print("times for which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
-        
+        print("times at which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
+
+
+
+        #exit()
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
         self.wavepacket     = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index , self.tgrid_plot_time, self.params['Nbas'])
 
