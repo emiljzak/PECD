@@ -325,18 +325,21 @@ class analysis:
     def legendre_expansion(self,funcpars,polargrid,fdir): 
         """ Calculate the Legendre expansion coefficients as a function of the photo-electron momentum """
 
-        Lmax    = self.params['Leg_lmax']
+        Lmax    = self.params['legendre_params']['Leg_lmax']
 
         #the number of Gauss-Legendre quadrature points used to calculate the expansion coefficients.
-        nleg    = self.params['N_leg_quad']
+        nleg    = self.params['legendre_params']['N_leg_quad']
         x, w    = np.polynomial.legendre.leggauss(nleg)
         w       = w.reshape(nleg,-1)
         #print("legendre grid")
         #print(-np.arccos(x)+np.pi)
 
 
-        kmin = self.energy_ev_to_momentum_au()
+        momentum_grid = self.energy_ev_to_momentum_au(np.asarray(self.params['legendre_params']['energy_grid']))
 
+
+        print(momentum_grid)
+        exit()
         #loop over elements of a dictionary of observables
         for elem in fdir.items():
 
@@ -473,7 +476,7 @@ class analysis:
 
         nbins   = self.params['prop_nbins'] 
         rmax    = nbins * self.params['bound_binw']
-        npts    = self.params['npts_r_ft'] 
+        npts    = self.params['FT_params']['npts_r_ft'] 
         N_red   = npts 
 
         grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
@@ -548,7 +551,7 @@ class analysis:
                     Plm.append([itime,l,m,val])
                     val = 0.0 + 1j * 0.0
 
-            if self.params['plot_Plm'] == True:
+            if self.params['FT_params']['plot_Plm'] == True:
 
 
                 #for i in range(Nr):
@@ -574,10 +577,10 @@ class analysis:
             Plm_resampled = Hank_obj.to_transform_r(elem[3])
             F = Hank_obj.qdht(Plm_resampled)
             Flm.append([elem[0],elem[1],elem[2],F])
-            if  params['plot_Flm']  == True:
+            if  self.params['FT_params']['plot_Flm']  == True:
                 plt.plot(Hank_obj.kr,np.abs(F))
         
-        if  params['plot_Flm']  == True:   
+        if  self.params['FT_params']['plot_Flm']  == True:   
             plt.show()
             plt.close()
 
@@ -1346,7 +1349,7 @@ class momentumfuncs(analysis):
         irun                    = self.params['irun']
 
         # which grid point corresponds to the radial cut-off?
-        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['rgrid'].ravel() - self.params['rcutoff']))
+        self.params['ipoint_cutoff'] = np.argmin(np.abs(self.params['rgrid'].ravel() - self.params['FT_params']['rcutoff']))
         print("ipoint_cutoff = " + str(self.params['ipoint_cutoff']))
 
         # read wavepacket from file
@@ -1363,7 +1366,7 @@ class momentumfuncs(analysis):
        # wavepacket           = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index, self.tgrid_plot_time, self.params['Nbas'])
 
 
-        if self.params['FT_method']    == "FFT_cart":
+        if self.params['FT_params']['FT_method']    == "FFT_cart":
 
             self.calc_fftcart_psi_3d(   self.params, 
                                         self.params['maparray'], 
@@ -1371,7 +1374,7 @@ class momentumfuncs(analysis):
                                         self.wavepacket,
                                         self.params['chilist'])
 
-        elif self.params['FT_method']  == "FFT_hankel":
+        elif self.params['FT_params']['FT_method']  == "FFT_hankel":
 
             grid_theta, grid_r = self.calc_rgrid_for_FT()
 

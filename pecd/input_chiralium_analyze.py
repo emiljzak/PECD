@@ -169,8 +169,7 @@ def read_input():
     params['bcoeffs']   = bcoeffs
 
     params['FT_params'] = {
-                                    'FT_method':            "FFT_hankel",  # "FFT_cart" #or quadratures
-                                    # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
+                                    'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
                                     'npts_r_ft':            500,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              30.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
@@ -180,7 +179,7 @@ def read_input():
     params['legendre_params'] = {
                                     'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-                                    'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to do Legendre decomposition
+                                    'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
                                     
                                     'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
                                     'test_leg_interp':      False,  # test interpolation of W2D by plotting
