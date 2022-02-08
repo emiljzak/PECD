@@ -370,6 +370,7 @@ class analysis:
             kgrid       = polargrid[0]
             thetagrid   = polargrid[1]
 
+
             """ Interpolate f(k,theta)"""
             #W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
             W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
@@ -435,7 +436,7 @@ class analysis:
                     for ienergy,energy in enumerate(energy_grid):
                         
                         bcoeffile.write(  str('{:8.2f}'.format(energy)) +\
-                        " ".join('{:12.8f}'.format(bcoeff[ienergy,n]) for n in range(Legmax))+"\n") 
+                        " ".join('{:12.8f}'.format(bcoeff[ienergy,n]/bcoeff[ienergy,0]) for n in range(Legmax))+"\n") 
 
            
             
@@ -578,8 +579,6 @@ class analysis:
                     val = 0.0 + 1j * 0.0
 
             if self.params['FT_params']['plot_Plm'] == True:
-
-
                 #for i in range(Nr):
                 #    plt.plot(grid_r,chilist[i](grid_r))
                 #plt.show()
@@ -1616,6 +1615,16 @@ class momentumfuncs(analysis):
 
             A 2D slice :math:`W(k,\\tilde{\\theta})` of the full 3D probability distribution :math:`W(k, \\tilde{\\theta}, \\tilde{\phi})` is calculated. A uniformly-weighted averaging over the azimuthal :math:`\phi` angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.
 
+            .. note:: `W2Dav` is a numpy.ndarray (complex) of shape (npts_r_ft, npts_th_grid). It is **always** defined on the original radial Hankel grid. Later this quantity can be interpolated for plotting in a custom radial range.
+
+            Parameters: dict
+                k_grid: dict
+                    type : 'manual' or 'automatic'
+                        For 'automatic' we use the original FT grid (Hankel) to plot and process W2Dav.
+                        For 'manual' we use a user-defined grid to plot and process W2Dav.
+                    npts : used with 'manual' gives the total number of radial grid points
+                    kmin : used with 'manual' gives the minimum radial momentum value
+                    kmax : used with 'manual' gives the maximum radial momentum value
 
             Arguments: dict
                 funcpars : dict
@@ -1636,7 +1645,7 @@ class momentumfuncs(analysis):
 
         """        
         irun       = self.params['irun']
-        Flm, kgrid = self.calc_Flm(self.helicity)
+        Flm, ft_kgrid = self.calc_Flm(self.helicity)
 
         print("Calculating 2D electron momentum probability density phi-averaged...")
 
@@ -1644,13 +1653,16 @@ class momentumfuncs(analysis):
 
         #radial grid
         if funcpars['k_grid']['type'] == "manual":
-            # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
-            kgrid1D             = kgrid#np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
+            
+            # ktuple determines the range for which we PLOT W2D. kgrid1D is the grid over which W2Dav is evaluated and kept in memory.
             funcpars['ktulpe']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            kgrid1D             = ft_kgrid
+
        
         elif funcpars['k_grid']['type'] == "automatic":
+            
             # automatic radial momentum grid as given by the resolution of the FT 
-            kgrid1D             = kgrid
+            kgrid1D             = ft_kgrid
             funcpars['ktulpe']  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
 
         #angular grid
@@ -1696,9 +1708,9 @@ class momentumfuncs(analysis):
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
-                bcoeff, kgrid       = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
+                bcoeff, momentum_grid      = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
                 obs_dict['bcoeff']  = bcoeff
-                obs_dict['kgrid']   = kgrid
+                obs_dict['kgrid']   = momentum_grid
 
             if funcpars['PES']  == True:
                 PES_av              = self.PESav(funcpars,polargrid,Wav,irun)
@@ -2141,7 +2153,7 @@ class momentumfuncs(analysis):
         kgrid       = grid[0]
         thetagrid   = grid[1]
 
-        Lmax        = self.params['pes_lmax'] 
+        Lmax        = self.params['pes_params']['pes_lmax'] 
         nleg        = Lmax
 
         x, w        = np.polynomial.legendre.leggauss(nleg)
@@ -2152,8 +2164,8 @@ class momentumfuncs(analysis):
 
 
         print("*** calculating photo-electron spectrum ***")
-        nkpoints    = params['pes_npts'] 
-        pes_kgrid   = np.linspace(0.0, params['pes_max_k'], nkpoints)
+        nkpoints    = params['pes_params']['pes_npts'] 
+        pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
         spectrum    = np.zeros(nkpoints, dtype = float)
         print("Number of Gauss-Legendre quadrature points for PES integration = " + str(w.shape[0]))
         

@@ -112,13 +112,13 @@ def read_input():
 
     W2Dav = {   'name':         'W2Dav',
                 'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                'show':         False, # show image on screen
+                'show':         True, # show image on screen
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes
-                'k_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 800,    #ignored when automatic (2*rmax)
+                'k_grid':       {   'type':'manual', #manual or automatic plotting grid type. 
+                                    'npts': 400,    #ignored when automatic (2*rmax)
                                     'kmin': 0.0,    #ignored when automatic
-                                    'kmax': 2.2  #ignored when automatic
+                                    'kmax': 2.2     #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
@@ -133,7 +133,7 @@ def read_input():
                 'PES_params': {     
                                 'name':         'PES',
                                 'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
-                                'show':         False, # show image on screen
+                                'show':         True, # show image on screen
                                 'save':         True, # save array in file
                             
                                 'k-axis':       "energy", # energy (eV) or momentum (a.u.)
@@ -179,7 +179,7 @@ def read_input():
     params['legendre_params'] = {
                                     'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-                                    'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
+                                    'energy_grid':          [5.0,6.0,7.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
                                     'plot_bcoeffs':         True,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file
