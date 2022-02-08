@@ -349,6 +349,12 @@ class analysis:
                 momentum_grid: numpy.ndarray
                     momentum grid on which the b-coeffs are calculated
 
+            An example plot of the legendre expansion coefficients (Legmax=20) vs. electron's momentum (in a.u.) is plotted below (in log-scale):
+
+            .. figure:: _images/bcoeffs_example.png
+                :height: 400
+                :width: 400
+                :align: center
 
         """
 
@@ -460,7 +466,7 @@ class analysis:
                         W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
                         bcoeff_plot[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-                    plt.plot(kgrid_plot,np.log(bcoeff_plot[:,n]),label=n)
+                    plt.plot(kgrid_plot,np.log(np.abs(bcoeff_plot[:,n])),label=n)
                 plt.legend()
                 plt.show()
                 plt.close()

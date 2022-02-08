@@ -177,7 +177,7 @@ def read_input():
                                     
                                     
     params['legendre_params'] = {
-                                    'Leg_lmax':             8,      # maximum angular momentum in the Legendre expansion
+                                    'Leg_lmax':             20,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
                                     'energy_grid':          [5.7,28.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
