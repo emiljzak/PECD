@@ -179,8 +179,8 @@ def read_input():
 
 
     params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
-    params['Leg_plot_reconst']  = True   # plot and compare the reconstructed distribution
-    params['Leg_test_interp']   = True  # test interpolation of W2D by plotting
+    params['test_leg_reconst']  = True   # plot and compare the reconstructed distribution
+    params['test_leg_interp']   = True  # test interpolation of W2D by plotting
     params['plot_bcoeffs']      = True  # plot b-coefficients
     params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
     params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion

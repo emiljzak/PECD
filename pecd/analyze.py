@@ -287,28 +287,40 @@ class analysis:
 
             return Ymat
 
-    def legendre_expansion(self,funcpars,grid,fdir): 
+    def legendre_expansion(self,funcpars,polargrid,fdir): 
         """ Calculate the Legendre expansion coefficients as a function of the photo-electron momentum """
 
+        Lmax    = self.params['Leg_lmax']
+
+        #the number of Gauss-Legendre quadrature points used to calculate the expansion coefficients.
+        nleg    = 100
+        x, w    = np.polynomial.legendre.leggauss(nleg)
+        w       = w.reshape(nleg,-1)
+        #print("legendre grid")
+        #print(-np.arccos(x)+np.pi)
+
+
+        #loop over elements of a dictionary of observables
         for elem in fdir.items():
 
             f       = elem[1]
             plane   = elem[0]
             print("plane = " + str(plane))
-            kgrid       = grid[0]
-            thetagrid   = grid[1]
+            kgrid       = polargrid[0]
+            thetagrid   = polargrid[1]
 
             """ Interpolate f(k,theta)"""
             #W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
             W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
 
-            if self.params['Leg_test_interp'] == True:
+            #test: plot the interpolated W(k,theta) and compare to the original discrete W(k,theta).
+            if self.params['test_leg_interp'] == True:
 
                 fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
                 spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax = fig.add_subplot(spec[0, 0], projection='polar')
 
-                #plot W_av on the original grid
+                #plot the interpolated W_av on the original grid
                 W_interp_mesh = W_interp(kgrid[:,0], thetagrid[0,:])
               
                 #line_W_original = ax.contourf(kgrid, thetagrid, W_interp_mesh, 
@@ -316,30 +328,16 @@ class analysis:
                 #plt.show()
                 #plt.close()
                 #plot W_av on test grid 
-                thetagridtest       = np.linspace(0, 2.0*np.pi, 400)
-                kgridtest           = np.linspace(0, 2, 600)
+                thetagridtest                   = np.linspace(0, 2.0*np.pi, 360)
+                kgridtest                       = np.linspace(funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+
                 kgridtestmesh ,thetatestmesh    = np.meshgrid(kgridtest, thetagridtest,indexing='ij' )
-                W_interp_testmesh   = W_interp( kgridtest , thetagridtest )
-                line_test = ax.contourf(  thetatestmesh ,kgridtestmesh, W_interp_testmesh , 
+                W_interp_testmesh               = W_interp(kgridtest, thetagridtest )
+                line_test = ax.contourf(  thetatestmesh, kgridtestmesh, W_interp_testmesh , 
                                         100, cmap = 'jet') 
                 plt.show()
                 plt.close()
 
-
-            Lmax    = self.params['Leg_lmax'] 
-            nleg     = 100
-            
-            x, w    = np.polynomial.legendre.leggauss(nleg)
-
-
-            #print(x.shape)
-            #print(w.shape)
-            #print(x)
-            #print("legendre grid")
-            #print(-np.arccos(x)+np.pi)
-
-            #exit()
-            w       = w.reshape(nleg,-1)
 
             nkpoints    = self.params['Leg_npts_r'] # number of radial grid points at which the b-coefficients are calculated
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
@@ -402,11 +400,11 @@ class analysis:
 
 
            
-            #plot Legendre-reconstructed distribution on test grid 
+            #test: plot Legendre-reconstructed distribution on test grid 
      
             kgrid_leg_mesh, thetagrid_leg_mesh = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
 
-            if self.params['Leg_plot_reconst'] == True:
+            if self.params['test_leg_reconst'] == True:
 
                 W_legendre = np.zeros((kgrid_leg_mesh.shape[0],thetagrid_leg_mesh.shape[1]), dtype = float)
 
@@ -1549,34 +1547,48 @@ class momentumfuncs(analysis):
 
 
     def W2Dav(self,funcpars):
-        
+        """2D electron momentum probability distribution averaged over the :math:`\phi` angle.
+
+            A 2D slice :math:`W(k,\\tilde{\\theta})` of the full 3D probability distribution :math:`W(k, \\tilde{\\theta}, \\tilde{\phi})` is calculated. A uniformly-weighted averaging over the azimuthal :math:`\phi` angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.
+
+
+            Arguments: dict
+                funcpars : dict
+                    A dictionary with all relevant W2Dav function parameters
+
+            Returns: tuple
+                obs_list : list
+                    A list of the form [i,t,obs_dict], where i is the time-index, t is the time and obs_dict is a dictionary of observables calculated at time t.
+                polargrid: numpy.ndarray
+                    2D polar grid or :math:`(k,\\tilde{\\theta})`
+             
+            An example distribution is plotted below:
+
+            .. figure:: _images/W2Dav_example.png
+                :height: 400
+                :width: 400
+                :align: center
+
+        """        
         irun       = self.params['irun']
         Flm, kgrid = self.calc_Flm(self.helicity)
 
-        print("Calculating 2D electron momentum probability density phi-averaged")
+        print("Calculating 2D electron momentum probability density phi-averaged...")
 
         """ set up 1D momentum grids """
 
+        #radial grid
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
-            ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktulpe']  = ktuple
             kgrid1D             = kgrid#np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
-
+            funcpars['ktulpe']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+       
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D             = kgrid
-            ktuple              = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
-            funcpars['ktulpe']  = ktuple
+            funcpars['ktulpe']  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
 
-
-        print("kgrid from Flm: ")
-        print(kgrid)
-        print("\n")
-        print("kgrid1D defined by user:")
-        print(kgrid1D)
-        #exit()
-
+        #angular grid
         thtuple             = funcpars['th_grid']
         funcpars['thtuple'] = thtuple
         unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
@@ -1614,8 +1626,8 @@ class momentumfuncs(analysis):
 
             if funcpars['save'] == True:
                 with open( self.params['job_directory'] +  "W2Dav" + "_" + str(irun) + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + self.helicity + ".dat" , 'w') as rhofile:   
-                    np.savetxt(rhofile, Wav, fmt = '%10.4e')
+                    "_" + self.helicity + ".dat" , 'w') as Wavfile:   
+                    np.savetxt(Wavfile, Wav, fmt = '%10.4e')
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
