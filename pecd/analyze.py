@@ -71,10 +71,8 @@ class analysis:
             momentum :math:`k = 2\sqrt{E}` in `au`.
 
         """
-        array   /= constants.au_to_ev
-        momentum = 2.0 * np.sqrt(array) 
-
-        return momentum
+    
+        return  2.0 * np.sqrt(array/constants.au_to_ev) 
 
 
     def find_nearest(self,array, value):
@@ -365,8 +363,8 @@ class analysis:
         x, w            = np.polynomial.legendre.leggauss(nleg)
         w               = w.reshape(nleg,-1)
         energy_grid     = np.asarray(self.params['legendre_params']['energy_grid'])
+        #be careful when assigning new values to attributes inside functions: they change globally.
         momentum_grid   = self.energy_ev_to_momentum_au(energy_grid)
-
 
         #loop over elements of a dictionary of observables
         for elem in fdir.items():
@@ -2181,18 +2179,14 @@ class momentumfuncs(analysis):
                     parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
                 polargrid : numpy.ndarray, dtype = float, shape = ()
                     polar meshgrid over which the input distribution is defined. It has the shape = (npts_r_ft,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
-                fdir :  dict
-                    dictionary containing the probability distribution(s) to be decomposed
+                Wav : numpy.ndarray, dtype = float, shape = (npts_r_ft,npts_the) 
+                    array containing :math:`(E,\\tilde{\\theta})` on the FT radial grid and user-defined theta-grid.
 
-            Returns: tuple
-                bcoef : numpy.ndarray, dtype = float, shape = (len(energy_grid),Legmax+1)
-                    Array of the legendre expansion coefficients calculated at energies specified by the used in   params['legendre_params']['energy_grid']
-                momentum_grid: numpy.ndarray
-                    momentum grid on which the b-coeffs are calculated
+            Returns: None
+              
+            An example photo-electron spectrum for the chiralim model molecule is shown below:
 
-            An example plot of the legendre expansion coefficients (Legmax=20) vs. electron's momentum (in a.u.) is plotted below (in log-scale):
-
-            .. figure:: _images/bcoeffs_example.png
+            .. figure:: _images/pes_example.png
                 :height: 400
                 :width: 400
                 :align: center
