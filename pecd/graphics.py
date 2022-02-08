@@ -264,12 +264,6 @@ def gparams_W2D_polar():
 def gparams_PES():
 
     """" ===== Plot parameters ====="""
-    #vmin,vmax: float : value range for the plot
-    #ncont:      int: number of contours
-
-    vmin    = 0.0
-    vmax    = 1.0
-    ncont   = 200
     resolution = 200
     fig_size_x = 3.5
     fig_size_y = 3.5
