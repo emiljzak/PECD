@@ -357,8 +357,8 @@ class analysis:
         #print("legendre grid")
         #print(-np.arccos(x)+np.pi)
 
-
-        momentum_grid = self.energy_ev_to_momentum_au(np.asarray(self.params['legendre_params']['energy_grid']))
+        energy_grid = np.asarray(self.params['legendre_params']['energy_grid'])
+        momentum_grid = self.energy_ev_to_momentum_au(energy_grid)
 
 
         #loop over elements of a dictionary of observables
@@ -375,7 +375,7 @@ class analysis:
             W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
 
             #test: plot the interpolated W(k,theta) and compare to the original discrete W(k,theta).
-            if self.params['test_leg_interp'] == True:
+            if self.params['legendre_params']['test_leg_interp'] == True:
 
                 fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
                 spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
@@ -399,24 +399,15 @@ class analysis:
                 plt.show()
                 plt.close()
 
+           
+            """ calculating Legendre moments """  
             # nkpoints is the number of radial grid points at which the b-coefficients are calculated 
             nkpoints    = momentum_grid.shape[0]
             bcoeff      = np.zeros((nkpoints,Legmax+1), dtype = float)
             kgrid1D     = momentum_grid
 
-            """ calculating Legendre moments """
-            print("Calculating b_n(E) coefficients in E range: " + str(self.params['legendre_params']['energy_grid'][0]) + " ... " + str(self.params['legendre_params']['energy_grid'][nkpoints]))
+            print("Calculating b_n(E) coefficients in E range: " + str(self.params['legendre_params']['energy_grid']))
             
-            #print("-acos(x) = " + str(-np.arccos(x)))
-            #Pn = eval_legendre(2, x).reshape(nleg,-1) 
-            #plt.plot(x,Pn)
-            #plt.show()
-            #exit()
-            
-            #kgridmesh_btest, thetamesh_btest = np.meshgrid(kgrid1D, -np.arccos(x)+np.pi,indexing='ij')
-            #print("legendre grid")
-            #print(-np.arccos(x)+np.pi)
-
             for n in range(0,Legmax+1):
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
@@ -436,28 +427,41 @@ class analysis:
                 #plt.show()
                 #exit()
 
-                if self.params['plot_bcoeffs'] == True:
-                    plt.plot(kgrid1D,np.log(bcoeff[:,n]),label=n)
-                    plt.legend()
-
-
-            if self.params['plot_bcoeffs'] == True:
-                plt.show()
-                plt.close()
-        
-            if self.params['save_bcoeffs'] == True:
+            if self.params['legendre_params']['save_bcoeffs'] == True:
 
                 with open(  self.params['job_directory'] +  "bcoeffs" +\
                     "_" + str(irun) + ".dat" , 'w') as bcoeffile:
                     
-                    for ielem, k in enumerate(kgrid1D):
-                    
-                        bcoeffile.write(   str('{:8.2f}'.format(k)) +\
-                        " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(self.params['Leg_lmax'] ))) 
+                    for ienergy,energy in enumerate(energy_grid):
+                        
+                        bcoeffile.write(  str('{:8.2f}'.format(energy)) +\
+                        " ".join('{:12.8f}'.format(bcoeff[ienergy,n]) for n in range(Legmax))+"\n") 
 
            
+            
+            if self.params['legendre_params']['plot_bcoeffs'] == True:
+                nkpoints_plot    = kgrid.shape[0]
+                bcoeff_plot      = np.zeros((nkpoints_plot,Legmax+1), dtype = float)
+                
+                print("Calculating b_n(E) coefficients for plotting")
+                for n in range(0,Legmax+1):
+
+                    Pn = eval_legendre(n, x).reshape(nleg,-1)
+
+                    for ipoint,k in enumerate(list(kgrid)):
+                        #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
+                        W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                        bcoeff_plot[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+
+                    plt.plot(kgrid[:,0],np.log(bcoeff_plot[:,n]),label=n)
+                plt.legend()
+                plt.show()
+                plt.close()
+        
+
+
             #test: plot Legendre-reconstructed distribution on test grid 
-            if self.params['test_leg_reconst'] == True:
+            if self.params['legendre_params']['test_leg_reconst'] == True:
                 kgridtest       = np.linspace(funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
 
                 thgridtest      = np.linspace(0.0, 2.0 * np.pi, 360, endpoint=False )

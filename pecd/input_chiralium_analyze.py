@@ -181,7 +181,7 @@ def read_input():
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
                                     'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
-                                    'plot_bcoeffs':         False,  # plot b-coefficients
+                                    'plot_bcoeffs':         True,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file
                                                          
                                     'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
