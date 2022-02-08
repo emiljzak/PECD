@@ -168,34 +168,33 @@ def read_input():
     params['rho2D']     = rho2D
     params['bcoeffs']   = bcoeffs
 
-
-    params['FT_method']       = "FFT_hankel"    # "FFT_cart" #or quadratures
-    # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-    params['npts_r_ft']       = 500             # number of radial points over which the Hankel Transform is evaluated.
-    params['rcutoff']         = 30.0            # radial cut-off of the wavepacket in the calculation of momentum space distributions
-    
-    params['plot_Plm']        = False           # plot and save photoelectron partial waves?
-    params['plot_Flm']        = False           # plot and save individual Hankel transforms?
-
+    params['FT_params'] = {
+                                    'FT_method':            "FFT_hankel",  # "FFT_cart" #or quadratures
+                                    # Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
+                                    'npts_r_ft':            500,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'rcutoff':              30.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
+                                    'plot_Plm':             False,  # plot and save photoelectron partial waves?
+                                    'plot_Flm':             False } # plot and save individual Hankel transforms?
+                                    
+                                    
     params['legendre_params'] = {
-        'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
-        'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-        'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
-        'test_leg_interp':      False,  # test interpolation of W2D by plotting
-        'plot_bcoeffs':         False,  # plot b-coefficients
-        'Leg_npts_r':           50,     # number of radial points for plotting of the Legendre expansion
-        'Leg_npts_th':          360,    # number of angular points for plotting of the Legendre expansion
-        'save_bcoeffs':         True }
+                                    'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
+                                    'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
+                                    'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
+                                    'test_leg_interp':      False,  # test interpolation of W2D by plotting
+                                    'plot_bcoeffs':         False,  # plot b-coefficients
+                                    'Leg_npts_r':           50,     # number of radial points for plotting of the Legendre expansion
+                                    'Leg_npts_th':          360,    # number of angular points for plotting of the Legendre expansion
+                                    'save_bcoeffs':         True }
 
+    params['pes_params'] = {
+                                    'pes_npts':             1000,   # numer of points for PES evaluation
+                                    'pes_max_k':            2.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
+                                    'pes_lmax':             100 }
 
-    params['pes_npts']       = 1000   # numer of points for PES evaluation
-    params['pes_max_k']      = 2.2     # maximum momentum in a.u. Must be lower than the momentum range for W2D
-    params['pes_lmax']       = 100
-
-
-    params['pecd_lmax']       = 4               # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-    params['pecd_energies']   = [0.62]   # (a.u.) (list) at what values of the electron momentum do you want PECD?
-    
+    params['pecd_params'] = {
+                                'pecd_lmax':                4,       # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
+                                'pecd_energies':            [0.62] } # (a.u.) (list) at what values of the electron momentum do you want PECD?
 
     return params
 
