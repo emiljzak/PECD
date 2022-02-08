@@ -118,7 +118,7 @@ def read_input():
                 'k_grid':       {   'type':'manual', #manual or automatic plotting grid type. 
                                     'npts': 400,    #ignored when automatic (2*rmax)
                                     'kmin': 0.0,    #ignored when automatic
-                                    'kmax': 2.2     #ignored when automatic
+                                    'kmax': 1.0     #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
@@ -177,9 +177,9 @@ def read_input():
                                     
                                     
     params['legendre_params'] = {
-                                    'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
+                                    'Leg_lmax':             8,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-                                    'energy_grid':          [5.0,6.0,7.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
+                                    'energy_grid':          [5.7,28.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
                                     'plot_bcoeffs':         True,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file

@@ -331,12 +331,16 @@ class analysis:
                 W(k,\\tilde{\\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\\tilde{\\theta})
                 :label: legendre_expansion
             
+            This function carries options for:
+            a) saving legendre expansion coefficients for a chosen momentum grid (`save_bcoeffs=True`)
+            b) plotting legendre expansion coefficients for a chosen momentum grid (`plot_bcoeffs=True`)
+
             Arguments: tuple
                 funcpars : dict
-                    parent function parameters
+                    parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
                 polargrid : numpy.ndarray, dtype = float, shape = ()
-                    polar meshgrid over which the input distribution is defined
-                fdig :  dict
+                    polar meshgrid over which the input distribution is defined. It has the shape = (npts_r_ft,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
+                fdir :  dict
                     dictionary containing the probability distribution(s) to be decomposed
 
             Returns: tuple
@@ -367,13 +371,13 @@ class analysis:
             f       = elem[1]
             plane   = elem[0]
             print("plane = " + str(plane))
-            kgrid       = polargrid[0]
+            ft_kgrid       = polargrid[0] #original FT grid over which W2D is defined. Checked. 6.02.2022
             thetagrid   = polargrid[1]
 
 
             """ Interpolate f(k,theta)"""
             #W_interp    = interpolate.interp2d(kgrid, thetagrid, f, kind='cubic')
-            W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
+            W_interp    = interpolate.RectBivariateSpline(ft_kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
 
             #test: plot the interpolated W(k,theta) and compare to the original discrete W(k,theta).
             if self.params['legendre_params']['test_leg_interp'] == True:
@@ -383,7 +387,7 @@ class analysis:
                 ax = fig.add_subplot(spec[0, 0], projection='polar')
 
                 #plot the interpolated W_av on the original grid
-                W_interp_mesh = W_interp(kgrid[:,0], thetagrid[0,:])
+                W_interp_mesh = W_interp(ft_kgrid[:,0], thetagrid[0,:])
               
                 #line_W_original = ax.contourf(kgrid, thetagrid, W_interp_mesh, 
                 #                        100, cmap = 'jet') 
@@ -405,7 +409,7 @@ class analysis:
             # nkpoints is the number of radial grid points at which the b-coefficients are calculated 
             nkpoints    = momentum_grid.shape[0]
             bcoeff      = np.zeros((nkpoints,Legmax+1), dtype = float)
-            kgrid1D     = momentum_grid
+     
 
             print("Calculating b_n(E) coefficients in E range: " + str(self.params['legendre_params']['energy_grid']))
             
@@ -413,7 +417,7 @@ class analysis:
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
 
-                for ipoint,k in enumerate(list(kgrid1D)):
+                for ipoint,k in enumerate(list(momentum_grid)):
                     #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
                     W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
                     bcoeff[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
@@ -441,7 +445,9 @@ class analysis:
            
             
             if self.params['legendre_params']['plot_bcoeffs'] == True:
-                nkpoints_plot    = kgrid.shape[0]
+                       
+                kgrid_plot =   np.linspace(funcpars['ktuple'][0],funcpars['ktuple'][1],funcpars['ktuple'][2],endpoint=True) 
+                nkpoints_plot    = funcpars['ktuple'][2] #ktuple determines the plotting grid
                 bcoeff_plot      = np.zeros((nkpoints_plot,Legmax+1), dtype = float)
                 
                 print("Calculating b_n(E) coefficients for plotting")
@@ -449,12 +455,12 @@ class analysis:
 
                     Pn = eval_legendre(n, x).reshape(nleg,-1)
 
-                    for ipoint,k in enumerate(list(kgrid)):
+                    for ipoint,k in enumerate(list(kgrid_plot)):
                         #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
                         W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
                         bcoeff_plot[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-                    plt.plot(kgrid[:,0],np.log(bcoeff_plot[:,n]),label=n)
+                    plt.plot(kgrid_plot,np.log(bcoeff_plot[:,n]),label=n)
                 plt.legend()
                 plt.show()
                 plt.close()
@@ -1100,7 +1106,7 @@ class spacefuncs(analysis):
         unity_vec       = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D        = thtuple[1] * unity_vec
 
-        funcpars['rtulpe'] = rtuple
+        funcpars['rtuple'] = rtuple
         funcpars['thtuple'] = thtuple
         
         #for xi in range(self.params['Nbas_chi']):
@@ -1152,7 +1158,7 @@ class spacefuncs(analysis):
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
-        rtuple      = funcpars['rtulpe'] #range for r
+        rtuple      = funcpars['rtuple'] #range for r
         thtuple     = funcpars['thtuple'] #range for theta
 
         """
@@ -1655,15 +1661,15 @@ class momentumfuncs(analysis):
         if funcpars['k_grid']['type'] == "manual":
             
             # ktuple determines the range for which we PLOT W2D. kgrid1D is the grid over which W2Dav is evaluated and kept in memory.
-            funcpars['ktulpe']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktuple']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             kgrid1D             = ft_kgrid
 
        
         elif funcpars['k_grid']['type'] == "automatic":
-            
+
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D             = ft_kgrid
-            funcpars['ktulpe']  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
+            funcpars['ktuple']  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
 
         #angular grid
         thtuple             = funcpars['th_grid']
@@ -1745,7 +1751,7 @@ class momentumfuncs(analysis):
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
-        ktuple      = funcpars['ktulpe'] #range for k
+        ktuple      = funcpars['ktuple'] #range for k
         thtuple     = funcpars['thtuple'] #range for theta
 
         """
@@ -1902,14 +1908,14 @@ class momentumfuncs(analysis):
         if funcpars['k_grid']['type'] == "manual":
             # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
             ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktulpe']  = ktuple
+            funcpars['ktuple']  = ktuple
             kgrid1D             = kgrid # kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
 
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D             = kgrid
             ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktulpe']  = ktuple
+            funcpars['ktuple']  = ktuple
 
         thtuple             = funcpars['th_grid']
         funcpars['thtuple'] = thtuple
@@ -1990,7 +1996,7 @@ class momentumfuncs(analysis):
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
-        ktuple      = funcpars['ktulpe'] #range for k
+        ktuple      = funcpars['ktuple'] #range for k
         thtuple     = funcpars['thtuple'] #range for theta
 
         """
