@@ -358,17 +358,14 @@ class analysis:
 
         """
 
-        Legmax    = self.params['legendre_params']['Leg_lmax']
+        Legmax          = self.params['legendre_params']['Leg_lmax']
 
         #the number of Gauss-Legendre quadrature points used to calculate the expansion coefficients.
-        nleg    = self.params['legendre_params']['N_leg_quad']
-        x, w    = np.polynomial.legendre.leggauss(nleg)
-        w       = w.reshape(nleg,-1)
-        #print("legendre grid")
-        #print(-np.arccos(x)+np.pi)
-
-        energy_grid = np.asarray(self.params['legendre_params']['energy_grid'])
-        momentum_grid = self.energy_ev_to_momentum_au(energy_grid)
+        nleg            = self.params['legendre_params']['N_leg_quad']
+        x, w            = np.polynomial.legendre.leggauss(nleg)
+        w               = w.reshape(nleg,-1)
+        energy_grid     = np.asarray(self.params['legendre_params']['energy_grid'])
+        momentum_grid   = self.energy_ev_to_momentum_au(energy_grid)
 
 
         #loop over elements of a dictionary of observables
@@ -2159,11 +2156,44 @@ class momentumfuncs(analysis):
             
             self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
-    def PESav(self,funcpars,grid,Wav,irun):
-        """ photo-electron spectrum from phi-averaged momentum distribution"""
+    def PESav(self,funcpars,polargrid,Wav,irun):
+        """Calculate the photo-electron spectrum (PES) from a phi-averaged momentum distribution.
+            
+            Perform the following integration:
+
+            .. math::
+                \sigma(E) = \int \sin\\theta d\\theta W(E,\\tilde{\\theta}) 
+                :label: PES_definition
+            
+            This function carries options for:
+            a) saving the PES for a chosen momentum grid (`save_PES=True`)
+            b) psaving the PES for a chosen momentum grid (`plot_PES=True`)
+
+            Arguments: tuple
+                funcpars : dict
+                    parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
+                polargrid : numpy.ndarray, dtype = float, shape = ()
+                    polar meshgrid over which the input distribution is defined. It has the shape = (npts_r_ft,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
+                fdir :  dict
+                    dictionary containing the probability distribution(s) to be decomposed
+
+            Returns: tuple
+                bcoef : numpy.ndarray, dtype = float, shape = (len(energy_grid),Legmax+1)
+                    Array of the legendre expansion coefficients calculated at energies specified by the used in   params['legendre_params']['energy_grid']
+                momentum_grid: numpy.ndarray
+                    momentum grid on which the b-coeffs are calculated
+
+            An example plot of the legendre expansion coefficients (Legmax=20) vs. electron's momentum (in a.u.) is plotted below (in log-scale):
+
+            .. figure:: _images/bcoeffs_example.png
+                :height: 400
+                :width: 400
+                :align: center
+
+        """      
     
-        kgrid       = grid[0]
-        thetagrid   = grid[1]
+        kgrid       = polargrid[0]
+        thetagrid   = polargrid[1]
 
         Lmax        = self.params['pes_params']['pes_lmax'] 
         nleg        = Lmax
@@ -2175,11 +2205,12 @@ class momentumfuncs(analysis):
         W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], Wav[:,:], kx=3, ky=3)
 
 
-        print("*** calculating photo-electron spectrum ***")
+        print("*** calculating the photo-electron spectrum ***")
+
         nkpoints    = params['pes_params']['pes_npts'] 
         pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
         spectrum    = np.zeros(nkpoints, dtype = float)
-        print("Number of Gauss-Legendre quadrature points for PES integration = " + str(w.shape[0]))
+        print("The number of Gauss-Legendre quadrature points for the PES integration = " + str(w.shape[0]))
         
         for ipoint,k in enumerate(list(pes_kgrid)):   
         
@@ -2188,9 +2219,10 @@ class momentumfuncs(analysis):
         
         self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
+
     def PES_plot(self,funcpars,spectrum,kgrid,irun):
 
-        """ Produces plot of the PES """
+        """ Produces a plot of the PES """
        
         plot_params = funcpars['PES_params']['plot'][1] #all plot params
 

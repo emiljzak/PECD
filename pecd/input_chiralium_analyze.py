@@ -127,8 +127,6 @@ def read_input():
                 
                 'legendre':     True, # calculate Legendre decomposition
 
-
-
                 'PES':          True, # calculate PES
                 'PES_params': {     
                                 'name':         'PES',
