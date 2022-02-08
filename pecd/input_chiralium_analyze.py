@@ -180,13 +180,12 @@ def read_input():
                                     'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
                                     'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
-                                    
-                                    'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
-                                    'test_leg_interp':      False,  # test interpolation of W2D by plotting
+
                                     'plot_bcoeffs':         False,  # plot b-coefficients
-                                    'Leg_npts_r':           50,     # number of radial points for plotting of the Legendre expansion
-                                    'Leg_npts_th':          360,    # number of angular points for plotting of the Legendre expansion
-                                    'save_bcoeffs':         True }
+                                    'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file
+                                                         
+                                    'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
+                                    'test_leg_interp':      False}  # test interpolation of W2D by plotting 
 
     params['pes_params'] = {
                                     'pes_npts':             1000,   # numer of points for PES evaluation

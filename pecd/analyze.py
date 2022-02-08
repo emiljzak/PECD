@@ -322,10 +322,33 @@ class analysis:
 
             return Ymat
 
-    def legendre_expansion(self,funcpars,polargrid,fdir): 
-        """ Calculate the Legendre expansion coefficients as a function of the photo-electron momentum """
+    def legendre_expansion(self,funcpars,polargrid,fdir):
+        """Calculate the Legendre expansion coefficients as a function of the photo-electron momentum. 
+            
+            Perform the following Legendre decomposition:
 
-        Lmax    = self.params['legendre_params']['Leg_lmax']
+            .. math::
+                W(k,\\tilde{\\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\\tilde{\\theta})
+                :label: legendre_expansion
+            
+            Arguments: tuple
+                funcpars : dict
+                    parent function parameters
+                polargrid : numpy.ndarray, dtype = float, shape = ()
+                    polar meshgrid over which the input distribution is defined
+                fdig :  dict
+                    dictionary containing the probability distribution(s) to be decomposed
+
+            Returns: tuple
+                bcoef : numpy.ndarray, dtype = float, shape = (len(energy_grid),Legmax+1)
+                    Array of the legendre expansion coefficients calculated at energies specified by the used in   params['legendre_params']['energy_grid']
+                momentum_grid: numpy.ndarray
+                    momentum grid on which the b-coeffs are calculated
+
+
+        """
+
+        Legmax    = self.params['legendre_params']['Leg_lmax']
 
         #the number of Gauss-Legendre quadrature points used to calculate the expansion coefficients.
         nleg    = self.params['legendre_params']['N_leg_quad']
@@ -338,8 +361,6 @@ class analysis:
         momentum_grid = self.energy_ev_to_momentum_au(np.asarray(self.params['legendre_params']['energy_grid']))
 
 
-        print(momentum_grid)
-        exit()
         #loop over elements of a dictionary of observables
         for elem in fdir.items():
 
@@ -378,16 +399,13 @@ class analysis:
                 plt.show()
                 plt.close()
 
-            # the number of radial grid points at which the b-coefficients are calculated
-            nkpoints    = self.params['Leg_npts_r'] 
-            bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
+            # nkpoints is the number of radial grid points at which the b-coefficients are calculated 
+            nkpoints    = momentum_grid.shape[0]
+            bcoeff      = np.zeros((nkpoints,Legmax+1), dtype = float)
+            kgrid1D     = momentum_grid
 
-            kgrid1D       = np.linspace(0.05, self.params['pes_max_k'], nkpoints)
-            thgrid1D      = np.linspace(0.0, 2.0 * np.pi, self.params['Leg_npts_th'], endpoint=False )
-            
-            
             """ calculating Legendre moments """
-            print("Calculating b(k) coefficients in k range: " + str(0.05) + " ... " + str(self.params['pes_max_k']))
+            print("Calculating b_n(E) coefficients in E range: " + str(self.params['legendre_params']['energy_grid'][0]) + " ... " + str(self.params['legendre_params']['energy_grid'][nkpoints]))
             
             #print("-acos(x) = " + str(-np.arccos(x)))
             #Pn = eval_legendre(2, x).reshape(nleg,-1) 
@@ -399,15 +417,14 @@ class analysis:
             #print("legendre grid")
             #print(-np.arccos(x)+np.pi)
 
-
-            for n in range(0,Lmax+1):
+            for n in range(0,Legmax+1):
 
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
 
                 for ipoint,k in enumerate(list(kgrid1D)):
                     #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
-                    W_interp1     =   W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
-                    bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+                    W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                    bcoeff[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
                 #print(W_interp1.shape)
                 #W_interp2    = W_interp(kgrid1D,-np.arccos(x)+np.pi)
@@ -440,19 +457,24 @@ class analysis:
 
            
             #test: plot Legendre-reconstructed distribution on test grid 
-     
-            kgrid_leg_mesh, thetagrid_leg_mesh = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
-
             if self.params['test_leg_reconst'] == True:
+                kgridtest       = np.linspace(funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+
+                thgridtest      = np.linspace(0.0, 2.0 * np.pi, 360, endpoint=False )
+        
+                kgrid_leg_mesh, thetagrid_leg_mesh = np.meshgrid(kgridtest, thgridtest, indexing='ij')
+
+                nkpoints_reconstruct    = funcpars['k_grid']['npts']
+                bcoeff_reconstruct      = np.zeros((nkpoints_reconstruct,Legmax+1), dtype = float)
 
                 W_legendre = np.zeros((kgrid_leg_mesh.shape[0],thetagrid_leg_mesh.shape[1]), dtype = float)
 
-                for ipoint in range(nkpoints):
+                for ipoint in range(nkpoints_reconstruct):
 
-                    for n in range(0,Lmax+1):
+                    for n in range(0,Legmax+1):
 
                         Pn                      = eval_legendre(n, np.cos(thetagrid_leg_mesh[0,:])).reshape(thetagrid_leg_mesh.shape[1],1)
-                        W_legendre[ipoint,:]    += bcoeff[ipoint,n] * Pn[:,0] 
+                        W_legendre[ipoint,:]    += bcoeff_reconstruct[ipoint,n] * Pn[:,0] 
                        
                 fig     = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
                 spec    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
@@ -466,7 +488,7 @@ class analysis:
                 plt.colorbar(line_legendre, ax=ax, aspect=30) 
                 plt.show()
 
-        return bcoeff, kgrid
+        return bcoeff, momentum_grid
 
 
 
