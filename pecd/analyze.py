@@ -2212,7 +2212,7 @@ class momentumfuncs(analysis):
         nkpoints    = params['pes_params']['pes_npts'] 
         pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
         spectrum    = np.zeros(nkpoints, dtype = float)
-        spectrum_arr    = np.zeros((10,nkpoints), dtype = float)
+        #spectrum_arr    = np.zeros((10,nkpoints), dtype = float)
 
 
         nleg        = self.params['pes_params']['pes_lmax'] 
@@ -2221,24 +2221,25 @@ class momentumfuncs(analysis):
 
 
         print("The number of Gauss-Legendre quadrature points for the PES integration = " + str(w.shape[0]))
+        """
         for icol,num_leg in enumerate(list(np.linspace(1,10,9,dtype=int))):
             print(num_leg)
             nleg        = num_leg #self.params['pes_params']['pes_lmax'] +10
             x, w        = np.polynomial.legendre.leggauss(nleg)
             w           = w.reshape(nleg,-1)
+        """
+        for ipoint,k in enumerate(list(pes_kgrid)):   
+            W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+            #W_interp1                   = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+            spectrum[ipoint]   = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
 
-            for ipoint,k in enumerate(list(pes_kgrid)):   
-                W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
-                #W_interp1                   = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
-                spectrum_arr[icol,ipoint]   = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
-
-            self.PES_plot(funcpars,spectrum_arr[icol,:],pes_kgrid,irun)
+        self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
 
 
-            if funcpars['PES_params']['show']  == True:
-                plt.show()
-                plt.legend()  
-                plt.close()
+        if funcpars['PES_params']['show']  == True:
+            plt.show()
+            plt.legend()  
+            plt.close()
 
 
     def PES_plot(self,funcpars,spectrum,kgrid,irun):
