@@ -180,6 +180,8 @@ def read_input():
     params['legendre_params'] = {
                                     'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
+                                    'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to do Legendre decomposition
+                                    
                                     'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
                                     'test_leg_interp':      False,  # test interpolation of W2D by plotting
                                     'plot_bcoeffs':         False,  # plot b-coefficients

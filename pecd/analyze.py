@@ -42,6 +42,41 @@ class analysis:
         self.helicity = params['helicity']
 
 
+    def momentum_au_to_energy_ev(self,array):
+        """Converts momentum given in atomic units to energy in eV
+        
+        Arguments: numpy.ndarray
+            array : numpy.ndarray, dtype = float, shape = (N,)
+                grid of momenta given in a.u.
+
+        Returns: numpu.ndarray
+            energy :math:`E=\frac{1}{2}k^2` in `eV`.
+
+        """
+        energy = 0.5 * (array)**2 
+        energy *= constants.au_to_ev
+
+        return energy
+
+
+
+    def energy_ev_to_momentum_au(self,array):
+        """Converts energy array given in eV to momentum array given in atomic units
+        
+        Arguments: numpy.ndarray
+            array : numpy.ndarray, dtype = float, shape = (N,)
+                grid of energies given in eV
+
+        Returns: numpu.ndarray
+            momentum :math:`k = 2\sqrt{E}` in `au`.
+
+        """
+        array   /= constants.au_to_ev
+        momentum = 2.0 * np.sqrt(array) 
+
+        return momentum
+
+
     def find_nearest(self,array, value):
         array   = np.asarray(array)
         idx     = (np.abs(array - value)).argmin()
@@ -299,6 +334,8 @@ class analysis:
         #print("legendre grid")
         #print(-np.arccos(x)+np.pi)
 
+
+        kmin = self.energy_ev_to_momentum_au()
 
         #loop over elements of a dictionary of observables
         for elem in fdir.items():
