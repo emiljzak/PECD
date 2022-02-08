@@ -159,7 +159,7 @@ def read_input():
                 }
 
 
-    params['analyze_space']     = [rho2D]
+    params['analyze_space']     = []
     params['analyze_momentum']  = [W2Dav]
     
     params['PECD']      = PECD
@@ -178,11 +178,12 @@ def read_input():
     params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
 
-    params['Leg_lmax']          = 6      # maximum angular momentum in the Legendre expansion
-    params['test_leg_reconst']  = True   # plot and compare the reconstructed distribution
-    params['test_leg_interp']   = True  # test interpolation of W2D by plotting
-    params['plot_bcoeffs']      = True  # plot b-coefficients
-    params['Leg_npts_r']        = 500   # number of radial points for plotting of the Legendre expansion
+    params['Leg_lmax']          = 4      # maximum angular momentum in the Legendre expansion
+    params['N_leg_quad']        = 100 # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
+    params['test_leg_reconst']  = False   # plot and compare the reconstructed distribution
+    params['test_leg_interp']   = False  # test interpolation of W2D by plotting
+    params['plot_bcoeffs']      = False  # plot b-coefficients
+    params['Leg_npts_r']        = 50   # number of radial points for plotting of the Legendre expansion
     params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
     params['save_bcoeffs']      = True        
 

@@ -293,7 +293,7 @@ class analysis:
         Lmax    = self.params['Leg_lmax']
 
         #the number of Gauss-Legendre quadrature points used to calculate the expansion coefficients.
-        nleg    = 100
+        nleg    = self.params['N_leg_quad']
         x, w    = np.polynomial.legendre.leggauss(nleg)
         w       = w.reshape(nleg,-1)
         #print("legendre grid")
@@ -338,8 +338,8 @@ class analysis:
                 plt.show()
                 plt.close()
 
-
-            nkpoints    = self.params['Leg_npts_r'] # number of radial grid points at which the b-coefficients are calculated
+            # the number of radial grid points at which the b-coefficients are calculated
+            nkpoints    = self.params['Leg_npts_r'] 
             bcoeff      = np.zeros((nkpoints,Lmax+1), dtype = float)
 
             kgrid1D       = np.linspace(0.05, self.params['pes_max_k'], nkpoints)
@@ -366,10 +366,12 @@ class analysis:
 
                 for ipoint,k in enumerate(list(kgrid1D)):
 
-                    W_interp1        = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                    W_interp1        = np.sin(-np.arccos(x)+2.0*np.pi)**4#W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                    #W_interp1[:,0]
+                    bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-                    bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
+           
                 #print(W_interp1.shape)
                 #W_interp2    = W_interp(kgrid1D,-np.arccos(x)+np.pi)
                 #fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
@@ -382,6 +384,9 @@ class analysis:
                 if self.params['plot_bcoeffs'] == True:
                     plt.plot(kgrid1D,np.log(bcoeff[:,n]),label=n)
                     plt.legend()
+
+            print(bcoeff)
+            exit()
 
             if self.params['plot_bcoeffs'] == True:
                 plt.show()
