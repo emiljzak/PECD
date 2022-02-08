@@ -185,7 +185,7 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pecd.wavefunction.Map.map_type">
 <span class="sig-name descname"><span class="pre">map_type</span></span><a class="headerlink" href="#pecd.wavefunction.Map.map_type" title="Permalink to this definition"></a></dt>
-<dd><p>type of mapping function (‘DVR’ or ‘SPECT’)</p>
+<dd><p>type of mapping function (‘DVR’ , ‘DVR_NAT’ or ‘SPECT’)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>str</p>
@@ -371,7 +371,7 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.wavefunction.Psi">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">Psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_euler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Psi" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">Psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_euler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psitype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bound'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Psi" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="pecd.wavefunction.Psi.project_psi_global">
 <span class="sig-name descname"><span class="pre">project_psi_global</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psi0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Psi.project_psi_global" title="Permalink to this definition"></a></dt>
@@ -412,14 +412,14 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#pecd.field.Field" title="pecd.field.Field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.field.Field</span></code></a>(params)</p></td>
-<td><p>Class representing electric field</p></td>
+<td><p>Class representing the electric field</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.field.Field">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.field.</span></span><span class="sig-name descname"><span class="pre">Field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.field.Field" title="Permalink to this definition"></a></dt>
-<dd><p>Class representing electric field</p>
+<dd><p>Class representing the electric field</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>filename</strong> – str
@@ -433,7 +433,7 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 </dl>
 </dd>
 <dt>Attrs:</dt><dd><dl class="simple">
-<dt>rank<span class="classifier">int</span></dt><dd><p>Rank of tensor operator.</p>
+<dt>params<span class="classifier">dict</span></dt><dd><p>Dictionary of parameters</p>
 </dd>
 </dl>
 </dd>
@@ -509,6 +509,68 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <dt class="sig sig-object py" id="pecd.analyze.analysis.read_wavepacket">
 <span class="sig-name descname"><span class="pre">read_wavepacket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgrid_plot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis.read_wavepacket" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.analyze.</span></span><span class="sig-name descname"><span class="pre">momentumfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2D">
+<span class="sig-name descname"><span class="pre">W2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2D" title="Permalink to this definition"></a></dt>
+<dd><p>2D electron momentum probability distribution</p>
+<p>A 2D slice <span class="math notranslate nohighlight">\(W(k,\lambda)\)</span> of the full 3D probability distribution <span class="math notranslate nohighlight">\(W(k, \tilde{\theta}, \tilde{\phi})\)</span> is calculated. We give a choice for the plane in which the slice is calculated: <cite>XY</cite>, <cite>XZ</cite> or <cite>YZ</cite>.</p>
+<dl class="simple">
+<dt>Arguments: dict</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>A dictionary with all relevant W2D function parameters</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Returns: None</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is a <strong>note</strong> box</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is a <strong>warning</strong> box.</p>
+</div>
+<p>An example distribution is plotted below:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/W2Dav_example.png"><img alt="_images/W2Dav_example.png" src="_images/W2Dav_example.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+<p>Table of slicing planes:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 43%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Plane</p></th>
+<th class="head"><p>Form</p></th>
+<th class="head"><p>Fixed angle</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><cite>XY</cite></p></td>
+<td><p><span class="math notranslate nohighlight">\(W(k,\tilde{\phi})\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{\theta} = 0\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>XZ</cite></p></td>
+<td><p><span class="math notranslate nohighlight">\(W(k,\tilde{\theta})\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{\phi} = 0\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><cite>YZ</cite></p></td>
+<td><p><span class="math notranslate nohighlight">\(W(k,\tilde{\theta})\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{\phi} = \pi/2\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</dd></dl>
 
 </dd></dl>
 

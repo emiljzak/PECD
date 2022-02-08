@@ -148,6 +148,33 @@ Ntpts = \ceil[\Bigg]{\frac{t_{max}-t_0}{dt}}
 such that the array of time-points contains elements: $t[0],t[1],...,t[Ntpts]$.
 Note that the last point (tmax) is included in the grid. 
 
+
+
+\section{wavepacket analysis}
+
+\subsection{Momentum space functions}
+
+\subsubsection{Legendre decomposition}
+The 2D momentum probability distribution can be decomposed into a Legendre polynomials series for each length of the electron's wavevector:
+
+\begin{equation}
+W(k,\tilde{\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\tilde{\theta})
+\end{equation}
+
+where the expansion coefficients are given as:
+
+\begin{equation}
+ b_n(k) = \frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\tilde{\theta}))P_n(\cos\tilde{\theta}) d\cos\tilde{\theta}
+ \label{eq:bcoeffs}
+\end{equation}
+
+The integral in eq. \ref{eq:bcoeffs} can be calculated using quadratures:
+\begin{equation}
+b_n(k) =  \frac{2n+1}{2}\sum_{s=0}^{s_{max}-1} w_s W(k,\cos\tilde{\theta}_s))P_n(\cos\tilde{\theta}_s)
+\label{eq:bcoeffs_quads}
+\end{equation}
+where $(\tilde{\theta}_s,w_s)_{s=0,1,....,s_{max}-1}$ are the quadrature points and weights pairs.
+
 \section{Input file}
 
 \subsection{Molecule}

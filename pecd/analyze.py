@@ -1610,11 +1610,9 @@ class momentumfuncs(analysis):
             obs_dict['Wav'] = Wav
 
             if funcpars['plot'][0] == True:
-
                 self.W2Dav_plot(funcpars,polargrid,Wav,irun)
 
             if funcpars['save'] == True:
-   
                 with open( self.params['job_directory'] +  "W2Dav" + "_" + str(irun) + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
                     "_" + self.helicity + ".dat" , 'w') as rhofile:   
                     np.savetxt(rhofile, Wav, fmt = '%10.4e')
@@ -1768,8 +1766,41 @@ class momentumfuncs(analysis):
         plt.close()
 
 
-    def W2D(self,funcpars):
 
+    def W2D(self,funcpars):
+        """2D electron momentum probability distribution 
+
+            A 2D slice :math:`W(k,\lambda)` of the full 3D probability distribution :math:`W(k, \\tilde{\\theta}, \\tilde{\phi})` is calculated. We give a choice for the plane in which the slice is calculated: `XY`, `XZ` or `YZ`.
+
+
+            Arguments: dict
+                funcpars : dict
+                    A dictionary with all relevant W2D function parameters
+
+            Returns: None
+             
+
+            .. note:: This is a **note** box
+            .. warning:: This is a **warning** box.
+
+            An example distribution is plotted below:
+
+            .. figure:: _images/W2Dav_example.png
+                :height: 400
+                :width: 400
+                :align: center
+
+            Table of slicing planes:
+
+                ==========   ================================   ================================
+                Plane        Form                                   Fixed angle
+                ==========   ================================   ================================
+                `XY`            :math:`W(k,\\tilde{\phi})`        :math:`\\tilde{\\theta} = 0`
+                `XZ`            :math:`W(k,\\tilde{\\theta})`     :math:`\\tilde{\phi} = 0`
+                `YZ`            :math:`W(k,\\tilde{\\theta})`     :math:`\\tilde{\phi} = \pi/2`
+                ==========   ================================   ================================
+
+        """
         Flm     = self.params['Flm']
         kgrid   = self.params['momentumgrid']
 
@@ -1848,7 +1879,6 @@ class momentumfuncs(analysis):
 
             if funcpars['PES']  == True:
                 self.PES(funcpars,polargrid,W2Ddir,irun)
-
         
     def W2D_calc(self, funcpar, Flm, polargrid):
         """calculate numerically W2D for fixed phi angle"""

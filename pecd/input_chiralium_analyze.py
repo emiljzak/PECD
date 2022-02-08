@@ -160,7 +160,7 @@ def read_input():
 
 
     params['analyze_space']     = [rho2D]
-    params['analyze_momentum']  = [PECD]
+    params['analyze_momentum']  = [W2Dav]
     
     params['PECD']      = PECD
     params['W2Dav']     = W2Dav
@@ -214,3 +214,4 @@ def read_input():
             4) W2Dav: W(k,theta,t)     - 2D momentum probability density in k,theta, phi-averaged
             5) PECD
 """
+

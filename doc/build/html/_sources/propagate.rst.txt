@@ -86,10 +86,16 @@ Analysis module (:code:`analyze`)
 .. autosummary::
 
 	pecd.analyze.analysis
-
+	pecs.analyze.momentumfuncs
+	
 .. autoclass:: pecd.analyze.analysis
 
 	.. automethod:: read_wavepacket
+	
+.. autoclass:: pecd.analyze.momentumfuncs
+
+	.. automethod:: W2D
+	
 	
 	
 	
