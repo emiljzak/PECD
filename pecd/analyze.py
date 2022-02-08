@@ -365,13 +365,10 @@ class analysis:
                 Pn = eval_legendre(n, x).reshape(nleg,-1)
 
                 for ipoint,k in enumerate(list(kgrid1D)):
+                    #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
+                    W_interp1     =   W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                    bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
-                    W_interp1        = np.sin(-np.arccos(x)+2.0*np.pi)**4#W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
-                    #W_interp1[:,0]
-                    bcoeff[ipoint,n] = np.sum(w[:,0] * W_interp1[:] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
-
-
-           
                 #print(W_interp1.shape)
                 #W_interp2    = W_interp(kgrid1D,-np.arccos(x)+np.pi)
                 #fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
@@ -381,12 +378,11 @@ class analysis:
                 #        100, cmap = 'jet')
                 #plt.show()
                 #exit()
+
                 if self.params['plot_bcoeffs'] == True:
                     plt.plot(kgrid1D,np.log(bcoeff[:,n]),label=n)
                     plt.legend()
 
-            print(bcoeff)
-            exit()
 
             if self.params['plot_bcoeffs'] == True:
                 plt.show()
@@ -401,8 +397,6 @@ class analysis:
                     
                         bcoeffile.write(   str('{:8.2f}'.format(k)) +\
                         " ".join('{:12.8f}'.format(bcoeff[ielem,n]/bcoeff[ielem,0]) for n in range(self.params['Leg_lmax'] ))) 
-
-
 
            
             #test: plot Legendre-reconstructed distribution on test grid 

@@ -177,15 +177,16 @@ def read_input():
     params['plot_Plm']        = False           # plot and save photoelectron partial waves?
     params['plot_Flm']        = False           # plot and save individual Hankel transforms?
 
+    params['legendre_params'] = {
+        'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
+        'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
+        'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
+        'test_leg_interp':      False,  # test interpolation of W2D by plotting
+        'plot_bcoeffs':         False,  # plot b-coefficients
+        'Leg_npts_r':           50,     # number of radial points for plotting of the Legendre expansion
+        'Leg_npts_th':          360,    # number of angular points for plotting of the Legendre expansion
+        'save_bcoeffs':         True }
 
-    params['Leg_lmax']          = 4      # maximum angular momentum in the Legendre expansion
-    params['N_leg_quad']        = 100 # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-    params['test_leg_reconst']  = False   # plot and compare the reconstructed distribution
-    params['test_leg_interp']   = False  # test interpolation of W2D by plotting
-    params['plot_bcoeffs']      = False  # plot b-coefficients
-    params['Leg_npts_r']        = 50   # number of radial points for plotting of the Legendre expansion
-    params['Leg_npts_th']       = 360   # number of angular points for plotting of the Legendre expansion
-    params['save_bcoeffs']      = True        
 
     params['pes_npts']       = 1000   # numer of points for PES evaluation
     params['pes_max_k']      = 2.2     # maximum momentum in a.u. Must be lower than the momentum range for W2D
