@@ -112,7 +112,7 @@ def read_input():
 
     W2Dav = {   'name':         'W2Dav',
                 'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                'show':         True, # show image on screen
+                'show':         False, # show image on screen
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes
                 'k_grid':       {   'type':'manual', #manual or automatic plotting grid type. 
@@ -179,7 +179,7 @@ def read_input():
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
                                     'energy_grid':          [5.7,28.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
-                                    'plot_bcoeffs':         True,  # plot b-coefficients
+                                    'plot_bcoeffs':         False,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file
                                                          
                                     'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
@@ -188,7 +188,7 @@ def read_input():
     params['pes_params'] = {
                                     'pes_npts':             1000,   # numer of points for PES evaluation
                                     'pes_max_k':            2.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
-                                    'pes_lmax':             100 }
+                                    'pes_lmax':             2 }
 
     params['pecd_params'] = {
                                 'pecd_lmax':                4,       # maximum angular momentum in the spherical harmonics expansion of the momentum probability function

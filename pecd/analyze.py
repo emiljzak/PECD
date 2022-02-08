@@ -2133,7 +2133,7 @@ class momentumfuncs(analysis):
             kgrid       = grid[0]
             thetagrid   = grid[1]
 
-            Lmax    = self.params['pes_lmax'] 
+            Lmax    = self.params['pes_params']['pes_lmax'] 
             nleg     = Lmax
             print(nleg)
             x, w    = np.polynomial.legendre.leggauss(nleg)
@@ -2144,14 +2144,17 @@ class momentumfuncs(analysis):
 
 
             print("*** calculating photo-electron spectrum ***")
-            nkpoints    = params['pes_npts'] 
-            pes_kgrid   = np.linspace(0.0, params['pes_max_k'], nkpoints)
+            nkpoints    = params['pes_params']['pes_npts'] 
+            pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
             spectrum    = np.zeros(nkpoints, dtype = float)
             
-            
+            #the integral can be done analytically or with quadratures
+
+            #quadratures
             for ipoint,k in enumerate(list(pes_kgrid)):   
             
-                W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+                W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
+
                 spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
             
             self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
@@ -2168,6 +2171,10 @@ class momentumfuncs(analysis):
             This function carries options for:
             a) saving the PES for a chosen momentum grid (`save_PES=True`)
             b) psaving the PES for a chosen momentum grid (`plot_PES=True`)
+
+            Parameters: dict
+                pes_max_k: float
+                    maximum range for the PES plot. It is independent of the respective momentum range set for W2Dav, but cannot exceed the FT range determined by the number of FT points.
 
             Arguments: tuple
                 funcpars : dict
@@ -2195,11 +2202,6 @@ class momentumfuncs(analysis):
         kgrid       = polargrid[0]
         thetagrid   = polargrid[1]
 
-        Lmax        = self.params['pes_params']['pes_lmax'] 
-        nleg        = Lmax
-
-        x, w        = np.polynomial.legendre.leggauss(nleg)
-        w           = w.reshape(nleg,-1)
 
         """ Interpolate Wav(k,theta)"""
         W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], Wav[:,:], kx=3, ky=3)
@@ -2210,28 +2212,52 @@ class momentumfuncs(analysis):
         nkpoints    = params['pes_params']['pes_npts'] 
         pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
         spectrum    = np.zeros(nkpoints, dtype = float)
+        spectrum2    = np.zeros(nkpoints, dtype = float)
+
+
+        nleg        = self.params['pes_params']['pes_lmax'] 
+        x, w        = np.polynomial.legendre.leggauss(nleg)
+        w           = w.reshape(nleg,-1)
+
+
         print("The number of Gauss-Legendre quadrature points for the PES integration = " + str(w.shape[0]))
-        
+        for num_leg in range(np.linspace(1,100,10)):
         for ipoint,k in enumerate(list(pes_kgrid)):   
         
             W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
             spectrum[ipoint] = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
-        
+
+
+        nleg        = self.params['pes_params']['pes_lmax'] +10
+        x, w        = np.polynomial.legendre.leggauss(nleg)
+        w           = w.reshape(nleg,-1)
+
+        for ipoint,k in enumerate(list(pes_kgrid)):   
+    
+            W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
+            spectrum2[ipoint] = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
+
         self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
+        self.PES_plot(funcpars,spectrum2,pes_kgrid,irun)
+
+
+        if funcpars['PES_params']['show']  == True:
+            plt.show()
+            plt.legend()  
+            plt.close()
 
 
     def PES_plot(self,funcpars,spectrum,kgrid,irun):
-
-        """ Produces a plot of the PES """
-       
-        plot_params = funcpars['PES_params']['plot'][1] #all plot params
-
-        """
+        """Produces a plot of the PES.
+    
         Args:
             kgrid: np.array of size (nkpoints): momentum grid in a.u.
             spectrum: array of size (nkpoints): 1D PES
             plot_params: parameters of the plot loaded from GRAPHICS.py
+        
         """
+
+        plot_params = funcpars['PES_params']['plot'][1] #all plot params
 
         figsizex    = plot_params['figsize_x']  # size of the figure on screen
         figsizey    = plot_params['figsize_y']  # size of the figure on screen
@@ -2244,9 +2270,9 @@ class momentumfuncs(analysis):
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
 
         if funcpars['PES_params']['k-axis'] == 'momentum':
-            grid_plot = kgrid#/(np.sqrt(4.0*np.pi))
+            grid_plot = kgrid
         elif funcpars['PES_params']['k-axis'] == 'energy':
-            grid_plot = (0.5*kgrid**2)*constants.au_to_ev#/(4.0*np.pi)
+            grid_plot = (0.5*kgrid**2)*constants.au_to_ev
         else:
             raise ValueError("incorrect k-axis specification")
 
@@ -2266,7 +2292,8 @@ class momentumfuncs(analysis):
                                 func_plot, 
                                 label = plot_params['plot_label'],
                                 marker = plot_params['plot_marker'], 
-                                color = plot_params['plot_colour'] )
+                                color = plot_params['plot_colour'],
+                                markersize = plot_params['markersize'] )
 
         ax1.set_title(  label               = plot_params['title_text'],
                         fontsize            = plot_params['title_size'],
@@ -2281,7 +2308,7 @@ class momentumfuncs(analysis):
 
 
         if funcpars['PES_params']['k-axis'] == 'momentum':
-            plt.xlabel("momentum (a.u)")
+            plt.xlabel("momentum (a.u.)")
         elif funcpars['PES_params']['k-axis'] == 'energy':
             plt.xlabel("energy (eV)")
 
@@ -2348,10 +2375,6 @@ class momentumfuncs(analysis):
                             )       
 
 
-        if funcpars['PES_params']['show']  == True:
-            plt.show()
-            plt.legend()  
-            plt.close()
 
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):

@@ -292,7 +292,7 @@ def gparams_PES():
                             "plot_colour":      'red',
                             "plot_marker":      '.',
                             "plot_label":       r"$\sigma(k)$",
-
+                            "markersize":       4,
                             ### LABELS ###
                             "xlabel_format":    '%.0f',
                             "ylabel_format":    '%.0f',
