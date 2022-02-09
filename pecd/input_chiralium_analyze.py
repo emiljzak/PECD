@@ -11,22 +11,22 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_legendre" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_timestep" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (4,4,1)
+    params['bound_lmax_arr']    = (10,10,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
-    params['prop_nbins']        = 100
+    params['prop_nbins']        = 200
 
-    params['tmax']              = 4000.0 
+    params['tmax']              = 6000.0 
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['helicity']          = "R"
+    params['helicity']          = "L"
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
@@ -129,7 +129,7 @@ def read_input():
                                     'FT_npts_th': 720
                                 },
                 
-                'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
+                'npts_phi':     10, #number of phi points for the integration over tha azimuthal angle.
                 
                 'legendre':     True, # calculate Legendre decomposition
 
@@ -189,7 +189,7 @@ def read_input():
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
                                     'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
-                                    'plot_bcoeffs':         True,  # plot b-coefficients
+                                    'plot_bcoeffs':         False,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file
                                                          
                                     'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
