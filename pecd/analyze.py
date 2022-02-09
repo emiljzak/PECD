@@ -1934,12 +1934,10 @@ class momentumfuncs(analysis):
         """ generate 2D meshgrid for storing W2D """
         ft_polargrid = np.meshgrid(ft_kgrid, thgrid1D, indexing='ij')
 
- 
-        """ set up time grids for evaluating wfn """
-        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
-        
-        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
-  
+
+        """ loop over evaluation times """
+        for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
+
             print(  "Generating W2D at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
                 " " + str( self.params['time_units']) + " ----- " +\
                 "time index = " + str(itime) )
@@ -1980,8 +1978,25 @@ class momentumfuncs(analysis):
             if funcpars['PES']  == True:
                 self.PES(funcpars,ft_polargrid,W2Ddir,irun)
         
-    def W2D_calc(self, funcpar, Flm, polargrid):
-        """calculate numerically W2D for fixed phi angle"""
+    def W2D_calc(self, funcpar, Flm, ft_polargrid):
+        """Calculate numerically :math:`W_{2D}(k,\\tilde{\\theta};\\tilde{\phi}_0)` for a fixed angle.
+
+            .. note:: `W2D` is a numpy.ndarray (complex) of shape (FT_npts_k, FT_npts_th). It is **always** defined on the original radial Hankel grid.
+
+            Arguments: dict
+                funcpars : dict
+                    A dictionary with all relevant W2Dav function parameters
+                Flm: numpy.ndarray, dtype = complex, shape = (FT_npts_k,)
+                    Array of radial FT amplitudes calculated calculated with Hankel transform
+                ft_polargrid: numpy.ndarray, shape = (FT_npts_k, FT_npts_th)
+                    2D polar grid or :math:`(k,\\tilde{\\theta})`
+
+            Returns: dict
+                W2Ddir : dict
+                    A dictionary keeping numpy arrays of W2D for requested evaluation planes: 'XY','XZ' or 'YZ'.
+
+        """     
+
 
         plane       = funcpar['plane']
 
@@ -1991,14 +2006,20 @@ class momentumfuncs(analysis):
 
             print("Evaluation plane for W2D: " + elem)
 
-            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], elem, polargrid)
+            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], elem, ft_polargrid)
             FT             = self.calc_FT_3D_hankel(Flm, Ymat)
             W2Ddir[elem]    = np.abs(FT)**2/np.max(np.abs(FT)**2)
 
         return W2Ddir
 
     def W2D_plot(self,funcpars,ft_polargrid,W2D): 
-        """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
+        """Produces a contour 2D plot for 2D electron's momentum distribution :math:`W_{2D}(k,\\tilde{\\theta})` evaluated at planes 'XY', 'XZ' or 'YZ'.
+        
+        .. warning:: In the present implementation the 2D controur plot is produced for the **original FT** grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only. 
+
+        .. note:: `contourf` already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.
+        """
+
         #radial grid
         if funcpars['k_grid']['type'] == "manual":
             
