@@ -11,16 +11,16 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "hfilt_1e15" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_legendre" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (10,10,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
-    params['prop_nbins']        = 200
+    params['prop_nbins']        = 100
 
-    params['tmax']              = 6000.0 
+    params['tmax']              = 4000.0 
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
@@ -127,7 +127,7 @@ def read_input():
                                     'FT_npts_th': 360
                                 },
                 
-                'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
+                'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
                 
                 'legendre':     True, # calculate Legendre decomposition
 
@@ -171,7 +171,7 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            2000,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'FT_npts_k':            500,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              20.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?

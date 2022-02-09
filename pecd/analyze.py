@@ -1622,7 +1622,7 @@ class momentumfuncs(analysis):
 
             A 2D slice :math:`W(k,\\tilde{\\theta})` of the full 3D probability distribution :math:`W(k, \\tilde{\\theta}, \\tilde{\phi})` is calculated. A uniformly-weighted averaging over the azimuthal :math:`\phi` angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.
 
-            .. note:: `W2Dav` is a numpy.ndarray (complex) of shape (FT_npts_k, npts_th_grid). It is **always** defined on the original radial Hankel grid. Later this quantity can be interpolated for plotting in a custom radial range.
+            .. note:: `W2Dav` is a numpy.ndarray (complex) of shape (FT_npts_k, FT_npts_th). It is **always** defined on the original radial Hankel grid. Later this quantity can be interpolated for plotting in a custom radial range.
 
             Parameters: dict
                 k_grid: dict
@@ -1640,7 +1640,7 @@ class momentumfuncs(analysis):
             Returns: tuple
                 obs_list : list
                     A list of the form [i,t,obs_dict], where i is the time-index, t is the time and obs_dict is a dictionary of observables calculated at time t.
-                polargrid: numpy.ndarray
+                ft_polargrid: numpy.ndarray, shape = (FT_npts_k, FT_npts_th)
                     2D polar grid or :math:`(k,\\tilde{\\theta})`
              
             An example distribution is plotted below:
@@ -1664,9 +1664,6 @@ class momentumfuncs(analysis):
             # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
             funcpars['ktuple']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
 
-            if  funcpars['k_grid']['kmax'] > ft_kgrid.max or funcpars['k_grid']['kmin'] < ft_kgrid.min:
-                raise ValueError("Plotting grid for W2Dav exceeds the original FT k-grid!")
-       
         elif funcpars['k_grid']['type'] == "automatic":
 
             # automatic radial momentum grid as given by the resolution of the FT 
@@ -1727,39 +1724,57 @@ class momentumfuncs(analysis):
         return obs_list, ft_polargrid
 
 
-    def W2Dav_calc(self, funcpar, Flm, polargrid):
-        """calculate numerically W2D for a sequence of phi angles and return averaged W2Dav"""
+    def W2Dav_calc(self, funcpar, Flm, ft_polargrid):
+        """Calculate numerically :math:`W_{2D}(k,\\tilde{\\theta};\\tilde{\phi}_0)` for a sequence of phi angles and return averaged W2Dav.
+
+           A uniformly-weighted averaging over the azimuthal :math:`\phi` angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.
+
+            .. note:: `W2Dav` is a numpy.ndarray (complex) of shape (FT_npts_k, FT_npts_th). It is **always** defined on the original radial Hankel grid.
+
+            Arguments: dict
+                funcpars : dict
+                    A dictionary with all relevant W2Dav function parameters
+                Flm: numpy.ndarray, dtype = complex, shape = (FT_npts_k,)
+                    Array of radial FT amplitudes calculated calculated with Hankel transform
+                ft_polargrid: numpy.ndarray, shape = (FT_npts_k, FT_npts_th)
+                    2D polar grid or :math:`(k,\\tilde{\\theta})`
+
+            Returns: numpy.ndarray
+                Wav : numpy.ndarray, dtype = float, shape = (FT_npts_k,FT_npts_th)
+                    Array keeping the phi-averaged 2D distribution.
+
+        """     
 
         print("Evaluation planes for W2D: Z")
-        Wav = np.zeros((polargrid[0].shape[0],polargrid[1].shape[1]), dtype=float)
+        Wav = np.zeros((ft_polargrid[0].shape[0],ft_polargrid[1].shape[1]), dtype=float)
 
         phimin = 0.0
         phimax = 2.0 * np.pi
-        phigrid = np.linspace(phimin, phimax, funcpar['nphi_pts'], endpoint=False)
-        
+        phigrid = np.linspace(phimin, phimax, funcpar['npts_phi'], endpoint=False)
+        print(Flm.shape)
+    
         for iphi in range(phigrid.shape[0]):
             print('iphi = ' + str(iphi) + ', phi = ' + str('{:.2}'.format(phigrid[iphi])))
-            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', polargrid, phigrid[iphi])
-            W2D             = self.calc_FT_3D_hankel(Flm, Ymat)
-            Wav             += np.abs(W2D)**2/np.max(np.abs(W2D)**2)
+            Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', ft_polargrid, 
+            phigrid[iphi])
+            print(Ymat.shape)
+            exit()
+            FT             = self.calc_FT_3D_hankel(Flm, Ymat)
+            Wav             += np.abs(FT)**2/np.max(np.abs(FT)**2)
 
-        return Wav / funcpar['nphi_pts']
+        return Wav / funcpar['npts_phi']
 
 
 
     def W2Dav_plot(self,funcpars,polargrid,W2D,irun): 
-        """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
+        """Produces a contour 2D plot for 2D phi-averaged electron's momentum distribution :math:`\\bar{W}_{2D}(k,\\tilde{\\theta})`
+        
+        
+        """
 
         plot_params = funcpars['plot'][1] #all plot params
         ktuple      = funcpars['ktuple'] #range for k
         thtuple     = funcpars['thtuple'] #range for theta
-
-        """
-        Args:
-            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
-            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
-            plot_params: parameters of the plot loaded from GRAPHICS.py
-        """
 
         figsizex    = plot_params['figsize_x'] #size of the figure on screen
         figsizey    = plot_params['figsize_y']  #size of the figure on screen
@@ -1910,9 +1925,7 @@ class momentumfuncs(analysis):
             ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktuple']  = ktuple
             kgrid1D             = kgrid # kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
-            if  funcpars['k_grid']['kmax'] > ft_kgrid.max or funcpars['k_grid']['kmin'] < ft_kgrid.min:
-                raise ValueError("Plotting grid for W2Dav exceeds the original FT k-grid!")
-       
+
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D             = kgrid
@@ -1989,8 +2002,8 @@ class momentumfuncs(analysis):
             print("Evaluation plane for W2D: " + elem)
 
             Ymat            = self.calc_spharm_array(self.params['bound_lmax'], elem, polargrid)
-            W2D             = self.calc_FT_3D_hankel(Flm, Ymat)
-            W2Ddir[elem]    = np.abs(W2D)**2/np.max(np.abs(W2D)**2)
+            FT             = self.calc_FT_3D_hankel(Flm, Ymat)
+            W2Ddir[elem]    = np.abs(FT)**2/np.max(np.abs(FT)**2)
 
         return W2Ddir
 
