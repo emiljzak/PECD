@@ -1670,17 +1670,13 @@ class momentumfuncs(analysis):
             funcpars['ktuple']  = (ft_kgrid.min(), ft_kgrid.max(), ft_kgrid.shape[0])
 
         #angular grid
-        thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['the_grid']['FT_npts_th'])
+        thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
         funcpars['thtuple'] = thtuple
         unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D            = thtuple[1] * unity_vec
-        
 
         """ generate 2D meshgrid for storing W2D """
         ft_polargrid = np.meshgrid(ft_kgrid, thgrid1D, indexing='ij')
-
-        #print(polargrid[0].shape,polargrid[1].shape)
-        #exit()
 
         obs_dict = {}
         obs_list = []
@@ -1751,14 +1747,15 @@ class momentumfuncs(analysis):
         phimin = 0.0
         phimax = 2.0 * np.pi
         phigrid = np.linspace(phimin, phimax, funcpar['npts_phi'], endpoint=False)
-        print(Flm.shape)
+        #print(type(Flm))
+        #print(np.shape(Flm))
     
         for iphi in range(phigrid.shape[0]):
             print('iphi = ' + str(iphi) + ', phi = ' + str('{:.2}'.format(phigrid[iphi])))
             Ymat            = self.calc_spharm_array(self.params['bound_lmax'], 'Z', ft_polargrid, 
             phigrid[iphi])
-            print(Ymat.shape)
-            exit()
+            #print(Ymat.shape)
+            #exit()
             FT             = self.calc_FT_3D_hankel(Flm, Ymat)
             Wav             += np.abs(FT)**2/np.max(np.abs(FT)**2)
 
@@ -1766,10 +1763,12 @@ class momentumfuncs(analysis):
 
 
 
-    def W2Dav_plot(self,funcpars,polargrid,W2D,irun): 
+    def W2Dav_plot(self,funcpars,ft_polargrid,W2D,irun): 
         """Produces a contour 2D plot for 2D phi-averaged electron's momentum distribution :math:`\\bar{W}_{2D}(k,\\tilde{\\theta})`
         
-        
+        .. warning:: In the present implementation the 2D controur plot is produced for the **original FT** grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only. 
+
+        .. note:: `contourf` already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.
         """
 
         plot_params = funcpars['plot'][1] #all plot params
@@ -1780,12 +1779,11 @@ class momentumfuncs(analysis):
         figsizey    = plot_params['figsize_y']  #size of the figure on screen
         resolution  = plot_params['resolution']  #resolution in dpi
 
-        fig         = plt.figure(   figsize=(figsizex, figsizey), 
-                                    dpi=resolution,
-                                    constrained_layout=True)
+        fig         = plt.figure(   figsize = (figsizex, figsizey), 
+                                    dpi = resolution,
+                                    constrained_layout = True)
                                     
         grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-
         ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
 
         cmap = matplotlib.cm.jet #jet, cool, etc
@@ -1799,10 +1797,11 @@ class momentumfuncs(analysis):
 
         plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
         plot_params['rticks']   = list(np.linspace(ktuple[0],ktuple[1],plot_params['nticks_rad'])) 
-                            
 
-        plot_W2D  = ax1.contourf(   polargrid[1], 
-                                    polargrid[0], 
+      
+
+        plot_W2D  = ax1.contourf(   ft_polargrid[1], 
+                                    ft_polargrid[0], 
                                     W2D,  
                                     plot_params['ncont'], 
                                     cmap = 'jet', 
