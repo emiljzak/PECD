@@ -320,7 +320,7 @@ class analysis:
 
             return Ymat
 
-    def legendre_expansion(self,funcpars,polargrid,fdir):
+    def legendre_expansion(self,funcpars,ft_polargrid,fdir):
         """Calculate the Legendre expansion coefficients as a function of the photo-electron momentum. 
             
             Perform the following Legendre decomposition:
@@ -328,6 +328,12 @@ class analysis:
             .. math::
                 W(k,\\tilde{\\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\\tilde{\\theta})
                 :label: legendre_expansion
+
+            where the expansion coefficients are given as:
+            .. math::
+                b_n(k) =  \frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\\tilde{\\theta}))P_n(\cos\\tilde{\\theta}) d\cos\\tilde{\\theta}
+                :label: legendre_coeffs
+    
             
             This function carries options for:
             a) saving legendre expansion coefficients for a chosen momentum grid (`save_bcoeffs=True`)
@@ -340,8 +346,8 @@ class analysis:
             Arguments: tuple
                 funcpars : dict
                     parent function parameters.
-                polargrid : numpy.ndarray, dtype = float, shape = ()
-                    polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
+                ft_polargrid : numpy.ndarray, dtype = float, shape = ()
+                    polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,FT_npts_th). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
                 fdir :  dict
                     dictionary containing the probability distribution(s) to be decomposed
 
@@ -366,18 +372,21 @@ class analysis:
         nleg            = self.params['legendre_params']['N_leg_quad']
         x, w            = np.polynomial.legendre.leggauss(nleg)
         w               = w.reshape(nleg,-1)
+        x               = x.reshape(nleg,-1)
         energy_grid     = np.asarray(self.params['legendre_params']['energy_grid'])
         #be careful when assigning new values to attributes inside functions: they change globally.
         momentum_grid   = self.energy_ev_to_momentum_au(energy_grid)
-
+        print("x:")
+        print(x)
+        exit()
         #loop over elements of a dictionary of observables
         for elem in fdir.items():
 
             f       = elem[1]
             plane   = elem[0]
             print("plane = " + str(plane))
-            ft_kgrid       = polargrid[0] #original FT grid over which W2D is defined. Checked. 6.02.2022
-            thetagrid   = polargrid[1]
+            ft_kgrid       = ft_polargrid[0] #original FT grid over which W2D is defined. Checked. 6.02.2022
+            thetagrid       = ft_polargrid[1]
 
 
             """ Interpolate f(k,theta)"""
@@ -420,12 +429,14 @@ class analysis:
             
             for n in range(0,Legmax+1):
 
-                Pn = eval_legendre(n, x).reshape(nleg,-1)
+                Pn = eval_legendre(n, x[:,0]).reshape(nleg,-1)
 
                 for ipoint,k in enumerate(list(momentum_grid)):
                     #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
-                    W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
-                    bcoeff[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+                    #W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                    #bcoeff[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+                    W_interp1           = W_interp(k,-np.arccos(x[:,0])+2.0*np.pi).reshape(nleg,-1)
+                    bcoeff[ipoint,n]    = np.sum( w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
                 #print(W_interp1.shape)
                 #W_interp2    = W_interp(kgrid1D,-np.arccos(x)+np.pi)
@@ -439,7 +450,7 @@ class analysis:
 
             if self.params['legendre_params']['save_bcoeffs'] == True:
 
-                with open(  self.params['job_directory'] +  "bcoeffs" +\
+                with open(  self.params['job_directory'] +  "bcoeffs" + "_"+plane+\
                     "_" + str(irun) + ".dat" , 'w') as bcoeffile:
                     
                     for ienergy,energy in enumerate(energy_grid):
@@ -459,12 +470,14 @@ class analysis:
                 print("Calculating b_n(E) coefficients for plotting")
                 for n in range(0,Legmax+1):
 
-                    Pn = eval_legendre(n, x).reshape(nleg,-1)
+                    Pn = eval_legendre(n, x[:,0]).reshape(nleg,-1)
 
                     for ipoint,k in enumerate(list(kgrid_plot)):
                         #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
-                        W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
-                        bcoeff_plot[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+                        #W_interp1           = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+                        #bcoeff_plot[ipoint,n]    = np.sum(w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
+                        W_interp1           = W_interp(k,-np.arccos(x[:,0])+2.0*np.pi).reshape(nleg,-1)
+                        bcoeff_plot[ipoint,n]    = np.sum( w[:,0] * W_interp1[:,0] * Pn[:,0]) * (2.0 * n + 1.0) / 2.0
 
                     plt.plot(kgrid_plot,np.log(np.abs(bcoeff_plot[:,n])),label=n)
                 plt.legend()
@@ -2297,7 +2310,7 @@ class momentumfuncs(analysis):
             #W_interp1                   = W_interp(k,-np.arccos(x)).reshape(nleg,-1) 
             spectrum[ipoint]   = np.sum( w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x[:])) ) 
 
-        self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
+        self.PES_plot(funcpars,spectrum,pes_kgrid,irun,"av")
 
 
         if funcpars['PES_params']['show']  == True:

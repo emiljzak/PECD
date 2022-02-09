@@ -131,7 +131,7 @@ def read_input():
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
                 
-                'legendre':     False, # calculate Legendre decomposition
+                'legendre':     True, # calculate Legendre decomposition
 
                 'PES':          True, # calculate PES
                 'PES_params': {     
@@ -169,7 +169,7 @@ def read_input():
                 }
 
     params['analyze_space']     = []
-    params['analyze_momentum']  = [W2D]
+    params['analyze_momentum']  = [W2Dav]
     
     params['PECD']      = PECD
     params['W2Dav']     = W2Dav
@@ -185,18 +185,18 @@ def read_input():
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
                                                      
     params['legendre_params'] = {
-                                    'Leg_lmax':             20,      # maximum angular momentum in the Legendre expansion
+                                    'Leg_lmax':             8,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-                                    'energy_grid':          [7.0,25.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
+                                    'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
-                                    'plot_bcoeffs':         False,  # plot b-coefficients
+                                    'plot_bcoeffs':         True,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file
                                                          
                                     'test_leg_reconst':     False,  # plot and compare the reconstructed distribution
                                     'test_leg_interp':      False}  # test interpolation of W2D by plotting 
 
     params['pes_params'] = {
-                                    'pes_npts':             500,   # numer of points for PES evaluation
+                                    'pes_npts':             1000,   # numer of points for PES evaluation
                                     'pes_max_k':            2.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
                                     'pes_nquad_pts':         60 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
 
