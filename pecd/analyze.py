@@ -1379,7 +1379,7 @@ class momentumfuncs(analysis):
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
         self.wavepacket     = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index , self.tgrid_plot_time, self.params['Nbas'])
 
-
+        self.Flm, self.ft_kgrid = self.calc_Flm(self.helicity)
 
     def calc_Flm(self,helicity):
 
@@ -1667,7 +1667,9 @@ class momentumfuncs(analysis):
 
         """        
         irun       = self.params['irun']
-        Flm, ft_kgrid = self.calc_Flm(self.helicity)
+        Flm        = self.Flm
+        ft_kgrid   = self.ft_kgrid
+
 
         print("Calculating 2D electron momentum probability density phi-averaged...")
 
@@ -1918,8 +1920,8 @@ class momentumfuncs(analysis):
                 ==========   ================================   ================================
 
         """
-        Flm         = self.params['Flm']
-        ft_kgrid   = self.params['momentumgrid']
+        Flm        = self.Flm
+        ft_kgrid   = self.ft_kgrid
 
         print("Calculating 2D electron momentum probability density")
         
@@ -2204,7 +2206,7 @@ class momentumfuncs(analysis):
             pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
             spectrum    = np.zeros(nkpoints, dtype = float)
             
-            nleg        = self.params['pes_params']['pes_lmax'] 
+            nleg        = self.params['pes_params']['pes_nquad_pts'] 
             x, w        = np.polynomial.legendre.leggauss(nleg)
             w           = w.reshape(nleg,-1)
 
@@ -2277,7 +2279,7 @@ class momentumfuncs(analysis):
         #spectrum_arr    = np.zeros((10,nkpoints), dtype = float)
 
 
-        nleg        = self.params['pes_params']['pes_lmax'] 
+        nleg        = self.params['pes_params']['pes_nquad_pts'] 
         x, w        = np.polynomial.legendre.leggauss(nleg)
         w           = w.reshape(nleg,-1)
 
@@ -2286,7 +2288,7 @@ class momentumfuncs(analysis):
         """
         for icol,num_leg in enumerate(list(np.linspace(1,10,9,dtype=int))):
             print(num_leg)
-            nleg        = num_leg #self.params['pes_params']['pes_lmax'] +10
+            nleg        = num_leg #self.params['pes_params']['pes_nquad_pts'] +10
             x, w        = np.polynomial.legendre.leggauss(nleg)
             w           = w.reshape(nleg,-1)
         """

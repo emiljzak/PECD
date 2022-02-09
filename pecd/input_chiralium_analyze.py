@@ -81,7 +81,7 @@ def read_input():
                 }
 
     W2D = {     'name':         'W2D',
-                'plane':        ('XZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_W2D_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen
                 'save':         True, # save array in file
@@ -97,7 +97,7 @@ def read_input():
                                     'FT_npts_th': 720
                                 },
                 
-                'legendre':     False, # calculate Legendre decomposition
+                'legendre':     True, # calculate Legendre decomposition
 
                 'PES':          True, # calculate PES
                 'PES_params': {     
@@ -169,7 +169,7 @@ def read_input():
                 }
 
     params['analyze_space']     = []
-    params['analyze_momentum']  = [W2Dav]
+    params['analyze_momentum']  = [W2D]
     
     params['PECD']      = PECD
     params['W2Dav']     = W2Dav
@@ -198,7 +198,7 @@ def read_input():
     params['pes_params'] = {
                                     'pes_npts':             2000,   # numer of points for PES evaluation
                                     'pes_max_k':            3.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
-                                    'pes_lmax':             60 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
+                                    'pes_nquad_pts':         60 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
 
     params['pecd_params'] = {
                                 'pecd_lmax':                4,       # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
