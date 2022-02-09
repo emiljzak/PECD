@@ -1634,11 +1634,16 @@ class momentumfuncs(analysis):
                     type : 'manual' or 'automatic'
                         For 'automatic' we use the original FT grid (Hankel) to plot and process W2Dav.
                         For 'manual' we use a user-defined grid to plot W2Dav. This grid only cuts ranges. The base W2Dav is always defined over `ft_polargrid`.
+                    
                     kmin : used with 'manual' gives the minimum radial momentum value to plot
+
                     kmax : used with 'manual' gives the maximum radial momentum value to plot
+                
                 th_grid: dict
                     thmin: gives the minimum angular value to plot
+                    
                     thmax: gives the maximum angular value to plot
+                    
                     FT_npts_th: numer of angular points at which W2Dav is evaluated, stored and plotted.
 
                 npts_phi: number of phi angles, distributed uniformly, that are used in phi-averaging
@@ -1666,22 +1671,9 @@ class momentumfuncs(analysis):
 
         print("Calculating 2D electron momentum probability density phi-averaged...")
 
-        """ set up 1D momentum grids """
-
-        #radial grid
-        if funcpars['k_grid']['type'] == "manual":
-            
-            # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
-            funcpars['ktuple']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'])
-
-        elif funcpars['k_grid']['type'] == "automatic":
-
-            # automatic radial momentum grid as given by the resolution of the FT 
-            funcpars['ktuple']  = (ft_kgrid.min(), ft_kgrid.max())
-
+        """ set up 1D momentum angular grid """
         #angular grid
         thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
-        funcpars['thtuple'] = thtuple
         unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D            = thtuple[1] * unity_vec
 
@@ -1780,10 +1772,20 @@ class momentumfuncs(analysis):
 
         .. note:: `contourf` already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.
         """
+        #radial grid
+        if funcpars['k_grid']['type'] == "manual":
+            
+            # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'])
+
+        elif funcpars['k_grid']['type'] == "automatic":
+
+            # automatic radial momentum grid as given by the resolution of the FT 
+            ktuple  = (ft_polargrid[0].min(), ft_polargrid[0].max())
+
+        thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
 
         plot_params = funcpars['plot'][1] #all plot params
-        ktuple      = funcpars['ktuple'] #range for k
-        thtuple     = funcpars['thtuple'] #range for theta
 
         figsizex    = plot_params['figsize_x'] #size of the figure on screen
         figsizey    = plot_params['figsize_y']  #size of the figure on screen
@@ -1898,10 +1900,6 @@ class momentumfuncs(analysis):
 
             Returns: None
              
-
-            .. note:: This is a **note** box
-            .. warning:: This is a **warning** box.
-
             An example distribution is plotted below:
 
             .. figure:: _images/W2Dav_example.png
@@ -1920,40 +1918,23 @@ class momentumfuncs(analysis):
                 ==========   ================================   ================================
 
         """
-        Flm     = self.params['Flm']
-        kgrid   = self.params['momentumgrid']
+        Flm         = self.params['Flm']
+        ft_kgrid   = self.params['momentumgrid']
 
         print("Calculating 2D electron momentum probability density")
         
         irun = self.params['irun']
        
-        """ set up 1D momentum grids """
-
-        if funcpars['k_grid']['type'] == "manual":
-            # ktuple determines the range for which we calculate W2D. It also determines maximum plotting range.
-            ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktuple']  = ktuple
-            kgrid1D             = kgrid # kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
-
-        elif funcpars['k_grid']['type'] == "automatic":
-            # automatic radial momentum grid as given by the resolution of the FT 
-            kgrid1D             = kgrid
-            ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            funcpars['ktuple']  = ktuple
-
-        thtuple             = funcpars['th_grid']
-        funcpars['thtuple'] = thtuple
+        """ set up 1D momentum angular grid """
+        #angular grid
+        thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
         unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
-        thgrid1D            = thtuple[1] * unity_vec
-        
+        thgrid1D            = thtuple[1] * unity_vec #Note: we squeeze the same number of points in  a smaller interval if thtuple[1]<2pi
 
         """ generate 2D meshgrid for storing W2D """
-        polargrid = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
+        ft_polargrid = np.meshgrid(ft_kgrid, thgrid1D, indexing='ij')
 
-        #print(polargrid[0].shape,polargrid[1].shape)
-        #exit()
-
-        
+ 
         """ set up time grids for evaluating wfn """
         tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
         
@@ -1969,7 +1950,7 @@ class momentumfuncs(analysis):
 
             W2Ddir = self.W2D_calc( funcpars,
                                     Flm_t,
-                                    polargrid)
+                                    ft_polargrid)
 
 
             if funcpars['plot'][0] == True:
@@ -1983,7 +1964,7 @@ class momentumfuncs(analysis):
                     funcpars['plane_split'] = self.split_word(plane)
 
                     # call plotting function
-                    self.W2D_plot(funcpars,polargrid,W)
+                    self.W2D_plot(funcpars,ft_polargrid,W)
 
 
             if funcpars['save'] == True:
@@ -1994,10 +1975,10 @@ class momentumfuncs(analysis):
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2D
-                self.legendre_expansion(funcpars,polargrid,W2Ddir)
+                self.legendre_expansion(funcpars,ft_polargrid,W2Ddir)
 
             if funcpars['PES']  == True:
-                self.PES(funcpars,polargrid,W2Ddir,irun)
+                self.PES(funcpars,ft_polargrid,W2Ddir,irun)
         
     def W2D_calc(self, funcpar, Flm, polargrid):
         """calculate numerically W2D for fixed phi angle"""
@@ -2016,19 +1997,22 @@ class momentumfuncs(analysis):
 
         return W2Ddir
 
-    def W2D_plot(self,funcpars,polargrid,W2D): 
+    def W2D_plot(self,funcpars,ft_polargrid,W2D): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
+        #radial grid
+        if funcpars['k_grid']['type'] == "manual":
+            
+            # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'])
 
+        elif funcpars['k_grid']['type'] == "automatic":
+
+            # automatic radial momentum grid as given by the resolution of the FT 
+            ktuple  = (ft_polargrid[0].min(), ft_polargrid[0].max())
+
+        thtuple     = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
+        
         plot_params = funcpars['plot'][1] #all plot params
-        ktuple      = funcpars['ktuple'] #range for k
-        thtuple     = funcpars['thtuple'] #range for theta
-
-        """
-        Args:
-            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
-            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
-            plot_params: parameters of the plot loaded from GRAPHICS.py
-        """
 
         figsizex    = plot_params['figsize_x'] #size of the figure on screen
         figsizey    = plot_params['figsize_y']  #size of the figure on screen
@@ -2055,8 +2039,8 @@ class momentumfuncs(analysis):
         plot_params['rticks']   = list(np.linspace(ktuple[0],ktuple[1],plot_params['nticks_rad'])) 
                             
 
-        plot_W2D  = ax1.contourf(   polargrid[1], 
-                                    polargrid[0], 
+        plot_W2D  = ax1.contourf(   ft_polargrid[1], 
+                                    ft_polargrid[0], 
                                     W2D,  
                                     plot_params['ncont'], 
                                     cmap = 'jet', 
