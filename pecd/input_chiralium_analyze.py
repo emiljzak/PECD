@@ -120,8 +120,12 @@ def read_input():
                                     'kmin': 0.0,    #ignored when automatic
                                     'kmax': 2.2     #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
-                                },                   
-                'th_grid':      (0.0,2.0*np.pi,360),
+                                },
+
+                'th_grid':      {   'thmin': 0.0,
+                                    'thmax': 2.0*np.pi,
+                                    'FT_npts_th': 360
+                                },
                 
                 'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
                 
@@ -156,7 +160,6 @@ def read_input():
                 'show':     True,
                 }
 
-
     params['analyze_space']     = []
     params['analyze_momentum']  = [W2Dav]
     
@@ -168,7 +171,7 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'npts_r_ft':            2000,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'FT_npts_k':            2000,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              20.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?

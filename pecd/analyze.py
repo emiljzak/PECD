@@ -337,7 +337,7 @@ class analysis:
                 funcpars : dict
                     parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
                 polargrid : numpy.ndarray, dtype = float, shape = ()
-                    polar meshgrid over which the input distribution is defined. It has the shape = (npts_r_ft,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
+                    polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
                 fdir :  dict
                     dictionary containing the probability distribution(s) to be decomposed
 
@@ -510,7 +510,7 @@ class analysis:
 
         nbins   = self.params['prop_nbins'] 
         rmax    = nbins * self.params['bound_binw']
-        npts    = self.params['FT_params']['npts_r_ft'] 
+        npts    = self.params['FT_params']['FT_npts_k'] 
         N_red   = npts 
 
         grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
@@ -1622,7 +1622,7 @@ class momentumfuncs(analysis):
 
             A 2D slice :math:`W(k,\\tilde{\\theta})` of the full 3D probability distribution :math:`W(k, \\tilde{\\theta}, \\tilde{\phi})` is calculated. A uniformly-weighted averaging over the azimuthal :math:`\phi` angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.
 
-            .. note:: `W2Dav` is a numpy.ndarray (complex) of shape (npts_r_ft, npts_th_grid). It is **always** defined on the original radial Hankel grid. Later this quantity can be interpolated for plotting in a custom radial range.
+            .. note:: `W2Dav` is a numpy.ndarray (complex) of shape (FT_npts_k, npts_th_grid). It is **always** defined on the original radial Hankel grid. Later this quantity can be interpolated for plotting in a custom radial range.
 
             Parameters: dict
                 k_grid: dict
@@ -1661,26 +1661,26 @@ class momentumfuncs(analysis):
         #radial grid
         if funcpars['k_grid']['type'] == "manual":
             
-            # ktuple determines the range for which we PLOT W2D. kgrid1D is the grid over which W2Dav is evaluated and kept in memory.
+            # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
             funcpars['ktuple']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
-            kgrid1D             = ft_kgrid
 
+            if  funcpars['k_grid']['kmax'] > ft_kgrid.max or funcpars['k_grid']['kmin'] < ft_kgrid.min:
+                raise ValueError("Plotting grid for W2Dav exceeds the original FT k-grid!")
        
         elif funcpars['k_grid']['type'] == "automatic":
 
             # automatic radial momentum grid as given by the resolution of the FT 
-            kgrid1D             = ft_kgrid
-            funcpars['ktuple']  = (kgrid1D.min(), kgrid1D.max(), kgrid1D.shape[0])
+            funcpars['ktuple']  = (ft_kgrid.min(), ft_kgrid.max(), ft_kgrid.shape[0])
 
         #angular grid
-        thtuple             = funcpars['th_grid']
+        thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['the_grid']['FT_npts_th'])
         funcpars['thtuple'] = thtuple
         unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D            = thtuple[1] * unity_vec
         
 
         """ generate 2D meshgrid for storing W2D """
-        polargrid = np.meshgrid(kgrid1D, thgrid1D, indexing='ij')
+        ft_polargrid = np.meshgrid(ft_kgrid, thgrid1D, indexing='ij')
 
         #print(polargrid[0].shape,polargrid[1].shape)
         #exit()
@@ -1701,31 +1701,30 @@ class momentumfuncs(analysis):
 
             Wav = self.W2Dav_calc(  funcpars,
                                     Flm_t,
-                                    polargrid)
+                                    ft_polargrid)
         
             obs_dict['Wav'] = Wav
 
             if funcpars['plot'][0] == True:
-                self.W2Dav_plot(funcpars,polargrid,Wav,irun)
+                self.W2Dav_plot(funcpars,ft_polargrid,Wav,irun)
 
             if funcpars['save'] == True:
-                with open( self.params['job_directory'] +  "W2Dav" + "_" + str(irun) + "_" + str('{:.1f}'.format(t/time_to_au) ) +\
-                    "_" + self.helicity + ".dat" , 'w') as Wavfile:   
+                with open( self.params['job_directory'] +  "W2Dav" + "_" + str(irun) + "_" + str('{:.1f}'.format(t/time_to_au) ) + "_" + self.helicity + ".dat" , 'w') as Wavfile:   
                     np.savetxt(Wavfile, Wav, fmt = '%10.4e')
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
-                bcoeff, momentum_grid      = self.legendre_expansion(funcpars,polargrid,{'av':Wav})
-                obs_dict['bcoeff']  = bcoeff
-                obs_dict['kgrid']   = momentum_grid
+                bcoeff, momentum_grid       = self.legendre_expansion(funcpars,ft_polargrid,{'av':Wav})
+                obs_dict['bcoeff']          = bcoeff
+                obs_dict['momentum_grid']   = momentum_grid
 
             if funcpars['PES']  == True:
-                PES_av              = self.PESav(funcpars,polargrid,Wav,irun)
+                PES_av              = self.PESav(funcpars,ft_polargrid,Wav,irun)
                 obs_dict['PES_av']  = PES_av
 
             obs_list.append([i,t,obs_dict])
 
-        return obs_list, polargrid
+        return obs_list, ft_polargrid
 
 
     def W2Dav_calc(self, funcpar, Flm, polargrid):
@@ -1891,7 +1890,7 @@ class momentumfuncs(analysis):
                 ==========   ================================   ================================
                 Plane        Form                                   Fixed angle
                 ==========   ================================   ================================
-                `XY`            :math:`W(k,\\tilde{\phi})`        :math:`\\tilde{\\theta} = 0`
+                `XY`            :math:`W(k,\\tilde{\phi})`        :math:`\\tilde{\\theta} = \pi/2`
                 `XZ`            :math:`W(k,\\tilde{\\theta})`     :math:`\\tilde{\phi} = 0`
                 `YZ`            :math:`W(k,\\tilde{\\theta})`     :math:`\\tilde{\phi} = \pi/2`
                 ==========   ================================   ================================
@@ -1911,7 +1910,9 @@ class momentumfuncs(analysis):
             ktuple              = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
             funcpars['ktuple']  = ktuple
             kgrid1D             = kgrid # kgrid1D         = np.linspace(ktuple[0], ktuple[1], ktuple[2], endpoint=True, dtype=float)
-
+            if  funcpars['k_grid']['kmax'] > ft_kgrid.max or funcpars['k_grid']['kmin'] < ft_kgrid.min:
+                raise ValueError("Plotting grid for W2Dav exceeds the original FT k-grid!")
+       
         elif funcpars['k_grid']['type'] == "automatic":
             # automatic radial momentum grid as given by the resolution of the FT 
             kgrid1D             = kgrid
@@ -2178,8 +2179,8 @@ class momentumfuncs(analysis):
                 funcpars : dict
                     parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
                 polargrid : numpy.ndarray, dtype = float, shape = ()
-                    polar meshgrid over which the input distribution is defined. It has the shape = (npts_r_ft,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
-                Wav : numpy.ndarray, dtype = float, shape = (npts_r_ft,npts_the) 
+                    polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
+                Wav : numpy.ndarray, dtype = float, shape = (FT_npts_k,npts_the) 
                     array containing :math:`(E,\\tilde{\\theta})` on the FT radial grid and user-defined theta-grid.
 
             Returns: None
