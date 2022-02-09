@@ -11,22 +11,22 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_PES" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "hfilt_1e15" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (6,6,1)
+    params['bound_lmax_arr']    = (10,10,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 30
     params['prop_nbins']        = 200
 
-    params['tmax']              = 4000.0 
+    params['tmax']              = 6000.0 
 
     params['N_euler'] 	        = 1    
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
-    params['helicity']          = "L"
+    params['helicity']          = "R"
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 2 ))
     params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
@@ -123,7 +123,7 @@ def read_input():
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360),
                 
-                'nphi_pts':     1, #number of phi points for the integration over tha azimuthal angle.
+                'nphi_pts':     10, #number of phi points for the integration over tha azimuthal angle.
                 
                 'legendre':     True, # calculate Legendre decomposition
 
@@ -168,8 +168,8 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'npts_r_ft':            800,    # number of radial points over which the Hankel Transform is evaluated.
-                                    'rcutoff':              30.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
+                                    'npts_r_ft':            2000,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'rcutoff':              20.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
                                                      
@@ -185,9 +185,9 @@ def read_input():
                                     'test_leg_interp':      False}  # test interpolation of W2D by plotting 
 
     params['pes_params'] = {
-                                    'pes_npts':             1000,   # numer of points for PES evaluation
-                                    'pes_max_k':            2.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
-                                    'pes_lmax':             50 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
+                                    'pes_npts':             2000,   # numer of points for PES evaluation
+                                    'pes_max_k':            3.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
+                                    'pes_lmax':             60 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
 
     params['pecd_params'] = {
                                 'pecd_lmax':                4,       # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
