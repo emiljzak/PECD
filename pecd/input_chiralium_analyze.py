@@ -103,7 +103,7 @@ def read_input():
                 'PES_params': {     
                                 'name':         'PES',
                                 'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
-                                'show':         True, # show image on screen
+                                'show':         False, # show image on screen
                                 'save':         True, # save array in file
                             
                                 'k-axis':       "energy", # energy (eV) or momentum (a.u.)
@@ -196,8 +196,8 @@ def read_input():
                                     'test_leg_interp':      False}  # test interpolation of W2D by plotting 
 
     params['pes_params'] = {
-                                    'pes_npts':             2000,   # numer of points for PES evaluation
-                                    'pes_max_k':            3.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
+                                    'pes_npts':             500,   # numer of points for PES evaluation
+                                    'pes_max_k':            2.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
                                     'pes_nquad_pts':         60 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
 
     params['pecd_params'] = {

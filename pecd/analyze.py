@@ -2218,12 +2218,12 @@ class momentumfuncs(analysis):
 
                 spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
             
-            self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
+            self.PES_plot(funcpars,spectrum,pes_kgrid,irun,plane)
 
-        if funcpars['PES_params']['show']  == True:
-            plt.show()
-            plt.legend()  
-            plt.close()
+            if funcpars['PES_params']['show']  == True:
+                plt.show()
+                plt.legend()  
+                plt.close()
 
 
 
@@ -2306,7 +2306,7 @@ class momentumfuncs(analysis):
             plt.close()
 
 
-    def PES_plot(self,funcpars,spectrum,kgrid,irun):
+    def PES_plot(self,funcpars,spectrum,kgrid,irun,plane):
         """Produces a plot of the PES.
     
             It handles the case of `W2D` for selected 2D evaluation planes as well as the `W2Dav` case.
@@ -2315,6 +2315,8 @@ class momentumfuncs(analysis):
             kgrid: np.array of size (nkpoints): momentum grid in a.u.
             spectrum: array of size (nkpoints): 1D PES
             plot_params: parameters of the plot loaded from GRAPHICS.py
+            plane: str
+                plane at which we calculate PES
         
         """
 
@@ -2409,8 +2411,7 @@ class momentumfuncs(analysis):
             if funcpars['name'] == 'W2D':
                 fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
                                             plot_params['save_name'] + "_" +
-                                            funcpars['plane_split'][1]+
-                                            funcpars['plane_split'][0]+ "_" +
+                                            plane + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             self.helicity +
@@ -2423,7 +2424,7 @@ class momentumfuncs(analysis):
                             )
             elif  funcpars['name'] == 'W2Dav':
                 fig.savefig(    fname       =   params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" + str(irun) + "_" +
+                                            plot_params['save_name'] + "av" + "_" + str(irun) + "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
                                             self.helicity +
@@ -2434,7 +2435,6 @@ class momentumfuncs(analysis):
                                             bbox_inches =   plot_params['save_bbox_inches'],
                                             pad_inches  =   plot_params['save_pad_inches']
                             )       
-
 
 
 
