@@ -333,9 +333,13 @@ class analysis:
             a) saving legendre expansion coefficients for a chosen momentum grid (`save_bcoeffs=True`)
             b) plotting legendre expansion coefficients for a chosen momentum grid (`plot_bcoeffs=True`)
 
+            Parameters: dict
+                bcoeffs['k_grid']['kmin'], bcoeffs['k_grid']['kmax'],bcoeffs['k_grid']['npts']
+                    deterimine radial grid for plotting the b-coeffients
+
             Arguments: tuple
                 funcpars : dict
-                    parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
+                    parent function parameters.
                 polargrid : numpy.ndarray, dtype = float, shape = ()
                     polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
                 fdir :  dict
@@ -447,8 +451,9 @@ class analysis:
             
             if self.params['legendre_params']['plot_bcoeffs'] == True:
                        
-                kgrid_plot =   np.linspace(funcpars['ktuple'][0],funcpars['ktuple'][1],funcpars['ktuple'][2],endpoint=True) 
-                nkpoints_plot    = funcpars['ktuple'][2] #ktuple determines the plotting grid
+                kgrid_plot =   np.linspace(self.params['bcoeffs']['k_grid']['kmin'] ,self.params['bcoeffs']['k_grid']['kmax'] ,self.params['bcoeffs']['k_grid']['npts'] ,endpoint=True) 
+                
+                nkpoints_plot    = self.params['bcoeffs']['k_grid']['npts'] #ktuple determines the plotting grid
                 bcoeff_plot      = np.zeros((nkpoints_plot,Legmax+1), dtype = float)
                 
                 print("Calculating b_n(E) coefficients for plotting")
@@ -1628,14 +1633,19 @@ class momentumfuncs(analysis):
                 k_grid: dict
                     type : 'manual' or 'automatic'
                         For 'automatic' we use the original FT grid (Hankel) to plot and process W2Dav.
-                        For 'manual' we use a user-defined grid to plot and process W2Dav.
-                    npts : used with 'manual' gives the total number of radial grid points
-                    kmin : used with 'manual' gives the minimum radial momentum value
-                    kmax : used with 'manual' gives the maximum radial momentum value
+                        For 'manual' we use a user-defined grid to plot W2Dav. This grid only cuts ranges. The base W2Dav is always defined over `ft_polargrid`.
+                    kmin : used with 'manual' gives the minimum radial momentum value to plot
+                    kmax : used with 'manual' gives the maximum radial momentum value to plot
+                th_grid: dict
+                    thmin: gives the minimum angular value to plot
+                    thmax: gives the maximum angular value to plot
+                    FT_npts_th: numer of angular points at which W2Dav is evaluated, stored and plotted.
 
+                npts_phi: number of phi angles, distributed uniformly, that are used in phi-averaging
+            
             Arguments: dict
                 funcpars : dict
-                    A dictionary with all relevant W2Dav function parameters
+                    A dictionary with all relevant W2Dav function parameters. See above.
 
             Returns: tuple
                 obs_list : list

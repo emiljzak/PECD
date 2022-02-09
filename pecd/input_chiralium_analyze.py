@@ -116,13 +116,13 @@ def read_input():
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes.
                 'k_grid':       {   'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
-                                    'kmin': 0.5,    #ignored when automatic
-                                    'kmax': 0.7     #ignored when automatic               
+                                    'kmin': 0.0,    #ignored when automatic
+                                    'kmax': 2.0     #ignored when automatic               
                                 },
 
-                'th_grid':      {   'thmin': np.pi,
+                'th_grid':      {   'thmin': 0.0,
                                     'thmax': 2.0*np.pi,
-                                    'FT_npts_th': 360
+                                    'FT_npts_th': 720
                                 },
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
@@ -156,10 +156,10 @@ def read_input():
     bcoeffs = { 'name':     'bcoeffs',
                 'plot':     (True, graphics.gparams_barray2D()),
                 'show':     True,
-                'k_grid':     {     'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                'k_grid':     {    
                                     'npts': 400,
-                                    'kmin': 0.5,    #ignored when automatic
-                                    'kmax': 0.7     #ignored when automatic               
+                                    'kmin': 0.0,    #ignored when automatic
+                                    'kmax': 2.2     #ignored when automatic               
                                 },
 
                 }
