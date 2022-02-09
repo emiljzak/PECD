@@ -112,24 +112,22 @@ def read_input():
 
     W2Dav = {   'name':         'W2Dav',
                 'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                'show':         False, # show image on screen
+                'show':         True, # show image on screen
                 'save':         True, # save array in file
-                                # Momentum grid parameters only for plotting purposes
-                'k_grid':       {   'type':'manual', #manual or automatic plotting grid type. 
-                                    'npts': 400,    #ignored when automatic (2*rmax)
-                                    'kmin': 0.0,    #ignored when automatic
-                                    'kmax': 2.2     #ignored when automatic
-                                    #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                # Momentum grid parameters only for plotting purposes.
+                'k_grid':       {   'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                    'kmin': 0.5,    #ignored when automatic
+                                    'kmax': 0.7     #ignored when automatic               
                                 },
 
-                'th_grid':      {   'thmin': 0.0,
+                'th_grid':      {   'thmin': np.pi,
                                     'thmax': 2.0*np.pi,
                                     'FT_npts_th': 360
                                 },
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
                 
-                'legendre':     True, # calculate Legendre decomposition
+                'legendre':     False, # calculate Legendre decomposition
 
                 'PES':          True, # calculate PES
                 'PES_params': {     
@@ -158,6 +156,12 @@ def read_input():
     bcoeffs = { 'name':     'bcoeffs',
                 'plot':     (True, graphics.gparams_barray2D()),
                 'show':     True,
+                'k_grid':     {     'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                    'npts': 400,
+                                    'kmin': 0.5,    #ignored when automatic
+                                    'kmax': 0.7     #ignored when automatic               
+                                },
+
                 }
 
     params['analyze_space']     = []
@@ -171,7 +175,7 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            500,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'FT_npts_k':            1000,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              20.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?

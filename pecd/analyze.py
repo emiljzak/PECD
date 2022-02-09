@@ -1662,12 +1662,12 @@ class momentumfuncs(analysis):
         if funcpars['k_grid']['type'] == "manual":
             
             # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
-            funcpars['ktuple']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'], funcpars['k_grid']['npts'])
+            funcpars['ktuple']  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'])
 
         elif funcpars['k_grid']['type'] == "automatic":
 
             # automatic radial momentum grid as given by the resolution of the FT 
-            funcpars['ktuple']  = (ft_kgrid.min(), ft_kgrid.max(), ft_kgrid.shape[0])
+            funcpars['ktuple']  = (ft_kgrid.min(), ft_kgrid.max())
 
         #angular grid
         thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
