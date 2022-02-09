@@ -1934,7 +1934,8 @@ class momentumfuncs(analysis):
         """ generate 2D meshgrid for storing W2D """
         ft_polargrid = np.meshgrid(ft_kgrid, thgrid1D, indexing='ij')
 
-
+        obs_dict = {}
+        obs_list = []
         """ loop over evaluation times """
         for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
 
@@ -1957,7 +1958,6 @@ class momentumfuncs(analysis):
 
                     plane       = elem[0]
                     W           = elem[1]
-                    print(W.shape)
 
                     funcpars['plane_split'] = self.split_word(plane)
 
@@ -1972,12 +1972,19 @@ class momentumfuncs(analysis):
                         np.savetxt(rhofile, elem[1], fmt = '%10.4e')
 
             if funcpars['legendre'] == True:
-                # perform legendre expansion of W2D
-                self.legendre_expansion(funcpars,ft_polargrid,W2Ddir)
-
+                bcoeff, momentum_grid = self.legendre_expansion(funcpars,ft_polargrid,W2Ddir)
+                obs_dict['bcoeff']          = bcoeff
+                obs_dict['momentum_grid']   = momentum_grid
+            
             if funcpars['PES']  == True:
-                self.PES(funcpars,ft_polargrid,W2Ddir,irun)
-        
+                PES = self.PES(funcpars,ft_polargrid,W2Ddir,irun)
+                obs_dict['PES']  = PES
+
+            obs_list.append([i,t,obs_dict])
+
+        return obs_list, ft_polargrid
+
+
     def W2D_calc(self, funcpar, Flm, ft_polargrid):
         """Calculate numerically :math:`W_{2D}(k,\\tilde{\\theta};\\tilde{\phi}_0)` for a fixed angle.
 
@@ -2018,6 +2025,7 @@ class momentumfuncs(analysis):
         .. warning:: In the present implementation the 2D controur plot is produced for the **original FT** grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only. 
 
         .. note:: `contourf` already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.
+        
         """
 
         #radial grid
