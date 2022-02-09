@@ -1926,7 +1926,6 @@ class momentumfuncs(analysis):
         irun = self.params['irun']
        
         """ set up 1D momentum angular grid """
-        #angular grid
         thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
         unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
         thgrid1D            = thtuple[1] * unity_vec #Note: we squeeze the same number of points in  a smaller interval if thtuple[1]<2pi
@@ -1951,17 +1950,13 @@ class momentumfuncs(analysis):
                                     Flm_t,
                                     ft_polargrid)
 
-
             if funcpars['plot'][0] == True:
 
                 for elem in W2Ddir.items():
 
                     plane       = elem[0]
                     W           = elem[1]
-
                     funcpars['plane_split'] = self.split_word(plane)
-
-                    # call plotting function
                     self.W2D_plot(funcpars,ft_polargrid,W)
 
 
@@ -2157,49 +2152,13 @@ class momentumfuncs(analysis):
         plt.close()
 
 
-    def PES(self,funcpars,grid,fdir,irun):
-
-        for elem in fdir.items():
-
-            f       = elem[1]
-            plane   = elem[0]
-
-            kgrid       = grid[0]
-            thetagrid   = grid[1]
-
-            Lmax    = self.params['pes_params']['pes_lmax'] 
-            nleg     = Lmax
-            print(nleg)
-            x, w    = np.polynomial.legendre.leggauss(nleg)
-            w       = w.reshape(nleg,-1)
-
-            """ Interpolate f(k,theta)"""
-            W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
-
-
-            print("*** calculating photo-electron spectrum ***")
-            nkpoints    = params['pes_params']['pes_npts'] 
-            pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
-            spectrum    = np.zeros(nkpoints, dtype = float)
-            
-            #the integral can be done analytically or with quadratures
-
-            #quadratures
-            for ipoint,k in enumerate(list(pes_kgrid)):   
-            
-                W_interp1        = W_interp(k,-np.arccos(x)).reshape(nleg,-1)
-
-                spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
-            
-            self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
-
-    def PESav(self,funcpars,polargrid,Wav,irun):
-        """Calculate the photo-electron spectrum (PES) from a phi-averaged momentum distribution.
+    def PES(self,funcpars,ft_polargrid,fdir,irun):
+        """Calculate the photo-electron spectrum (PES) from a 2D momentum distribution.
             
             Perform the following integration:
 
             .. math::
-                \sigma(E) = \int \sin\\theta d\\theta W(E,\\tilde{\\theta}) 
+                \sigma(E) = \int \sin\\theta d\\theta W_{2D}(E,\\tilde{\\theta}) 
                 :label: PES_definition
             
             This function carries options for:
@@ -2213,7 +2172,80 @@ class momentumfuncs(analysis):
             Arguments: tuple
                 funcpars : dict
                     parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
-                polargrid : numpy.ndarray, dtype = float, shape = ()
+                ft_polargrid : numpy.ndarray, dtype = float, shape = ()
+                    polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
+                fdir : dict
+                    A dictionary containing {'plane':W2D[plane]}' where W2D is numpy.ndarray, dtype = float, shape = (FT_npts_k,npts_the) and 'plane' = 'XY,'XZ','YZ'
+
+
+            Returns: None
+              
+            An example photo-electron spectrum for the chiralim model molecule is shown below:
+
+            .. figure:: _images/pes_example.png
+                :height: 400
+                :width: 400
+                :align: center
+
+        """      
+        for elem in fdir.items():
+
+            f           = elem[1]
+            plane       = elem[0]
+
+            kgrid       = ft_polargrid[0]
+            thetagrid   = ft_polargrid[1]
+
+            """ Interpolate W2D(k,theta)"""
+            W_interp    = interpolate.RectBivariateSpline(kgrid[:,0], thetagrid[0,:], f[:,:], kx=3, ky=3)
+
+            print("*** calculating photo-electron spectrum ***")
+            nkpoints    = params['pes_params']['pes_npts'] 
+            pes_kgrid   = np.linspace(0.0, params['pes_params']['pes_max_k'], nkpoints)
+            spectrum    = np.zeros(nkpoints, dtype = float)
+            
+            nleg        = self.params['pes_params']['pes_lmax'] 
+            x, w        = np.polynomial.legendre.leggauss(nleg)
+            w           = w.reshape(nleg,-1)
+
+            print("The number of Gauss-Legendre quadrature points for the PES integration = " + str(w.shape))
+
+            for ipoint,k in enumerate(list(pes_kgrid)):   
+            
+                W_interp1        = W_interp(k,-np.arccos(x)+2.0*np.pi).reshape(nleg,-1)
+
+                spectrum[ipoint] = np.sum(w[:,0] * W_interp1[:,0] * np.sin(np.arccos(x)) ) 
+            
+            self.PES_plot(funcpars,spectrum,pes_kgrid,irun)
+
+        if funcpars['PES_params']['show']  == True:
+            plt.show()
+            plt.legend()  
+            plt.close()
+
+
+
+    def PESav(self,funcpars,ft_polargrid,Wav,irun):
+        """Calculate the photo-electron spectrum (PES) from a phi-averaged momentum distribution.
+            
+            Perform the following integration:
+
+            .. math::
+                \sigma(E) = \int \sin\\theta d\\theta \\bar{W}_{2D}(E,\\tilde{\\theta}) 
+                :label: PES_definition
+            
+            This function carries options for:
+            a) saving the PES for a chosen momentum grid (`save_PES=True`)
+            b) psaving the PES for a chosen momentum grid (`plot_PES=True`)
+
+            Parameters: dict
+                pes_max_k: float
+                    maximum range for the PES plot. It is independent of the respective momentum range set for W2Dav, but cannot exceed the FT range determined by the number of FT points.
+
+            Arguments: tuple
+                funcpars : dict
+                    parent function parameters. This includes `funcpars['ktuple']` and `funcpars['thtuple']`, which determine plotting ranges.
+                ft_polargrid : numpy.ndarray, dtype = float, shape = ()
                     polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in `th_grid`. The number of radial points is determined by the number of points used to calculate the Hankel transform.
                 Wav : numpy.ndarray, dtype = float, shape = (FT_npts_k,npts_the) 
                     array containing :math:`(E,\\tilde{\\theta})` on the FT radial grid and user-defined theta-grid.
@@ -2229,8 +2261,8 @@ class momentumfuncs(analysis):
 
         """      
     
-        kgrid       = polargrid[0]
-        thetagrid   = polargrid[1]
+        kgrid       = ft_polargrid[0]
+        thetagrid   = ft_polargrid[1]
 
 
         """ Interpolate Wav(k,theta)"""
@@ -2275,6 +2307,8 @@ class momentumfuncs(analysis):
     def PES_plot(self,funcpars,spectrum,kgrid,irun):
         """Produces a plot of the PES.
     
+            It handles the case of `W2D` for selected 2D evaluation planes as well as the `W2Dav` case.
+
         Args:
             kgrid: np.array of size (nkpoints): momentum grid in a.u.
             spectrum: array of size (nkpoints): 1D PES
