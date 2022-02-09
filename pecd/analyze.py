@@ -330,11 +330,21 @@ class analysis:
                 :label: legendre_expansion
 
             where the expansion coefficients are given as:
+
             .. math::
-                b_n(k) =  \frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\\tilde{\\theta}))P_n(\cos\\tilde{\\theta}) d\cos\\tilde{\\theta}
+                b_n(k) =\\frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\\tilde{\\theta}))P_n(\cos\\tilde{\\theta}) d\cos\\tilde{\\theta}
                 :label: legendre_coeffs
     
-            
+            :math:`n_{max}` is determined by `Leg_Lmax` in the input file.
+
+            For consisency with the angular range and definition of `W2D` we use :math:`\\theta=-np.arccos(x[:,0])+2.0*np.pi`. The respespective integral is calculated using the Gauss-Legendre quadrature:
+
+            .. math::
+                b_n(k) =  \sum_{q=0}^{q_{max}} w_q P_n(\cos\\tilde{\\theta}_q) W(k,-\\arccos(\cos\\tilde{\\theta})+2\pi)
+                :label: legendre_coeffs_quad
+    
+            where :math:`q_{max}` is determined by `N_leg_quad'.
+
             This function carries options for:
             a) saving legendre expansion coefficients for a chosen momentum grid (`save_bcoeffs=True`)
             b) plotting legendre expansion coefficients for a chosen momentum grid (`plot_bcoeffs=True`)
@@ -376,9 +386,7 @@ class analysis:
         energy_grid     = np.asarray(self.params['legendre_params']['energy_grid'])
         #be careful when assigning new values to attributes inside functions: they change globally.
         momentum_grid   = self.energy_ev_to_momentum_au(energy_grid)
-        print("x:")
-        print(x)
-        exit()
+
         #loop over elements of a dictionary of observables
         for elem in fdir.items():
 
@@ -429,7 +437,7 @@ class analysis:
             
             for n in range(0,Legmax+1):
 
-                Pn = eval_legendre(n, x[:,0]).reshape(nleg,-1)
+                Pn = eval_legendre(n, np.cos(-np.arccos(x[:,0])+2.0*np.pi)).reshape(nleg,-1)
 
                 for ipoint,k in enumerate(list(momentum_grid)):
                     #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests
@@ -470,7 +478,7 @@ class analysis:
                 print("Calculating b_n(E) coefficients for plotting")
                 for n in range(0,Legmax+1):
 
-                    Pn = eval_legendre(n, x[:,0]).reshape(nleg,-1)
+                    Pn = eval_legendre(n, np.cos(-np.arccos(x[:,0])+2.0*np.pi)).reshape(nleg,-1)
 
                     for ipoint,k in enumerate(list(kgrid_plot)):
                         #= np.sin(-np.arccos(x)+2.0*np.pi)**4  for tests

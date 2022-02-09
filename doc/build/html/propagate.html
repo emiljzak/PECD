@@ -510,6 +510,39 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <span class="sig-name descname"><span class="pre">read_wavepacket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgrid_plot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis.read_wavepacket" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.analysis.momentum_au_to_energy_ev">
+<span class="sig-name descname"><span class="pre">momentum_au_to_energy_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis.momentum_au_to_energy_ev" title="Permalink to this definition"></a></dt>
+<dd><p>Converts momentum given in atomic units to energy in eV</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Arguments: numpy.ndarray</dt><dd><dl class="simple">
+<dt>array<span class="classifier">numpy.ndarray, dtype = float, shape = (N,)</span></dt><dd><p>grid of momenta given in a.u.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns: numpu.ndarray</dt><dd><p>energy :math:<a href="#id1"><span class="problematic" id="id2">`</span></a>E=</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>rac{1}{2}k^2` in <cite>eV</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.analysis.energy_ev_to_momentum_au">
+<span class="sig-name descname"><span class="pre">energy_ev_to_momentum_au</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis.energy_ev_to_momentum_au" title="Permalink to this definition"></a></dt>
+<dd><p>Converts energy array given in eV to momentum array given in atomic units</p>
+<dl class="simple">
+<dt>Arguments: numpy.ndarray</dt><dd><dl class="simple">
+<dt>array<span class="classifier">numpy.ndarray, dtype = float, shape = (N,)</span></dt><dd><p>grid of energies given in eV</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns: numpu.ndarray</dt><dd><p>momentum <span class="math notranslate nohighlight">\(k = 2\sqrt{E}\)</span> in <cite>au</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -528,14 +561,6 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 </dd>
 </dl>
 <p>Returns: None</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This is a <strong>note</strong> box</p>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This is a <strong>warning</strong> box.</p>
-</div>
 <p>An example distribution is plotted below:</p>
 <figure class="align-center">
 <a class="reference internal image-reference" href="_images/W2Dav_example.png"><img alt="_images/W2Dav_example.png" src="_images/W2Dav_example.png" style="width: 400px; height: 400px;" /></a>
@@ -557,7 +582,7 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <tbody>
 <tr class="row-even"><td><p><cite>XY</cite></p></td>
 <td><p><span class="math notranslate nohighlight">\(W(k,\tilde{\phi})\)</span></p></td>
-<td><p><span class="math notranslate nohighlight">\(\tilde{\theta} = 0\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{\theta} = \pi/2\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><cite>XZ</cite></p></td>
 <td><p><span class="math notranslate nohighlight">\(W(k,\tilde{\theta})\)</span></p></td>
@@ -570,6 +595,267 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 </tbody>
 </table>
 </div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2D_calc">
+<span class="sig-name descname"><span class="pre">W2D_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Flm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2D_calc" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate numerically <span class="math notranslate nohighlight">\(W_{2D}(k,\tilde{\theta};\tilde{\phi}_0)\)</span> for a fixed angle.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>W2D</cite> is a numpy.ndarray (complex) of shape (FT_npts_k, FT_npts_th). It is <strong>always</strong> defined on the original radial Hankel grid.</p>
+</div>
+<dl class="simple">
+<dt>Arguments: dict</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>A dictionary with all relevant W2Dav function parameters</p>
+</dd>
+<dt>Flm: numpy.ndarray, dtype = complex, shape = (FT_npts_k,)</dt><dd><p>Array of radial FT amplitudes calculated calculated with Hankel transform</p>
+</dd>
+<dt>ft_polargrid: numpy.ndarray, shape = (FT_npts_k, FT_npts_th)</dt><dd><p>2D polar grid or <span class="math notranslate nohighlight">\((k,\tilde{\theta})\)</span></p>
+</dd>
+</dl>
+</dd>
+<dt>Returns: dict</dt><dd><dl class="simple">
+<dt>W2Ddir<span class="classifier">dict</span></dt><dd><p>A dictionary keeping numpy arrays of W2D for requested evaluation planes: ‘XY’,’XZ’ or ‘YZ’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2D_plot">
+<span class="sig-name descname"><span class="pre">W2D_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W2D</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2D_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Produces a contour 2D plot for 2D electron’s momentum distribution <span class="math notranslate nohighlight">\(W_{2D}(k,\tilde{\theta})\)</span> evaluated at planes ‘XY’, ‘XZ’ or ‘YZ’.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In the present implementation the 2D controur plot is produced for the <strong>original FT</strong> grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>contourf</cite> already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.PES">
+<span class="sig-name descname"><span class="pre">PES</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.PES" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the photo-electron spectrum (PES) from a 2D momentum distribution.</p>
+<p>Perform the following integration:</p>
+<div class="math notranslate nohighlight" id="equation-pes-definition">
+<span class="eqno">(2)<a class="headerlink" href="#equation-pes-definition" title="Permalink to this equation"></a></span>\[\sigma(E) = \int \sin\theta d\theta W_{2D}(E,\tilde{\theta})\]</div>
+<p>This function carries options for:
+a) saving the PES for a chosen momentum grid (<cite>save_PES=True</cite>)
+b) psaving the PES for a chosen momentum grid (<cite>plot_PES=True</cite>)</p>
+<dl class="simple">
+<dt>Parameters: dict</dt><dd><dl class="simple">
+<dt>pes_max_k: float</dt><dd><p>maximum range for the PES plot. It is independent of the respective momentum range set for W2Dav, but cannot exceed the FT range determined by the number of FT points.</p>
+</dd>
+</dl>
+</dd>
+<dt>Arguments: tuple</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>parent function parameters. This includes <cite>funcpars[‘ktuple’]</cite> and <cite>funcpars[‘thtuple’]</cite>, which determine plotting ranges.</p>
+</dd>
+<dt>ft_polargrid<span class="classifier">numpy.ndarray, dtype = float, shape = ()</span></dt><dd><p>polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in <cite>th_grid</cite>. The number of radial points is determined by the number of points used to calculate the Hankel transform.</p>
+</dd>
+<dt>fdir<span class="classifier">dict</span></dt><dd><p>A dictionary containing {‘plane’:W2D[plane]}’ where W2D is numpy.ndarray, dtype = float, shape = (FT_npts_k,npts_the) and ‘plane’ = ‘XY,’XZ’,’YZ’</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Returns: None</p>
+<p>An example photo-electron spectrum for the chiralim model molecule is shown below:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/pes_example.png"><img alt="_images/pes_example.png" src="_images/pes_example.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.PES_plot">
+<span class="sig-name descname"><span class="pre">PES_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plane</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.PES_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Produces a plot of the PES.</p>
+<blockquote>
+<div><p>It handles the case of <cite>W2D</cite> for selected 2D evaluation planes as well as the <cite>W2Dav</cite> case.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kgrid</strong> – np.array of size (nkpoints): momentum grid in a.u.</p></li>
+<li><p><strong>spectrum</strong> – array of size (nkpoints): 1D PES</p></li>
+<li><p><strong>plot_params</strong> – parameters of the plot loaded from GRAPHICS.py</p></li>
+<li><p><strong>plane</strong> – str
+plane at which we calculate PES</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2Dav">
+<span class="sig-name descname"><span class="pre">W2Dav</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2Dav" title="Permalink to this definition"></a></dt>
+<dd><p>2D electron momentum probability distribution averaged over the <span class="math notranslate nohighlight">\(\phi\)</span> angle.</p>
+<p>A 2D slice <span class="math notranslate nohighlight">\(W(k,\tilde{\theta})\)</span> of the full 3D probability distribution <span class="math notranslate nohighlight">\(W(k, \tilde{\theta}, \tilde{\phi})\)</span> is calculated. A uniformly-weighted averaging over the azimuthal <span class="math notranslate nohighlight">\(\phi\)</span> angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>W2Dav</cite> is a numpy.ndarray (complex) of shape (FT_npts_k, FT_npts_th). It is <strong>always</strong> defined on the original radial Hankel grid. Later this quantity can be interpolated for plotting in a custom radial range.</p>
+</div>
+<dl>
+<dt>Parameters: dict</dt><dd><dl>
+<dt>k_grid: dict</dt><dd><dl class="simple">
+<dt>type<span class="classifier">‘manual’ or ‘automatic’</span></dt><dd><p>For ‘automatic’ we use the original FT grid (Hankel) to plot and process W2Dav.
+For ‘manual’ we use a user-defined grid to plot W2Dav. This grid only cuts ranges. The base W2Dav is always defined over <cite>ft_polargrid</cite>.</p>
+</dd>
+</dl>
+<p>kmin : used with ‘manual’ gives the minimum radial momentum value to plot</p>
+<p>kmax : used with ‘manual’ gives the maximum radial momentum value to plot</p>
+</dd>
+<dt>th_grid: dict</dt><dd><p>thmin: gives the minimum angular value to plot</p>
+<p>thmax: gives the maximum angular value to plot</p>
+<p>FT_npts_th: numer of angular points at which W2Dav is evaluated, stored and plotted.</p>
+</dd>
+</dl>
+<p>npts_phi: number of phi angles, distributed uniformly, that are used in phi-averaging</p>
+</dd>
+<dt>Arguments: dict</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>A dictionary with all relevant W2Dav function parameters. See above.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>obs_list<span class="classifier">list</span></dt><dd><p>A list of the form [i,t,obs_dict], where i is the time-index, t is the time and obs_dict is a dictionary of observables calculated at time t.</p>
+</dd>
+<dt>ft_polargrid: numpy.ndarray, shape = (FT_npts_k, FT_npts_th)</dt><dd><p>2D polar grid or <span class="math notranslate nohighlight">\((k,\tilde{\theta})\)</span></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>An example distribution is plotted below:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/W2Dav_example.png"><img alt="_images/W2Dav_example.png" src="_images/W2Dav_example.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2Dav_calc">
+<span class="sig-name descname"><span class="pre">W2Dav_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Flm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2Dav_calc" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate numerically <span class="math notranslate nohighlight">\(W_{2D}(k,\tilde{\theta};\tilde{\phi}_0)\)</span> for a sequence of phi angles and return averaged W2Dav.</p>
+<p>A uniformly-weighted averaging over the azimuthal <span class="math notranslate nohighlight">\(\phi\)</span> angle is performed, to reflect the near-symmetry imposed multiple-cycle circularly-polarised light pulse that interacts with the molecule.</p>
+<blockquote>
+<div><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>W2Dav</cite> is a numpy.ndarray (complex) of shape (FT_npts_k, FT_npts_th). It is <strong>always</strong> defined on the original radial Hankel grid.</p>
+</div>
+<dl class="simple">
+<dt>Arguments: dict</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>A dictionary with all relevant W2Dav function parameters</p>
+</dd>
+<dt>Flm: numpy.ndarray, dtype = complex, shape = (FT_npts_k,)</dt><dd><p>Array of radial FT amplitudes calculated calculated with Hankel transform</p>
+</dd>
+<dt>ft_polargrid: numpy.ndarray, shape = (FT_npts_k, FT_npts_th)</dt><dd><p>2D polar grid or <span class="math notranslate nohighlight">\((k,\tilde{\theta})\)</span></p>
+</dd>
+</dl>
+</dd>
+<dt>Returns: numpy.ndarray</dt><dd><dl class="simple">
+<dt>Wav<span class="classifier">numpy.ndarray, dtype = float, shape = (FT_npts_k,FT_npts_th)</span></dt><dd><p>Array keeping the phi-averaged 2D distribution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2Dav_plot">
+<span class="sig-name descname"><span class="pre">W2Dav_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W2D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2Dav_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Produces a contour 2D plot for 2D phi-averaged electron’s momentum distribution <span class="math notranslate nohighlight">\(\bar{W}_{2D}(k,\tilde{\theta})\)</span></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In the present implementation the 2D controur plot is produced for the <strong>original FT</strong> grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>contourf</cite> already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.PESav">
+<span class="sig-name descname"><span class="pre">PESav</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wav</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.PESav" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the photo-electron spectrum (PES) from a phi-averaged momentum distribution.</p>
+<p>Perform the following integration:</p>
+<div class="math notranslate nohighlight" id="equation-pes-definition">
+<span class="eqno">(3)<a class="headerlink" href="#equation-pes-definition" title="Permalink to this equation"></a></span>\[\sigma(E) = \int \sin\theta d\theta \bar{W}_{2D}(E,\tilde{\theta})\]</div>
+<p>This function carries options for:
+a) saving the PES for a chosen momentum grid (<cite>save_PES=True</cite>)
+b) psaving the PES for a chosen momentum grid (<cite>plot_PES=True</cite>)</p>
+<dl class="simple">
+<dt>Parameters: dict</dt><dd><dl class="simple">
+<dt>pes_max_k: float</dt><dd><p>maximum range for the PES plot. It is independent of the respective momentum range set for W2Dav, but cannot exceed the FT range determined by the number of FT points.</p>
+</dd>
+</dl>
+</dd>
+<dt>Arguments: tuple</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>parent function parameters. This includes <cite>funcpars[‘ktuple’]</cite> and <cite>funcpars[‘thtuple’]</cite>, which determine plotting ranges.</p>
+</dd>
+<dt>ft_polargrid<span class="classifier">numpy.ndarray, dtype = float, shape = ()</span></dt><dd><p>polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,npts_theta). The numer of angular points is arbitrary, as defined by the user in <cite>th_grid</cite>. The number of radial points is determined by the number of points used to calculate the Hankel transform.</p>
+</dd>
+<dt>Wav<span class="classifier">numpy.ndarray, dtype = float, shape = (FT_npts_k,npts_the)</span></dt><dd><p>array containing <span class="math notranslate nohighlight">\((E,\tilde{\theta})\)</span> on the FT radial grid and user-defined theta-grid.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Returns: None</p>
+<p>An example photo-electron spectrum for the chiralim model molecule is shown below:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/pes_example.png"><img alt="_images/pes_example.png" src="_images/pes_example.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.legendre_expansion">
+<span class="sig-name descname"><span class="pre">legendre_expansion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ft_polargrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.legendre_expansion" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the Legendre expansion coefficients as a function of the photo-electron momentum.</p>
+<p>Perform the following Legendre decomposition:</p>
+<div class="math notranslate nohighlight" id="equation-legendre-expansion">
+<span class="eqno">(4)<a class="headerlink" href="#equation-legendre-expansion" title="Permalink to this equation"></a></span>\[W(k,\tilde{\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\tilde{\theta})\]</div>
+<p>where the expansion coefficients are given as:</p>
+<div class="math notranslate nohighlight" id="equation-legendre-coeffs">
+<span class="eqno">(5)<a class="headerlink" href="#equation-legendre-coeffs" title="Permalink to this equation"></a></span>\[b_n(k) =\frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\tilde{\theta}))P_n(\cos\tilde{\theta}) d\cos\tilde{\theta}\]</div>
+<p><span class="math notranslate nohighlight">\(n_{max}\)</span> is determined by <cite>Leg_Lmax</cite> in the input file.</p>
+<p>For consisency with the angular range and definition of <cite>W2D</cite> we use <span class="math notranslate nohighlight">\(\theta=-np.arccos(x[:,0])+2.0*np.pi\)</span>. The respespective integral is calculated using the Gauss-Legendre quadrature:</p>
+<div class="math notranslate nohighlight" id="equation-legendre-coeffs-quad">
+<span class="eqno">(6)<a class="headerlink" href="#equation-legendre-coeffs-quad" title="Permalink to this equation"></a></span>\[b_n(k) =  \sum_{q=0}^{q_{max}} w_q P_n(\cos\tilde{\theta}_q) W(k,-\arccos(\cos\tilde{\theta})+2\pi)\]</div>
+<p>where <span class="math notranslate nohighlight">\(q_{max}\)</span> is determined by <a href="#id3"><span class="problematic" id="id4">`</span></a>N_leg_quad’.</p>
+<p>This function carries options for:
+a) saving legendre expansion coefficients for a chosen momentum grid (<cite>save_bcoeffs=True</cite>)
+b) plotting legendre expansion coefficients for a chosen momentum grid (<cite>plot_bcoeffs=True</cite>)</p>
+<dl class="simple">
+<dt>Parameters: dict</dt><dd><dl class="simple">
+<dt>bcoeffs[‘k_grid’][‘kmin’], bcoeffs[‘k_grid’][‘kmax’],bcoeffs[‘k_grid’][‘npts’]</dt><dd><p>deterimine radial grid for plotting the b-coeffients</p>
+</dd>
+</dl>
+</dd>
+<dt>Arguments: tuple</dt><dd><dl class="simple">
+<dt>funcpars<span class="classifier">dict</span></dt><dd><p>parent function parameters.</p>
+</dd>
+<dt>ft_polargrid<span class="classifier">numpy.ndarray, dtype = float, shape = ()</span></dt><dd><p>polar meshgrid over which the input distribution is defined. It has the shape = (FT_npts_k,FT_npts_th). The numer of angular points is arbitrary, as defined by the user in <cite>th_grid</cite>. The number of radial points is determined by the number of points used to calculate the Hankel transform.</p>
+</dd>
+<dt>fdir<span class="classifier">dict</span></dt><dd><p>dictionary containing the probability distribution(s) to be decomposed</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>bcoef<span class="classifier">numpy.ndarray, dtype = float, shape = (len(energy_grid),Legmax+1)</span></dt><dd><p>Array of the legendre expansion coefficients calculated at energies specified by the used in   params[‘legendre_params’][‘energy_grid’]</p>
+</dd>
+<dt>momentum_grid: numpy.ndarray</dt><dd><p>momentum grid on which the b-coeffs are calculated</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>An example plot of the legendre expansion coefficients (Legmax=20) vs. electron’s momentum (in a.u.) is plotted below (in log-scale):</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/bcoeffs_example.png"><img alt="_images/bcoeffs_example.png" src="_images/bcoeffs_example.png" style="width: 400px; height: 400px;" /></a>
+</figure>
 </dd></dl>
 
 </dd></dl>

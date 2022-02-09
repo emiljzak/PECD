@@ -91,10 +91,23 @@ Analysis module (:code:`analyze`)
 .. autoclass:: pecd.analyze.analysis
 
 	.. automethod:: read_wavepacket
+	.. automethod:: momentum_au_to_energy_ev
+	.. automethod:: energy_ev_to_momentum_au
+	
 	
 .. autoclass:: pecd.analyze.momentumfuncs
 
 	.. automethod:: W2D
+	.. automethod:: W2D_calc
+	.. automethod:: W2D_plot
+	.. automethod:: PES
+	.. automethod:: PES_plot
+	.. automethod:: W2Dav
+	.. automethod:: W2Dav_calc
+	.. automethod:: W2Dav_plot
+	.. automethod:: PESav
+	.. automethod:: legendre_expansion
+	
 	
 	
 	
