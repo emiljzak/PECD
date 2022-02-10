@@ -1305,11 +1305,12 @@ class Hamiltonian():
 
         helicity = self.pull_helicity(self.params)
 
+        #for CPL always pull and use h_{ll'mm'\mu=-1} -> to be multiplied by E_{mu=-1}
         if helicity == "R":
-            tmat = tjmat3D[:,:,2]
+            tmat = tjmat3D[:,:,0]
             sigma = 1 
         elif helicity == "L":
-            tmat = tjmat3D[:,:,2]
+            tmat = tjmat3D[:,:,0]
             sigma = -1
         elif helicity == "0":
             tmat = tjmat3D[:,:,1]
@@ -1328,10 +1329,10 @@ class Hamiltonian():
         intmat = sparse.block_diag(diparr)
 
         dipmat = ((-1.0)**(sigma)) * np.sqrt( 4.0 * np.pi / 3.0 ) * intmat
-        #plot_mat(intmat)
-        #plt.spy(intmat+intmat.H,precision=1e-12)
-        #plt.show()
-        #exit()
+        plot_mat(dipmat)
+        plt.spy(dipmat+dipmat.H,precision=1e-12)
+        plt.show()
+        exit()
         return dipmat
 
 
