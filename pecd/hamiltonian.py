@@ -180,6 +180,24 @@ class Hamiltonian():
             raise ValueError("Incorrect format type for the Hamiltonian")
 
 
+    @staticmethod
+    def pull_helicity(params):
+        """Pulls helicity of the laser pulse.
+
+            Returns: str
+                helicity = "R","L" or "0" for right-,left- circularly polarized light and linearly polarized light, respectively.
+        """
+        if params['field_type']['function_name'] == "fieldRCPL":
+            helicity = "R"
+        elif params['field_type']['function_name'] == "fieldLCPL":
+            helicity = "L"  
+        elif params['field_type']['function_name'] == "fieldLP":
+            helicity = "0"
+        else:
+            raise ValueError("Incorect field name")
+
+        return helicity
+
     def save_energies(self,enr,irun=0):
         """Saves the energy levels in a file
         
@@ -1284,12 +1302,16 @@ class Hamiltonian():
         print("Time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
         
 
-        tmats = self.map_tjmat_dip(tjmat)
+        tjmat3D = self.map_tjmat_dip(tjmat)
 
-        if self.params['field_func_name'] == "RCPL" or self.params['field_func_name'] == "LCPL":
-            tmat = tmats[:,:,2]
-        elif self.params['field_func_name'] == "LP":
-            tmat = tmats[:,:,1]
+        helicity = self.pull_helicity(self.params)
+
+        if helicity == "R":
+            tmat = tjmat3D[:,:,2] 
+        elif helicity == "L":
+            tmat = tjmat3D[:,:,2]
+        elif helicity == "0":
+            tmat = tjmat3D[:,:,1]
         else:
             raise NotImplementedError("Incorrect field name") 
 
@@ -1303,11 +1325,12 @@ class Hamiltonian():
 
         intmat = sparse.block_diag(diparr)
 
+        dipmat = (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat
         #plot_mat(intmat)
         #plt.spy(intmat+intmat.H,precision=1e-12)
         #plt.show()
         #exit()
-        return (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat
+        return 
 
 
 

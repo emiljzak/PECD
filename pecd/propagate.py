@@ -86,22 +86,6 @@ class Propagator():
         plt.spy(mat, precision=self.params['sph_quad_tol'], markersize=5)
         plt.show()
 
-    def pull_helicity(self):
-        """Pulls helicity of the laser pulse.
-
-            Returns: str
-                helicity = "R","L" or "0" for right-,left- circularly polarized light and linearly polarized light, respectively.
-        """
-        if self.params['field_type']['function_name'] == "fieldRCPL":
-            helicity = "R"
-        elif self.params['field_type']['function_name'] == "fieldLCPL":
-            helicity = "L"  
-        elif self.params['field_type']['function_name'] == "fieldLP":
-            helicity = "0"
-        else:
-            raise ValueError("Incorect field name")
-
-        return helicity
 
     def allocate_wavepacket(self,helicity):
         
@@ -341,7 +325,7 @@ class Propagator():
         print("Allocating wavepacket...")
         print("\n")
 
-        helicity = self.pull_helicity()
+        helicity = hamiltonian.Hamiltonian.pull_helicity(self.params)
         fl_wavepacket = self.allocate_wavepacket(helicity)
 
         print("\n")
