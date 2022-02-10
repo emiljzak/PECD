@@ -1301,17 +1301,19 @@ class Hamiltonian():
         end_time = time.time()
         print("Time for calculation of tjmat in dipole matrix =  " + str("%10.3f"%(end_time-start_time)) + "s")
         
-
         tjmat3D = self.map_tjmat_dip(tjmat)
 
         helicity = self.pull_helicity(self.params)
 
         if helicity == "R":
-            tmat = tjmat3D[:,:,2] 
+            tmat = tjmat3D[:,:,2]
+            sigma = 1 
         elif helicity == "L":
             tmat = tjmat3D[:,:,2]
+            sigma = -1
         elif helicity == "0":
             tmat = tjmat3D[:,:,1]
+            sigma = 0
         else:
             raise NotImplementedError("Incorrect field name") 
 
@@ -1325,12 +1327,12 @@ class Hamiltonian():
 
         intmat = sparse.block_diag(diparr)
 
-        dipmat = (-1.0) * np.sqrt( 2.0 * np.pi / 3.0 ) * intmat
+        dipmat = ((-1.0)**(sigma)) * np.sqrt( 4.0 * np.pi / 3.0 ) * intmat
         #plot_mat(intmat)
         #plt.spy(intmat+intmat.H,precision=1e-12)
         #plt.show()
         #exit()
-        return 
+        return dipmat
 
 
 
