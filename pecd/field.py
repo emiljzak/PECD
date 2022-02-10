@@ -27,18 +27,18 @@ class Field():
     def fieldRCPL(self, t, function_name, omega, E0, CEP0, spherical):
         #all vectors are returned in spherical tensor form -1, 0, 1 order. Adopted convention used in Artemyev et al., J. Chem. Phys. 142, 244105 (2015).
         if spherical == True:
-            fieldvec = E0 * np.array( [  -1.0 * np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,  np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 )  ] ) / np.sqrt(2.0)
+            fieldvec = E0 * np.array( [  -1.0 * np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,  np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 )  ] ) 
         else:
-            fieldvec = E0 * np.array( [  -1.0 * np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,  np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 )  ] ) / np.sqrt(2.0)        
+            fieldvec = E0 * np.array( [  -1.0 * np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,  np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 )  ] )     
         return fieldvec 
 
 
     def fieldLCPL(self, t, function_name, omega, E0, CEP0, spherical):
         #all vectors are returned in spherical tensor form -1, 0, 1 order
         if spherical == True:
-            fieldvec = E0 * np.array( [    np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,   -1.0 *np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ] ) / np.sqrt(2.0)
+            fieldvec = E0 * np.array( [    np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,   -1.0 *np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ] ) 
         else:
-            fieldvec = E0 * np.array( [    np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,   -1.0 *np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ] ) / np.sqrt(2.0)
+            fieldvec = E0 * np.array( [    np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) , 0.0,   -1.0 *np.cos( omega * t + CEP0 )  + 1j * np.sin( omega * t + CEP0 ) ] ) 
         return fieldvec 
 
     def fieldLP(self, t, function_name, omega, E0, CEP0):
@@ -69,9 +69,9 @@ class Field():
                 ==========   =============   =====================
                 Component    Type            Description
                 ==========   =============   =====================
-                Fvec[:,0]    complex         :math:`F_{-1}(t)`
-                Fvec[:,1]    complex         :math:`F_{0}(t)`
-                Fvec[:,2]    complex         :math:`F_{+1}(t)`
+                Fvec[:,0]    complex         :math:`E_{-1}(t)`
+                Fvec[:,1]    complex         :math:`E_{0}(t)`
+                Fvec[:,2]    complex         :math:`E_{+1}(t)`
                 ==========   =============   =====================
 
         """
@@ -88,15 +88,8 @@ class Field():
                 raise NotImplementedError("Method %s not implemented" % self.params['field_env']['env_type'])
 
 
-            field_m1 , field_0 , field_p1  = field_type_function(t, **self.params['field_type']) #spherical tensor form
+            field_m1 , field_0 , field_p1  = field_type_function(t, **self.params['field_type'])
             fieldenv = field_env_function(t, **self.params['field_env'])
-
-            #print(np.shape(output))
-            
-
-            #fieldvec2 = np.multiply(fieldenv,fieldz)
-            #print("fieldvec2")
-            #print(np.shape(fieldvec2))
 
         elif self.params['field_type'] == 'numerical':
             print("reading field from file")
@@ -116,4 +109,3 @@ class Field():
         print(Fvec.shape)
         #exit()
         return Fvec 
-
