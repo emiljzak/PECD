@@ -1223,7 +1223,24 @@ class Hamiltonian():
         return vxi
 
     def gen_3j_dip(self,lmax,mode):
-        """precompute all necessary 3-j symbols for dipole matrix elements"""
+        """Precompute all necessary :math:`h_{ll'mm'\mu}` dipole matrix elements. 
+            
+            Perform the following Legendre decomposition:
+
+            .. math::
+                h_{ll'mm'\mu} = (-1)^m\sqrt{\frac{3}{4\pi}}\sqrt{(2l+1)(2l'+1)} \begin{pmatrix}
+                                l & 1 & l' \\
+                                m' & -\mu & -m 
+                                \end{pmatrix}}
+                :label: dipole_matrix
+
+           
+            Returns: numpy.ndarray
+                tjmat : numpy.ndarray, dtype = float, shape = (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3)
+                  
+
+        """
+        
 
         # 2) tjmat[l1,l2,m1,m2,sigma] = [0,...lmax,0...lmax,0,...,m+l,0...2]
         tjmat = np.zeros( (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3), dtype = float)
