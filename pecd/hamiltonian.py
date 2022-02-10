@@ -1225,15 +1225,14 @@ class Hamiltonian():
             vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
             tmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
         
-        Returns: array
-            vxi (2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
+        Returns: numpy.ndarray, dtype = float, 
+            dipxi 2D numpy array, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2
         """
-        Nang = tmats.shape[0]
-        vxi = np.zeros((Nang,Nang), dtype = complex)
-
-        vxi = rin * tmats[:,:]
+        Nang    = tmats.shape[0]
+        dipxi   = np.zeros((Nang,Nang), dtype =  float)
+        dipxi   = rin * tmats[:,:]
  
-        return vxi
+        return dipxi
 
     def gen_3j_dip(self,lmax,mode):
         """Precompute all necessary :math:`h_{ll'mm'\mu}` dipole matrix elements. 
@@ -1287,8 +1286,21 @@ class Hamiltonian():
             
           
             Returns: numpy.ndarray
-                intmat : numpy.ndarray, dtype = complex, shape = ()
-                  
+                intmat : numpy.ndarray, dtype = float, shape = (Nbas,Nbas)
+
+            An example plot of the dipole interaction matrix for CPL is given below:
+
+            .. figure:: _images/dipmat_example1.png
+                :height: 400
+                :width: 400
+                :align: center
+            
+            this matrix is not Hermitian. The symmetrized dipole interaction matrix is shown below:
+
+            .. figure:: _images/dipmat_example2.png
+                :height: 400
+                :width: 400
+                :align: center
         """
   
         Nr = self.Gr.ravel().shape[0]
@@ -1329,7 +1341,7 @@ class Hamiltonian():
         intmat = sparse.block_diag(diparr)
 
         dipmat = ((-1.0)**(sigma)) * np.sqrt( 4.0 * np.pi / 3.0 ) * intmat
-        plot_mat(dipmat)
+        plot_mat(dipmat,dipmat.max())
         plt.spy(dipmat+dipmat.H,precision=1e-12)
         plt.show()
         exit()
