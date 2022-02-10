@@ -286,7 +286,7 @@ class Propagator():
 
         return u
 
-    def prop_wf(self, ham_init, intmat, psi_init):
+    def prop_wf(self, ham_init, dipmat, psi_init):
         """This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.
 
             Here the time-grid and the electric fields are constructed. The wavefunction is propagated by an iterative
@@ -363,7 +363,7 @@ class Propagator():
                 print("t = " + str( "%10.1f"%(t/self.time_to_au)) + " as")
         
             # building the electric dipole interaction matrix
-            dip = Fvec[0,itime] * intmat - Fvec[2,itime] * intmat.H #+ Fvec[itime,1] * intmat
+            dip = Fvec[0,itime] * dipmat - Fvec[2,itime] * dipmat.H #+ Fvec[1,itime] * dipmat #for LP
            
             #dip = sparse.csr_matrix(dip)
             #print("Is the full hamiltonian matrix symmetric? " + str(check_symmetric(ham_init.todense() + dip.todense() )))
@@ -853,7 +853,7 @@ if __name__ == "__main__":
     print("\n")
 
     start_time = time.time()
-    intmat =  HamObjProp.build_intmat() 
+    dipmat =  HamObjProp.build_intmat() 
     end_time = time.time()
     print("Time for the calculation of the electric dipole interaction matrix in propagation space = " +  str("%10.3f"%(end_time-start_time)) + "s")
     
@@ -893,7 +893,7 @@ if __name__ == "__main__":
         print("Setting up initial wavefunction...")
         print("\n")
         PropObj     = Propagator(params,irun)
-        PropObj.prop_wf(ham_init, intmat, psi_init)
+        PropObj.prop_wf(ham_init, dipmat, psi_init)
 
 
     end_time_total = time.time()
