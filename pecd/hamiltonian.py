@@ -1147,24 +1147,19 @@ class Hamiltonian():
     """======================== ELECTRIC DIPOLE MATRIX ========================"""
 
     def map_tjmat_dip(self,tjmat):
-        """Map the 6D tjmat onto a practical 3D numpy array.
+        """Map the 5D dipole's tjmat onto a practical 3D numpy array.
 
         Args:
-            tjmat (6D numpy array): matrix elements of the respective spherical harmonics operators in the spherical harmonics basis
+            tjmat (5D numpy array): matrix elements of the respective spherical harmonics operators in the spherical harmonics basis
 
         Returns: array
             tjmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions
         """
         lmax = self.params['bound_lmax']
-
-
         Nang = (lmax+1)**2
-        #print("Nang = " + str(Nang))
-        #print("Nmulti = " + str(Nmulti))
-
-        tjmats = np.zeros((Nang,Nang,3),dtype=float)
+        tjmat3D = np.zeros((Nang,Nang,3),dtype=float)
         #tjmats2 = np.zeros((Nang,Nang,Nmulti),dtype=float)
-
+        #test of a different way:
         """
         start_time = time.time()
         #using local basis indices with counters
@@ -1196,14 +1191,14 @@ class Hamiltonian():
                     for m2 in range(-l2,l2+1):
        
                       for mu in range(3):
-                                tjmats[l1*(l1+1)+m1,l2*(l2+1)+m2,mu] = tjmat[l1,l2,l1+m1,l2+m2,mu]
+                                tjmat3D[l1*(l1+1)+m1,l2*(l2+1)+m2,mu] = tjmat[l1,l2,l1+m1,l2+m2,mu]
         
         end_time = time.time()
         print("Time for the construction of tjmats_dip withouts counters: " +  str("%10.3f"%(end_time-start_time)) + "s")
         
         #print(np.allclose(tjmats1,tjmats2))
         #exit()
-        return tjmats
+        return tjmat3D
 
     def calc_dipxi(self,rin,tmats):
         """Calculate a block of the electric dipole interaction matrix for a single grid point.
@@ -1270,14 +1265,15 @@ class Hamiltonian():
         return tjmat
 
     def build_intmat(self):
-        """ 
-        Driver routine for the calculation of the dipole interaction energy matrix.
-
-    
+        """Driver routine for the calculation of the dipole interaction energy matrix.
+            
+          
+            Returns: numpy.ndarray
+                intmat : numpy.ndarray, dtype = complex, shape = ()
+                  
         """
   
         Nr = self.Gr.ravel().shape[0]
-
         rgrid = self.Gr.ravel()
 
         """precompute all necessary 3-j symbols"""
