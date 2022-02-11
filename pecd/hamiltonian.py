@@ -773,11 +773,11 @@ class Hamiltonian():
             for n2 in range(0, N-2):
                 KD[n1,n2] = JMAT[n1+1,n2+1]/np.sqrt(w[n1+1] * w[n2+1])
 
-        return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)
+        return KD 
 
     def BUILD_KC(self,JMAT,w,N):
-        
-        Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) #+ w[N-1]
+
+        Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) 
         
         Ws = np.zeros(len(w), dtype = float)
         Ws = 1.0 / np.sqrt(w)
@@ -785,14 +785,13 @@ class Hamiltonian():
         KC = np.zeros( (N-1), dtype=float)
 
         #b-b:
-        KC[N-2] = Wb * Wb * JMAT[0, N-1] * np.sqrt(w[0] * w[N-1]) #invariant to quadrature weights scaling
+        KC[N-2] = Wb * Wb * JMAT[0, N-1] 
 
         #b-s:
         for n2 in range(0, N-2):
-            KC[n2] = Wb * np.sqrt(w[0]) * JMAT[0, n2 + 1] #here we exclude n'=0 which is already included in the def. of bridge function
-        #changed 0->N-1 above
+            KC[n2] = Wb * JMAT[0, n2 + 1] / np.sqrt(w[n2+1])  
 
-        return KC #checked 1 May 2021. Revisied and modified on 28 Oct 2021
+        return KC 
 
     """======================== POTENTIAL ENERGY MATRIX ========================"""
     @staticmethod
