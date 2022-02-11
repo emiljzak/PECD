@@ -382,7 +382,7 @@ class Hamiltonian():
         DMAT = self.build_dmat(x)
 
         """ Build J-matrix """
-        JMAT  = self.BUILD_JMAT(DMAT,w)
+        JMAT  = self.build_jmat(DMAT,w)
 
         """
         plot_mat(JMAT)
@@ -392,8 +392,8 @@ class Hamiltonian():
         """
 
         """ Build KD, KC matrices """
-        KD  = self.BUILD_KD(JMAT,w,nlobs) / (0.5 * self.params['bound_binw'])**2 #### !!!! check
-        KC  = self.BUILD_KC(JMAT,w,nlobs) / (0.5 * self.params['bound_binw'])**2
+        KD  = self.BUILD_KD(JMAT,w,nlobs)
+        KC  = self.BUILD_KC(JMAT,w,nlobs) 
         
         """
         plot_mat(KD)
@@ -726,7 +726,7 @@ class Hamiltonian():
         #exit()
         return DMAT
 
-    def BUILD_JMAT(self,D,w):
+    def build_jmat(self,D,w):
 
         wdiag = np.zeros((w.size,w.size), dtype = float)
         for k in range(w.size):
@@ -750,31 +750,33 @@ class Hamiltonian():
         
         Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) ) #+ w[N-1]
         
-        Ws = np.zeros(len(w), dtype = float)
+        Ws = np.zeros(w.shape[0], dtype = float)
         Ws = 1.0 / np.sqrt(w)
 
         KD = np.zeros( (N-1,N-1), dtype=float)
         #elements below are invariant to boundary quadrature scaling
+
         #b-b:
-        KD[N-2,N-2] = Wb * Wb * ( w[N-1] * JMAT[N-1, N-1] + w[0] * JMAT[0 , 0]  )
+        KD[N-2,N-2] = Wb * Wb * ( JMAT[N-1, N-1] + JMAT[0 , 0]  )
 
 
         #b-s:
         for n2 in range(0,N-2):
-            KD[N-2, n2] = np.sqrt(w[N-1]) * Wb *  JMAT[N-1, n2 + 1] #checked Ws[n2 + 1] *
+            KD[N-2, n2] =  Wb * JMAT[N-1, n2 + 1]/ np.sqrt(w[n2+1])   
 
         #s-b:
         for n1 in range(0,N-2):
-            KD[n1, N-2] = np.sqrt(w[N-1]) * Wb *  JMAT[n1 + 1, N-1] #Ws[n1 + 1] *
+            KD[n1, N-2] = Wb * JMAT[n1+1, N-1]/ np.sqrt(w[n1+1])  
 
         #s-s:
         for n1 in range(0, N-2):
             for n2 in range(0, N-2):
-                KD[n1,n2] = JMAT[n1 + 1, n2 + 1] # Ws[n1 + 1] * Ws[n2 + 1] *  #checked. Note the shift between J-matrix and tss or Kd matrices.
+                KD[n1,n2] = JMAT[n1+1,n2+1]/np.sqrt(w[n1+1] * w[n2+1])
 
         return KD  #Revisied and modified (perhaps to an equivalent form on 28 Oct 2021)
 
     def BUILD_KC(self,JMAT,w,N):
+        
         Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) #+ w[N-1]
         
         Ws = np.zeros(len(w), dtype = float)
