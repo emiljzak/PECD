@@ -379,7 +379,7 @@ class Hamiltonian():
             #x *= 0.5 * params['bound_binw']
 
         """ Build D-matrix """
-        DMAT = self.BUILD_DMAT(x,w)
+        DMAT = self.build_dmat(x)
 
         """ Build J-matrix """
         JMAT  = self.BUILD_JMAT(DMAT,w)
@@ -677,8 +677,24 @@ class Hamiltonian():
 
         return keomat
 
-    def BUILD_DMAT(self,x,w):
+    def build_dmat(self,x):
+        """Constructs the D-matrix of derivatives of Lagrange polynomials evaluated at Gauss-Lobatto quadrature nodes.
 
+           The D-matrix is defined as
+
+            .. math::
+                D_{kn} = L'_n(x_k)
+                :label: D-matrix
+            
+            Arguments: numpy.ndarray, dtype = float, shape = (Nl,)
+                x : quadrature nodes          
+
+            Returns: numpy.ndarray
+                Dmat :numpy.ndarray
+                    The D-matrix    
+
+        
+        """
         N       = x.shape[0]
         DMAT    = np.zeros( ( N , N ), dtype=float)
         Dd      = np.zeros( N , dtype=float)
@@ -691,11 +707,11 @@ class Hamiltonian():
        
 
         for n in range(N):
-            DMAT[n,n] += Dd[n]/np.sqrt(w[n])
+            DMAT[n,n] += Dd[n]
 
             for k in range(N):
                 if n != k: 
-                    DMAT[k,n]  =  1.0 / ( np.sqrt(w[n]) * (x[n]-x[k]) )
+                    DMAT[k,n]  =  1.0 / (x[n]-x[k]) 
 
                     for mu in range(N):
                         if mu != k and mu != n:
