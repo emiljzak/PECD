@@ -930,10 +930,11 @@ class Hamiltonian():
         return tjmats
 
 
-    def gen_wigner_dmats(self,n_grid_euler, Jmax, grid_euler):
-
+    def gen_wigner_dmats(self, n_grid_euler, Jmax, grid_euler):
+        print("grie euler:" + str(grid_euler))
         wigner = spherical.Wigner(Jmax)
         grid_euler = grid_euler.reshape(-1,3)
+        print("grie euler:" + str(grid_euler))
         R = quaternionic.array.from_euler_angles(grid_euler)
         D = wigner.D(R)
 
@@ -990,7 +991,7 @@ class Hamiltonian():
 
         lmax = tjmat.shape[0] -1
 
-        tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1,  2 * lmax + 1), dtype = complex)
+        tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2 * lmax + 1, 2*Lmax + 1, 2 * lmax + 1), dtype = complex)
             
         #l1 - ket, l2 - bra
 
@@ -999,7 +1000,7 @@ class Hamiltonian():
         n_grid_euler = grid_euler.shape[0]
         print("number of euler grid points = " + str(n_grid_euler))
         print("current Euler grid point = " + str(grid_euler[irun]))
-
+        grid_euler = grid_euler.reshape(-1,3)
         WDMATS = self.gen_wigner_dmats(1, Lmax, grid_euler[irun])
 
         #print(grid_euler[irun])
@@ -1058,7 +1059,7 @@ class Hamiltonian():
 
         return vxi
 
-    def build_potmat(self,grid_euler=[0,0,0],irun=0):
+    def build_potmat(self,grid_euler=np.zeros(3),irun=0):
         """Driver routine for the calculation of the potential energy matrix.
 
             Here it is decided which routine to call. We have a choice of different routines depending on the molecule and the type of method used to calculate matrix elements.
@@ -1071,7 +1072,10 @@ class Hamiltonian():
             potmat: sparse array, dtype = complex, shape = (Nbas, Nbas)      
         
         """
-  
+        print(type(grid_euler))
+        print(grid_euler)
+        print(grid_euler.shape)
+
         if self.params['molec_name'] == "chiralium":
 
             if self.params['matelem_method'] == "analytic":
@@ -1134,6 +1138,11 @@ class Hamiltonian():
                     :align: center          
 
         """
+
+        print(grid_euler.shape)
+        print(grid_euler)
+
+
         Nr = self.Gr.ravel().shape[0]
         # Read the potential partial waves on the grid
         start_time = time.time()
@@ -1143,6 +1152,8 @@ class Hamiltonian():
 
         # Build an array of 3-j symbols
         tjmat       = self.gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
+
+        grid_euler = grid_euler.reshape(3,-1)
 
         tjmat       = self.rotate_tjmat(grid_euler,irun,tjmat)
 
