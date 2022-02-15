@@ -23,11 +23,11 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 10
+    params['bound_nbins']       = 17
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 20
+    params['prop_nbins']        = 17
 
 
     """==== time-grid parameters ===="""

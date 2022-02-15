@@ -2908,14 +2908,14 @@ if __name__ == "__main__":
             func(elem)
         
         # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
-        
-        momentumobs     = momentumfuncs(params)
+        if  params['analyze_momentum']:
+            momentumobs     = momentumfuncs(params)
 
-        for elem in params['analyze_momentum']:
+            for elem in params['analyze_momentum']:
 
-            func = getattr(momentumobs,elem['name'])
-            print("Calling momentum function: " + str(elem['name']))
-            func(elem)
+                func = getattr(momentumobs,elem['name'])
+                print("Calling momentum function: " + str(elem['name']))
+                func(elem)
         
 
 

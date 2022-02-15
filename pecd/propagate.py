@@ -897,6 +897,8 @@ if __name__ == "__main__":
         if params['save_enr0'] == True: HamObjBound.save_energies(enra,irun)
         if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psia,irun)
 
+        HamObjBound.save_density(psia,irun)
+
         print("\n")
         print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
         print("\n")

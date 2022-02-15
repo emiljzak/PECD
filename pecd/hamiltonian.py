@@ -234,6 +234,27 @@ class Hamiltonian():
                             " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                             "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
 
+    def save_wavefunctions(self,psi,irun=0):
+        """Saves the electron density to a file
+        
+            Arguments: 
+                psi: numpy.ndarray, dtype = complex, shape = (num_ini_vec,)
+                    array of energy levels
+            Args:
+                irun: int, default = 0
+                    id of the run for a given molecular orientation in the lab frame.
+        
+        """
+
+        psifile = open(self.params['job_directory']  + self.params['file_psi0'] + "_" + str(irun), 'w')
+
+        for ielem,elem in enumerate(self.maparray):
+            psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
+                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
+                            "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
+
+
+
 
     @staticmethod
     def filter_mat(mat,filter):
@@ -884,7 +905,7 @@ class Hamiltonian():
         #print("Nang = " + str(Nang))
         #print("Nmulti = " + str(Nmulti))
 
-        tjmats = np.zeros((Nang,Nang,Nmulti),dtype=float)
+        tjmats = np.zeros((Nang,Nang,Nmulti),dtype=complex)
         #tjmats2 = np.zeros((Nang,Nang,Nmulti),dtype=float)
 
         """
@@ -1012,7 +1033,7 @@ class Hamiltonian():
                         for m2 in range(-l2,l2+1):
                             for m1 in range(-l1,l1+1):
                                 for Mp in range(-L,L+1):
-                                    tjmat_rot[l1,L,l2,l1+m1,M+L, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,l1+m1,L+Mp,l2+m2] 
+                                    tjmat_rot[l1,L,l2,l1+m1,M+L,m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,l1+m1,L+Mp,l2+m2] 
 
         return tjmat_rot
 
