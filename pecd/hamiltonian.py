@@ -1000,7 +1000,7 @@ class Hamiltonian():
         n_grid_euler = grid_euler.shape[0]
         print("number of euler grid points = " + str(n_grid_euler))
         print("current Euler grid point = " + str(grid_euler[irun]))
-        grid_euler = grid_euler.reshape(-1,3)
+
         WDMATS = self.gen_wigner_dmats(1, Lmax, grid_euler[irun])
 
         #print(grid_euler[irun])
@@ -1013,7 +1013,7 @@ class Hamiltonian():
                         for m2 in range(-l2,l2+1):
                             for m1 in range(-l1,l1+1):
                                 for Mp in range(-L,L+1):
-                                    tjmat_rot[l1,L,l2,M+L,l1+m1, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,L+Mp,l1+m1,l2+m2] 
+                                    tjmat_rot[l1,L,l2,l1+m1,M+L, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,l1+m1,L+Mp,l2+m2] 
 
         return tjmat_rot
 
@@ -1059,7 +1059,7 @@ class Hamiltonian():
 
         return vxi
 
-    def build_potmat(self,grid_euler=np.zeros(3),irun=0):
+    def build_potmat(self,grid_euler=np.zeros((1,3),dtype=float),irun=0):
         """Driver routine for the calculation of the potential energy matrix.
 
             Here it is decided which routine to call. We have a choice of different routines depending on the molecule and the type of method used to calculate matrix elements.
@@ -1152,8 +1152,6 @@ class Hamiltonian():
 
         # Build an array of 3-j symbols
         tjmat       = self.gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
-
-        grid_euler = grid_euler.reshape(3,-1)
 
         tjmat       = self.rotate_tjmat(grid_euler,irun,tjmat)
 
