@@ -25,7 +25,6 @@ from scipy.spatial.transform import Rotation as R
 
 #custom libraries
 import quadpy
-import quaternionic
 import spherical
 
 #special acceleration libraries
@@ -160,11 +159,12 @@ class Hamiltonian():
 
     """
 
-    def __init__(self,params,hamtype = 'bound'):
+    def __init__(self,params,WDMATS,hamtype = 'bound'):
 
         self.params         = params
         self.hamtype        = hamtype
-
+        self.WDMATS         = WDMATS
+        
         if hamtype == "bound":
             self.Nbas       = params['Nbas0']
             self.maparray   = params['maparray0']  
@@ -234,27 +234,7 @@ class Hamiltonian():
                             " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                             "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
 
-    def save_wavefunctions(self,psi,irun=0):
-        """Saves the electron density to a file
-        
-            Arguments: 
-                psi: numpy.ndarray, dtype = complex, shape = (num_ini_vec,)
-                    array of energy levels
-            Args:
-                irun: int, default = 0
-                    id of the run for a given molecular orientation in the lab frame.
-        
-        """
-
-        psifile = open(self.params['job_directory']  + self.params['file_psi0'] + "_" + str(irun), 'w')
-
-        for ielem,elem in enumerate(self.maparray):
-            psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
-                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
-                            "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
-
-
-
+  
 
     @staticmethod
     def filter_mat(mat,filter):
@@ -951,24 +931,6 @@ class Hamiltonian():
         return tjmats
 
 
-    def gen_wigner_dmats(self, n_grid_euler, Jmax, grid_euler):
-
-        wigner      = spherical.Wigner(Jmax)
-        grid_euler  = grid_euler.reshape(-1,3)
-        R           = quaternionic.array.from_euler_angles(grid_euler)
-        D           = wigner.D(R)
-
-        WDMATS = []
-        for J in range(Jmax+1):
-            WDM = np.zeros((2*J+1, 2*J+1, n_grid_euler), dtype=complex)
-            for m in range(-J,J+1):
-                for k in range(-J,J+1):
-                    WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
-            #print(J,WDM)
-            #print(WDM.shape)
-
-            WDMATS.append(WDM)  
-        return WDMATS
 
     def test_vlm_symmetry(self,vLM):
         #function to test if vLM obeys derived symmetry rules

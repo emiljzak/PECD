@@ -1205,12 +1205,9 @@ class spacefuncs(analysis):
 
         cmap = matplotlib.cm.jet #jet, cool, etc
 
-
-
         ax1.set_ylim(rtuple[0],rtuple[1]) #radial scale
         ax1.set_thetamin(thtuple[0]*180.0/np.pi)
         ax1.set_thetamax(thtuple[1]*180.0/np.pi)
-
 
         plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
         plot_params['rticks']   = list(np.linspace(rtuple[0],rtuple[1],plot_params['nticks_rad'])) 

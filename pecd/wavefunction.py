@@ -27,6 +27,12 @@ from sympy.polys.rootoftools import RootOf
 #plotting libraries
 import matplotlib.pyplot as plt
 
+
+#special libraries
+import quaternionic
+import spherical
+
+
 #from numba import jit, prange
 #jitcache = False
 
@@ -94,32 +100,34 @@ class Psi():
         return psi
 
 
-    def rotate_psi(self,psi):
-        return psi
 
-
-    def rotate_coefficients(self,ind_euler,coeffs,WDMATS,lmax,Nr):
+    def rotate_psi(self,coeffs,Nr):
         """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
-        #ind_euler - index of euler angles in global 3D grid
+        #irun - index of euler angles in global 3D grid
 
-        Dsize = (lmax+1)**2 
-        Dmat = np.zeros((Dsize,Dsize), dtype = complex)
+
+        irun = self.params['irun']
+        lmax = self.params['bound_lmax']
+        WDMATS = self.WDMATS
+
+        Dsize   = (lmax+1)**2 
+        Dmat    = np.zeros((Dsize,Dsize), dtype = complex)
 
         #fill up the D super-matrix
-        ind_start = np.zeros(lmax+1, dtype=Integer)
-        ind_end = np.zeros(lmax+1, dtype=Integer)
+        ind_start   = np.zeros(lmax+1, dtype=int)
+        ind_end     = np.zeros(lmax+1, dtype=int)
 
         ind_start[0] = 0
-        ind_end[0] = 0
+        ind_end[0]  = 0
 
         for l in range(0,lmax):
             ind_start[l+1] = ind_start[l] +  2 * l +1
             ind_end[l+1] = ind_start[l+1] + 2 * (l+1) +1  #checked by hand 5 Jun 2021
 
         for l in range(0,lmax+1):
-            #print(WDMATS[l][:,:,ind_euler].shape)
+            #print(WDMATS[l][:,:,irun].shape)
             #print(l, ind_start[l], ind_end[l])
-            Dmat[ind_start[l]:ind_end[l],ind_start[l]:ind_end[l]] = WDMATS[l][:,:,ind_euler]
+            Dmat[ind_start[l]:ind_end[l],ind_start[l]:ind_end[l]] = WDMATS[l][:,:,irun]
 
         #with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.8f}'.format}, linewidth=400):
         #    print(Dmat)
@@ -128,8 +136,8 @@ class Psi():
 
         #print("number of radial basis points/functions: " + str(Nr))
 
-        xi_start    = np.zeros(Nr, dtype=Integer)
-        xi_end      = np.zeros(Nr, dtype=Integer)
+        xi_start    = np.zeros(Nr, dtype=int)
+        xi_end      = np.zeros(Nr, dtype=int)
         xi_start[0] = 0 
         xi_end[0]   = Dsize
 
@@ -423,12 +431,12 @@ class GridEuler():
 
 
 
-    def __init__(self,N_euler,N_batches,grid_type):
+    def __init__(self,N_euler,N_batches,grid_type,lmax):
 
         self.N_euler    = N_euler
         self.N_batches  = N_batches
         self.grid_type  = grid_type
-
+        self.lmax       = lmax
 
     def read_euler_grid(self):   
         """Read the Euler grid from file and put it in a correct shape.
@@ -494,6 +502,28 @@ class GridEuler():
     def save_euler_grid(self, grid_euler, path):   
         with open( path + "grid_euler.dat" , 'w') as eulerfile:   
             np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
+
+
+    def gen_wigner_dmats(self, n_grid_euler, grid_euler):
+        
+        Jmax        = self.lmax
+        wigner      = spherical.Wigner(Jmax)
+        grid_euler  = grid_euler.reshape(-1,3)
+        R           = quaternionic.array.from_euler_angles(grid_euler)
+        D           = wigner.D(R)
+
+        WDMATS = []
+        for J in range(Jmax+1):
+            WDM = np.zeros((2*J+1, 2*J+1, n_grid_euler), dtype=complex)
+            for m in range(-J,J+1):
+                for k in range(-J,J+1):
+                    WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
+            #print(J,WDM)
+            #print(WDM.shape)
+
+            WDMATS.append(WDM)  
+        return WDMATS
+
 
 
 class GridRad():

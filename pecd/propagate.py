@@ -4,6 +4,7 @@
 # Copyright (C) 2022 Emil Zak <emil.zak@cfel.de>, <emil.j.zak@gmail.com>
 #
 from textwrap import indent
+from tkinter import Grid
 from h5py._hl import datatype
 import numpy as np
 from scipy import sparse
@@ -792,17 +793,23 @@ if __name__ == "__main__":
 
     GridObjEuler = wavefunction.GridEuler(  params['N_euler'],
                                             params['N_batches'],
-                                            params['orient_grid_type'])
+                                            params['orient_grid_type'],
+                                            params['bound_lmax'])
     
     grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
 
+    print("\n")
+    print("Building Wigner-D matrices for rotations...")
+    print("\n")
+
+    WDMATS = GridObjEuler.gen_wigner_dmats(N_Euler, grid_euler)
 
     print("\n")
     print("Setting up Hamiltonians...")
     print("\n")
 
-    HamObjBound = hamiltonian.Hamiltonian(params,'bound')
-    HamObjProp  = hamiltonian.Hamiltonian(params,'prop')
+    HamObjBound = hamiltonian.Hamiltonian(params,'bound',WDMATS)
+    HamObjProp  = hamiltonian.Hamiltonian(params,'prop',WDMATS)
 
     print("\n")
     print("Building the kinetic energy operator matrix for the bound Hamiltonian...")
@@ -897,14 +904,12 @@ if __name__ == "__main__":
         if params['save_enr0'] == True: HamObjBound.save_energies(enra,irun)
         if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psia,irun)
 
-        HamObjBound.save_density(psia,irun)
-
         print("\n")
         print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
         print("\n")
 
         PsiObj      = wavefunction.Psi(params,grid_euler,irun,"prop")
-        psi0_rot    = PsiObj.rotate_psi(psi0[:,params['ivec']])
+        psi0_rot    = PsiObj.rotate_psi(psi0[:,params['ivec']],WDMATS,params['Nr0'])
         psi_init    = PsiObj.project_psi_global(psi0_rot)
 
         print("\n")
