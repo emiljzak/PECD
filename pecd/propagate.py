@@ -793,23 +793,23 @@ if __name__ == "__main__":
 
     GridObjEuler = wavefunction.GridEuler(  params['N_euler'],
                                             params['N_batches'],
-                                            params['orient_grid_type'],
-                                            params['bound_lmax'])
+                                            params['orient_grid_type'])
     
     grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
+
 
     print("\n")
     print("Building Wigner-D matrices for rotations...")
     print("\n")
-
-    WDMATS = GridObjEuler.gen_wigner_dmats(N_Euler, grid_euler)
-
+    WDMATS_wfn = GridObjEuler.gen_wigner_dmats(N_Euler, grid_euler,params['bound_lmax'])
+    WDMATS_pot = GridObjEuler.gen_wigner_dmats(N_Euler, grid_euler,params['multi_lmax'])
+    
     print("\n")
     print("Setting up Hamiltonians...")
     print("\n")
 
-    HamObjBound = hamiltonian.Hamiltonian(params,'bound',WDMATS)
-    HamObjProp  = hamiltonian.Hamiltonian(params,'prop',WDMATS)
+    HamObjBound = hamiltonian.Hamiltonian(params,WDMATS_pot,'bound')
+    HamObjProp  = hamiltonian.Hamiltonian(params,WDMATS_pot,'prop')
 
     print("\n")
     print("Building the kinetic energy operator matrix for the bound Hamiltonian...")

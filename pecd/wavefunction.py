@@ -431,13 +431,12 @@ class GridEuler():
 
 
 
-    def __init__(self,N_euler,N_batches,grid_type,lmax):
+    def __init__(self,N_euler,N_batches,grid_type):
 
         self.N_euler    = N_euler
         self.N_batches  = N_batches
         self.grid_type  = grid_type
-        self.lmax       = lmax
-
+        
     def read_euler_grid(self):   
         """Read the Euler grid from file and put it in a correct shape.
 
@@ -504,16 +503,15 @@ class GridEuler():
             np.savetxt(eulerfile, grid_euler, fmt = '%15.4f')
 
 
-    def gen_wigner_dmats(self, n_grid_euler, grid_euler):
+    def gen_wigner_dmats(self, n_grid_euler, grid_euler,lmax):
         
-        Jmax        = self.lmax
-        wigner      = spherical.Wigner(Jmax)
+        wigner      = spherical.Wigner(lmax)
         grid_euler  = grid_euler.reshape(-1,3)
         R           = quaternionic.array.from_euler_angles(grid_euler)
         D           = wigner.D(R)
 
         WDMATS = []
-        for J in range(Jmax+1):
+        for J in range(lmax+1):
             WDM = np.zeros((2*J+1, 2*J+1, n_grid_euler), dtype=complex)
             for m in range(-J,J+1):
                 for k in range(-J,J+1):

@@ -7,6 +7,7 @@
 #modules
 import potential
 import constants
+import wavefunction
 
 #standard python libraries
 import os.path
@@ -163,8 +164,7 @@ class Hamiltonian():
 
         self.params         = params
         self.hamtype        = hamtype
-        self.WDMATS         = WDMATS
-        
+
         if hamtype == "bound":
             self.Nbas       = params['Nbas0']
             self.maparray   = params['maparray0']  
@@ -978,14 +978,11 @@ class Hamiltonian():
         #l1 - ket, l2 - bra
 
         # pull wigner matrices at a given euler angles set
-        
+
         n_grid_euler = grid_euler.shape[0]
 
         print("The total number of euler grid points = " + str(n_grid_euler))
         print("The current Euler grid point = " + str(grid_euler[irun]))
-
-        WDMATS = self.gen_wigner_dmats(1, Lmax, grid_euler[irun])
-
 
         # transform tjmat
         for l1 in range(0,lmax+1):
@@ -995,7 +992,7 @@ class Hamiltonian():
                         for m2 in range(-l2,l2+1):
                             for m1 in range(-l1,l1+1):
                                 for Mp in range(-L,L+1):
-                                    tjmat_rot[l1,L,l2,l1+m1,M+L,m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,l1+m1,L+Mp,l2+m2] 
+                                    tjmat_rot[l1,L,l2,l1+m1,M+L,m2+l2] +=  self.WDMATS[L][Mp+L,M+L,irun] * tjmat[l1,L,l2,l1+m1,L+Mp,l2+m2] 
 
         return tjmat_rot
 
