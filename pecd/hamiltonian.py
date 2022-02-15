@@ -242,11 +242,11 @@ class Hamiltonian():
         """
 
         psifile = open(self.params['job_directory']  + "_density.dat", 'w')
-
-        for ielem,elem in enumerate(self.maparray):
-            psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
-                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
-                            "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
+        np.savetxt(psifile,density,fmt='%10.6f')
+        #for ielem,elem in enumerate(self.maparray):
+        #    psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
+        #                    " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
+        #                    "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
 
   
   

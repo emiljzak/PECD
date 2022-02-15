@@ -902,7 +902,14 @@ if __name__ == "__main__":
             print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
             if params['save_enr0'] == True: HamObjBound.save_energies(enr_MF,irun)
             if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi_MF,irun)
-            density[:,irun] = np.abs(psi_MF)
+            density[:,irun] = np.abs(psi_MF[:,params['ivec']])
+            psi_init = psi_MF[:,params['ivec']]
+            print("\n")
+            print("Setting up initial wavefunction...")
+            print("\n")
+            PropObj     = Propagator(params,irun)
+            PropObj.prop_wf(ham_init, dipmat, psi_init)
+       
         else:
             
             print("\n")
@@ -923,22 +930,22 @@ if __name__ == "__main__":
             #Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
             PsiObj      = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"prop")
             psi0_rot    = PsiObj.rotate_psi(psi_MF[:,params['ivec']])
-            density[:,irun] = np.abs(psi0_rot)
+            density[:,irun] = np.abs(psi0_rot[:])
 
             print("Saving wavefunctions for the full rotated Hamiltonian...")
-            if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0_rot,irun)
+            #if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0_rot,irun)
         
             #psi_init    = PsiObj.project_psi_global(psi0_rot)
             #hamiltonian.plot_mat(np.vstack((np.abs(psi_init).reshape(-1,1),np.vstack(np.abs(psia[:,params['ivec']]).reshape(-1,1)))),1.0)
             #print(np.abs(psia[:,params['ivec']]-psi_init))
             
-
+            psi_init = psi0_rot
             print("\n")
             print("Setting up initial wavefunction...")
             print("\n")
-            #PropObj     = Propagator(params,irun)
-            #PropObj.prop_wf(ham_init, dipmat, psi_init)
-    HamObjBound.save_density()
+            PropObj     = Propagator(params,irun)
+            PropObj.prop_wf(ham_init, dipmat, psi_init)
+    HamObjBound.save_density(density)
 
     end_time_total = time.time()
     print("Global time =  " + str("%10.3f"%(end_time_total-start_time_total)) + "s")

@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_orient" 
+    params['job_label']    = "test_orient_density" 
     
     """====== Basis set parameters ======"""
     """ 

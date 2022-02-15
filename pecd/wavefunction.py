@@ -110,7 +110,7 @@ class Psi():
         irun    = self.irun
         lmax    = self.params['bound_lmax']
         WDMATS  = self.WDMATS
-
+        print("irunnnn"+ str(irun))
         Dsize   = (lmax+1)**2 
         Dmat    = np.zeros((Dsize,Dsize), dtype = complex)
 
