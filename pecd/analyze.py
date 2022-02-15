@@ -180,7 +180,7 @@ class analysis:
     
     def read_wavepacket_metadata(self):
          
-        file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(irun) + ".h5"
+        file_wavepacket  =  self.params['job_directory'] + self.params['wavepacket_file'] + self.helicity + "_" + str(self.params['irun']) + ".h5"
 
         with h5py.File(file_wavepacket, 'r') as h5:
             t0          = h5["metadata"].attrs['t0']
@@ -797,7 +797,7 @@ class spacefuncs(analysis):
         #exit()
         tplot_ind_new = []
         for itime,T in enumerate(params['space_analyze_times']):
-            print(T)
+        
             val, ind = self.find_nearest(times_saved/time_to_au,T)
             tplot_ind_new.append(ind)
 
@@ -1113,8 +1113,6 @@ class spacefuncs(analysis):
     def rho2D(self,funcpars):
         print("Calculating 2D electron density")
 
-        irun = self.params['irun']
-
         """ set up 1D grids """
 
         if funcpars['r_grid']['type'] == "manual":
@@ -1171,7 +1169,7 @@ class spacefuncs(analysis):
                     funcpars['plane_split'] = self.split_word(plane)
 
                     # call plotting function
-                    self.rho2D_plot(funcpars,polargrid,rho,irun)
+                    self.rho2D_plot(funcpars,polargrid,rho)
 
 
             if funcpars['save'] == True:
@@ -1181,7 +1179,7 @@ class spacefuncs(analysis):
                     np.savetxt(rhofile, rho, fmt = '%10.4e')
 
 
-    def rho2D_plot(self,funcpars,polargrid,rho,irun): 
+    def rho2D_plot(self,funcpars,polargrid,rho): 
         """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
 
         plot_params = funcpars['plot'][1] #all plot params
@@ -1322,7 +1320,7 @@ class spacefuncs(analysis):
                                             funcpars['plane_split'][0]+ "_" +
                                             str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
                                             "_" +
-                                            self.helicity + "_" + str(irun) +
+                                            self.helicity + "_" + str(self.params['irun']) +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],
@@ -2892,20 +2890,21 @@ if __name__ == "__main__":
         gamma   = grid_euler[irun][2]
 
         #if params['density_averaging'] == True:
-        #    print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
+            #print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
 
         params['irun']  = irun 
+        
         analysis_obj    = analysis(params)
-        spaceobs        = spacefuncs(params)
+        if  params['analyze_space']:
+            spaceobs        = spacefuncs(params)
+            for elem in params['analyze_space']:
+                # Future note: we may want to pull out the wavefunction calculation into a general routine
+                # independent of the called function. This is going to save some time.
 
-        for elem in params['analyze_space']:
-            # Future note: we may want to pull out the wavefunction calculation into a general routine
-            # independent of the called function. This is going to save some time.
-
-            #call function by name given in the dictionary
-            func = getattr(spaceobs,elem['name'])
-            print("Calling space function: " + str(elem['name']))
-            func(elem)
+                #call function by name given in the dictionary
+                func = getattr(spaceobs,elem['name'])
+                print("Calling space function: " + str(elem['name']))
+                func(elem)
         
         # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
         if  params['analyze_momentum']:
