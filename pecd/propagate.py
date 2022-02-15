@@ -845,7 +845,7 @@ if __name__ == "__main__":
     
     
     print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
-    if params['save_psi0'] == True: HamObjBound.save_energies(enr0)
+    if params['save_enr0'] == True: HamObjBound.save_energies(enr0)
     if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0)
 
     print("\n")
@@ -881,6 +881,22 @@ if __name__ == "__main__":
         end_time    = time.time()
         print("Time for filtering of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
    
+        """ ROTATION TESTS """
+
+        print("\n")
+        print("Calculating eigenvalues and eigenvectors of the rotated Hamiltonian operator matrix...")
+        print("\n")
+
+        start_time = time.time()
+        enra, psia = HamObjBound.call_eigensolver(ham_init)
+        end_time = time.time()
+        print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
+        
+        
+        print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
+        if params['save_enr0'] == True: HamObjBound.save_energies(enra,irun)
+        if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psia,irun)
+
         print("\n")
         print("Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
         print("\n")

@@ -749,10 +749,6 @@ class Hamiltonian():
         """
         
         Wb = 1.0 / np.sqrt( (w[0] + w[N-1]) ) #+ w[N-1]
-        
-        Ws = np.zeros(w.shape[0], dtype = float)
-        Ws = 1.0 / np.sqrt(w)
-
         KD = np.zeros( (N-1,N-1), dtype=float)
         #elements below are invariant to boundary quadrature scaling
 
@@ -779,9 +775,6 @@ class Hamiltonian():
 
         Wb = 1.0 / np.sqrt( (w[0]+ w[N-1] ) ) 
         
-        Ws = np.zeros(len(w), dtype = float)
-        Ws = 1.0 / np.sqrt(w)
-
         KC = np.zeros( (N-1), dtype=float)
 
         #b-b:
@@ -847,6 +840,32 @@ class Hamiltonian():
                         vlist.append([ maparray[p1][2], maparray[p1][3], maparray[p1][4], maparray[p2][3], maparray[p2][4] ])
         return vlist
 
+
+
+    def gen_tjmat(self,lmax_basis,lmax_multi):
+        """precompute all necessary 3-j symbols for the matrix elements of the multipole moments"""
+
+        #store in arrays:
+        # 2) tjmat[l,L,l',m,M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
+        tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1,  2 * lmax_basis + 1, 2*lmax_multi + 1, 2 * lmax_basis + 1), dtype = float)
+        
+        #l1 - ket, l2 - bra
+
+        for l1 in range(0,lmax_basis+1):
+            for l2 in range(0,lmax_basis+1):
+                for L in range(0,lmax_multi+1):
+                    for M in range(-L,L+1):
+                        for m1 in range(-l1,l1+1):
+                            for m2 in range(-l2,l2+1): 
+                                tjmat[l1,L,l2,l1+m1,L+M,l2+m2] = np.sqrt( (2.0*float(l2)+1) * (2.0*float(L)+1) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
+                                # ( (-1.0)**(-M) ) * spherical.Wigner3j( l1,L, l2, m1, M, m2) * \
+                                #                        spherical.Wigner3j( l1, L ,l2, 0, 0, 0) * \
+                                #                        np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
+
+
+
+        return tjmat
+
     def map_tjmat(self,tjmat):
         """Map the 6D tjmat onto a practical 3D numpy array.
 
@@ -910,6 +929,92 @@ class Hamiltonian():
         #exit()
         return tjmats
 
+
+    def gen_wigner_dmats(self,n_grid_euler, Jmax, grid_euler):
+
+        wigner = spherical.Wigner(Jmax)
+        grid_euler = grid_euler.reshape(-1,3)
+        R = quaternionic.array.from_euler_angles(grid_euler)
+        D = wigner.D(R)
+
+        WDMATS = []
+        for J in range(Jmax+1):
+            WDM = np.zeros((2*J+1, 2*J+1, n_grid_euler), dtype=complex)
+            for m in range(-J,J+1):
+                for k in range(-J,J+1):
+                    WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
+            #print(J,WDM)
+            #print(WDM.shape)
+
+            WDMATS.append(WDM)  
+        return WDMATS
+
+    def test_vlm_symmetry(self,vLM):
+        #function to test if vLM obeys derived symmetry rules
+        Lmax = vLM.shape[1]
+        nxi = vLM.shape[0]
+
+        S = np.zeros((nxi,Lmax+1,Lmax+1),dtype = complex)
+
+        for L in range(Lmax):
+            for M in range(0,L+1):
+                S[:,L,M] = vLM[:,L,L+M]-(-1)**M * vLM[:,L,L-M].conj()
+                #print(S[:,L,M])
+
+                if np.allclose(S[:,L,M],0e0+1j*0e0, 1e-8, 1e-8):
+                    print("L = " + str(L) + ", M = " + str(M) + ": All have zero difference")
+        exit()
+
+    def rotate_tjmat(self,grid_euler,irun,tjmat):
+        """Rotates the angular matrix elements given in the spherical harmonics representation.
+
+            We utilize the property of the spherical harmonics, that rotated harmonics can be expanded in the same space(L) as the original unrotated harmonics.
+
+            .. math::
+                t_{lLl'mMm'}(\omega) = \sum_{\mu=-L}^L D^{(L)\dagger}_{\muM}t_{lLl'm\mu m'}(0)
+                :label: tjmat_rotate
+            
+            Arguments: tuple
+                grid_euler : numpy.ndarray
+                    euler angles grid
+                irun: int
+                    index in the euler angles grid :math:`GE(irun)=\omega=[\alpha,\beta,\gamma]`
+
+            Returns: tuple
+                tjmat: numpy.ndarray, dtype = complex, shape = 
+                    rotated matrix of matrix elements    
+
+
+        """
+        Lmax = tjmat.shape[1] -1
+
+        lmax = tjmat.shape[0] -1
+
+        tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1,  2 * lmax + 1), dtype = complex)
+            
+        #l1 - ket, l2 - bra
+
+        # pull wigner matrices at the given euler angle's set
+        
+        n_grid_euler = grid_euler.shape[0]
+        print("number of euler grid points = " + str(n_grid_euler))
+        print("current Euler grid point = " + str(grid_euler[irun]))
+
+        WDMATS = self.gen_wigner_dmats(1, Lmax, grid_euler[irun])
+
+        #print(grid_euler[irun])
+
+        # transform tjmat
+        for l1 in range(0,lmax+1):
+            for l2 in range(0,lmax+1):
+                for L in range(0,Lmax+1):
+                    for M in range(-L,L+1):
+                        for m2 in range(-l2,l2+1):
+                            for m1 in range(-l1,l1+1):
+                                for Mp in range(-L,L+1):
+                                    tjmat_rot[l1,L,l2,M+L,l1+m1, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,L+Mp,l1+m1,l2+m2] 
+
+        return tjmat_rot
 
     def map_vmats(self,vLM,Nr):
         """Map the 3D vLM array onto a practical 2D numpy array.
@@ -1037,7 +1142,9 @@ class Hamiltonian():
         print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
         # Build an array of 3-j symbols
-        tjmat       = gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
+        tjmat       = self.gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
+
+        tjmat       = self.rotate_tjmat(grid_euler,irun,tjmat)
 
         tmats = self.map_tjmat(tjmat)
 
@@ -1366,202 +1473,6 @@ class Hamiltonian():
         return dipmat
 
 
-
-
-def BUILD_HMAT0_ROT(params, grid_euler, irun):
-    """ Build the bound Hamiltonian with rotated ESP in unrotated basis, store the hamiltonian in a file 
-    
-    
-    
-    
-    """
-    
-    print("Nbas0 = " + str(Nbas0))
-    print("maparray0: ")
-    print(maparray)
-    
-    if params['read_ham_init_file'] == True:
-
-        if params['hmat_format']   == "numpy_arr":
-            if os.path.isfile(params['job_directory'] + params['file_hmat0'] + "_" + str(irun) + ".dat"  ):
-        
-                print (params['file_hmat0'] + " file exist")
-                hmat = read_ham_init_rot(params,irun)
-                """ diagonalize hmat """
-                start_time = time.time()
-                enr, coeffs = np.linalg.eigh(hmat, UPLO = 'U')
-                end_time = time.time()
-                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-                #bound.plot_mat(hmat)
-                #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=2)
-                #plt.show()
-                return hmat, coeffs
-            else:
-                raise ValueError("Incorrect file name for the Hamiltonian matrix")
-                exit()
-
-        elif params['hmat_format']   == "sparse_csr":
-
-            if os.path.isfile(params['job_directory'] + params['file_hmat0'] + "_" + str(irun) + ".npz" ):
-                print (params['file_hmat0'] + "_" + str(irun) + ".npz" + " file exist")
-                ham0 =  read_ham_init_rot(params,irun)
-                #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-                #plt.legend()
-                #plt.show()
-        
-                """ Alternatively we can read enr and coeffs from file"""
-
-                """ diagonalize hmat """
-                start_time = time.time()
-                enr, coeffs = call_eigensolver(ham0, params)
-                end_time = time.time()
-                print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-                return ham0, coeffs
-            else:
-                raise ValueError("Incorrect file name for the Hamiltonian matrix or file does not exists")
-                exit()
-    else:
-
-        if params['hmat_format'] == 'numpy_arr':    
-            hmat =  np.zeros((Nbas, Nbas), dtype=float)
-        elif params['hmat_format'] == 'sparse_csr':
-            if params['esp_mode']  == 'anton':
-                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #complex potential in Demekhin's work
-            else:
-                hmat = sparse.csr_matrix((Nbas, Nbas), dtype=complex) #if
-        else:
-            raise ValueError("Incorrect format type for the Hamiltonian")
-            exit()
-
-        """ calculate POTMAT """
-        if params['esp_mode'] == "exact":
-            """ Use Psi4 to generate values of the ESP at quadrature grid points. 
-                Use jit for fast calculation of the matrix elements """
-            potmat, potind = bound.BUILD_POTMAT0_ROT( params, maparray, Nbas, Gr, grid_euler, irun )   
-
-
-        elif params['esp_mode'] == "multipoles":
-            potmat, potind = bound.BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun )
-        
-        elif params['esp_mode'] == "anton":
-            potmat, potind = bound.BUILD_POTMAT0_ANTON_ROT( params, Nbas , Gr, grid_euler, irun )
-
-        """ Put the indices and values back together in the Hamiltonian array"""
-        for ielem, elem in enumerate(potmat):
-            #print(elem[0])
-            hmat[ potind[ielem][0], potind[ielem][1] ] = elem[0]
-
-
-        #print("plot of hmat")
-
-        #bound.plot_mat(hmat.todense())
-        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        #plt.legend()
-        #plt.show()
-        #exit()
-
-        """ calculate KEO """
-        start_time = time.time()
-        #print(Gr.ravel())
-        #exit()
-        keomat = bound.BUILD_KEOMAT_FAST( params, maparray, Nbas , Gr )
-        end_time = time.time()
-        print("New implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-        #start_time = time.time()
-        #keomat = bound.BUILD_KEOMAT( params, maparray, Nbas , Gr )
-        #end_time = time.time()
-        #print("Old implementation - time for construction of KEO matrix is " +  str("%10.3f"%(end_time-start_time)) + "s")
-        
-        hmat += keomat 
-        #bound.plot_mat(hmat.todense())
-        #print("plot of hmat")
-        #bound.plot_mat(hmat)
-        #plt.spy(hmat,precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        #plt.legend()
-        #plt.show()
-        
-        """ --- make the hamiltonian matrix hermitian --- """
-        if params['hmat_format'] == 'numpy_arr':    
-            ham0    = np.copy(hmat)
-            ham0    += np.transpose(hmat.conjugate()) 
-            for i in range(ham0.shape[0]):
-                ham0[i,i] -= hmat.diagonal()[i]
-            print("Is the field-free hamiltonian matrix symmetric? " + str(check_symmetric(ham0)))
-
-        elif params['hmat_format'] == 'sparse_csr':
-            #hmat = sparse.csr_matrix(hmat)
-            hmat_csr_size = hmat.data.size/(1024**2)
-            print('Size of the sparse Hamiltonian csr_matrix: '+ '%3.2f' %hmat_csr_size + ' MB')
-            ham0 = hmat.copy()
-            ham0 += hmat.getH()
-            for i in range(ham0.shape[0]):
-                ham0[i,i] /=2.0#-= hmat.diagonal()[i]
-        else:
-            raise ValueError("Incorrect format type for the Hamiltonian")
-            exit()
-
-        """ --- filter hamiltonian matrix  --- """
-
-        if params['hmat_format'] == 'numpy_arr':    
-            ham_filtered = np.where( np.abs(ham0) < params['hmat_filter'], 0.0, ham0)
-            #ham_filtered = sparse.csr_matrix(ham_filtered)
-
-        elif params['hmat_format'] == 'sparse_csr':
-            nonzero_mask        = np.array(np.abs(ham0[ham0.nonzero()]) < params['hmat_filter'])[0]
-            rows                = ham0.nonzero()[0][nonzero_mask]
-            cols                = ham0.nonzero()[1][nonzero_mask]
-            ham0[rows, cols]    = 0
-            ham_filtered        = ham0.copy()
-
-
-        #plt.spy(ham0, precision=params['sph_quad_tol'], markersize=3, label="HMAT")
-        #plt.legend()
-        #plt.show()
-        #exit()
-        #print("Maximum real part of the hamiltonian matrix = " + str(np.max(ham_filtered.real)))
-        #print("Maximum imaginary part of the hamiltonian matrix = " + str(np.max(ham_filtered.imag)))
-        #exit()
-
-        if params['save_ham0'] == True:
-            if params['hmat_format'] == 'sparse_csr':
-                sparse.save_npz( params['job_directory']  + params['file_hmat0'] + "_" + str(irun) , ham_filtered , compressed = False )
-            elif params['hmat_format'] == 'numpy_arr':
-                with open( params['job_directory'] + params['file_hmat0']+ "_" + str(irun) , 'w') as hmatfile:   
-                    np.savetxt(hmatfile, ham_filtered, fmt = '%10.4e')
-            print("Hamiltonian matrix saved.")
-
-        """ diagonalize hmat """
-        if params['hmat_format'] == 'numpy_arr':    
-            start_time = time.time()
-            enr, coeffs = np.linalg.eigh(ham_filtered , UPLO = 'U')
-            end_time = time.time()
-        elif params['hmat_format'] == 'sparse_csr':
-            start_time = time.time()
-            enr, coeffs = call_eigensolver(ham_filtered, params)
-            end_time = time.time()
-
-   
-        print("Time for diagonalization of field-free Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
-        print("Normalization of initial wavefunctions: ")
-        for v in range(params['num_ini_vec']):
-            print(str(v) + " " + str(np.sqrt( np.sum( np.conj(coeffs[:,v] ) * coeffs[:,v] ) )))
-
-
-
-        """ Plot initial orbitals """
-        if params['plot_ini_orb'] == True:
-            plots.plot_initial_orbitals(params,maparray,coeffs)
-
-
-        return ham_filtered, coeffs
-
-
-
 """ ============ POTMAT0 ROTATED ============ """
 def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
 
@@ -1634,55 +1545,7 @@ def BUILD_POTMAT0_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
     return potmat0, potind
 
 
-def gen_wigner_dmats(n_grid_euler, Jmax, grid_euler):
 
-    wigner = spherical.Wigner(Jmax)
-    grid_euler = grid_euler.reshape(-1,3)
-    R = quaternionic.array.from_euler_angles(grid_euler)
-    D = wigner.D(R)
-
-    WDMATS = []
-    for J in range(Jmax+1):
-        WDM = np.zeros((2*J+1, 2*J+1, n_grid_euler), dtype=complex)
-        for m in range(-J,J+1):
-            for k in range(-J,J+1):
-                WDM[m+J,k+J,:] = D[:,wigner.Dindex(J,m,k)]
-        #print(J,WDM)
-        #print(WDM.shape)
-
-        WDMATS.append(WDM)  
-    return WDMATS
-
-
-def gen_tjmat(lmax_basis,lmax_multi):
-    """precompute all necessary 3-j symbols for the matrix elements of the multipole moments"""
-
-    #store in arrays:
-    # 2) tjmat[l,L,l',m,M,m'] = [0,...lmax,0...lmax,0,...,m+l,...,2l] - for definition check notes
-    tjmat = np.zeros( (lmax_basis+1, lmax_multi+1, lmax_basis+1,  2 * lmax_basis + 1, 2*lmax_multi + 1, 2 * lmax_basis + 1), dtype = float)
-    
-    #l1 - ket, l2 - bra
-
-    #to do: impose triangularity by creating index list for gaunt coefficients
-
-    for l1 in range(0,lmax_basis+1):
-        for l2 in range(0,lmax_basis+1):
-            for L in range(0,lmax_multi+1):
-                for M in range(-L,L+1):
-                    for m1 in range(-l1,l1+1):
-                        for m2 in range(-l2,l2+1): 
-                            tjmat[l1,L,l2,l1+m1,L+M,l2+m2] = np.sqrt( (2.0*float(l2)+1) * (2.0*float(L)+1) /(  (2.0*float(l1)+1) * (4.0*np.pi) ) ) * spherical.clebsch_gordan(l2,m2,L,M,l1,m1) * spherical.clebsch_gordan(l2,0,L,0,l1,0)
-                            # ( (-1.0)**(-M) ) * spherical.Wigner3j( l1,L, l2, m1, M, m2) * \
-                            #                        spherical.Wigner3j( l1, L ,l2, 0, 0, 0) * \
-                            #                        np.sqrt( (2.0*float(l1)+1) * (2.0*float(L)+1) * (2.0*float(l2)+1) / (4.0*np.pi) ) 
-
-
-    #print(spherical.Wigner3j(1, 2, 2, 1, 1, -2))
-    #exit()
-    #print("3j symbols in array:")
-    #print(tjmat)
-
-    return tjmat#/np.sqrt(4.0*np.pi)
 
 def gen_tjmat_quadpy(lmax_basis,lmax_multi):
     """precompute all necessary 3-j symbols for the matrix elements of the multipole moments"""
@@ -1810,53 +1673,6 @@ def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun 
     return  potmat0, potind 
 
 
-def test_vlm_symmetry(vLM):
-    #function to test if vLM obeys derived symmetry rules
-    Lmax = vLM.shape[1]
-    nxi = vLM.shape[0]
-
-    S = np.zeros((nxi,Lmax+1,Lmax+1),dtype = complex)
-
-    for L in range(Lmax):
-        for M in range(0,L+1):
-            S[:,L,M] = vLM[:,L,L+M]-(-1)**M * vLM[:,L,L-M].conj()
-            #print(S[:,L,M])
-
-            if np.allclose(S[:,L,M],0e0+1j*0e0, 1e-8, 1e-8):
-                print("L = " + str(L) + ", M = " + str(M) + ": All have zero difference")
-    exit()
-
-def rotate_tjmat(grid_euler,irun,tjmat):
-    
-    Lmax = tjmat.shape[1] -1
-
-    lmax = tjmat.shape[0] -1
-
-    tjmat_rot = np.zeros( (lmax+1, Lmax+1, lmax+1, 2*Lmax + 1,  2 * lmax + 1,  2 * lmax + 1), dtype = complex)
-        
-    #l1 - ket, l2 - bra
-
-    # pull wigner matrices at the given euler angle's set
-    
-    n_grid_euler = grid_euler.shape[0]
-    print("number of euler grid points = " + str(n_grid_euler))
-    print("current Euler grid point = " + str(grid_euler[irun]))
-
-    WDMATS = gen_wigner_dmats(1, Lmax, grid_euler[irun])
-
-    #print(grid_euler[irun])
-
-    # transform tjmat
-    for l1 in range(0,lmax+1):
-        for l2 in range(0,lmax+1):
-            for L in range(0,Lmax+1):
-                for M in range(-L,L+1):
-                    for m2 in range(-l2,l2+1):
-                        for m1 in range(-l1,l1+1):
-                            for Mp in range(-L,L+1):
-                                tjmat_rot[l1,L,l2,M+L,l1+m1, m2+l2] +=  WDMATS[L][Mp+L,M+L,0] * tjmat[l1,L,l2,L+Mp,l1+m1,l2+m2] 
-
-    return tjmat_rot
 
 
 
