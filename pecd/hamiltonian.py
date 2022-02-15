@@ -164,6 +164,7 @@ class Hamiltonian():
 
         self.params         = params
         self.hamtype        = hamtype
+        self.WDMATS         = WDMATS
 
         if hamtype == "bound":
             self.Nbas       = params['Nbas0']
@@ -233,7 +234,21 @@ class Hamiltonian():
             psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
                             " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
                             "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
+    
+    def save_density(self,density):
+        """Saves electron densities to a file
+        
+        
+        """
 
+        psifile = open(self.params['job_directory']  + "_density.dat", 'w')
+
+        for ielem,elem in enumerate(self.maparray):
+            psifile.write( " %5d"%elem[0] +  " %5d"%elem[1] + "  %5d"%elem[2] + \
+                            " %5d"%elem[3] +  " %5d"%elem[4] + "\t" + \
+                            "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
+
+  
   
 
     @staticmethod

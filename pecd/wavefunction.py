@@ -38,12 +38,13 @@ import spherical
 
 class Psi():
 
-    def __init__(self, params, grid_euler, irun, psitype="bound"):
+    def __init__(self, params,WDMATS, grid_euler,  irun, psitype="bound"):
 
         self.params         = params
         self.hamtype        = psitype
-        self.grid_euler = grid_euler
-        self.irun       = irun
+        self.grid_euler     = grid_euler
+        self.irun           = irun
+        self.WDMATS         = WDMATS
 
         if psitype == "bound":
                 
@@ -101,14 +102,14 @@ class Psi():
 
 
 
-    def rotate_psi(self,coeffs,Nr):
+    def rotate_psi(self,coeffs):
         """ take coefficients and rotate them by angles = (alpha, beta, gamma) """
         #irun - index of euler angles in global 3D grid
 
-
-        irun = self.params['irun']
-        lmax = self.params['bound_lmax']
-        WDMATS = self.WDMATS
+        Nr      = self.params['Nr0']
+        irun    = self.irun
+        lmax    = self.params['bound_lmax']
+        WDMATS  = self.WDMATS
 
         Dsize   = (lmax+1)**2 
         Dmat    = np.zeros((Dsize,Dsize), dtype = complex)
@@ -436,7 +437,7 @@ class GridEuler():
         self.N_euler    = N_euler
         self.N_batches  = N_batches
         self.grid_type  = grid_type
-        
+
     def read_euler_grid(self):   
         """Read the Euler grid from file and put it in a correct shape.
 
