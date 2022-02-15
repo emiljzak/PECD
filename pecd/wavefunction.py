@@ -442,7 +442,6 @@ class GridEuler():
         grid_euler  = grid_euler.reshape(-1,3)     
         N_Euler     = grid_euler.shape[0]
         N_per_batch = int(N_Euler/self.N_batches)
-        grid_euler  = grid_euler.reshape(-1,3)
 
         return grid_euler, N_Euler, N_per_batch
 

@@ -931,12 +931,11 @@ class Hamiltonian():
 
 
     def gen_wigner_dmats(self, n_grid_euler, Jmax, grid_euler):
-        print("grie euler:" + str(grid_euler))
-        wigner = spherical.Wigner(Jmax)
-        grid_euler = grid_euler.reshape(-1,3)
-        print("grie euler:" + str(grid_euler))
-        R = quaternionic.array.from_euler_angles(grid_euler)
-        D = wigner.D(R)
+
+        wigner      = spherical.Wigner(Jmax)
+        grid_euler  = grid_euler.reshape(-1,3)
+        R           = quaternionic.array.from_euler_angles(grid_euler)
+        D           = wigner.D(R)
 
         WDMATS = []
         for J in range(Jmax+1):
@@ -995,15 +994,15 @@ class Hamiltonian():
             
         #l1 - ket, l2 - bra
 
-        # pull wigner matrices at the given euler angle's set
+        # pull wigner matrices at a given euler angles set
         
         n_grid_euler = grid_euler.shape[0]
-        print("number of euler grid points = " + str(n_grid_euler))
-        print("current Euler grid point = " + str(grid_euler[irun]))
+
+        print("The total number of euler grid points = " + str(n_grid_euler))
+        print("The current Euler grid point = " + str(grid_euler[irun]))
 
         WDMATS = self.gen_wigner_dmats(1, Lmax, grid_euler[irun])
 
-        #print(grid_euler[irun])
 
         # transform tjmat
         for l1 in range(0,lmax+1):
@@ -1072,9 +1071,6 @@ class Hamiltonian():
             potmat: sparse array, dtype = complex, shape = (Nbas, Nbas)      
         
         """
-        print(type(grid_euler))
-        print(grid_euler)
-        print(grid_euler.shape)
 
         if self.params['molec_name'] == "chiralium":
 
@@ -1138,9 +1134,6 @@ class Hamiltonian():
                     :align: center          
 
         """
-
-        print(grid_euler.shape)
-        print(grid_euler)
 
 
         Nr = self.Gr.ravel().shape[0]
