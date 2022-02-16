@@ -467,8 +467,8 @@ class GridEuler():
             Status: tested.
 
         """
-        alpha_1d        = list(np.linspace(0, 2*np.pi,  num=self.N_euler, endpoint=True))
-        beta_1d         = list(np.linspace(0, np.pi,    num=1, endpoint=True))
+        alpha_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=True))
+        beta_1d         = list(np.linspace(0, np.pi,    num=self.N_euler, endpoint=True))
         gamma_1d        = list(np.linspace(0, 2*np.pi,  num=1, endpoint=True))
         euler_grid   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
@@ -532,8 +532,7 @@ class GridEuler():
         wigner      = spherical.Wigner(lmax)
         grid_euler  = grid_euler.reshape(-1,3)
         q_rot           = quaternionic.array.from_euler_angles(grid_euler) #array of quaterions corresponding to the Euler grid
-        print()
-        exit()
+     
         D           = wigner.D(q_rot)
 
         WDMATS = []

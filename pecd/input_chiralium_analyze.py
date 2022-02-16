@@ -11,7 +11,7 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_orient_density_Rdiv2" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_orient_density_new_beta" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
@@ -65,7 +65,7 @@ def read_input():
 
 
     rho2D = {   'name':         'rho2D',
-                'plane':        ('XZ',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                'plane':        ('XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_rho2D_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen                    
                 'save':         True,

@@ -846,14 +846,14 @@ if __name__ == "__main__":
     print("\n")
 
     start_time = time.time()
-    enr0, psi0 = HamObjBound.call_eigensolver(ham_bound)
+    enr_bound_0, psi_bound_0 = HamObjBound.call_eigensolver(ham_bound)
     end_time = time.time()
     print("Time for the calculation of eigenvalues and eigenvectos of the bound Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
     
     
     print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
-    if params['save_enr0'] == True: HamObjBound.save_energies(enr0)
-    if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0)
+    if params['save_enr0'] == True: HamObjBound.save_energies(enr_bound_0)
+    if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi_bound_0)
 
     print("\n")
     print("Building the interaction matrix...")
@@ -895,21 +895,34 @@ if __name__ == "__main__":
             print("Calculating eigenvalues and eigenvectors of the unrotated full Hamiltonian operator matrix...")
             print("\n")
 
+
+            keo_bound = HamObjBound.build_keo()
+            pot_bound = HamObjBound.build_potmat(grid_euler,irun)
+            ham_bound = HamObjBound.build_ham(keo_bound,pot_bound)
+            enr_bound_0, psi_bound_0 = HamObjBound.call_eigensolver(ham_bound)
+
+
+            keo_bound = HamObjBound.build_keo()
+            pot_bound = HamObjBound.build_potmat(grid_euler,irun)
+            ham_bound = HamObjBound.build_ham(keo_bound,pot_bound)
+            enr_bound_0, psi_bound_0 = HamObjBound.call_eigensolver(ham_bound)
+
+
             start_time = time.time()
-            enr_MF, psi_MF = HamObjBound.call_eigensolver(ham_init)
+            enr_prop_0, psi_prop_0 = HamObjBound.call_eigensolver(ham_init)
             end_time = time.time()
 
             print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
             if params['save_enr0'] == True: HamObjBound.save_energies(enr_MF,irun)
             if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi_MF,irun)
-            density[:,irun] = np.abs(psi_MF[:,params['ivec']])
-            psi_init = psi_MF[:,params['ivec']]
+            density[:,irun] = np.abs(psi_prop_0[:,params['ivec']])
+            psi_init = psi_prop_0[:,params['ivec']]
             print("\n")
             print("Setting up initial wavefunction...")
             print("\n")
             PropObj     = Propagator(params,irun)
             PropObj.prop_wf(ham_init, dipmat, psi_init)
-       
+
         else:
             
             print("\n")
@@ -927,6 +940,13 @@ if __name__ == "__main__":
             print("\n")
             print("Calculating eigenvectors by rotation of the MF wavefunction")
             print("\n")
+            
+            #Rotate psi_prop_0:
+                        
+            PsiObj      = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"prop")
+            psi_prop_0_rot    = PsiObj.rotate_psi(psi_prop_0[:,params['ivec']])
+            
+            #rotate psi_bound_0
             #Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
             PsiObj      = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"prop")
             psi0_rot    = PsiObj.rotate_psi(psi_MF[:,params['ivec']])

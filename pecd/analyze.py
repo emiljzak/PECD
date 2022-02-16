@@ -274,13 +274,11 @@ class analysis:
 
             #calculate spherical harmonics on the angular grid for all quantum numbers
             Ymat = np.zeros((lmax+1,2*lmax+1,grid[0].shape[0],grid[1].shape[1]),dtype=complex)
-            print(int(grid[1].shape[1]/2))
-            print(grid[1].shape[1])
 
             for l in range(lmax+1):
                 for m in range(-l,l+1):
                     Ymat[l,l+m,:,0:int(grid[1].shape[1]/2)] =  self.spharm(l, m, grid[1][:,0:int(grid[1].shape[1]/2)], phi0) 
-                    Ymat[l,l+m,:,int(grid[1].shape[1]/2):grid[1].shape[1]] =  self.spharm(l, m, -grid[1][:,int(grid[1].shape[1]/2):grid[1].shape[1]], phi0+np.pi) 
+                    Ymat[l,l+m,:,int(grid[1].shape[1]/2):grid[1].shape[1]] =  self.spharm(l, m, 2*np.pi-grid[1][:,int(grid[1].shape[1]/2):grid[1].shape[1]], phi0+np.pi) 
 
             return Ymat
 
@@ -292,7 +290,8 @@ class analysis:
             
             for l in range(lmax+1):
                 for m in range(-l,l+1):
-                    Ymat[l,l+m,:,:] =  self.spharm(l, m, grid[1], phi0) 
+                    Ymat[l,l+m,:,0:int(grid[1].shape[1]/2)] =  self.spharm(l, m, grid[1][:,0:int(grid[1].shape[1]/2)], phi0) 
+                    Ymat[l,l+m,:,int(grid[1].shape[1]/2):grid[1].shape[1]] =  self.spharm(l, m, 2*np.pi-grid[1][:,int(grid[1].shape[1]/2):grid[1].shape[1]], phi0+np.pi) 
 
             return Ymat
 

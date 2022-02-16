@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_orient_density_Rdiv2" 
+    params['job_label']    = "test_orient_density_new_beta" 
     
     """====== Basis set parameters ======"""
     """ 
