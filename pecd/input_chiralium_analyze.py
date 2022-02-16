@@ -11,18 +11,18 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_orient_density" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_orient_density1dalpha" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 17
     params['prop_nbins']        = 17
 
     params['tmax']              = 4.0 
 
-    params['N_euler'] 	        = 3   
+    params['N_euler'] 	        = 12   
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
@@ -65,7 +65,7 @@ def read_input():
 
 
     rho2D = {   'name':         'rho2D',
-                'plane':        ('XY','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                'plane':        ('XY','YZ','XZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_rho2D_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen                    
                 'save':         True,
@@ -76,7 +76,7 @@ def read_input():
                                     'rmax': 30.0  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
-                'th_grid':      (0.0,2.0*np.pi,360),
+                'th_grid':      (0.0,2.0*np.pi,360), #grif for phi and for theta too (although it goes from 0 to pi)
                 'coeff_thr':    1e-15 #threshold for the wavefunction coefficients in the calculation of rho
                 }
 

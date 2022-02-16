@@ -236,7 +236,7 @@ class Hamiltonian():
                             "\t\t ".join('{:10.5e}'.format(psi[ielem,v]) for v in range(0,self.params['num_ini_vec'])) + "\n")
     
     def save_density(self,density):
-        """Saves electron densities to a file
+        """Saves the trace of the density matrix to a file
         
         
         """

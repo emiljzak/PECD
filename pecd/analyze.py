@@ -1133,7 +1133,7 @@ class spacefuncs(analysis):
 
         funcpars['rtuple'] = rtuple
         funcpars['thtuple'] = thtuple
-        
+
         #for xi in range(self.params['Nbas_chi']):
 
         #    plt.plot(rgrid1D,chilist[xi](rgrid1D))

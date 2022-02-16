@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_orient_density" 
+    params['job_label']    = "test_orient_density1dalpha" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -20,7 +20,7 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 17
@@ -39,9 +39,9 @@ def read_input():
 
 
     """==== Molecule-field orientation ===="""
-    params['N_euler'] 	        = 3    # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
+    params['N_euler'] 	        = 12    # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
-    params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "1D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
     """
