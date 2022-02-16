@@ -914,8 +914,8 @@ if __name__ == "__main__":
             
             
             #density[:,irun] = np.abs(psi_prop_0[:,params['ivec']])
-            PropObj     = Propagator(params,irun)
-            PropObj.prop_wf(ham_init, dipmat, psi_prop_0[:,params['ivec']])
+           # PropObj     = Propagator(params,irun)
+           # PropObj.prop_wf(ham_init, dipmat, psi_prop_0[:,params['ivec']])
 
         else:
             
@@ -952,10 +952,13 @@ if __name__ == "__main__":
             #psi_init    = PsiObj.project_psi_global(psi0_rot)
             #hamiltonian.plot_mat(np.vstack((np.abs(psi_init).reshape(-1,1),np.vstack(np.abs(psia[:,params['ivec']]).reshape(-1,1)))),1.0)
             #print(np.abs(psia[:,params['ivec']]-psi_init))
-)
-            PropObj     = Propagator(params,irun)
-            PropObj.prop_wf(ham_init, dipmat, psi_)
+
+            #PropObj     = Propagator(params,irun)
+            #PropObj.prop_wf(ham_init, dipmat, psi_bound_rot_prop)
     
+            with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.4f}'.format}, linewidth=400):
+                print(np.concatenate((psi_prop_0_rot,psi_prop_rot,psi_bound_rot_prop,psi_bound_0_rot_prop)))
+
     #HamObjBound.save_density(density)
 
     end_time_total = time.time()
