@@ -142,11 +142,11 @@ class Psi():
         xi_start[0] = 0 
         xi_end[0]   = Dsize
 
-        for xi in range(Nr-1):
+        for xi in range(Nr-1): #bug here!!!!!!!!!!!!
             xi_start[xi+1] = xi_start[xi] + Dsize
-            xi_end[xi+1]   = xi_end[xi] +  Dsize
+            xi_end[xi+1]   = xi_end[xi] +  Dsize 
             
-
+            print(xi_start[xi],xi_end[xi])
         print("size of single D-mat block: " + str(-xi_start[1]+xi_end[1]))
 
         for xi in range(Nr):
