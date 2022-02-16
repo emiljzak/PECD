@@ -276,6 +276,8 @@ def run_array_job(params_list):
             grid_euler, iparams['n_grid_euler_3d'] = GridObjEuler.gen_euler_grid()            
         elif iparams['orient_grid_type'] == "2D":
             grid_euler, iparams['n_grid_euler_2d'] = GridObjEuler.gen_euler_grid_2D()            
+        elif iparams['orient_grid_type'] == "1D":
+            grid_euler, iparams['n_grid_euler_2d'] = GridObjEuler.gen_euler_grid_1D()     
         else:
             raise ValueError("incorrect euler grid typ")
         

@@ -22,7 +22,7 @@ def read_input():
 
     params['tmax']              = 4.0 
 
-    params['N_euler'] 	        = 2    
+    params['N_euler'] 	        = 3   
     params['N_batches'] 	    = 1    
     params['orient_grid_type']  = "3D"  
     
