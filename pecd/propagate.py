@@ -869,17 +869,10 @@ if __name__ == "__main__":
     print("Building the kinetic energy operator matrix for the propagation Hamiltonian...")
     print("\n")
 
-
-    keo_bound = HamObjBound.build_keo()
-
     start_time = time.time()
     keo_prop = HamObjProp.build_keo()
     end_time = time.time()
     print("Time for the calculation of the kinetic energy matrix for the propagatino Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-    density = np.zeros((params['Nbas'],N_per_batch)) 
-
-
 
     # loop over molecular orientations in the present batch
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
@@ -889,97 +882,18 @@ if __name__ == "__main__":
         end_time    = time.time()
         print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
-        pot_bound = HamObjBound.build_potmat(grid_euler,irun)
-        ham_bound = HamObjBound.build_ham(keo_bound,pot_bound)
-       
         start_time  = time.time()
-        ham_init    = HamObjProp.build_ham(keo_prop,pot_prop)
+        ham_init    = HamObjProp.build_ham(keo_prop, pot_prop)
         end_time    = time.time()
         print("Time for filtering of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
-   
-        """ ROTATION TESTS """
-        if irun == 0:
-            print("\n")
-            print("Calculating eigenvalues and eigenvectors of the unrotated full Hamiltonian operator matrix...")
-            print("\n")
 
-            enr_bound_0, psi_bound_0 = HamObjBound.call_eigensolver(ham_bound)
-            enr_prop_0, psi_prop_0 = HamObjProp.call_eigensolver(ham_init)
+        PsiObj          = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"bound")
+        psi_bound_0_rot = PsiObj.rotate_psi(psi_bound_0[:,params['ivec']])
+        psi_init        = PsiObj.project_psi_global(psi_bound_0_rot)
 
+        PropObj     = Propagator(params,irun)
+        PropObj.prop_wf(ham_init, dipmat, psi_init)
 
-            #print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
-            #if params['save_enr0'] == True: HamObjBound.save_energies(enr_MF,irun)
-            #if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi_MF,irun)
-            
-            
-            #density[:,irun] = np.abs(psi_prop_0[:,params['ivec']])
-           # PropObj     = Propagator(params,irun)
-           # PropObj.prop_wf(ham_init, dipmat, psi_prop_0[:,params['ivec']])
-
-        else:
-            
-            print("\n")
-            print("Calculating eigenvalues and eigenvectors of the rotated full Hamiltonian operator matrix...")
-            print("\n")
-
-            start_time = time.time()
-            enr_prop_rot, psi_prop_rot = HamObjProp.call_eigensolver(ham_init)
-            end_time = time.time()
-            enr_bound_rot, psi_bound_rot = HamObjBound.call_eigensolver(ham_bound)
-            #print("Saving energy levels and wavefunctions for the bound Hamiltonian...")
-            #if params['save_enr0'] == True: HamObjBound.save_energies(enr_MF,irun)
-            #if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi_MF,irun)
-        
-
-            
-            #Rotate psi_prop_0:
-                        
-            PsiObj      = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"prop")
-            psi_prop_0_rot    = PsiObj.rotate_psi(psi_prop_0[:,params['ivec']])
-            
-            #rotate psi_bound_0
-            #Setting up initial wavefunction for irun = " + str(irun) + " with Euler angles: " + str(grid_euler[irun]))
-            PsiObj      = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"bound")
-            psi_bound_0_rot    = PsiObj.rotate_psi(psi_bound_0[:,params['ivec']])
-            psi_bound_0_rot_prop    = PsiObj.project_psi_global(psi_bound_0_rot)
-            psi_bound_rot_prop      = PsiObj.project_psi_global(psi_bound_rot[:,params['ivec']])
-            #density[:,irun] = np.abs(psi0_rot[:])
-
-            #print("Saving wavefunctions for the full rotated Hamiltonian...")
-            #if params['save_psi0'] == True: HamObjBound.save_wavefunctions(psi0_rot,irun)
-        
-            #psi_init    = PsiObj.project_psi_global(psi0_rot)
-            #hamiltonian.plot_mat(np.vstack((np.abs(psi_init).reshape(-1,1),np.vstack(np.abs(psia[:,params['ivec']]).reshape(-1,1)))),1.0)
-            #print(np.abs(psia[:,params['ivec']]-psi_init))
-
-            PropObj     = Propagator(params,irun)
-            PropObj.prop_wf(ham_init, dipmat, psi_bound_rot_prop)
-    
-            print(psi_prop_0_rot.shape)
-            print(psi_prop_rot.shape)
-            print(psi_bound_rot_prop.shape)
-            print(psi_bound_0_rot_prop.shape)
-            
-            psi_prop_0_rot = psi_prop_0_rot.reshape(-1,1)
-            psi_prop_rot= psi_prop_rot[:,params['ivec']].reshape(-1,1)
-            psi_bound_rot_prop= psi_bound_rot_prop.reshape(-1,1)
-            psi_bound_0_rot_prop= psi_bound_0_rot_prop.reshape(-1,1)
-
-            psi_all = np.concatenate((psi_prop_0_rot,psi_prop_rot,psi_bound_rot_prop,psi_bound_0_rot_prop),axis=1)
-            
-            dens_all = np.concatenate((np.abs(psi_prop_0_rot)**2,np.abs(psi_prop_rot)**2,np.abs(psi_bound_rot_prop)**2,np.abs(psi_bound_0_rot_prop)**2),axis=1)
-
-            with np.printoptions(precision=4, suppress=True, formatter={'complex': '{:15.5f}'.format}, linewidth=400):
-                print(np.concatenate((psi_prop_0_rot,psi_prop_rot,psi_bound_rot_prop,psi_bound_0_rot_prop),axis=1))
-            
-            psifile = open(params['job_directory']  + "psis"+str(irun)+".dat", 'w')
-            np.savetxt(psifile,psi_all,fmt='%25.9f')
-
-            densfile = open(params['job_directory']  + "densis"+str(irun)+".dat", 'w')
-            np.savetxt(densfile,dens_all,fmt='%25.9f')
-        
-    #HamObjBound.save_density(density)
 
     end_time_total = time.time()
     print("Global time =  " + str("%10.3f"%(end_time_total-start_time_total)) + "s")
