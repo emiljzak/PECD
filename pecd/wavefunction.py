@@ -239,7 +239,8 @@ class Psi():
         #exit()
         interpolation_step = binw/200.0
         x = np.arange(0.0, self.nbins * binw + 0.10, interpolation_step)
-
+        print(x)
+        
         chilist  = []
 
         for i, elem in enumerate(self.maparray_rad):

@@ -11,25 +11,25 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_orient_density_new_beta" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_analyze" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 17
-    params['prop_nbins']        = 17
+    params['prop_nbins']        = 30
 
-    params['tmax']              = 4.0 
+    params['tmax']              = 40.0 
 
-    params['N_euler'] 	        = 12   
+    params['N_euler'] 	        = 3   
     params['N_batches'] 	    = 1    
-    params['orient_grid_type']  = "3D"  
+    params['orient_grid_type']  = "1D"  
     
     params['helicity']          = "L"
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
-    params['momentum_analyze_times'] =   list(np.linspace(params['tmax'], params['tmax'], 1 ))
+    params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 3 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),
@@ -71,9 +71,9 @@ def read_input():
                 'save':         True,
                 'scale':        "log", #unit or log
                 'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 100,    #ignored when automatic (2*rmax)
+                                    'npts': 200,    #ignored when automatic (2*rmax)
                                     'rmin': 0.0,    #ignored when automatic
-                                    'rmax': 30.0  #ignored when automatic
+                                    'rmax': 50.0  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360), #grif for phi and for theta too (although it goes from 0 to pi)
@@ -116,24 +116,24 @@ def read_input():
 
     W2Dav = {   'name':         'W2Dav',
                 'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
-                'show':         True, # show image on screen
+                'show':         False, # show image on screen
                 'save':         True, # save array in file
                                 # Momentum grid parameters only for plotting purposes.
-                'k_grid':       {   'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                'k_grid':       {   'type':'automatic', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     'kmin': 0.0,    #ignored when automatic
                                     'kmax': 2.0     #ignored when automatic               
                                 },
 
                 'th_grid':      {   'thmin': 0.0,
                                     'thmax': 2.0*np.pi,
-                                    'FT_npts_th': 720
+                                    'FT_npts_th': 360
                                 },
                 
-                'npts_phi':     10, #number of phi points for the integration over tha azimuthal angle.
+                'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
                 
                 'legendre':     True, # calculate Legendre decomposition
 
-                'PES':          True, # calculate PES
+                'PES':          False, # calculate PES
                 'PES_params': {     
                                 'name':         'PES',
                                 'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
@@ -168,8 +168,8 @@ def read_input():
 
                 }
 
-    params['analyze_space']     = [rho2D]
-    params['analyze_momentum']  = []
+    params['analyze_space']     = []
+    params['analyze_momentum']  = [W2Dav]
     
     params['PECD']      = PECD
     params['W2Dav']     = W2Dav
@@ -179,8 +179,8 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            1000,    # number of radial points over which the Hankel Transform is evaluated.
-                                    'rcutoff':              20.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
+                                    'FT_npts_k':            400,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'rcutoff':              0.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
                                                      

@@ -542,7 +542,7 @@ class analysis:
         N_red   = npts 
 
         grid_theta  = np.linspace(-np.pi, np.pi, N_red , endpoint = False ) # 
-        grid_r      = np.linspace(0.0, rmax, npts, endpoint = False)
+        grid_r      = np.linspace(0.001, rmax, npts, endpoint = False)
 
         return grid_theta, grid_r
 
@@ -590,7 +590,8 @@ class analysis:
         Nr              = len(maparray_chi)
         npts = grid_r.size #number of radial grid point at which Plm are evaluated. This grid determines the maximum photoelectron momentum.
         
-
+        #print(grid_r)
+        #exit()
         val = np.zeros(npts, dtype = complex)
 
 
@@ -2868,8 +2869,8 @@ if __name__ == "__main__":
     grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
 
 
-    PsiObjProp                  = wavefunction.Psi(params,grid_euler,0,"prop")
-    PsiObjBound                 = wavefunction.Psi(params,grid_euler,0,"bound")
+    PsiObjProp                  = wavefunction.Psi(params,_,grid_euler,0,"prop")
+    PsiObjBound                 = wavefunction.Psi(params,_,grid_euler,0,"bound")
 
     params['chilist']           = PsiObjProp.interpolate_chi()
     params['chilist_bound']     = PsiObjBound.interpolate_chi()
@@ -2879,6 +2880,8 @@ if __name__ == "__main__":
     print("==post-processing of the wavepacket==")
     print("====================================="+"\n")
 
+    helicity = params['helicity'] 
+    obs_table = []
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
         print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )
@@ -2909,29 +2912,14 @@ if __name__ == "__main__":
             momentumobs     = momentumfuncs(params)
 
             for elem in params['analyze_momentum']:
-
                 func = getattr(momentumobs,elem['name'])
                 print("Calling momentum function: " + str(elem['name']))
-                func(elem)
-        
-
-
-        """ calculate contribution to averaged quantities"""
-
-        """
-        if params['density_averaging'] == True:
-        #plot_W_3D_num(params, maparray_chi, maparray_global, psi, chilist, gamma)
-        Wav += float(rho[irun]) * np.abs(FT)**2
-        #PLOTS.plot_2D_polar_map(np.abs(FT)**2,grid_theta,kgrid,100)
-
-        else:
-        print("proceeding with uniform rotational density")
-        Wav += np.abs(FT)**2
-
-        
-    """
-    """ Consolidate quanitites averaged over orientations """
-    #obj     = analysis(params)
-    #ibcoeff = 9
-    #obj.barray_plot_2D(grid_euler,ibcoeff,params['bcoeffs'])
-    #exit()
+                if elem['name'] == "W2Dav":
+                    obs_list,_ = func(elem)
+                    
+                    for ielem in obs_list:
+                        print(ielem)
+                        #t = ielem[1]
+                        #bcoeffs = ielem[2]
+                        #energy = ielem[3]
+                        #obs_table.append([ibatch,irun,alpha,beta,gamma,t,helicity,energy,bcoeffs])
