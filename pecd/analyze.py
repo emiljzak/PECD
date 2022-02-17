@@ -1445,7 +1445,6 @@ class momentumfuncs(analysis):
     
     def PECD(self,funcpars):
         
-       
         print("------------ Quantitative PECD analysis --------------"+'\n\n')
 
         """ Calculate W2D for left- and right-circularly polarized light """
