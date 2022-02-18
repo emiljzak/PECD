@@ -44,17 +44,30 @@ class analysis:
 
     def build_obs_table(self,obs_list,ibatch):
         obs_table ={}
+
+        energy_grid = obs_list[0][2]['energy_grid']
+       
+        #initialize lists associated with existing observables
+        obs_dict = obs_list[0][2]
+        for key, value in obs_dict.items():
+            obs_table[key] = []
+
         for elem in obs_list:
             print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
+            t = elem[1]
             for key, value in elem[2].items():
-                print(key, ":", value)
-            
-          
-            
-            #obs_table[str(elem[2])] = [ibatch,self.params['irun'],self.helicity]
-            
+                #print(key, ":", value)
+                if key == "bcoeffs":
+                    for ienergy,energy in enumerate(list(energy_grid)):
+                        obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,energy,[value[ienergy,:]]])
+                elif key == "W2Dav":
+                        obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,value])
+                elif key == "PESav":
+                        obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,value])
+                else:
+                    raise KeyError("incorrect observable name")
 
-        #print(obs_table)
+        print(obs_table)
         exit()
 
     
