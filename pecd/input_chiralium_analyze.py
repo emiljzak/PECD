@@ -11,7 +11,7 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_analyze" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_bcoeffs" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
@@ -22,8 +22,8 @@ def read_input():
 
     params['tmax']              = 40.0 
 
-    params['N_euler'] 	        = 3   
-    params['N_batches'] 	    = 1    
+    params['N_euler'] 	        = 4   
+    params['N_batches'] 	    = 2    
     params['orient_grid_type']  = "1D"  
     
     params['helicity']          = "L"

@@ -15,14 +15,14 @@ class Avobs:
         self.helicity = params['helicity']
 
     def read_obs(self):
-        print("wewewewe")
+
         GridObjEuler = wavefunction.GridEuler(  self.params['N_euler'],
                                                 self.params['N_batches'],
                                                 self.params['orient_grid_type'])
     
         grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
         global_obs_table = []
-        print(self.params['N_batches'])
+
 
         for ibatch in range(0,self.params['N_batches']):
             #os.chdir(self.params['job_directory'])

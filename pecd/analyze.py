@@ -45,7 +45,7 @@ class analysis:
         bcoeffs =[]
         #print(obs_table)
         #exit()
-        bcoeffs_file = "bcoeffs_table_"+str(ibatch)+".dat"
+        bcoeffs_file = "bcoeffs_table_"+str(ibatch)
         
         for elem in self.params['analyze_momentum']:
         
@@ -62,13 +62,33 @@ class analysis:
                 #print(type(elem[i][5]))
         #        print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
 
-        with open(  self.params['job_directory'] + bcoeffs_file , 'w') as bfile:
+        with open(  self.params['job_directory'] + bcoeffs_file+".dat" , 'w') as bfile:
         
             for ielem,elem in enumerate(bcoeffs):
                 for i in range(len(obs_list)):
                     bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
 
-           
+        
+        bfileh5 =  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w')
+
+        wfn = bfileh5.create_dataset( name        = "metadata", 
+                                            data        = np.zeros(1),
+                                            dtype       = int)
+
+        wfn.attrs['t0']         = self.params['t0']
+        wfn.attrs['tmax']       = self.params['tmax']
+        wfn.attrs['dt']         = self.params['dt']
+        wfn.attrs['saverate']   = self.params['wfn_saverate']
+        wfn.attrs['units']      = self.params['time_units']
+
+        for ielem,elem in enumerate(bcoeffs):
+            for i in range(len(obs_list)):
+                bfileh5.create_dataset(   name        = "bcoeffs", 
+                                        data        = elem[i][8][0],
+                                        dtype       = float,
+                                    )
+
+ 
 
 
     def build_obs_table(self,obs_list,ibatch,irun,alpha,beta,gamma):
