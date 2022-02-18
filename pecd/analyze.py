@@ -48,15 +48,14 @@ class analysis:
         energy_grid = obs_list[0][2]['energy_grid']
        
         #initialize lists associated with existing observables
-        obs_dict = obs_list[0][2]
-        for key, value in obs_dict.items():
+        for key, value in obs_list[0][2].items():
             obs_table[key] = []
 
         for elem in obs_list:
             print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
             t = elem[1]
             for key, value in elem[2].items():
-                #print(key, ":", value)
+                print(key, ":", value)
                 if key == "bcoeffs":
                     for ienergy,energy in enumerate(list(energy_grid)):
                         obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,energy,[value[ienergy,:]]])
@@ -64,15 +63,7 @@ class analysis:
                         obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,value])
                 elif key == "PESav":
                         obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,value])
-                else:
-                    raise KeyError("incorrect observable name")
-
-        print(obs_table)
-        exit()
-
-    
-
-                        #obs_table.append([ibatch,irun,alpha,beta,gamma,t,helicity,energy,bcoeffs])
+               
         return obs_table
 
     def momentum_au_to_energy_ev(self,array):

@@ -29,7 +29,7 @@ def read_input():
     params['helicity']          = "L"
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
-    params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 3 ))
+    params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),
@@ -126,7 +126,7 @@ def read_input():
 
                 'th_grid':      {   'thmin': 0.0,
                                     'thmax': 2.0*np.pi,
-                                    'FT_npts_th': 180
+                                    'FT_npts_th': 90
                                 },
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
@@ -178,7 +178,7 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            200,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'FT_npts_k':            100,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              10.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
