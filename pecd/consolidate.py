@@ -27,14 +27,166 @@ class Avobs:
             os.chdir()
             obs_table = self.read_table()
             global_obs_table.append(obs_table)
-           
+        
+        print(global_obs_table)
+        exit()
+        return global_obs_table
 
+    def read_table(self,ibatch):
+      
+        bcoeffs_file = "bcoeffs_table_"+str(ibatch)+".dat"
+        self.params['job_directory'] + bcoeffs_file
+        table = []
+        with open(bcoeffs_file, 'r', ) as f:
+            for line in f:
+                words   = line.split()
+                irun = words[1]
+                alpha = float(words[2])
+                beta = float(words[3])
+                gamma = float(words[4])
+                t = float(words[5])
+                sigma = str(words[6])
+                energy = float(words[7])
+                barray = []
+                for n in range(self.params['legendre_params']['Leg_lmax']):
+                    barray.append(float(words[7+n]))
+                
+                table.append([irun,alpha,beta,gamma,t,sigma,energy,np.asarray(barray,dtype=float)])
 
-    def read_table(self):
-        pass
+        return table
 
     def calc_bcoeffs(self):
         pass
+
+
+
+
+    def barray_plot_2D(self,grid_euler,ibcoeff,funcpars):
+        """ Produces contour plot for b(beta,gamma) """
+
+        """
+        Args:
+            
+        Comments:
+            1)
+
+        """
+
+        cont2D_params = funcpars['plot'][1] #all plot params
+
+        N_Euler = grid_euler.shape[0]
+    
+        barray = np.zeros((N_Euler,4+2*(self.params['Leg_lmax']+1)), dtype = float)
+        
+        #for each time pointer
+        #for each k pointer
+
+        for irun in range(N_Euler):
+            barray[irun,0],barray[irun,1] = grid_euler[irun,1], grid_euler[irun,2]
+            for t in list(self.params['momentum_analyze_times']):
+                file = self.params['job_directory'] +  "bcoeffs" +\
+                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t) ) +\
+                            ".dat"
+
+                barray[irun,2] = t
+                if not os.path.isfile(file):
+                    continue
+                else:
+                    with open(  file , 'r') as pecdfile:
+                        barray[irun,2] = t
+                        #for ikelem, k in enumerate(self.params['pecd_momenta']):
+
+                        for line in pecdfile:
+                            words   = line.split()
+                            barray[irun,3] = float(words[0])
+                            for il in range(2*(self.params['Leg_lmax']+1)):
+        
+                                barray[irun,il+4] = float(words[il+1])
+
+        with open( self.params['job_directory'] +  "barray.dat" , 'w') as barfile:   
+            np.savetxt(barfile, barray, fmt = '%12.8f')
+
+
+        bcoef = barray[:,4+ibcoeff]
+
+        cmap = matplotlib.cm.jet #jet, cool, etc
+
+        norm = matplotlib.colors.Normalize(vmin = bcoef.min(), vmax = bcoef.max())
+
+        figsizex = cont2D_params['figsize_x'] #size of the figure on screen
+        figsizey = cont2D_params['figsize_y']  #size of the figure on screen
+        resolution = cont2D_params['resolution']  #resolution in dpi
+
+        fig = plt.figure(figsize=(figsizex, figsizey), dpi=resolution,
+                        constrained_layout=True)
+        grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+
+
+        #x2d,y2d = np.meshgrid(barray[:,1],barray[:,0], 'ij')
+        #bcoef_int = interpolate.intetrp2d(x2d,y2d,bcoef)
+
+        plot_cont_1 = ax1.tricontourf( barray[:,1]/np.pi,barray[:,0]/np.pi, bcoef, 
+                                    cont2D_params['ncont'], 
+                                    cmap = 'jet')
+        
+        ax1.set_title(  label               = "",
+                        fontsize            = cont2D_params['title_size'],
+                        color               = cont2D_params['title_color'],
+                        verticalalignment   = cont2D_params['title_vertical'],
+                        horizontalalignment = cont2D_params['title_horizontal'],
+                        #position            = cont2D_params[ "title_position"],
+                        pad                 = cont2D_params['title_pad'],
+                        backgroundcolor     = cont2D_params['title_background'],
+                        fontname            = cont2D_params['title_fontname'],
+                        fontstyle           = cont2D_params['title_fontstyle'])
+
+        ax1.set_xlabel( xlabel              = cont2D_params['xlabel'],
+                        fontsize            = cont2D_params['xlabel_size'],
+                        color               = cont2D_params['label_color'],
+                        loc                 = cont2D_params['xlabel_loc'],
+                        labelpad            = cont2D_params['xlabel_pad'] )
+
+        ax1.set_ylabel(cont2D_params['ylabel'])
+
+    
+        ax1.set_xticks(cont2D_params['xticks']) #positions of x-ticks
+        ax1.set_yticks(cont2D_params['yticks']) #positions of y-ticks
+
+        ax1.set_xticklabels(cont2D_params['xticks']) #x-ticks labels
+        ax1.set_yticklabels(cont2D_params['yticks']) #y-ticks labels
+
+        ax1.xaxis.set_major_formatter(FormatStrFormatter('%.1f')) #set tick label formatter 
+        ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+        fig.colorbar(   mappable =  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                        ax                  = ax1, 
+                        orientation         = cont2D_params['cbar_orientation'],
+                        label               = r'$b_{0}^{{CPR}}$'.format(ibcoeff)+"(%)",
+                        fraction            = cont2D_params['cbar_fraction'],
+                        aspect              = cont2D_params['cbar_aspect'],
+                        shrink              = cont2D_params['cbar_shrink'],
+                        pad                 = cont2D_params['cbar_pad'],
+                        extend              = cont2D_params['cbar_extend'],
+                        ticks               = cont2D_params['cbar_ticks'],
+                        drawedges           = cont2D_params['cbar_drawedges'],
+                        format              = cont2D_params['cbar_format'])
+        
+        if cont2D_params['save'] == True:
+            fig.savefig(    fname       = "b"+str(ibcoeff) + "_" +  cont2D_params['save_name'],
+                            dpi         = cont2D_params['save_dpi'],
+                            orientation = cont2D_params['save_orientation'],
+                            bbox_inches = cont2D_params['save_bbox_inches'],
+                            pad_inches  = cont2D_params['save_pad_inches']
+                            )
+
+        #ax1.legend() #show legends
+        if funcpars['show'] == True:
+            plt.show()
+            plt.close()
+
+
 
     def plot_bcoeffs(self):
         """" ===== Plot parameters ====="""
@@ -274,3 +426,4 @@ if __name__ == "__main__":
     params.update(params_analyze)
 
     Obs = Avobs(params)
+    Obs.read_obs()
