@@ -17,8 +17,8 @@ def read_input():
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
-    params['bound_nbins']       = 17
-    params['prop_nbins']        = 30
+    params['bound_nbins']       = 10
+    params['prop_nbins']        = 12
 
     params['tmax']              = 40.0 
 
@@ -29,7 +29,7 @@ def read_input():
     params['helicity']          = "L"
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
-    params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
+    params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 4 ))
    
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),
@@ -184,9 +184,9 @@ def read_input():
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
                                                      
     params['legendre_params'] = {
-                                    'Leg_lmax':             8,      # maximum angular momentum in the Legendre expansion
+                                    'Leg_lmax':             4,      # maximum angular momentum in the Legendre expansion
                                     'N_leg_quad':           100,    # the number of Gauss-Legendre quadrature points used to calcualte the b-coefficients
-                                    'energy_grid':          [5.0,27.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
+                                    'energy_grid':          [5.0,12.0], #list of energies (eV) for which we want to perform Legendre decomposition and save b(E) coeffs
 
                                     'plot_bcoeffs':         False,  # plot b-coefficients
                                     'save_bcoeffs':         True,   # save bcoeffs array calculated for energy_grid in a file

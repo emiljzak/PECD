@@ -348,6 +348,9 @@ def run_array_job(params_list):
                         pecd_process = "python3 analyze.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
                         iflag = subprocess.call(pecd_process, shell=True) 
                         flag.append([ibatch,iflag])
+            elif iparams['mode'] == "consolidate":
+                print("proceeding with consolidate")
+                consolidate()
 
             print("Termination flags for euler grid array job: [ibatch,flag]")
             print(flag)

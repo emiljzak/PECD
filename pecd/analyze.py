@@ -48,20 +48,19 @@ class analysis:
         bcoeffs_file = "bcoeffs_table_"+str(ibatch)+".dat"
         
         for elem in self.params['analyze_momentum']:
-            obs_list = obs_dict_global[elem['name']]
         
-            for i in range(len(obs_list)):
+            for i in range(len(obs_dict_global[elem['name']])): #loop over irun
 
-                bcoeffs.append(obs_list[i]['bcoeffs'])
+                bcoeffs.append(obs_dict_global[elem['name']][i]['bcoeffs'])
 
-       
+        #bcoeffs is list of lists
      
-        for ielem,elem in enumerate(bcoeffs):
+        #for ielem,elem in enumerate(bcoeffs):
 
-            for i in range(len(obs_list)):
+        #    for i in range(len(obs_list)):
                 #print(elem[i][5])
                 #print(type(elem[i][5]))
-                print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
+        #        print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
 
         with open(  self.params['job_directory'] + bcoeffs_file , 'w') as bfile:
         
@@ -89,6 +88,7 @@ class analysis:
                 if key == "bcoeffs":
                     for ienergy,energy in enumerate(list(energy_grid)):
                         obs_table[key].append([ibatch,irun,self.helicity,t,energy,[value[ienergy,:]]])
+                        print("value:"+str(energy))
                 elif key == "W2Dav":
                         obs_table[key].append([ibatch,irun,self.helicity,t,value])
                 elif key == "PESav":
