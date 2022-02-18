@@ -307,22 +307,30 @@ def run_array_job(params_list):
             os.chdir(path + "/slurm_run")
             
             print ("Job directory is %s" % iparams['job_directory'])
+            
+            if iparams['mode'] == "propagate" or "analyze":
 
-            for ibatch in range(iparams['N_batches']):
-                time.sleep(2)
-                if iparams['mode'] == "propagate":
-                    pecd_process =  "./master_script.sh " + str(ibatch) +\
-                                    " " + str(iparams['job_directory']) + " " +\
-                                    str("propagate.py")
-                    iflag = subprocess.call(pecd_process, shell=True)
-                    flag.append([ibatch,iflag])
+                for ibatch in range(iparams['N_batches']):
+                    time.sleep(2)
+                    if iparams['mode'] == "propagate":
+                        pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                        " " + str(iparams['job_directory']) + " " +\
+                                        str("propagate.py")
+                        iflag = subprocess.call(pecd_process, shell=True)
+                        flag.append([ibatch,iflag])
 
-                elif iparams['mode'] == "analyze":
-                    pecd_process =  "./master_script.sh " + str(ibatch) +\
-                                    " " + str(iparams['job_directory']) + " " +\
-                                    str("analyze.py")
-                    iflag = subprocess.call(pecd_process, shell=True)
-                    flag.append([ibatch,iflag])
+                    elif iparams['mode'] == "analyze":
+                        pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                        " " + str(iparams['job_directory']) + " " +\
+                                        str("analyze.py")
+                        iflag = subprocess.call(pecd_process, shell=True)
+                        flag.append([ibatch,iflag])
+            elif iparams['mode'] == "consolidate":
+                pecd_process =  "./master_script.sh " + str(0) +\
+                                        " " + str(iparams['job_directory']) + " " +\
+                                        str("consolidate.py")
+                iflag = subprocess.call(pecd_process, shell=True)
+                flag.append([ibatch,iflag])
 
             print("Termination flags for euler grid array job: [ibatch,flag]")        
             print(flag)
@@ -348,9 +356,11 @@ def run_array_job(params_list):
                         pecd_process = "python3 analyze.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
                         iflag = subprocess.call(pecd_process, shell=True) 
                         flag.append([ibatch,iflag])
+            
             elif iparams['mode'] == "consolidate":
                 print("proceeding with consolidate")
-                consolidate()
+                pecd_process = "python3 consolidate.py "+str(iparams['job_directory'])
+                iflag = subprocess.call(pecd_process, shell=True) 
 
             print("Termination flags for euler grid array job: [ibatch,flag]")
             print(flag)

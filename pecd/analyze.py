@@ -66,12 +66,12 @@ class analysis:
         
             for ielem,elem in enumerate(bcoeffs):
                 for i in range(len(obs_list)):
-                    bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
+                    bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
 
            
 
 
-    def build_obs_table(self,obs_list,ibatch,irun):
+    def build_obs_table(self,obs_list,ibatch,irun,alpha,beta,gamma):
         obs_table ={}
         #Note: we could straightforwardly generate elements of obs_table in correct format at the stage of observables calculations, but this way we do now is more transparent and general, although a bit more involving.
         energy_grid = obs_list[0][2]['energy_grid']
@@ -87,12 +87,12 @@ class analysis:
                 #print(key, ":", value)
                 if key == "bcoeffs":
                     for ienergy,energy in enumerate(list(energy_grid)):
-                        obs_table[key].append([ibatch,irun,self.helicity,t,energy,[value[ienergy,:]]])
+                        obs_table[key].append([ibatch,irun,alpha,beta,gamma,self.helicity,t,energy,[value[ienergy,:]]])
                         print("value:"+str(energy))
                 elif key == "W2Dav":
-                        obs_table[key].append([ibatch,irun,self.helicity,t,value])
+                        obs_table[key].append([ibatch,irun,alpha,beta,gamma,self.helicity,t,value])
                 elif key == "PESav":
-                        obs_table[key].append([ibatch,irun,self.helicity,t,value])
+                        obs_table[key].append([ibatch,irun,alpha,beta,gamma,self.helicity,t,value])
                
         return obs_table
 
@@ -2774,41 +2774,6 @@ class momentumfuncs(analysis):
         return fty, yftgrid, zftgrid 
 
 
-class averagedobs:
-    def __init__(self):
-        pass
-
-
-    """
-
-
-    Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
-
-
-
-
-    if params['density_averaging'] == True:
-        WDMATS  = gen_wigner_dmats( N_Euler, 
-                                    params['Jmax'], 
-                                    grid_euler)
-
-        #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-        grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
-                                                WDMATS,
-                                                params) 
-
-
-          
-        print(n_grid_euler_2d)
-        grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
-                                    WDMATS,
-                                    params) 
-        print("shape of rho")
-        print(np.shape(rho))
-        #print(rho.shape)
-        #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
-        """
-
 def check_compatibility(params_prop,params_analyze):
 
     if params_prop['tmax'] != params_analyze['tmax']:
@@ -2975,7 +2940,7 @@ if __name__ == "__main__":
                 print("Calling momentum function: " + str(elem['name']))
                 obs_list,ft_polargrid = func(elem)
                 
-                global_obs_dict[elem['name']].append(analysis_obj.build_obs_table(obs_list,ibatch,irun))
+                global_obs_dict[elem['name']].append(analysis_obj.build_obs_table(obs_list,ibatch,irun,alpha,beta,gamma))
 
     analysis_obj.save_obs_table(global_obs_dict,ibatch)
                 

@@ -31,6 +31,8 @@ def read_input():
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
     params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 4 ))
    
+    params['consolidate'] = {'bcoeffs': True}
+
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),
                         'show':         True, # show image on screen                    
