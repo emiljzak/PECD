@@ -336,16 +336,18 @@ def run_array_job(params_list):
             print ("Job directory is %s" % iparams['job_directory'])
             print("Number of batches = " + str(iparams['N_batches']))
 
-            for ibatch in range(0,iparams['N_batches']):
-                if iparams['mode'] == "propagate":
-                    pecd_process = "python3 propagate.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
-                    iflag = subprocess.call(pecd_process, shell=True) 
-                    flag.append([ibatch,iflag])
+            if iparams['mode'] == "propagate" or "analyze":
 
-                elif iparams['mode'] == "analyze":
-                    pecd_process = "python3 analyze.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
-                    iflag = subprocess.call(pecd_process, shell=True) 
-                    flag.append([ibatch,iflag])
+                for ibatch in range(0,iparams['N_batches']):
+                    if iparams['mode'] == "propagate":
+                        pecd_process = "python3 propagate.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                        iflag = subprocess.call(pecd_process, shell=True) 
+                        flag.append([ibatch,iflag])
+
+                    elif iparams['mode'] == "analyze":
+                        pecd_process = "python3 analyze.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                        iflag = subprocess.call(pecd_process, shell=True) 
+                        flag.append([ibatch,iflag])
 
             print("Termination flags for euler grid array job: [ibatch,flag]")
             print(flag)

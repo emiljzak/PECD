@@ -41,23 +41,38 @@ class analysis:
         self.params = params
         self.helicity = params['helicity']
 
-    def save_obs_table(self,obs_table,ibatch):
-
+    def save_obs_table(self,obs_dict_global,ibatch):
+        bcoeffs =[]
         #print(obs_table)
         #exit()
         bcoeffs_file = "bcoeffs_table_"+str(ibatch)+".dat"
+        
+        for elem in self.params['analyze_momentum']:
+            obs_list = obs_dict_global[elem['name']]
+        
+            for i in range(len(obs_list)):
 
-        with open(  self.params['job_directory'] + bcoeffs_file , 'w') as bcoeffsfile:
-                            
-            for ielem,elem in enumerate(obs_table['bcoeffs']['bcoeffs']):
-                
-                bcoeffsfile.write(  " ".join(str('{:8d}'.format(elem[i])) for i in range(5)) +\
-                " ".join('{:12.8f}'.format(elem[n]) for n in range(self.params['legendre_params']['Leg_lmax']))+"\n") 
+                bcoeffs.append(obs_list[i]['bcoeffs'])
+
+       
+     
+        for ielem,elem in enumerate(bcoeffs):
+
+            for i in range(len(obs_list)):
+                #print(elem[i][5])
+                #print(type(elem[i][5]))
+                print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
+
+        with open(  self.params['job_directory'] + bcoeffs_file , 'w') as bfile:
+        
+            for ielem,elem in enumerate(bcoeffs):
+                for i in range(len(obs_list)):
+                    bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
 
            
 
 
-    def build_obs_table(self,obs_list,ibatch):
+    def build_obs_table(self,obs_list,ibatch,irun):
         obs_table ={}
         #Note: we could straightforwardly generate elements of obs_table in correct format at the stage of observables calculations, but this way we do now is more transparent and general, although a bit more involving.
         energy_grid = obs_list[0][2]['energy_grid']
@@ -73,11 +88,11 @@ class analysis:
                 #print(key, ":", value)
                 if key == "bcoeffs":
                     for ienergy,energy in enumerate(list(energy_grid)):
-                        obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,energy,[value[ienergy,:]]])
+                        obs_table[key].append([ibatch,irun,self.helicity,t,energy,[value[ienergy,:]]])
                 elif key == "W2Dav":
-                        obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,value])
+                        obs_table[key].append([ibatch,irun,self.helicity,t,value])
                 elif key == "PESav":
-                        obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,value])
+                        obs_table[key].append([ibatch,irun,self.helicity,t,value])
                
         return obs_table
 
@@ -2921,11 +2936,10 @@ if __name__ == "__main__":
 
     helicity = params['helicity'] 
 
-    obs_table = {'bcoeffs': [],
-                 'W2Dav':   [],
-                 'PESav':   [],
-                 'W2D':     [],
-                 'PES':     []}
+    global_obs_dict = {
+                        'W2Dav':   [],
+                        'W2D':     []} #dictionary of all calculated observables
+
 
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
@@ -2961,7 +2975,7 @@ if __name__ == "__main__":
                 print("Calling momentum function: " + str(elem['name']))
                 obs_list,ft_polargrid = func(elem)
                 
-                obs_table[elem['name']].append(analysis_obj.build_obs_table(obs_list,ibatch))
+                global_obs_dict[elem['name']].append(analysis_obj.build_obs_table(obs_list,ibatch,irun))
 
-    analysis_obj.save_obs_table(obs_table)
+    analysis_obj.save_obs_table(global_obs_dict,ibatch)
                 
