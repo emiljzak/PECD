@@ -117,7 +117,7 @@ def read_input():
     W2Dav = {   'name':         'W2Dav',
                 'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen
-                'save':         True, # save array in file
+                'save':         False, # save array in file
                                 # Momentum grid parameters only for plotting purposes.
                 'k_grid':       {   'type':'automatic', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     'kmin': 0.0,    #ignored when automatic
@@ -126,7 +126,7 @@ def read_input():
 
                 'th_grid':      {   'thmin': 0.0,
                                     'thmax': 2.0*np.pi,
-                                    'FT_npts_th': 360
+                                    'FT_npts_th': 180
                                 },
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
@@ -161,7 +161,7 @@ def read_input():
                 'plot':     (True, graphics.gparams_barray2D()),
                 'show':     True,
                 'k_grid':     {    
-                                    'npts': 400,
+                                    'npts': 200,
                                     'kmin': 0.0,    #ignored when automatic
                                     'kmax': 2.2     #ignored when automatic               
                                 },
@@ -171,16 +171,15 @@ def read_input():
     params['analyze_space']     = []
     params['analyze_momentum']  = [W2Dav]
     
-    params['PECD']      = PECD
     params['W2Dav']     = W2Dav
     params['W2D']       = W2D
     params['rho2D']     = rho2D
-    params['bcoeffs']   = bcoeffs
+
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            400,    # number of radial points over which the Hankel Transform is evaluated.
-                                    'rcutoff':              0.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
+                                    'FT_npts_k':            200,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'rcutoff':              10.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
                                                      

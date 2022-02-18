@@ -42,6 +42,26 @@ class analysis:
         self.helicity = params['helicity']
 
 
+    def build_obs_table(self,obs_list,ibatch):
+        obs_table ={}
+        for elem in obs_list:
+            print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
+            for key, value in elem[2].items():
+                print(key, ":", value)
+            
+          
+            
+            #obs_table[str(elem[2])] = [ibatch,self.params['irun'],self.helicity]
+            
+
+        #print(obs_table)
+        exit()
+
+    
+
+                        #obs_table.append([ibatch,irun,alpha,beta,gamma,t,helicity,energy,bcoeffs])
+        return obs_table
+
     def momentum_au_to_energy_ev(self,array):
         """Converts momentum given in atomic units to energy in eV
         
@@ -366,8 +386,8 @@ class analysis:
             Returns: tuple
                 bcoef : numpy.ndarray, dtype = float, shape = (len(energy_grid),Legmax+1)
                     Array of the legendre expansion coefficients calculated at energies specified by the used in   params['legendre_params']['energy_grid']
-                momentum_grid: numpy.ndarray
-                    momentum grid on which the b-coeffs are calculated
+                energy_grid: numpy.ndarray
+                    energy grid on which the b-coeffs are calculated
 
             An example plot of the legendre expansion coefficients (Legmax=20) vs. electron's momentum (in a.u.) is plotted below (in log-scale):
 
@@ -528,7 +548,7 @@ class analysis:
                 plt.colorbar(line_legendre, ax=ax, aspect=30) 
                 plt.show()
 
-        return bcoeff, momentum_grid
+        return bcoeff, energy_grid
 
 
 
@@ -1718,7 +1738,7 @@ class momentumfuncs(analysis):
                                     Flm_t,
                                     ft_polargrid)
         
-            obs_dict['Wav'] = Wav
+            obs_dict['W2Dav'] = Wav
 
             if funcpars['plot'][0] == True:
                 self.W2Dav_plot(funcpars,ft_polargrid,Wav,irun)
@@ -1729,13 +1749,13 @@ class momentumfuncs(analysis):
 
             if funcpars['legendre'] == True:
                 # perform legendre expansion of W2Dav
-                bcoeff, momentum_grid       = self.legendre_expansion(funcpars,ft_polargrid,{'av':Wav})
-                obs_dict['bcoeff']          = bcoeff
-                obs_dict['momentum_grid']   = momentum_grid
+                bcoeff, energy_grid       = self.legendre_expansion(funcpars,ft_polargrid,{'av':Wav})
+                obs_dict['bcoeffs']          = bcoeff
+                obs_dict['energy_grid']   = energy_grid
 
             if funcpars['PES']  == True:
                 PES_av              = self.PESav(funcpars,ft_polargrid,Wav,irun)
-                obs_dict['PES_av']  = PES_av
+                obs_dict['PESav']  = PES_av
 
             obs_list.append([i,t,obs_dict])
 
@@ -2881,7 +2901,13 @@ if __name__ == "__main__":
     print("====================================="+"\n")
 
     helicity = params['helicity'] 
-    obs_table = []
+
+    obs_table = {'bcoeffs': [],
+                 'W2Dav':   [],
+                 'PESav':   [],
+                 'W2D':     [],
+                 'PES':     []}
+
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
         print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )
@@ -2914,12 +2940,7 @@ if __name__ == "__main__":
             for elem in params['analyze_momentum']:
                 func = getattr(momentumobs,elem['name'])
                 print("Calling momentum function: " + str(elem['name']))
-                if elem['name'] == "W2Dav":
-                    obs_list,_ = func(elem)
-                    
-                    for ielem in obs_list:
-                        print(ielem)
-                        #t = ielem[1]
-                        #bcoeffs = ielem[2]
-                        #energy = ielem[3]
-                        #obs_table.append([ibatch,irun,alpha,beta,gamma,t,helicity,energy,bcoeffs])
+                obs_list,ft_polargrid = func(elem)
+                
+                analysis_obj.build_obs_table(obs_list,ibatch)
+                
