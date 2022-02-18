@@ -41,10 +41,25 @@ class analysis:
         self.params = params
         self.helicity = params['helicity']
 
+    def save_obs_table(self,obs_table,ibatch):
+
+        #print(obs_table)
+        #exit()
+        bcoeffs_file = "bcoeffs_table_"+str(ibatch)+".dat"
+
+        with open(  self.params['job_directory'] + bcoeffs_file , 'w') as bcoeffsfile:
+                            
+            for ielem,elem in enumerate(obs_table['bcoeffs']['bcoeffs']):
+                
+                bcoeffsfile.write(  " ".join(str('{:8d}'.format(elem[i])) for i in range(5)) +\
+                " ".join('{:12.8f}'.format(elem[n]) for n in range(self.params['legendre_params']['Leg_lmax']))+"\n") 
+
+           
+
 
     def build_obs_table(self,obs_list,ibatch):
         obs_table ={}
-
+        #Note: we could straightforwardly generate elements of obs_table in correct format at the stage of observables calculations, but this way we do now is more transparent and general, although a bit more involving.
         energy_grid = obs_list[0][2]['energy_grid']
        
         #initialize lists associated with existing observables
@@ -55,7 +70,7 @@ class analysis:
             print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
             t = elem[1]
             for key, value in elem[2].items():
-                print(key, ":", value)
+                #print(key, ":", value)
                 if key == "bcoeffs":
                     for ienergy,energy in enumerate(list(energy_grid)):
                         obs_table[key].append([ibatch,self.params['irun'],self.helicity,t,energy,[value[ienergy,:]]])
@@ -2946,5 +2961,7 @@ if __name__ == "__main__":
                 print("Calling momentum function: " + str(elem['name']))
                 obs_list,ft_polargrid = func(elem)
                 
-                analysis_obj.build_obs_table(obs_list,ibatch)
+                obs_table[elem['name']].append(analysis_obj.build_obs_table(obs_list,ibatch))
+
+    analysis_obj.save_obs_table(obs_table)
                 
