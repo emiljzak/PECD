@@ -15,17 +15,18 @@ class Avobs:
         self.helicity = params['helicity']
 
     def read_obs(self):
-
+        print("wewewewe")
         GridObjEuler = wavefunction.GridEuler(  self.params['N_euler'],
                                                 self.params['N_batches'],
                                                 self.params['orient_grid_type'])
     
         grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
         global_obs_table = []
+        print(self.params['N_batches'])
 
         for ibatch in range(0,self.params['N_batches']):
-            os.chdir()
-            obs_table = self.read_table()
+            #os.chdir(self.params['job_directory'])
+            obs_table = self.read_table(ibatch)
             global_obs_table.append(obs_table)
         
         print(global_obs_table)
@@ -35,21 +36,22 @@ class Avobs:
     def read_table(self,ibatch):
       
         bcoeffs_file = "bcoeffs_table_"+str(ibatch)+".dat"
-        self.params['job_directory'] + bcoeffs_file
+
         table = []
-        with open(bcoeffs_file, 'r', ) as f:
+        print(        self.params['job_directory'] + bcoeffs_file)
+        with open(self.params['job_directory'] + bcoeffs_file, 'r', ) as f:
             for line in f:
                 words   = line.split()
-                irun = words[1]
+                irun = int(words[1])
                 alpha = float(words[2])
                 beta = float(words[3])
                 gamma = float(words[4])
-                t = float(words[5])
-                sigma = str(words[6])
+                sigma = str(words[5])
+                t = float(words[6])
                 energy = float(words[7])
                 barray = []
                 for n in range(self.params['legendre_params']['Leg_lmax']):
-                    barray.append(float(words[7+n]))
+                    barray.append(float(words[8+n]))
                 
                 table.append([irun,alpha,beta,gamma,t,sigma,energy,np.asarray(barray,dtype=float)])
 
@@ -272,15 +274,15 @@ class Avobs:
                             }
 
             
-            """" ===== generate function on the grid ====="""
+        """" ===== generate function on the grid ====="""
 
-            x2d,y2d = gen_meshgrid_2D(xrange,yrange,nptsx,nptsy)
-            v2d     = eval_func_meshgrid_2D(x2d,y2d,func)
+        x2d,y2d = gen_meshgrid_2D(xrange,yrange,nptsx,nptsy)
+        v2d     = eval_func_meshgrid_2D(x2d,y2d,func)
 
 
-            """" ===== Plot and save ====="""
-            plot_cont2D_analytic(x2d,y2d,v2d,cont2D_params)
-            
+        """" ===== Plot and save ====="""
+        plot_cont2D_analytic(x2d,y2d,v2d,cont2D_params)
+        
 
 
 
@@ -397,7 +399,8 @@ class Avobs:
         print(np.shape(rho))
         #print(rho.shape)
         #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
-        """
+    """
+
 if __name__ == "__main__":   
 
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -405,10 +408,11 @@ if __name__ == "__main__":
     print(" ")
     print("---------------------- START CONSOLIDATE --------------------")
     print(" ")
-    
+    print(sys.argv)
     os.chdir(sys.argv[1])
     path = os.getcwd()
-
+    print("wewegdsgdsgfsd")
+    print(path)
     # read input_propagate
     with open('input_prop', 'r') as input_file:
         params_prop = json.load(input_file)
@@ -416,6 +420,8 @@ if __name__ == "__main__":
     #read input_analyze
     with open('input_analyze', 'r') as input_file:
         params_analyze = json.load(input_file)
+    with open('input_consolidate', 'r') as input_file:
+        params_consolidate = json.load(input_file)
 
     #check compatibility
     #check_compatibility(params_prop,params_analyze)
@@ -424,6 +430,6 @@ if __name__ == "__main__":
     params = {}
     params.update(params_prop)
     params.update(params_analyze)
-
+    params.update(params_consolidate)
     Obs = Avobs(params)
     Obs.read_obs()

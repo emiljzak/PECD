@@ -292,6 +292,11 @@ def run_array_job(params_list):
         elif iparams['mode'] == 'analyze':
             print("mode = analyze")
             save_input_file(iparams,"analyze")
+        
+        elif iparams['mode'] == 'consolidate':
+            print("mode = consolidate")
+            save_input_file(iparams,"consolidate")
+        
         else:
             raise ValueError("incorrect mode")
 
@@ -344,7 +349,7 @@ def run_array_job(params_list):
             print ("Job directory is %s" % iparams['job_directory'])
             print("Number of batches = " + str(iparams['N_batches']))
 
-            if iparams['mode'] == "propagate" or "analyze":
+            if iparams['mode'] == "propagate" or iparams['mode'] =="analyze":
 
                 for ibatch in range(0,iparams['N_batches']):
                     if iparams['mode'] == "propagate":
@@ -359,7 +364,7 @@ def run_array_job(params_list):
             
             elif iparams['mode'] == "consolidate":
                 print("proceeding with consolidate")
-                pecd_process = "python3 consolidate.py "+str(iparams['job_directory'])
+                pecd_process = "python3 consolidate.py " + str(iparams['job_directory'])
                 iflag = subprocess.call(pecd_process, shell=True) 
 
             print("Termination flags for euler grid array job: [ibatch,flag]")
