@@ -89,65 +89,20 @@ class Avobs:
 
         ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
 
+        print(self.grid_euler.shape)
+        #exit()
 
+        print(self.grid_euler[:,1])
+        print(self.grid_euler[:,2])
+        print(barray)
+        exit()
         plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,
                                     100, 
                                     cmap = 'jet')
-        
-        ax1.set_title(  label               = "",
-                        fontsize            = cont2D_params['title_size'],
-                        color               = cont2D_params['title_color'],
-                        verticalalignment   = cont2D_params['title_vertical'],
-                        horizontalalignment = cont2D_params['title_horizontal'],
-                        #position            = cont2D_params[ "title_position"],
-                        pad                 = cont2D_params['title_pad'],
-                        backgroundcolor     = cont2D_params['title_background'],
-                        fontname            = cont2D_params['title_fontname'],
-                        fontstyle           = cont2D_params['title_fontstyle'])
+       
 
-        ax1.set_xlabel( xlabel              = cont2D_params['xlabel'],
-                        fontsize            = cont2D_params['xlabel_size'],
-                        color               = cont2D_params['label_color'],
-                        loc                 = cont2D_params['xlabel_loc'],
-                        labelpad            = cont2D_params['xlabel_pad'] )
-
-        ax1.set_ylabel(cont2D_params['ylabel'])
-
-    
-        ax1.set_xticks(cont2D_params['xticks']) #positions of x-ticks
-        ax1.set_yticks(cont2D_params['yticks']) #positions of y-ticks
-
-        ax1.set_xticklabels(cont2D_params['xticks']) #x-ticks labels
-        ax1.set_yticklabels(cont2D_params['yticks']) #y-ticks labels
-
-        ax1.xaxis.set_major_formatter(FormatStrFormatter('%.1f')) #set tick label formatter 
-        ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-
-        fig.colorbar(   mappable =  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
-                        ax                  = ax1, 
-                        orientation         = cont2D_params['cbar_orientation'],
-                        label               = r'$b_{0}^{{CPR}}$'.format(ibcoeff)+"(%)",
-                        fraction            = cont2D_params['cbar_fraction'],
-                        aspect              = cont2D_params['cbar_aspect'],
-                        shrink              = cont2D_params['cbar_shrink'],
-                        pad                 = cont2D_params['cbar_pad'],
-                        extend              = cont2D_params['cbar_extend'],
-                        ticks               = cont2D_params['cbar_ticks'],
-                        drawedges           = cont2D_params['cbar_drawedges'],
-                        format              = cont2D_params['cbar_format'])
-        
-        if cont2D_params['save'] == True:
-            fig.savefig(    fname       = "b"+str(ibcoeff) + "_" +  cont2D_params['save_name'],
-                            dpi         = cont2D_params['save_dpi'],
-                            orientation = cont2D_params['save_orientation'],
-                            bbox_inches = cont2D_params['save_bbox_inches'],
-                            pad_inches  = cont2D_params['save_pad_inches']
-                            )
-
-        #ax1.legend() #show legends
-        if funcpars['show'] == True:
-            plt.show()
-            plt.close()
+        plt.show()
+        plt.close()
 
 
 
