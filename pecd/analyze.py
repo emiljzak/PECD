@@ -69,17 +69,25 @@ class analysis:
                     bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
 
         
-        bfileh5 =  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w')
+        with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
 
-        wfn = bfileh5.create_dataset( name        = "metadata", 
-                                            data        = np.zeros(1),
-                                            dtype       = int)
+            G_grids = bfileh5.create_group("grids")
+            G_bcoeffs = bfileh5.create_group("bcoeffs")
 
-        wfn.attrs['t0']         = self.params['t0']
-        wfn.attrs['tmax']       = self.params['tmax']
-        wfn.attrs['dt']         = self.params['dt']
-        wfn.attrs['saverate']   = self.params['wfn_saverate']
-        wfn.attrs['units']      = self.params['time_units']
+            obs_times = G_grids.create_dataset( name        = "times", 
+                                                data        = np.array(self.params['momentum_analyze_times']),
+                                                dtype       = float)
+
+            obs_times.attrs['t0']         = self.params['t0']
+            obs_times.attrs['tmax']       = self.params['tmax']
+            obs_times.attrs['dt']         = self.params['dt']
+            obs_times.attrs['saverate']   = self.params['wfn_saverate']
+            obs_times.attrs['units']      = self.params['time_units']
+
+            obs_enrs = G_grids.create_dataset(  name        = "enrs", 
+                                                data        = np.array(self.params['legendre_params']['energy_grid']),
+                                                dtype       = float)
+
 
         for ielem,elem in enumerate(bcoeffs):
             for i in range(len(obs_list)):

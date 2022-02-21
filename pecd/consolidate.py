@@ -29,8 +29,8 @@ class Avobs:
             obs_table = self.read_table(ibatch)
             global_obs_table.append(obs_table)
         
-        print(global_obs_table)
-        exit()
+        #print(global_obs_table)
+        #exit()
         return global_obs_table
 
     def read_table(self,ibatch):
@@ -432,4 +432,9 @@ if __name__ == "__main__":
     params.update(params_analyze)
     params.update(params_consolidate)
     Obs = Avobs(params)
-    Obs.read_obs()
+    global_obs_table = Obs.read_obs()
+
+            
+    for ielem,elem in enumerate(bcoeffs):
+        for i in range(len(obs_list)):
+            bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
