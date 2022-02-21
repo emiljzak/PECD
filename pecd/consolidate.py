@@ -24,7 +24,7 @@ class Avobs:
 
     def read_obs(self):
         barray = []
-        for ibatch in range(0,self.params['N_batches']+1):
+        for ibatch in range(0,self.params['N_batches']):
             bb = self.read_h5(ibatch)
             #print(bb)
             barray.append(bb)
@@ -96,8 +96,8 @@ class Avobs:
         print(self.grid_euler[:,2])
         print(barray)
         #exit()
-        ax1.plot(self.grid_euler[:,1],barray)
-        #plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,100,cmap = 'jet')
+        #ax1.plot(self.grid_euler[:,1],barray)
+        plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,100,cmap = 'jet')
        
 
         plt.show()

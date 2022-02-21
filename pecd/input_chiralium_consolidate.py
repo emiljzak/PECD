@@ -11,22 +11,20 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_bcoeffs" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_bcoeffs_plot" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
-    params['bound_nbins']       = 10
-    params['prop_nbins']        = 12
+    params['bound_nbins']       = 17
+    params['prop_nbins']        = 50
 
-    params['tmax']              = 40.0 
+    params['tmax']              = 1000.0 
 
-    params['N_euler'] 	        = 3   
-    params['N_batches'] 	    = 1    
-    params['orient_grid_type']  = "1D"  
-    
-    params['helicity']          = "L"
+    params['N_euler'] 	        = 4   
+    params['N_batches'] 	    = 2    
+    params['orient_grid_type']  = "2D"  
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
     params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 4 ))
@@ -35,8 +33,8 @@ def read_input():
 
 
     params['index_energy'] = [0]
-    params['index_time'] = [0]
-    params['index_bcoeff'] = [0]
+    params['index_time'] = [1]
+    params['index_bcoeff'] = [2]
 
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),
