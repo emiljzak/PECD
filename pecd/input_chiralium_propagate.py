@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_bcoeffs" 
+    params['job_label']    = "test_bcoeffs_plot" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -23,25 +23,25 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 10
+    params['bound_nbins']       = 17
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 12
+    params['prop_nbins']        = 50
 
 
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 40.0 
+    params['tmax']          = 1000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
     params['N_euler'] 	        = 4   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 2    # number of batches for orientation averaging
-    params['orient_grid_type']  = "1D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
     """
@@ -96,7 +96,7 @@ def read_input():
 
     """ gaussian pulse """
     params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
-    params['gauss_t0']      = 3000.0 #as: pulse centre
+    params['gauss_t0']      = 1000.0 #as: pulse centre
 
     """ sin2 pulse """
     params['sin2_ncycles']  = 10

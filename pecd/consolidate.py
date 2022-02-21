@@ -83,7 +83,7 @@ class Avobs:
 
     def plot_bcoeffs_2D(self,barray):
 
-        fig = plt.figure(figsize=(200,200), dpi=200,
+        fig = plt.figure(figsize=(100,100), dpi=200,
                         constrained_layout=True)
         grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
@@ -95,10 +95,9 @@ class Avobs:
         print(self.grid_euler[:,1])
         print(self.grid_euler[:,2])
         print(barray)
-        exit()
-        plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,
-                                    100, 
-                                    cmap = 'jet')
+        #exit()
+        ax1.plot(self.grid_euler[:,1],barray)
+        #plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,100,cmap = 'jet')
        
 
         plt.show()
