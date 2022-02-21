@@ -35,8 +35,8 @@ def read_input():
 
 
     params['index_energy'] = [0]
-    params['index_time'] = [3]
-    params['index_bcoeff'] = [2]
+    params['index_time'] = [0]
+    params['index_bcoeff'] = [0]
 
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),
