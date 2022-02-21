@@ -88,19 +88,9 @@ class analysis:
                                                 data        = np.array(self.params['legendre_params']['energy_grid']),
                                                 dtype       = float)
 
-
-            Ntimes = np.array(self.params['momentum_analyze_times']).shape[0]
-            print("Ntimes = " + str(Ntimes))
-
-            Nenrs = np.array( np.array(self.params['legendre_params']['energy_grid'])).shape[0]
-            print("Nenrs = " + str(Nenrs))
-
-
-            bcoeffs_arr = np.zeros(())
-
-            obs_bcoeffs = G_bcoeffs.create_dataset(  name    = "bcoeffs", 
-                                                data        = bcoeffs_arr,
-                                                dtype       = float)
+        obs_bcoeffs = G_bcoeffs.create_dataset(  name    = "bcoeffs", 
+                                            data        = bcoeffs_arr,
+                                            dtype       = float)
 
         for ielem,elem in enumerate(bcoeffs):
             for i in range(len(obs_list)):
@@ -108,6 +98,93 @@ class analysis:
 
         exit()
  
+
+  def save_obs_table(self,obs_dict_global,ibatch):
+        bcoeffs =[]
+        #print(obs_table)
+        #exit()
+        bcoeffs_file = "bcoeffs_table_"+str(ibatch)
+        
+        for elem in self.params['analyze_momentum']:
+        
+            for i in range(len(obs_dict_global[elem['name']])): #loop over irun
+
+                bcoeffs.append(obs_dict_global[elem['name']][i]['bcoeffs'])
+
+        #bcoeffs is list of lists
+     
+        #for ielem,elem in enumerate(bcoeffs):
+
+        #    for i in range(len(obs_list)):
+                #print(elem[i][5])
+                #print(type(elem[i][5]))
+        #        print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
+
+        with open(  self.params['job_directory'] + bcoeffs_file+".dat" , 'w') as bfile:
+        
+            for ielem,elem in enumerate(bcoeffs):
+                for i in range(len(obs_list)):
+                    bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
+
+        
+        with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
+
+            G_grids = bfileh5.create_group("grids")
+            G_bcoeffs = bfileh5.create_group("bcoeffs")
+
+            obs_times = G_grids.create_dataset( name        = "times", 
+                                                data        = np.array(self.params['momentum_analyze_times']),
+                                                dtype       = float)
+
+            obs_times.attrs['t0']         = self.params['t0']
+            obs_times.attrs['tmax']       = self.params['tmax']
+            obs_times.attrs['dt']         = self.params['dt']
+            obs_times.attrs['saverate']   = self.params['wfn_saverate']
+            obs_times.attrs['units']      = self.params['time_units']
+
+            obs_enrs = G_grids.create_dataset(  name        = "enrs", 
+                                                data        = np.array(self.params['legendre_params']['energy_grid']),
+                                                dtype       = float)
+
+        obs_bcoeffs = G_bcoeffs.create_dataset(  name    = "bcoeffs", 
+                                            data        = bcoeffs_arr,
+                                            dtype       = float)
+
+        for ielem,elem in enumerate(bcoeffs):
+            for i in range(len(obs_list)):
+                print(elem[i][8][0])
+
+        exit()
+ 
+
+
+    def build_bcoeffs_array(self,obs_list):
+      
+        Ntimes = np.array(self.params['momentum_analyze_times']).shape[0]
+        print("Ntimes = " + str(Ntimes))
+
+        Nenrs = np.array( np.array(self.params['legendre_params']['energy_grid'])).shape[0]
+        print("Nenrs = " + str(Nenrs))
+
+        NLegmax = self.params['legendre_params']['Leg_lmax']+1
+        print("NLegmax = " + str(NLegmax))
+
+        bcoeffs_arr = np.zeros((Ntimes,Nenrs,NLegmax),dtype=float)
+
+        for elem in obs_list:
+            print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
+            itime = elem[0]
+            for key, value in elem[2].items():
+                #print(key, ":", value)
+                if key == "bcoeffs":
+     
+                    for ienr in range(value.shape[0]):
+                        for n in range(value.shape[1]):
+                            bcoeffs_arr[itime,ienr,n] = value[ienr,n]
+
+
+        return bcoeffs_arr
+
 
 
     def build_obs_table(self,obs_list,ibatch,irun,alpha,beta,gamma):
@@ -2820,6 +2897,7 @@ if __name__ == "__main__":
                         'W2D':     []} #dictionary of all calculated observables
 
 
+    bcoeffs_list = []
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
         print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )
@@ -2834,6 +2912,9 @@ if __name__ == "__main__":
         params['irun']  = irun 
         
         analysis_obj    = analysis(params)
+
+
+
         if  params['analyze_space']:
             spaceobs        = spacefuncs(params)
             for elem in params['analyze_space']:
@@ -2854,7 +2935,7 @@ if __name__ == "__main__":
                 print("Calling momentum function: " + str(elem['name']))
                 obs_list,ft_polargrid = func(elem)
                 
-                global_obs_dict[elem['name']].append(analysis_obj.build_obs_table(obs_list,ibatch,irun,alpha,beta,gamma))
+                bcoeffs_list.append([irun,analysis_obj.build_bcoeffs_array(obs_list,irun)])
 
-    analysis_obj.save_obs_table(global_obs_dict,ibatch)
-                
+    #analysis_obj.save_obs_table(bcoeffs_list,ibatch)
+    analysis_obj.save_bcoeffs_list(bcoeffs_list,ibatch)          
