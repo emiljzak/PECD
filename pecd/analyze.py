@@ -89,13 +89,24 @@ class analysis:
                                                 dtype       = float)
 
 
+            Ntimes = np.array(self.params['momentum_analyze_times']).shape[0]
+            print("Ntimes = " + str(Ntimes))
+
+            Nenrs = np.array( np.array(self.params['legendre_params']['energy_grid'])).shape[0]
+            print("Nenrs = " + str(Nenrs))
+
+
+            bcoeffs_arr = np.zeros(())
+
+            obs_bcoeffs = G_bcoeffs.create_dataset(  name    = "bcoeffs", 
+                                                data        = bcoeffs_arr,
+                                                dtype       = float)
+
         for ielem,elem in enumerate(bcoeffs):
             for i in range(len(obs_list)):
-                bfileh5.create_dataset(   name        = "bcoeffs", 
-                                        data        = elem[i][8][0],
-                                        dtype       = float,
-                                    )
+                print(elem[i][8][0])
 
+        exit()
  
 
 
