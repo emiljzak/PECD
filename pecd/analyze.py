@@ -99,40 +99,44 @@ class analysis:
         exit()
  
 
-  def save_obs_table(self,obs_dict_global,ibatch):
-        bcoeffs =[]
-        #print(obs_table)
-        #exit()
-        bcoeffs_file = "bcoeffs_table_"+str(ibatch)
-        
-        for elem in self.params['analyze_momentum']:
-        
-            for i in range(len(obs_dict_global[elem['name']])): #loop over irun
-
-                bcoeffs.append(obs_dict_global[elem['name']][i]['bcoeffs'])
-
-        #bcoeffs is list of lists
+    def save_bcoeffs_list(self,bcoeffs_list,ibatch,N_per_batch):
+    
+        bcoeffs_file = "bcoeffs_batch_"+str(ibatch)
      
-        #for ielem,elem in enumerate(bcoeffs):
+        irun_indices = []
+        for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+            irun_indices.append(irun)
 
-        #    for i in range(len(obs_list)):
-                #print(elem[i][5])
-                #print(type(elem[i][5]))
-        #        print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
+        irun_indices = np.asarray(irun_indices,dtype=int)
 
-        with open(  self.params['job_directory'] + bcoeffs_file+".dat" , 'w') as bfile:
-        
-            for ielem,elem in enumerate(bcoeffs):
-                for i in range(len(obs_list)):
-                    bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
+        bcoeffs_arr = np.asarray(bcoeffs_list)
 
-        
+        print("shape of bcoeffs_arr" + str(bcoeffs_arr.shape))
+        print(bcoeffs_arr)
+        exit()
+
         with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
 
-            G_grids = bfileh5.create_group("grids")
-            G_bcoeffs = bfileh5.create_group("bcoeffs")
+            G_bcoefs     = bfileh5.create_group("bcoefs")
 
-            obs_times = G_grids.create_dataset( name        = "times", 
+            irun_grid = G_bcoefs.create_dataset(  name    = "irun_indices", 
+                                            data        = irun_indices,
+                                            dtype       = int)
+
+
+            bcoefs = G_bcoefs.create_dataset(  name    = "bcoefs", 
+                                            data        = ,
+                                            dtype       = int)
+
+
+    
+    def save_grids(self):
+        
+        with  h5py.File( self.params['job_directory'] + grids+".h5", mode = 'w') as hdf5: 
+
+            G_grids     = hdf5.create_group("grids")
+
+            obs_times   = G_grids.create_dataset( name      = "times", 
                                                 data        = np.array(self.params['momentum_analyze_times']),
                                                 dtype       = float)
 
@@ -145,17 +149,6 @@ class analysis:
             obs_enrs = G_grids.create_dataset(  name        = "enrs", 
                                                 data        = np.array(self.params['legendre_params']['energy_grid']),
                                                 dtype       = float)
-
-        obs_bcoeffs = G_bcoeffs.create_dataset(  name    = "bcoeffs", 
-                                            data        = bcoeffs_arr,
-                                            dtype       = float)
-
-        for ielem,elem in enumerate(bcoeffs):
-            for i in range(len(obs_list)):
-                print(elem[i][8][0])
-
-        exit()
- 
 
 
     def build_bcoeffs_array(self,obs_list):
