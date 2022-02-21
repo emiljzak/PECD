@@ -7,31 +7,48 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 
+import h5py
+
 import wavefunction
 
 class Avobs:
     def __init__(self,params):
         self.params = params
         self.helicity = params['helicity']
-
-    def read_obs(self):
-
         GridObjEuler = wavefunction.GridEuler(  self.params['N_euler'],
                                                 self.params['N_batches'],
                                                 self.params['orient_grid_type'])
     
-        grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
-        global_obs_table = []
+        self.grid_euler, self.N_Euler, self.N_per_batch  = GridObjEuler.read_euler_grid()
 
+
+    def read_obs(self):
 
         for ibatch in range(0,self.params['N_batches']):
-            #os.chdir(self.params['job_directory'])
-            obs_table = self.read_table(ibatch)
-            global_obs_table.append(obs_table)
-        
-        #print(global_obs_table)
-        #exit()
+
+            barray = self.read_h5(ibatch)
+            print(barray.shape)
+            barray = np.vstack((barray,),dtype=float)
+
         return global_obs_table
+
+
+    def read_h5(self,ibatch):
+
+
+        index_energy = self.params['index_energy'][0]
+        index_time = self.params['index_time'][0]
+        index_bcoeff = self.params['index_bcoeff'][0]
+
+        with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
+            G = h5.get('bcoefs_group')
+            bcoefs_arr = np.array(G.get('bcoefs'))
+            print(bcoefs_arr.shape)
+            barray = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
+            #print(list(G.items()))
+        
+        return barray
+
 
     def read_table(self,ibatch):
       
@@ -411,30 +428,24 @@ if __name__ == "__main__":
     print(sys.argv)
     os.chdir(sys.argv[1])
     path = os.getcwd()
-    print("wewegdsgdsgfsd")
     print(path)
     # read input_propagate
     with open('input_prop', 'r') as input_file:
         params_prop = json.load(input_file)
-
     #read input_analyze
     with open('input_analyze', 'r') as input_file:
         params_analyze = json.load(input_file)
     with open('input_consolidate', 'r') as input_file:
         params_consolidate = json.load(input_file)
 
-    #check compatibility
-    #check_compatibility(params_prop,params_analyze)
-
     #combine inputs
     params = {}
     params.update(params_prop)
     params.update(params_analyze)
     params.update(params_consolidate)
+
     Obs = Avobs(params)
     global_obs_table = Obs.read_obs()
 
-            
-    for ielem,elem in enumerate(bcoeffs):
-        for i in range(len(obs_list)):
-            bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
+
+    #Obs.plot_bcoeffs_2D()

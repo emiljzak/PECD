@@ -11,7 +11,7 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_analyze" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_bcoeffs" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
@@ -32,6 +32,11 @@ def read_input():
     params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 4 ))
    
     params['consolidate'] = {'bcoeffs': True}
+
+
+    params['index_energy'] = [0]
+    params['index_time'] = [3]
+    params['index_bcoeff'] = [2]
 
     rho1D_ini_rad =  {  'name':         'rho1D_ini_rad',
                         'plot':         (True, graphics.gparams_rho1D_ini_rad()),

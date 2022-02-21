@@ -99,25 +99,33 @@ class analysis:
         exit()
  
 
-    def save_bcoeffs_list(self,bcoeffs_list,ibatch,N_per_batch):
+
+
+    def save_bcoeffs_list(self,bcoeffs_list,ibatch):
     
         bcoeffs_file = "bcoeffs_batch_"+str(ibatch)
      
         irun_indices = []
-        for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
-            irun_indices.append(irun)
+        temp_b_arr = []
+        for elem in bcoeffs_list:
+            irun_indices.append(elem[0])
+            temp_b_arr.append(elem[1])
+            #print(np.shape(elem[1]))
+            #print(type(elem[1]))
+            #print(elem[1])
 
+        #exit()
         irun_indices = np.asarray(irun_indices,dtype=int)
 
-        bcoeffs_arr = np.asarray(bcoeffs_list)
+        bcoeffs_arr = np.asarray(temp_b_arr,dtype=float)
 
+    
         print("shape of bcoeffs_arr" + str(bcoeffs_arr.shape))
         print(bcoeffs_arr)
-        exit()
-
+        
         with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
 
-            G_bcoefs     = bfileh5.create_group("bcoefs")
+            G_bcoefs     = bfileh5.create_group("bcoefs_group")
 
             irun_grid = G_bcoefs.create_dataset(  name    = "irun_indices", 
                                             data        = irun_indices,
@@ -125,30 +133,9 @@ class analysis:
 
 
             bcoefs = G_bcoefs.create_dataset(  name    = "bcoefs", 
-                                            data        = ,
-                                            dtype       = int)
+                                            data        = bcoeffs_arr,
+                                            dtype       = float)
 
-
-    
-    def save_grids(self):
-        
-        with  h5py.File( self.params['job_directory'] + grids+".h5", mode = 'w') as hdf5: 
-
-            G_grids     = hdf5.create_group("grids")
-
-            obs_times   = G_grids.create_dataset( name      = "times", 
-                                                data        = np.array(self.params['momentum_analyze_times']),
-                                                dtype       = float)
-
-            obs_times.attrs['t0']         = self.params['t0']
-            obs_times.attrs['tmax']       = self.params['tmax']
-            obs_times.attrs['dt']         = self.params['dt']
-            obs_times.attrs['saverate']   = self.params['wfn_saverate']
-            obs_times.attrs['units']      = self.params['time_units']
-
-            obs_enrs = G_grids.create_dataset(  name        = "enrs", 
-                                                data        = np.array(self.params['legendre_params']['energy_grid']),
-                                                dtype       = float)
 
 
     def build_bcoeffs_array(self,obs_list):
@@ -2773,6 +2760,29 @@ def check_compatibility(params_prop,params_analyze):
 
     return 0
 
+
+
+    
+def save_grids(params):
+    
+    with  h5py.File( params['job_directory'] + "grids.h5", mode = 'w') as hdf5: 
+
+        G_grids     = hdf5.create_group("grids")
+
+        obs_times   = G_grids.create_dataset( name      = "times", 
+                                            data        = np.array(params['momentum_analyze_times']),
+                                            dtype       = float)
+
+        obs_times.attrs['t0']         = params['t0']
+        obs_times.attrs['tmax']       = params['tmax']
+        obs_times.attrs['dt']         = params['dt']
+        obs_times.attrs['saverate']   = params['wfn_saverate']
+        obs_times.attrs['units']      = params['time_units']
+
+        obs_enrs = G_grids.create_dataset(  name        = "enrs", 
+                                            data        = np.array(params['legendre_params']['energy_grid']),
+                                            dtype       = float)
+
 if __name__ == "__main__":   
 
     start_time_total = time.time()
@@ -2803,12 +2813,12 @@ if __name__ == "__main__":
     params.update(params_prop)
     params.update(params_analyze)
 
-    print(" ")
-    print("---------------------- INPUT ECHO --------------------")
-    print(" ")
+    #print(" ")
+    #print("---------------------- INPUT ECHO --------------------")
+    #print(" ")
 
-    for key, value in params.items():
-        print(key, ":", value)
+    #for key, value in params.items():
+    #    print(key, ":", value)
 
     time_to_au = constants.time_to_au[ params['time_units'] ]
  
@@ -2892,6 +2902,9 @@ if __name__ == "__main__":
 
     bcoeffs_list = []
 
+
+    if ibatch == 0: save_grids(params)
+
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
         print("processing grid point: " + str(irun) + " " + str(grid_euler[irun]) )
 
@@ -2928,7 +2941,7 @@ if __name__ == "__main__":
                 print("Calling momentum function: " + str(elem['name']))
                 obs_list,ft_polargrid = func(elem)
                 
-                bcoeffs_list.append([irun,analysis_obj.build_bcoeffs_array(obs_list,irun)])
+                bcoeffs_list.append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
 
     #analysis_obj.save_obs_table(bcoeffs_list,ibatch)
     analysis_obj.save_bcoeffs_list(bcoeffs_list,ibatch)          

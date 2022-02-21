@@ -19,7 +19,7 @@ import subprocess
 #scientific computing libraries
 import numpy as np
 import json
-
+import h5py
 
 def convert(o):
     if isinstance(o, np.generic): return o.item()  
@@ -260,6 +260,8 @@ def setup_input(params_input,mode,jobtype):
 
 
     return params
+
+
 
 def run_array_job(params_list):
 
