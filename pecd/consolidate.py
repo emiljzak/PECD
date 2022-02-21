@@ -100,9 +100,10 @@ class Avobs:
         plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,100,cmap = 'jet')
        
 
-        plt.show()
-        plt.close()
-
+        #plt.show()
+        #plt.close()
+        fig.savefig(    fname       = "bcoeffs_map.pdf",
+                        dpi         = 200       )
 
 
     def barray_plot_2D(self,grid_euler,ibcoeff,funcpars):
