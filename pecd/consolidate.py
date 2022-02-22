@@ -81,37 +81,44 @@ class Avobs:
         fig.savefig(    fname       = "bcoeffs_map.pdf",
                         dpi         = 200       )
 
+    def calc_pecdav(self,b_av_array):
+        
+        PECD[0] = b_av_R[1] - b_av_L[1]
+        PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
+        for N in range(Nphotons):
+            
+            PECD[N] = b_av_array[]
+
+    def calc_bav(self,barray):
+
+        Nomega = barray.shape[0]
+        print("Nomega = " + str(Nomega))
+        bav = np.zeros((barray.shape[1]),dtype=float)
+
+        for n in range(barray.shape[1]):
+            bav[n] = np.sum(barray[:,n])/Nomega
 
 
-    """
+        print(bav)
+        return bav
+"""
+if params['density_averaging'] == True:
+    WDMATS  = gen_wigner_dmats( N_Euler, 
+                                params['Jmax'], 
+                                grid_euler)
+
+    #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
+    grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
+                                            WDMATS,
+                                            params) 
 
 
-    Wav = np.zeros((grid_theta.shape[0],grid_r.shape[0]), dtype = float)
-
-
-
-
-    if params['density_averaging'] == True:
-        WDMATS  = gen_wigner_dmats( N_Euler, 
-                                    params['Jmax'], 
-                                    grid_euler)
-
-        #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-        grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
-                                                WDMATS,
-                                                params) 
-
-
-          
-        print(n_grid_euler_2d)
-        grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
-                                    WDMATS,
-                                    params) 
-        print("shape of rho")
-        print(np.shape(rho))
-        #print(rho.shape)
-        #PLOTS.plot_rotdens(rho[:].real, grid_euler_2d)
-    """
+        
+    print(n_grid_euler_2d)
+    grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
+                                WDMATS,
+                                params) 
+"""
 
 if __name__ == "__main__":   
 
@@ -142,4 +149,7 @@ if __name__ == "__main__":
     Obs = Avobs(params)
     barray = Obs.read_obs()
 
+    Obs.calc_bav(barray)
+    exit()
+    Obs.calc_pecdav(barray)
     Obs.plot_bcoeffs_2D(barray)

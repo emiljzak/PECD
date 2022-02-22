@@ -12,6 +12,7 @@ def read_input():
     params = {}
  
     params['job_label']    = "test_bcoeffs_plot" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['molec_name']   = "chiralium"
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)

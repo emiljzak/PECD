@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_bcoeffs_plot" 
+    params['job_label']    = "test_bav" 
     
     """====== Basis set parameters ======"""
     """ 
