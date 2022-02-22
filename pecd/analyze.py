@@ -41,65 +41,6 @@ class analysis:
         self.params = params
         self.helicity = params['helicity']
 
-    def save_obs_table(self,obs_dict_global,ibatch):
-        bcoeffs =[]
-        #print(obs_table)
-        #exit()
-        bcoeffs_file = "bcoeffs_table_"+str(ibatch)
-        
-        for elem in self.params['analyze_momentum']:
-        
-            for i in range(len(obs_dict_global[elem['name']])): #loop over irun
-
-                bcoeffs.append(obs_dict_global[elem['name']][i]['bcoeffs'])
-
-        #bcoeffs is list of lists
-     
-        #for ielem,elem in enumerate(bcoeffs):
-
-        #    for i in range(len(obs_list)):
-                #print(elem[i][5])
-                #print(type(elem[i][5]))
-        #        print( str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+" "+str(elem[i][2])+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+str(" ".join('{:12.8f}'.format(elem[i][5][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))) 
-
-        with open(  self.params['job_directory'] + bcoeffs_file+".dat" , 'w') as bfile:
-        
-            for ielem,elem in enumerate(bcoeffs):
-                for i in range(len(obs_list)):
-                    bfile.write(  str('{:8d}'.format(elem[i][0]))+str('{:8d}'.format(elem[i][1]))+str('{:12.8f}'.format(elem[i][2]))+str('{:12.8f}'.format(elem[i][3]))+str('{:12.8f}'.format(elem[i][4]))+" "+str(elem[i][5])+str('{:12.8f}'.format(elem[i][6]))+str('{:12.8f}'.format(elem[i][7]))+str(" ".join('{:12.8f}'.format(elem[i][8][0][n]) for n in range(self.params['legendre_params']['Leg_lmax'])))+"\n") 
-
-        
-        with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
-
-            G_grids = bfileh5.create_group("grids")
-            G_bcoeffs = bfileh5.create_group("bcoeffs")
-
-            obs_times = G_grids.create_dataset( name        = "times", 
-                                                data        = np.array(self.params['momentum_analyze_times']),
-                                                dtype       = float)
-
-            obs_times.attrs['t0']         = self.params['t0']
-            obs_times.attrs['tmax']       = self.params['tmax']
-            obs_times.attrs['dt']         = self.params['dt']
-            obs_times.attrs['saverate']   = self.params['wfn_saverate']
-            obs_times.attrs['units']      = self.params['time_units']
-
-            obs_enrs = G_grids.create_dataset(  name        = "enrs", 
-                                                data        = np.array(self.params['legendre_params']['energy_grid']),
-                                                dtype       = float)
-
-        obs_bcoeffs = G_bcoeffs.create_dataset(  name    = "bcoeffs", 
-                                            data        = bcoeffs_arr,
-                                            dtype       = float)
-
-        for ielem,elem in enumerate(bcoeffs):
-            for i in range(len(obs_list)):
-                print(elem[i][8][0])
-
-        exit()
- 
-
-
 
     def save_bcoeffs_list(self,bcoeffs_list,ibatch):
     
@@ -110,19 +51,11 @@ class analysis:
         for elem in bcoeffs_list:
             irun_indices.append(elem[0])
             temp_b_arr.append(elem[1])
-            #print(np.shape(elem[1]))
-            #print(type(elem[1]))
-            #print(elem[1])
 
-        #exit()
         irun_indices = np.asarray(irun_indices,dtype=int)
-
         bcoeffs_arr = np.asarray(temp_b_arr,dtype=float)
 
-    
-        print("shape of bcoeffs_arr" + str(bcoeffs_arr.shape))
-        print(bcoeffs_arr)
-        
+ 
         with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
 
             G_bcoefs     = bfileh5.create_group("bcoefs_group")
@@ -167,30 +100,6 @@ class analysis:
 
 
 
-    def build_obs_table(self,obs_list,ibatch,irun,alpha,beta,gamma):
-        obs_table ={}
-        #Note: we could straightforwardly generate elements of obs_table in correct format at the stage of observables calculations, but this way we do now is more transparent and general, although a bit more involving.
-        energy_grid = obs_list[0][2]['energy_grid']
-       
-        #initialize lists associated with existing observables
-        for key, value in obs_list[0][2].items():
-            obs_table[key] = []
-
-        for elem in obs_list:
-            print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
-            t = elem[1]
-            for key, value in elem[2].items():
-                #print(key, ":", value)
-                if key == "bcoeffs":
-                    for ienergy,energy in enumerate(list(energy_grid)):
-                        obs_table[key].append([ibatch,irun,alpha,beta,gamma,self.helicity,t,energy,[value[ienergy,:]]])
-                        print("value:"+str(energy))
-                elif key == "W2Dav":
-                        obs_table[key].append([ibatch,irun,alpha,beta,gamma,self.helicity,t,value])
-                elif key == "PESav":
-                        obs_table[key].append([ibatch,irun,alpha,beta,gamma,self.helicity,t,value])
-               
-        return obs_table
 
     def momentum_au_to_energy_ev(self,array):
         """Converts momentum given in atomic units to energy in eV
@@ -2915,11 +2824,8 @@ if __name__ == "__main__":
         #if params['density_averaging'] == True:
             #print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
 
-        params['irun']  = irun 
-        
+        params['irun']  = irun    
         analysis_obj    = analysis(params)
-
-
 
         if  params['analyze_space']:
             spaceobs        = spacefuncs(params)
