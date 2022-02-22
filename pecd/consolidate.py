@@ -73,10 +73,7 @@ class Avobs:
         PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
   
     def calc_bav(self,barray):
-        print(barray.shape)
-    
-       # barray = barray.reshape(-1,)
-        
+
         Nomega = barray.shape[0]
         print("Nomega = " + str(Nomega))
         bav = np.zeros((barray.shape[1]),dtype=float)
@@ -84,7 +81,7 @@ class Avobs:
         for n in range(barray.shape[1]):
             bav[n] = np.sum(barray[:,n])/Nomega
 
-
+        print("Orientation-averaged b-coefficients: ")
         print(bav)
         return bav
 """
@@ -134,8 +131,8 @@ if __name__ == "__main__":
 
     Obs = Avobs(params)
     barray = Obs.read_obs()
-
+    #include sigma resolution somewhere here
     b_av = Obs.calc_bav(barray)
     
-    #Obs.calc_pecdav(barray)
-    Obs.plot_bcoeffs_2D(barray,b_av)
+    pecd_av=Obs.calc_pecdav(b_av)
+    #Obs.plot_bcoeffs_2D(barray,b_av)
