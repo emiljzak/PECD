@@ -28,12 +28,14 @@ class Avobs:
             bb = self.read_h5(ibatch)
             #print(bb)
             barray.append(bb)
-        
-        barray = np.asarray(barray,dtype=float)
-        #print("shape of barray " + str(barray.shape))
+            
+        print(barray)
+        barray_new = np.concatenate(np.asarray(barray),axis=0)
+        print(barray_new)
+        print("shape of barray " + str(barray_new.shape))
 
-        #print(barray.ravel())
-        return barray.ravel()
+    
+        return barray_new#.ravel()
 
 
     def read_h5(self,ibatch):
@@ -41,7 +43,7 @@ class Avobs:
 
         index_energy = self.params['index_energy'][0]
         index_time = self.params['index_time'][0]
-        index_bcoeff = self.params['index_bcoeff'][0]
+        index_bcoeff = self.params['index_bcoeff']
 
         with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
             G = h5.get('bcoefs_group')
@@ -49,12 +51,9 @@ class Avobs:
             print(bcoefs_arr.shape)
             barray = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
             #print(list(G.items()))
-        
+        print("ffds")
+        print(barray.shape)
         return barray
-
-
-    def calc_bcoeffs(self):
-        pass
 
 
     def plot_bcoeffs_2D(self,barray):
@@ -85,12 +84,12 @@ class Avobs:
         
         PECD[0] = b_av_R[1] - b_av_L[1]
         PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
-        for N in range(Nphotons):
-            
-            PECD[N] = b_av_array[]
-
+  
     def calc_bav(self,barray):
-
+        print(barray.shape)
+    
+       # barray = barray.reshape(-1,)
+        
         Nomega = barray.shape[0]
         print("Nomega = " + str(Nomega))
         bav = np.zeros((barray.shape[1]),dtype=float)

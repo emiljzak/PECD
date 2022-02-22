@@ -11,7 +11,7 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_bcoeffs_plot" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_bav" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
@@ -29,7 +29,7 @@ def read_input():
 
     params['index_energy'] = [0]
     params['index_time'] = [1]
-    params['index_bcoeff'] = [2]
+    params['index_bcoeff'] = list(np.linspace(0,4,5,endpoint=True,dtype=int))
 
     return params
 
