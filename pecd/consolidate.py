@@ -58,26 +58,14 @@ class Avobs:
 
     def plot_bcoeffs_2D(self,barray,b_av):
 
-        fig = plt.figure()
-        grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-
-        ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-
-        print(self.grid_euler.shape)
-        #exit()
-
-        print(self.grid_euler[:,1])
-        print(self.grid_euler[:,2])
-        print(barray)
-        #exit()
-        #ax1.plot(self.grid_euler[:,1],barray)
-        
-        print(barray.shape)
-        for n in range(5):
-            plot = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
-            plt.show()
-            #plt.close()
+        for n in range(barray.shape[1]):
+            fig = plt.figure()
+            grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+            ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+            line_b = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
+            plt.colorbar(line_b, ax=ax1, aspect=30) 
             fig.savefig(  "bcoeffs_map"+str(n)+".pdf"   )
+            plt.close()
 
     def calc_pecdav(self,b_av_array):
         
