@@ -56,10 +56,9 @@ class Avobs:
         return barray
 
 
-    def plot_bcoeffs_2D(self,barray):
+    def plot_bcoeffs_2D(self,barray,b_av):
 
-        fig = plt.figure(figsize=(100,100), dpi=200,
-                        constrained_layout=True)
+        fig = plt.figure()
         grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
 
         ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
@@ -72,13 +71,13 @@ class Avobs:
         print(barray)
         #exit()
         #ax1.plot(self.grid_euler[:,1],barray)
-        plot_cont_1 = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray,100,cmap = 'jet')
-       
-
-        #plt.show()
-        #plt.close()
-        fig.savefig(    fname       = "bcoeffs_map.pdf",
-                        dpi         = 200       )
+        
+        print(barray.shape)
+        for n in range(5):
+            plot = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
+            plt.show()
+            #plt.close()
+            fig.savefig(  "bcoeffs_map"+str(n)+".pdf"   )
 
     def calc_pecdav(self,b_av_array):
         
@@ -148,7 +147,7 @@ if __name__ == "__main__":
     Obs = Avobs(params)
     barray = Obs.read_obs()
 
-    Obs.calc_bav(barray)
-    exit()
-    Obs.calc_pecdav(barray)
-    Obs.plot_bcoeffs_2D(barray)
+    b_av = Obs.calc_bav(barray)
+    
+    #Obs.calc_pecdav(barray)
+    Obs.plot_bcoeffs_2D(barray,b_av)
