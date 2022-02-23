@@ -45,12 +45,12 @@ class analysis:
     def save_bcoeffs_list(self,bcoeffs_dict,ibatch):
     
         bcoeffs_file    = "bcoeffs_batch_"+str(ibatch)
-     
-        irun_indices    = []
-        temp_b_arr      = []
 
         for sigma,bcoeffs_list in bcoeffs_dict.items():
-            
+                 
+            irun_indices    = []
+            temp_b_arr      = []
+
             print("saving b-coeffs for helicity: " +sigma)
 
             for elem in bcoeffs_list:
@@ -2830,7 +2830,7 @@ if __name__ == "__main__":
 
 
         if  params['analyze_space']:
-            for helicity in params['helicity']:
+            for helicity in params['helicity_analyze']:
                 print(helicity)
                 analysis_obj    = analysis(params,helicity)
                 spaceobs        = spacefuncs(params,helicity)
@@ -2846,7 +2846,7 @@ if __name__ == "__main__":
         # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
         if  params['analyze_momentum']:
             bcoeffs_dict = {}
-            for helicity in params['helicity']:
+            for helicity in params['helicity_analyze']:
                 print("Processing light's helicity: " + str(helicity))
                 analysis_obj    = analysis(params,helicity)
                 momentumobs     = momentumfuncs(params,helicity)

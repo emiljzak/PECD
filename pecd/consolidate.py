@@ -13,11 +13,11 @@ import wavefunction
 
 class Avobs:
     def __init__(self,params):
-        self.params = params
-        self.helicity = params['helicity']
-        GridObjEuler = wavefunction.GridEuler(  self.params['N_euler'],
-                                                self.params['N_batches'],
-                                                self.params['orient_grid_type'])
+        self.params     = params
+        self.helicity   = params['helicity_consolidate']
+        GridObjEuler    = wavefunction.GridEuler(   self.params['N_euler'],
+                                                    self.params['N_batches'],
+                                                    self.params['orient_grid_type'])
     
         self.grid_euler, self.N_Euler, self.N_per_batch  = GridObjEuler.read_euler_grid()
 
@@ -25,9 +25,9 @@ class Avobs:
     def read_obs(self):
         barray = []
         for ibatch in range(0,self.params['N_batches']):
-            bb = self.read_h5(ibatch)
+            bcoefs_dict = self.read_h5(ibatch)
             #print(bb)
-            barray.append(bb)
+            barray.append(bcoefs_dict)
             
         print(barray)
         barray_new = np.concatenate(np.asarray(barray),axis=0)
@@ -40,19 +40,19 @@ class Avobs:
 
     def read_h5(self,ibatch):
 
-
         index_energy = self.params['index_energy'][0]
         index_time = self.params['index_time'][0]
         index_bcoeff = self.params['index_bcoeff']
 
+        bcoeffs_dict = {}
         with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
             G = h5.get('bcoefs_group')
-            bcoefs_arr = np.array(G.get('bcoefs'))
-            print(bcoefs_arr.shape)
-            barray = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
-            #print(list(G.items()))
+            for sigma in self.helicity:
+                bcoefs_arr = np.array(G.get("bcoefs"+str(sigma)))
+                bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
+                #print(list(G.items()))
 
-        return barray
+        return bcoeffs_dict
 
 
     def plot_bcoeffs_2D(self,barray,b_av):
@@ -71,8 +71,8 @@ class Avobs:
         PECD[0] = b_av_R[1] - b_av_L[1]
         PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
   
-    def calc_bav(self,barray):
-
+    def calc_bcoeffs_av(self,barray):
+        """Calculate orientation averaged b-coefficients for selected helicities"""
         Nomega = barray.shape[0]
         print("Nomega = " + str(Nomega))
         bav = np.zeros((barray.shape[1]),dtype=float)
@@ -83,6 +83,14 @@ class Avobs:
         print("Orientation-averaged b-coefficients: ")
         print(bav)
         return bav
+
+
+
+
+    def check_b_symmetry(self,b_av_dict):
+        """Check the symmetry of b-coefficients"""
+        return 0
+
 """
 if params['density_averaging'] == True:
     WDMATS  = gen_wigner_dmats( N_Euler, 
@@ -101,6 +109,9 @@ if params['density_averaging'] == True:
                                 WDMATS,
                                 params) 
 """
+
+
+
 
 if __name__ == "__main__":   
 
@@ -129,9 +140,10 @@ if __name__ == "__main__":
     params.update(params_consolidate)
 
     Obs = Avobs(params)
-    barray = Obs.read_obs()
-    #include sigma resolution somewhere here
-    b_av = Obs.calc_bav(barray)
+    bcoeffs_dict = Obs.read_obs()
+ 
+    #calculate orientation-averaged b-coefficients for given time, energy and helicities.
+    b_av_dict = Obs.calc_bav(bcoeffs_dict)
     
     pecd_av=Obs.calc_pecdav(b_av)
     #Obs.plot_bcoeffs_2D(barray,b_av)

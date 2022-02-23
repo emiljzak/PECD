@@ -11,22 +11,22 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_bav" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_bav_sigma" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 17
-    params['prop_nbins']        = 50
+    params['prop_nbins']        = 20
 
-    params['tmax']              = 1000.0 
+    params['tmax']              = 100.0 
 
-    params['N_euler'] 	        = 4   
+    params['N_euler'] 	        = 2   
     params['N_batches'] 	    = 2    
     params['orient_grid_type']  = "2D"  
     
-    params['helicity']          = ["L","R"]
+    params['helicity_analyze']          = ["L","R"]
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
     params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
@@ -179,7 +179,7 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            500,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'FT_npts_k':            100,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              10.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?
