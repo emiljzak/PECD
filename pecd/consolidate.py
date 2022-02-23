@@ -56,11 +56,14 @@ class Avobs:
         index_bcoeff = self.params['index_bcoeff']
 
         bcoeffs_dict = {}
+        print(ibatch)
         with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
             G = h5.get('bcoefs_group')
             for sigma in self.helicity:
+                print(sigma)
                 bcoefs_arr = np.array(G.get("bcoefs"+str(sigma)))
-                bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
+                print(bcoefs_arr.shape)
+                #bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
                 #print(list(G.items()))
 
         return bcoeffs_dict

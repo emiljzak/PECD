@@ -22,11 +22,11 @@ def read_input():
     params['tmax']              = 1000.0 
 
     params['helicity_consolidate']          = ["L","R"]
-    
+
     #maximum number of photons considered in PECD calculations based on Legendre expansion.
     params['Nmax_photons']      = 4
 
-    params['N_euler'] 	        = 4   
+    params['N_euler'] 	        = 2   
     params['N_batches'] 	    = 2    
     params['orient_grid_type']  = "2D"  
 

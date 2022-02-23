@@ -45,31 +45,31 @@ class analysis:
     def save_bcoeffs_list(self,bcoeffs_dict,ibatch):
     
         bcoeffs_file    = "bcoeffs_batch_"+str(ibatch)
+        with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5:
+                        
+            G_bcoefs     = bfileh5.create_group("bcoefs_group")
 
-        for sigma,bcoeffs_list in bcoeffs_dict.items():
-                 
-            irun_indices    = []
-            temp_b_arr      = []
 
-            print("saving b-coeffs for helicity: " +sigma)
+            for sigma,bcoeffs_list in bcoeffs_dict.items():
+                print(sigma)
+                print(bcoeffs_list)
+                irun_indices    = []
+                temp_b_arr      = []
 
-            for elem in bcoeffs_list:
-                irun_indices.append(elem[0])
-                temp_b_arr.append(elem[1])
+                print("saving b-coeffs for helicity: " +sigma)
 
-            irun_indices    = np.asarray(irun_indices,dtype=int)
-            bcoeffs_arr     = np.asarray(temp_b_arr,dtype=float)
-    
-            with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
+                for elem in bcoeffs_list:
+                    irun_indices.append(elem[0])
+                    temp_b_arr.append(elem[1])
 
-                G_bcoefs     = bfileh5.create_group("bcoefs_group")
+        
+                G_bcoefs.create_dataset(  name    = "irun_indices"+str(sigma), 
+                                                data        = np.asarray(irun_indices,dtype=int),
+                                                dtype       = int) 
+        
 
-                irun_grid = G_bcoefs.create_dataset(  name    = "irun_indices", 
-                                                data        = irun_indices,
-                                                dtype       = int)
-
-                bcoefs = G_bcoefs.create_dataset(  name    = "bcoefs"+str(sigma), 
-                                                data        = bcoeffs_arr,
+                G_bcoefs.create_dataset(  name    = "bcoefs"+str(sigma), 
+                      data        =np.asarray(temp_b_arr,dtype=float),
                                                 dtype       = float)
 
 
