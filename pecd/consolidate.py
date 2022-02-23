@@ -55,19 +55,14 @@ class Avobs:
         return bcoeffs_dict
 
 
-    def plot_bcoeffs_2D(self,barray,b_av):
-
-        for n in range(barray.shape[1]):
-            fig = plt.figure()
-            grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-            ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-            line_b = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
-            plt.colorbar(line_b, ax=ax1, aspect=30) 
-            fig.savefig(  "bcoeffs_map"+str(n)+".pdf"   )
-            plt.close()
-
-    def calc_pecdav(self,b_av):
+    def calc_pecd(self):
+        """Calculate multiphoton-PECD for a grid of orientations (beta,gamma) and a sequence of total photon numbers
         
+            Use integrated Legendre expansion of increasing size for the calculation of appropriate coefficients.
+        """
+
+    def calc_pecd_av(self,b_av):
+        """Calculate multi-photon PECD averaged over orientations, for a sequence of total photon numbers"""
         PECD[0] = b_av_R[1] - b_av_L[1]
         PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
   
@@ -85,7 +80,21 @@ class Avobs:
         return bav
 
 
+    def plot_bcoeffs_2D(self,barray,b_av):
 
+        for n in range(barray.shape[1]):
+            fig = plt.figure()
+            grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+            ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+            line_b = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
+            plt.colorbar(line_b, ax=ax1, aspect=30) 
+            fig.savefig(  "bcoeffs_map"+str(n)+".pdf"   )
+            plt.close()
+
+
+    def average_alpha(self):
+        """Average the input b-coefficients over the alpha angle"""
+        
 
     def check_b_symmetry(self,b_av_dict):
         """Check the symmetry of b-coefficients"""
