@@ -51,8 +51,7 @@ class Avobs:
             print(bcoefs_arr.shape)
             barray = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
             #print(list(G.items()))
-        print("ffds")
-        print(barray.shape)
+
         return barray
 
 
@@ -67,7 +66,7 @@ class Avobs:
             fig.savefig(  "bcoeffs_map"+str(n)+".pdf"   )
             plt.close()
 
-    def calc_pecdav(self,b_av_array):
+    def calc_pecdav(self,b_av):
         
         PECD[0] = b_av_R[1] - b_av_L[1]
         PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)

@@ -513,9 +513,9 @@ class GridEuler():
 
             Status: tested
         """
-        alpha_1d        = list(np.linspace(0, 2*np.pi,  num=self.N_euler, endpoint=False))
+        alpha_1d        = list(np.linspace(0, 2*np.pi,  num=2*self.N_euler, endpoint=False))
         beta_1d         = list(np.linspace(0, np.pi,    num=self.N_euler, endpoint=True))
-        gamma_1d        = list(np.linspace(0, 2*np.pi,  num=self.N_euler, endpoint=False))
+        gamma_1d        = list(np.linspace(0, 2*np.pi,  num=2*self.N_euler, endpoint=False))
         euler_grid_3d   = np.array(list(itertools.product(*[alpha_1d, beta_1d, gamma_1d]))) #cartesian product of [alpha,beta,gamma]
 
         n_euler_3d      = euler_grid_3d.shape[0]
