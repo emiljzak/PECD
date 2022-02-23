@@ -24,11 +24,22 @@ class Avobs:
 
     def read_obs(self):
         barray = []
+        bcoeffs_dict = {"L":[],"R":[]}
         for ibatch in range(0,self.params['N_batches']):
-            bcoefs_dict = self.read_h5(ibatch)
-            #print(bb)
-            barray.append(bcoefs_dict)
+            bcoeffs_dict_ibatch = self.read_h5(ibatch)
+            for sigma,b in bcoeffs_dict_ibatch.items():
+                bcoeffs_dict[sigma].append(b)
+
             
+            
+        print(bcoeffs_dict)
+        print("shape of bcoeffs_dict[L]:")
+        print(np.shape(bcoeffs_dict['L']))
+        exit()
+        #convert to a clean dictionary containing arrays with all Euler angles
+
+
+
         print(barray)
         barray_new = np.concatenate(np.asarray(barray),axis=0)
         print(barray_new)
@@ -94,7 +105,7 @@ class Avobs:
 
     def average_alpha(self):
         """Average the input b-coefficients over the alpha angle"""
-        
+
 
     def check_b_symmetry(self,b_av_dict):
         """Check the symmetry of b-coefficients"""
