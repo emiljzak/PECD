@@ -91,7 +91,7 @@ def read_input():
     params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
     params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
-    params['field_func_name']    = "LCPL"
+    params['field_func_name']    = "RCPL"
     params['field_env_name']     = "gaussian" 
 
     """ gaussian pulse """

@@ -44,17 +44,17 @@ class analysis:
 
     def save_bcoeffs_list(self,bcoeffs_list,ibatch):
     
-        bcoeffs_file = "bcoeffs_batch_"+str(ibatch)
+        bcoeffs_file    = "bcoeffs_batch_"+str(ibatch)
      
-        irun_indices = []
-        temp_b_arr = []
+        irun_indices    = []
+        temp_b_arr      = []
+
         for elem in bcoeffs_list:
             irun_indices.append(elem[0])
-            temp_b_arr.append(elem[1])
+            temp_b_arr.append(elem[2])
 
-        irun_indices = np.asarray(irun_indices,dtype=int)
-        bcoeffs_arr = np.asarray(temp_b_arr,dtype=float)
-
+        irun_indices    = np.asarray(irun_indices,dtype=int)
+        bcoeffs_arr     = np.asarray(temp_b_arr,dtype=float)
  
         with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5: 
 
@@ -64,10 +64,10 @@ class analysis:
                                             data        = irun_indices,
                                             dtype       = int)
 
-
-            bcoefs = G_bcoefs.create_dataset(  name    = "bcoefs", 
-                                            data        = bcoeffs_arr,
-                                            dtype       = float)
+            for sigma in self.helicity:
+                bcoefs = G_bcoefs.create_dataset(  name    = "bcoefs"+str(sigma), 
+                                                data        = bcoeffs_arr,
+                                                dtype       = float)
 
 
 
@@ -713,11 +713,11 @@ class spacefuncs(analysis):
     
     """ Class of real space functions"""
 
-    def __init__(self,params):
+    def __init__(self,params,helicity):
         self.params         = params
 
         #1. read metadata from the wavepacket
-        self.helicity       = params['helicity'] #self.pull_helicity()
+        self.helicity       = helicity #self.pull_helicity()
         self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
         #2. setup time grid
@@ -1327,7 +1327,7 @@ class momentumfuncs(analysis):
         #3. setup time grid indices to analyze - they correspond to the respective analyze times
         self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['momentum_analyze_times']) 
         self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
-        print("times for which space functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
+        print("times for which momentum functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
         
         #4. read wavepacket, return (i,T_i,psi[:,i]) for i in analyze_time_index
         self.wavepacket     = self.read_wavepacket(file_wavepacket, self.tgrid_plot_index , self.tgrid_plot_time, self.params['Nbas'])
@@ -2802,7 +2802,6 @@ if __name__ == "__main__":
     print("==post-processing of the wavepacket==")
     print("====================================="+"\n")
 
-    helicity = params['helicity'] 
 
     global_obs_dict = {
                         'W2Dav':   [],
@@ -2828,22 +2827,24 @@ if __name__ == "__main__":
 
 
         if  params['analyze_space']:
-            
-            analysis_obj    = analysis(params)
-            spaceobs        = spacefuncs(params)
-            for elem in params['analyze_space']:
-                # Future note: we may want to pull out the wavefunction calculation into a general routine
-                # independent of the called function. This is going to save some time.
+            for helicity in params['helicity']:
+                print(helicity)
+                analysis_obj    = analysis(params,helicity)
+                spaceobs        = spacefuncs(params,helicity)
+                for elem in params['analyze_space']:
+                    # Future note: we may want to pull out the wavefunction calculation into a general routine
+                    # independent of the called function. This is going to save some time.
 
-                #call function by name given in the dictionary
-                func = getattr(spaceobs,elem['name'])
-                print("Calling space function: " + str(elem['name']))
-                func(elem)
+                    #call function by name given in the dictionary
+                    func = getattr(spaceobs,elem['name'])
+                    print("Calling space function: " + str(elem['name']))
+                    func(elem)
         
         # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
         if  params['analyze_momentum']:
+            bcoeffs_dict = {}
             for helicity in params['helicity']:
-                print(helicity)
+                print("Processing light's helicity: " + str(helicity))
                 analysis_obj    = analysis(params,helicity)
                 momentumobs     = momentumfuncs(params,helicity)
 
@@ -2853,6 +2854,8 @@ if __name__ == "__main__":
                     obs_list,ft_polargrid = func(elem)
                     
                     bcoeffs_list.append([irun,helicity,analysis_obj.build_bcoeffs_array(obs_list)])
-
-    #analysis_obj.save_obs_table(bcoeffs_list,ibatch)
-    #analysis_obj.save_bcoeffs_list(bcoeffs_list,ibatch)          
+                
+                bcoeffs_dict[helicity] = bcoeffs_list 
+    
+    
+    analysis_obj.save_bcoeffs_list(bcoeffs_list,ibatch)          
