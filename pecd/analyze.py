@@ -37,9 +37,9 @@ from pyhank import qdht, iqdht, HankelTransform
 
 class analysis:
 
-    def __init__(self,params):
+    def __init__(self,params,helicity):
         self.params = params
-        self.helicity = params['helicity']
+        self.helicity = helicity
 
 
     def save_bcoeffs_list(self,bcoeffs_list,ibatch):
@@ -1315,11 +1315,11 @@ class spacefuncs(analysis):
 
 class momentumfuncs(analysis):
 
-    def __init__(self,params):
+    def __init__(self,params,helicity):
         self.params = params
 
         #1. read metadata from the wavepacket
-        self.helicity       = params['helicity']#self.pull_helicity()
+        self.helicity       = helicity
         self.params['t0'],self.params['tmax'],self.params['dt'],self.params['wfn_saverate'],self.params['time_units'],file_wavepacket   = self.read_wavepacket_metadata()
 
         #2. setup time grid
@@ -2825,9 +2825,11 @@ if __name__ == "__main__":
             #print( "Rotational density at point " + str([alpha, beta, gamma]) + " is: " + str(rho[irun]))
 
         params['irun']  = irun    
-        analysis_obj    = analysis(params)
+
 
         if  params['analyze_space']:
+            
+            analysis_obj    = analysis(params)
             spaceobs        = spacefuncs(params)
             for elem in params['analyze_space']:
                 # Future note: we may want to pull out the wavefunction calculation into a general routine
@@ -2840,14 +2842,17 @@ if __name__ == "__main__":
         
         # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
         if  params['analyze_momentum']:
-            momentumobs     = momentumfuncs(params)
+            for helicity in params['helicity']:
+                print(helicity)
+                analysis_obj    = analysis(params,helicity)
+                momentumobs     = momentumfuncs(params,helicity)
 
-            for elem in params['analyze_momentum']:
-                func = getattr(momentumobs,elem['name'])
-                print("Calling momentum function: " + str(elem['name']))
-                obs_list,ft_polargrid = func(elem)
-                
-                bcoeffs_list.append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
+                for elem in params['analyze_momentum']:
+                    func = getattr(momentumobs,elem['name'])
+                    print("Calling momentum function: " + str(elem['name']))
+                    obs_list,ft_polargrid = func(elem)
+                    
+                    bcoeffs_list.append([irun,helicity,analysis_obj.build_bcoeffs_array(obs_list)])
 
     #analysis_obj.save_obs_table(bcoeffs_list,ibatch)
-    analysis_obj.save_bcoeffs_list(bcoeffs_list,ibatch)          
+    #analysis_obj.save_bcoeffs_list(bcoeffs_list,ibatch)          

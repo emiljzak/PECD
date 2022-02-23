@@ -26,7 +26,7 @@ def read_input():
     params['N_batches'] 	    = 2    
     params['orient_grid_type']  = "2D"  
     
-    params['helicity']          = "L"
+    params['helicity']          = ["L","R"]
 
     params['space_analyze_times']    =   list(np.linspace(0.0, params['tmax'], 1 ))
     params['momentum_analyze_times'] =   list(np.linspace(0.0, params['tmax'], 2 ))
