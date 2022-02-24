@@ -200,9 +200,6 @@ def read_input():
                                     'pes_max_k':            2.2,    # maximum momentum in a.u. Must be lower than the momentum range for W2D
                                     'pes_nquad_pts':         60 }    # number of Gauss-Legendre points used to integrate the momentum distribution over angles
 
-    params['pecd_params'] = {
-                                'pecd_lmax':                4,       # maximum angular momentum in the spherical harmonics expansion of the momentum probability function
-                                'pecd_energies':            [0.62] } # (a.u.) (list) at what values of the electron momentum do you want PECD?
 
     return params
 

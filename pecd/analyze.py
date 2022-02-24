@@ -1650,6 +1650,9 @@ class momentumfuncs(analysis):
 
             Flm_t = Flm[i*(self.params['bound_lmax']+1)**2:(i+1)*(self.params['bound_lmax']+1)**2 ]
 
+            #here return Flm for alpha averaging
+            #Flm at selected energies, save into .h5
+
             Wav = self.W2Dav_calc(  funcpars,
                                     Flm_t,
                                     ft_polargrid)

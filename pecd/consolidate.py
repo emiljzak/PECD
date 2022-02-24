@@ -144,6 +144,17 @@ class Avobs:
             plt.close()
 
 
+    def plot_pecd_2D(self,barray,b_av):
+        """Generate 2D plot of PECD for a sequence of photon numbers"""
+        for n in range(barray.shape[1]):
+            fig = plt.figure()
+            grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+            ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+            line_b = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
+            plt.colorbar(line_b, ax=ax1, aspect=30) 
+            fig.savefig(  "pecd_map"+str(nph)+".pdf"   )
+            plt.close()
+
     def average_alpha(self):
         """Average the input b-coefficients over the alpha angle"""
 
@@ -203,6 +214,8 @@ if __name__ == "__main__":
     Obs = Avobs(params)
     bcoeffs_dict = Obs.read_obs()
  
+    #read Flm's and do alpha-averaging
+
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
     pecd        = Obs.calc_pecd(bcoeffs_dict)
