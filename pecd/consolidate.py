@@ -125,7 +125,7 @@ class Avobs:
         pecd_av = np.zeros(Nphotons,dtype=float)
 
         for nph in range(1,Nphotons+1):
-            pecd_av[nph] = np.sum(pecd[:,nph])
+            pecd_av[nph-1] = np.sum(pecd[:,nph-1])
         
         print("PECD_av")
         print(pecd_av)
