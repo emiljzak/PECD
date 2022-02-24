@@ -1,0 +1,577 @@
+ 
+---------------------- START ANALYZE --------------------
+ 
+
+
+Generating index maps...
+
+
+
+
+Generating grids...
+
+
+
+
+Reading grid of molecular orientations (Euler angles)...
+
+
+[0.000e+00 1.000e-02 2.000e-02 ... 4.007e+01 4.008e+01 4.009e+01]
+[0.000e+00 1.000e-02 2.000e-02 ... 3.407e+01 3.408e+01 3.409e+01]
+=====================================
+==post-processing of the wavepacket==
+=====================================
+
+processing grid point: 0 [0. 0. 0.]
+Processing light's helicity: L
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.001s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+Processing light's helicity: R
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.001s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+processing grid point: 1 [0.     0.     3.1416]
+Processing light's helicity: L
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.001s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+Processing light's helicity: R
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.002s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+saving b-coeffs for helicity: L
+saving b-coeffs for helicity: R
+ 
+---------------------- START ANALYZE --------------------
+ 
+
+
+Generating index maps...
+
+
+
+
+Generating grids...
+
+
+
+
+Reading grid of molecular orientations (Euler angles)...
+
+
+[0.000e+00 1.000e-02 2.000e-02 ... 4.007e+01 4.008e+01 4.009e+01]
+[0.000e+00 1.000e-02 2.000e-02 ... 3.407e+01 3.408e+01 3.409e+01]
+=====================================
+==post-processing of the wavepacket==
+=====================================
+
+processing grid point: 2 [0.     3.1416 0.    ]
+Processing light's helicity: L
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.001s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+Processing light's helicity: R
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.002s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+processing grid point: 3 [0.     3.1416 3.1416]
+Processing light's helicity: L
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.001s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+Processing light's helicity: R
+Setting up time-grid
+Final list of plottime indices in tgrid:
+[0, 50]
+times for which momentum functions are analyzed: [  0. 100.]
+time for reading .h5 wavepacket file =       0.002s
+ipoint_cutoff = 44
+time-point: 0
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+time-point: 1
+P_lm: 0 0
+P_lm: 1 -1
+P_lm: 1 0
+P_lm: 1 1
+P_lm: 2 -2
+P_lm: 2 -1
+P_lm: 2 0
+P_lm: 2 1
+P_lm: 2 2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  0 for partial wave Plm: 2 2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 0 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 1 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -2
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 -1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 0
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 1
+Calculating Hankel transform for time-point =  1 for partial wave Plm: 2 2
+Calling momentum function: W2Dav
+Calculating 2D electron momentum probability density phi-averaged...
+Generating W2Dav at time =   0.00 as ----- time index = 0
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Generating W2Dav at time = 100.00 as ----- time index = 50
+Evaluation planes for W2D: Z
+iphi = 0, phi = 0.0
+plane = av
+Calculating b_n(E) coefficients in E range: [5.0, 12.0]
+Ntimes = 2
+Nenrs = 2
+NLegmax = 5
+i = 0, t = 0.0
+i = 1, t = 4.134281461881925
+saving b-coeffs for helicity: L
+saving b-coeffs for helicity: R
+
+
+***********************************************************
+------------------------- CHIRALEX ------------------------
+***********************************************************
+
+
+input file: input_chiralium_analyze
+mode: analyze
+jobtype: local
+
+
+
+l = 2, n = 10, Rb = 2.0:
+
+job directory exists: True, /home/emil/Desktop/projects/PECD_personal/PECD/tests/molecules/chiralium/chiralium_2_10_2.00_17_test_bav_sigma/
+
+Total number of 2D-Euler grid points:  4  and the shape of the 3D grid array is:     (4, 3)
+mode = analyze
+Executing local job
+The current working directory is /home/emil/Desktop/projects/PECD_personal/PECD/pecd
+Job directory is /home/emil/Desktop/projects/PECD_personal/PECD/tests/molecules/chiralium/chiralium_2_10_2.00_17_test_bav_sigma/
+Number of batches = 2
+Termination flags for euler grid array job: [ibatch,flag]
+[[0, 0], [1, 0]]

@@ -42,8 +42,11 @@ class analysis:
         self.helicity = helicity
 
 
-    def save_bcoeffs_list(self,bcoeffs_dict,ibatch):
-    
+    def save_bcoeffs_dict(self,bcoeffs_dict,ibatch):
+        """Saves b-coeffs dictionary to an hdf5 format file
+            Keys: helicity = "L","R"
+            Values: list of lists containing [[irun, b[itime,ienergy,n]], ...] for irun in the present batch
+        """
         bcoeffs_file    = "bcoeffs_batch_"+str(ibatch)
         with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5:
                         
@@ -51,8 +54,7 @@ class analysis:
 
 
             for sigma,bcoeffs_list in bcoeffs_dict.items():
-                print(sigma)
-                print(bcoeffs_list)
+
                 irun_indices    = []
                 temp_b_arr      = []
 
@@ -2812,7 +2814,7 @@ if __name__ == "__main__":
 
 
     bcoeffs_list = []
-
+    bcoeffs_dict = {"L":[],"R":[]}
 
     if ibatch == 0: save_grids(params)
 
@@ -2845,7 +2847,7 @@ if __name__ == "__main__":
         
         # Calculate an array of Hankel transforms on the momentum grid (1D, 2D or 3D) for all selected times
         if  params['analyze_momentum']:
-            bcoeffs_dict = {}
+
             for helicity in params['helicity_analyze']:
                 print("Processing light's helicity: " + str(helicity))
                 analysis_obj    = analysis(params,helicity)
@@ -2856,9 +2858,7 @@ if __name__ == "__main__":
                     print("Calling momentum function: " + str(elem['name']))
                     obs_list,ft_polargrid = func(elem)
                     
-                    bcoeffs_list.append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
-                
-                bcoeffs_dict[helicity] = bcoeffs_list 
+                    bcoeffs_dict[helicity].append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
     
     
-    analysis_obj.save_bcoeffs_list(bcoeffs_dict,ibatch)          
+    analysis_obj.save_bcoeffs_dict(bcoeffs_dict,ibatch)          

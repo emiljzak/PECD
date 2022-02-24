@@ -62,7 +62,7 @@ class Avobs:
             for sigma in self.helicity:
                 print(sigma)
                 bcoefs_arr = np.array(G.get("bcoefs"+str(sigma)))
-                print(bcoefs_arr.shape)
+                print(bcoefs_arr)
                 #bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
                 #print(list(G.items()))
 
