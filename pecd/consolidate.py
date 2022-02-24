@@ -120,7 +120,15 @@ class Avobs:
     def calc_pecd_av(self,pecd,b_av_dict):
         """Calculate multi-photon PECD averaged over orientations, for a sequence of total photon numbers"""
 
+        Nphotons = self.params['Nmax_photons']
 
+        pecd_av = np.zeros(Nphotons,dtype=float)
+
+        for nph in range(1,Nphotons+1):
+            pecd_av[nph] = np.sum(pecd[:,nph])
+        
+        print("PECD_av")
+        print(pecd_av)
         return pecd_av
 
 
