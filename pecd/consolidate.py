@@ -88,14 +88,30 @@ class Avobs:
         
             Use integrated Legendre expansion of increasing size for the calculation of appropriate coefficients.
         """
+        
+        coefficients = [1.0, -1.0/4.0, 1.0/8.0, -5.0/64.0, 7.0/128.0]
+
         Nphotons = self.params['Nmax_photons']
         
-        pecd = np.zeros(())
-
-        for sigma,barray in bcoeffs_dict.item():
-            pecd
+        for sigma,barray in bcoeffs_dict.items():
+            Nomega = barray.shape[0]
 
 
+        pecd = np.zeros((Nomega,Nphotons),dtype=float)
+
+        for sigma,barray in bcoeffs_dict.items():
+
+            if sigma == "L":
+                sign = -1
+            elif sigma == "R":
+                sign = +1
+
+            for nph in range(Nphotons):
+                for n in range(2*nph):
+                    pecd[:,nph] += sign*coefficients[n]*barray[:,n]
+
+        print("PECD")
+        print(pecd)
         return pecd
 
 

@@ -24,7 +24,7 @@ def read_input():
     params['helicity_consolidate']          = ["L","R"]
 
     #maximum number of photons considered in PECD calculations based on Legendre expansion.
-    params['Nmax_photons']      = 4
+    params['Nmax_photons']      = 3
 
     params['N_euler'] 	        = 2   
     params['N_batches'] 	    = 2    
