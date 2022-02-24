@@ -105,10 +105,12 @@ class Avobs:
                 sign = -1
             elif sigma == "R":
                 sign = +1
-
-            for nph in range(Nphotons):
-                for n in range(2*nph):
-                    pecd[:,nph] += sign*coefficients[n]*barray[:,n]
+            print("helicity = " + sigma)
+            for nph in range(1,Nphotons+1):
+                print("Number of photons = " + str(nph))
+                for n in range(2*nph+1):
+                    print("n = "+str(n))
+                    pecd[:,nph-1] += sign*coefficients[n]*barray[:,n]
 
         print("PECD")
         print(pecd)
