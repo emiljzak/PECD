@@ -25,6 +25,7 @@ class Avobs:
     def read_obs(self):
         barray = []
         bcoeffs_dict = {"L":[],"R":[]}
+
         for ibatch in range(0,self.params['N_batches']):
             bcoeffs_dict_ibatch = self.read_h5(ibatch)
             for sigma,b in bcoeffs_dict_ibatch.items():
@@ -35,18 +36,17 @@ class Avobs:
         print(bcoeffs_dict)
         print("shape of bcoeffs_dict[L]:")
         print(np.shape(bcoeffs_dict['L']))
-        exit()
+
+
+        for key,value in bcoeffs_dict.items():
+            blist = value
+            barray = np.concatenate(np.asarray(blist),axis=0)
+            bcoeffs_dict[key] = barray
         #convert to a clean dictionary containing arrays with all Euler angles
 
 
-
-        print(barray)
-        barray_new = np.concatenate(np.asarray(barray),axis=0)
-        print(barray_new)
-        print("shape of barray " + str(barray_new.shape))
-
     
-        return barray_new#.ravel()
+        return bcoeffs_dict#.ravel()
 
 
     def read_h5(self,ibatch):
@@ -58,12 +58,15 @@ class Avobs:
         bcoeffs_dict = {}
         print(ibatch)
         with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
-            G = h5.get('bcoefs_group')
+
             for sigma in self.helicity:
+                G = h5.get('bcoefs_group'+sigma)
+
                 print(sigma)
-                bcoefs_arr = np.array(G.get("bcoefs"+str(sigma)))
-                print(bcoefs_arr)
-                #bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
+                bcoefs_arr = G.get("bcoefs")
+                bb = np.array(bcoefs_arr)
+                print(bb)
+                bcoeffs_dict[sigma] = bb[:,index_time,index_energy,index_bcoeff]
                 #print(list(G.items()))
 
         return bcoeffs_dict

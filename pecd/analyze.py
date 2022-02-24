@@ -41,20 +41,19 @@ class analysis:
         self.params = params
         self.helicity = helicity
 
-
-    def save_bcoeffs_dict(self,bcoeffs_dict,ibatch):
+    @staticmethod
+    def save_bcoeffs_dict(dir,bcoeffs_dict,ibatch):
         """Saves b-coeffs dictionary to an hdf5 format file
             Keys: helicity = "L","R"
             Values: list of lists containing [[irun, b[itime,ienergy,n]], ...] for irun in the present batch
         """
         bcoeffs_file    = "bcoeffs_batch_"+str(ibatch)
-        with  h5py.File( self.params['job_directory'] + bcoeffs_file+".h5", mode = 'w') as bfileh5:
+        with  h5py.File(dir + bcoeffs_file+".h5", mode = 'w') as bfileh5:
                         
-            G_bcoefs     = bfileh5.create_group("bcoefs_group")
 
 
             for sigma,bcoeffs_list in bcoeffs_dict.items():
-
+                G1    = bfileh5.create_group("bcoefs_group"+sigma)
                 irun_indices    = []
                 temp_b_arr      = []
 
@@ -64,16 +63,14 @@ class analysis:
                     irun_indices.append(elem[0])
                     temp_b_arr.append(elem[1])
 
-        
-                G_bcoefs.create_dataset(  name    = "irun_indices"+str(sigma), 
+                G1.create_dataset(  name    = "irun_indices", 
                                                 data        = np.asarray(irun_indices,dtype=int),
                                                 dtype       = int) 
         
 
-                G_bcoefs.create_dataset(  name    = "bcoefs"+str(sigma), 
-                      data        =np.asarray(temp_b_arr,dtype=float),
-                                                dtype       = float)
-
+                G1.create_dataset(    name    = "bcoefs", 
+                                            data    = np.asarray(temp_b_arr,dtype=float),
+                                            dtype   = float)
 
 
     def build_bcoeffs_array(self,obs_list):
@@ -2861,4 +2858,4 @@ if __name__ == "__main__":
                     bcoeffs_dict[helicity].append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
     
     
-    analysis_obj.save_bcoeffs_dict(bcoeffs_dict,ibatch)          
+    analysis.save_bcoeffs_dict(params['job_directory'],bcoeffs_dict,ibatch)          
