@@ -42,11 +42,9 @@ class Avobs:
             blist = value
             barray = np.concatenate(np.asarray(blist),axis=0)
             bcoeffs_dict[key] = barray
-        #convert to a clean dictionary containing arrays with all Euler angles
 
 
-    
-        return bcoeffs_dict#.ravel()
+        return bcoeffs_dict
 
 
     def read_h5(self,ibatch):
@@ -58,15 +56,11 @@ class Avobs:
         bcoeffs_dict = {}
         print(ibatch)
         with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
-
+            G = h5.get('bcoefs_group')
             for sigma in self.helicity:
-                G = h5.get('bcoefs_group'+sigma)
 
-                print(sigma)
-                bcoefs_arr = G.get("bcoefs")
-                bb = np.array(bcoefs_arr)
-                print(bb)
-                bcoeffs_dict[sigma] = bb[:,index_time,index_energy,index_bcoeff]
+                bcoefs_arr = np.asarray(G.get("bcoefs"+sigma),dtype=float)
+                bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
                 #print(list(G.items()))
 
         return bcoeffs_dict
@@ -83,17 +77,19 @@ class Avobs:
         PECD[0] = b_av_R[1] - b_av_L[1]
         PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
   
-    def calc_bcoeffs_av(self,barray):
+    def calc_bcoeffs_av(self,bcoeff_dict):
         """Calculate orientation averaged b-coefficients for selected helicities"""
-        Nomega = barray.shape[0]
-        print("Nomega = " + str(Nomega))
-        bav = np.zeros((barray.shape[1]),dtype=float)
+        
+        for sigma,barray in bcoeff_dict.items():
+            Nomega = barray.shape[0]
+            print("Nomega = " + str(Nomega))
+            bav = np.zeros((barray.shape[1]),dtype=float)
 
-        for n in range(barray.shape[1]):
-            bav[n] = np.sum(barray[:,n])/Nomega
+            for n in range(barray.shape[1]):
+                bav[n] = np.sum(barray[:,n])/Nomega
 
-        print("Orientation-averaged b-coefficients: ")
-        print(bav)
+            print("Orientation-averaged b-coefficients: ")
+            print(bav)
         return bav
 
 
@@ -169,7 +165,7 @@ if __name__ == "__main__":
     bcoeffs_dict = Obs.read_obs()
  
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
-    b_av_dict = Obs.calc_bav(bcoeffs_dict)
+    b_av_dict = Obs.calc_bcoeffs_av(bcoeffs_dict)
     
-    pecd_av=Obs.calc_pecdav(b_av)
+    #pecd_av=Obs.calc_pecdav(b_av)
     #Obs.plot_bcoeffs_2D(barray,b_av)

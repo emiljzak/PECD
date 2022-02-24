@@ -51,24 +51,24 @@ class analysis:
         with  h5py.File(dir + bcoeffs_file+".h5", mode = 'w') as bfileh5:
                         
 
-
+            G1    = bfileh5.create_group("bcoefs_group")
             for sigma,bcoeffs_list in bcoeffs_dict.items():
-                G1    = bfileh5.create_group("bcoefs_group"+sigma)
+
                 irun_indices    = []
                 temp_b_arr      = []
 
-                print("saving b-coeffs for helicity: " +sigma)
+                print("saving b-coeffs for helicity: " )
 
                 for elem in bcoeffs_list:
                     irun_indices.append(elem[0])
                     temp_b_arr.append(elem[1])
 
-                G1.create_dataset(  name    = "irun_indices", 
+                G1.create_dataset(  name    = "irun_indices"+sigma, 
                                                 data        = np.asarray(irun_indices,dtype=int),
                                                 dtype       = int) 
         
 
-                G1.create_dataset(    name    = "bcoefs", 
+                G1.create_dataset(    name    = "bcoefs"+sigma, 
                                             data    = np.asarray(temp_b_arr,dtype=float),
                                             dtype   = float)
 
