@@ -66,17 +66,6 @@ class Avobs:
         return bcoeffs_dict
 
 
-    def calc_pecd(self):
-        """Calculate multiphoton-PECD for a grid of orientations (beta,gamma) and a sequence of total photon numbers
-        
-            Use integrated Legendre expansion of increasing size for the calculation of appropriate coefficients.
-        """
-
-    def calc_pecd_av(self,b_av):
-        """Calculate multi-photon PECD averaged over orientations, for a sequence of total photon numbers"""
-        PECD[0] = b_av_R[1] - b_av_L[1]
-        PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
-  
     def calc_bcoeffs_av(self,bcoeff_dict):
         """Calculate orientation averaged b-coefficients for selected helicities"""
         bcoeff_av_dict = {}
@@ -94,6 +83,27 @@ class Avobs:
             print(bav)
         return bcoeff_av_dict
 
+    def calc_pecd(self,bcoeffs_dict):
+        """Calculate multiphoton-PECD for a grid of orientations (beta,gamma) and a sequence of total photon numbers
+        
+            Use integrated Legendre expansion of increasing size for the calculation of appropriate coefficients.
+        """
+        Nphotons = self.params['Nmax_photons']
+        
+        pecd = np.zeros(())
+
+        for sigma,barray in bcoeffs_dict.item():
+            pecd
+
+
+        return pecd
+
+
+    def calc_pecd_av(self,b_av):
+        """Calculate multi-photon PECD averaged over orientations, for a sequence of total photon numbers"""
+        PECD[0] = b_av_R[1] - b_av_L[1]
+        PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
+  
 
     def plot_bcoeffs_2D(self,barray,b_av):
 
@@ -167,7 +177,8 @@ if __name__ == "__main__":
     bcoeffs_dict = Obs.read_obs()
  
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
-    b_av_dict = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    
+    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
+    pecd        = Obs.calc_pecd(bcoeffs_dict)
+
     #pecd_av=Obs.calc_pecdav(b_av)
     #Obs.plot_bcoeffs_2D(barray,b_av)
