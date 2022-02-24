@@ -112,16 +112,17 @@ class Avobs:
                     print("n = "+str(n))
                     pecd[:,nph-1] += sign*coefficients[n]*barray[:,n]
 
-        print("PECD")
+        print("PECD across orientations")
         print(pecd)
         return pecd
 
 
-    def calc_pecd_av(self,b_av):
+    def calc_pecd_av(self,pecd,b_av_dict):
         """Calculate multi-photon PECD averaged over orientations, for a sequence of total photon numbers"""
-        PECD[0] = b_av_R[1] - b_av_L[1]
-        PECD[1] = b_av_R[1] - b_av_R[3]/4.0 + b_av_R[5]/8.0- b_av_R[7]*5.0/64.0 - 1.0*(b_av_L[1] - b_av_L[3]/4.0 + b_av_L[5]/8.0- b_av_L[7]*5.0/64.0)
-  
+
+
+        return pecd_av
+
 
     def plot_bcoeffs_2D(self,barray,b_av):
 
@@ -197,6 +198,5 @@ if __name__ == "__main__":
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
     pecd        = Obs.calc_pecd(bcoeffs_dict)
-
-    #pecd_av=Obs.calc_pecdav(b_av)
+    pecd_av     = Obs.calc_pecd_av(pecd,b_av_dict)
     #Obs.plot_bcoeffs_2D(barray,b_av)
