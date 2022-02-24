@@ -79,7 +79,8 @@ class Avobs:
   
     def calc_bcoeffs_av(self,bcoeff_dict):
         """Calculate orientation averaged b-coefficients for selected helicities"""
-        
+        bcoeff_av_dict = {}
+
         for sigma,barray in bcoeff_dict.items():
             Nomega = barray.shape[0]
             print("Nomega = " + str(Nomega))
@@ -87,10 +88,11 @@ class Avobs:
 
             for n in range(barray.shape[1]):
                 bav[n] = np.sum(barray[:,n])/Nomega
-
-            print("Orientation-averaged b-coefficients: ")
+            
+            bcoeff_av_dict[sigma] = bav
+            print("Orientation-averaged b-coefficients for sigma = "+sigma)
             print(bav)
-        return bav
+        return bcoeff_av_dict
 
 
     def plot_bcoeffs_2D(self,barray,b_av):
