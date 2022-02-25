@@ -112,7 +112,10 @@ class Avobs:
 
 
     def calc_Flm_alpha_av(self,Flm_dict):
-        "Calculating alpha-averaged Flm for a selected set of energies and times"
+        """Calculating alpha-averaged Flm for a selected set of energies and times
+        We choose one energy and one time. The output is kept in sigma-resolved dictionary.
+        """
+
         Flm_alpha_av_dict = {'L':[],
                             'R':[]}
 
@@ -129,6 +132,25 @@ class Avobs:
 
         print(grid2D)
 
+
+        for sigma,Flm in Flm_dict.items():
+
+            if sigma == "L":
+                sign = -1
+            elif sigma == "R":
+                sign = +1
+
+            #k0 = self.find_k_index()
+            k0 =0
+            itime = 1
+            Flm_alpha_av = np.zeros((grid2D.shape[0],Flm.shape[2],Flm.shape[3]))
+
+            for betagamma in range(Ngrid2D):
+
+                for ialpha in range(self.params['N_euler']+2):
+                    Flm_alpha_av[betagamma,:,:] += Flm[betagamma+ialpha*Ngrid2D,itime,:,:,k0])
+
+            Flm_alpha_av_dict[sigma] = Flm_alpha_av
 
         return Flm_alpha_av_dict
 
@@ -285,7 +307,8 @@ if __name__ == "__main__":
     Flm_dict = Obs.read_Flm()
     #produce 2D Euler grid (beta,gamma)
     #set up alpha averaged Flm array
-    Flm_alpha_av = Obs.calc_Flm_alpha_av(Flm_dict)
+    Flm_alpha_av_dict = Obs.calc_Flm_alpha_av(Flm_dict)
+    print(Flm_alpha_av_dict)
     #loop over alpha in 3D grid
     #b_flm_alpha_av = Obs.calc_bcoeffs_flm_alpha_av(Flm_alpha_av)
     exit()
