@@ -237,6 +237,21 @@ class Avobs:
         return pecd_av
 
 
+    def plot_bcoeffs_Flm_2D(self,b_flm_alpha_av,grid2D):
+        
+        for sigma,barray in b_flm_alpha_av.items():
+
+
+            for n in range(barray.shape[1]):
+                fig = plt.figure()
+                grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+                line_b = ax1.tricontourf( grid2D[:,0],grid2D[:,1],barray[:,n],100,cmap = 'jet')
+                plt.colorbar(line_b, ax=ax1, aspect=30) 
+                fig.savefig(  "bcoeffs_flm_map"+str(n)+".pdf"   )
+                plt.close()
+    
+
     def plot_bcoeffs_2D(self,barray,b_av):
 
         for n in range(barray.shape[1]):
@@ -323,6 +338,9 @@ if __name__ == "__main__":
     Flm_dict = Obs.read_Flm()
     Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
     b_flm_alpha_av = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
+
+
+    Obs.plot_bcoeffs_Flm_2D(b_flm_alpha_av,grid2D)
     exit()
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
