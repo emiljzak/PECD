@@ -76,12 +76,12 @@ class analysis:
     def save_Flm_dict(dir,Flm_dict,ibatch):
         """Saves Flm amplitudes dictionary to an hdf5 format file
             Keys: helicity = "L","R"
-            Values: list of lists containing [[irun, [itime,t,[l,m,Flm[ft_kgrid]]], ...] for irun in the present batch
+            Values: list of lists containing [irun, ndarray(F[itime,l,m,k])] for irun in the present batch
         """
-        bcoeffs_file    = "Flm_batch_"+str(ibatch)
-        with  h5py.File(dir + bcoeffs_file+".h5", mode = 'w') as bfileh5:
-                        
+        Flm_file    = "Flm_batch_"+str(ibatch)
 
+        with  h5py.File(dir + Flm_file+".h5", mode = 'w') as bfileh5:
+                        
             G1    = bfileh5.create_group("Flm_group")
             for sigma,Flm_list in Flm_dict.items():
 
@@ -123,13 +123,11 @@ class analysis:
                     print(value)
 
 
-                    exit()
-
-                    for itime in range(value.shape[0]):
-                        for l in range(-lmax,lmax+1):
+                    for itime in range(Ntimes):
+                        for l in range(lmax+1):
                             for m in range(-l,l+1):
 
-                                Flm_arr[itime,l,m,:] = value[,n]
+                                Flm_arr[itime,l,m,:] = value[itime][l][l+m][:]
 
 
         return Flm_arr
