@@ -11,7 +11,7 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_bav_sigma" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "test_Flm_alpha" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
@@ -24,7 +24,7 @@ def read_input():
 
     params['N_euler'] 	        = 2   
     params['N_batches'] 	    = 2    
-    params['orient_grid_type']  = "2D"  
+    params['orient_grid_type']  = "3D"  
     
     params['helicity_analyze']          = ["L","R"]
 
@@ -82,10 +82,10 @@ def read_input():
                 }
 
     W2D = {     'name':         'W2D',
-                'plane':        ('XY','XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                'plane':        ('XY',), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_W2D_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen
-                'save':         True, # save array in file
+                'save':         False, # save array in file
                                 # Momentum grid parameters only for plotting purposes
                 'k_grid':       {   'type':'manual', #manual or automatic grid type. 
                                     'kmin': 0.0,    #ignored when automatic
@@ -116,7 +116,7 @@ def read_input():
 
 
     W2Dav = {   'name':         'W2Dav',
-                'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
+                'plot':         (False, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen
                 'save':         False, # save array in file
                                 # Momentum grid parameters only for plotting purposes.

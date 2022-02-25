@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_bav_sigma" 
+    params['job_label']    = "test_Flm_alpha" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -41,7 +41,7 @@ def read_input():
     """==== Molecule-field orientation ===="""
     params['N_euler'] 	        = 2   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 2    # number of batches for orientation averaging
-    params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
     """
@@ -91,7 +91,7 @@ def read_input():
     params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
     params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
-    params['field_func_name']    = "LCPL"
+    params['field_func_name']    = "RCPL"
     params['field_env_name']     = "gaussian" 
 
     """ gaussian pulse """

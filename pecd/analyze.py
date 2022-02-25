@@ -100,8 +100,8 @@ class analysis:
         
                 #be careful when converting nested list to a numpy array.
                 G1.create_dataset(    name    = "Flm"+sigma, 
-                                            data    = np.asarray(temp_Flm_arr,dtype=float),
-                                            dtype   = float)
+                                            data    = np.asarray(temp_Flm_arr,dtype=complex),
+                                            dtype   = complex)
 
     def build_Flm_array(self,obs_list):
         """Return numpy array Flm[itime,l,m,k]"""

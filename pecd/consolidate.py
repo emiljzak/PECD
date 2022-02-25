@@ -104,7 +104,7 @@ class Avobs:
             G = h5.get('Flm_group')
             for sigma in self.helicity:
 
-                Flm_arr = np.asarray(G.get("Flm"+sigma),dtype=float)
+                Flm_arr = np.asarray(G.get("Flm"+sigma),dtype=complex)
                 Flm_dict[sigma] = Flm_arr
                 #print(list(G.items()))
 
@@ -115,6 +115,19 @@ class Avobs:
         "Calculating alpha-averaged Flm for a selected set of energies and times"
         Flm_alpha_av_dict = {'L':[],
                             'R':[]}
+
+        grid3D = self.grid_euler
+        Ngrid3D = grid3D.shape[0]
+        print("Ngrid3D = " + str(Ngrid3D))
+
+        print(grid3D)
+
+        #generate 2D euler grid for alpha-averaged variables
+        grid2D = self.grid_euler2D
+        Ngrid2D = grid2D.shape[0]   
+        print("Ngrid2D = " + str(Ngrid2D))
+
+        print(grid2D)
 
 
         return Flm_alpha_av_dict
