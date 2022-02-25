@@ -104,11 +104,13 @@ class analysis:
                                             dtype   = float)
 
     def build_Flm_array(self,obs_list):
-      
+        """Return numpy array Flm[itime,l,m,k]"""
+
         Ntimes = np.array(self.params['momentum_analyze_times']).shape[0]
         print("Ntimes = " + str(Ntimes))
-
-        Flm_arr = np.zeros((Ntimes,lmax+1,2*lmax+1,N_ft_kgrid),dtype=complex)
+        lmax = self.params['bound_lmax']
+        Nk = self.params['FT_params']['FT_npts_k']
+        Flm_arr = np.zeros((Ntimes,lmax+1,2*lmax+1,Nk),dtype=complex)
 
         for elem in obs_list:
             print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
@@ -116,13 +118,21 @@ class analysis:
             for key, value in elem[2].items():
                 #print(key, ":", value)
                 if key == "Flm":
-     
-                    for ienr in range(value.shape[0]):
-                        for n in range(value.shape[1]):
-                            bcoeffs_arr[itime,ienr,n] = value[ienr,n]
+                    print(type(value))
+                    print(np.shape(value))
+                    print(value)
 
 
-        return bcoeffs_arr
+                    exit()
+
+                    for itime in range(value.shape[0]):
+                        for l in range(-lmax,lmax+1):
+                            for m in range(-l,l+1):
+
+                                Flm_arr[itime,l,m,:] = value[,n]
+
+
+        return Flm_arr
 
 
 
@@ -1696,6 +1706,8 @@ class momentumfuncs(analysis):
         obs_list = []
 
 
+        obs_dict['Flm'] = Flm
+
         """ loop over evaluation times """
         for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
   
@@ -1710,7 +1722,6 @@ class momentumfuncs(analysis):
             #here return Flm for alpha averaging
             #Flm at selected energies, save into .h5
 
-            obs_dict['Flm'] = Flm_t
 
             Wav = self.W2Dav_calc(  funcpars,
                                     Flm_t,
@@ -2918,7 +2929,7 @@ if __name__ == "__main__":
                     print("Calling momentum function: " + str(elem['name']))
                     obs_list,ft_polargrid = func(elem)
 
-                    Flm_dict[helicity].append([irun,obs_list])
+                    Flm_dict[helicity].append([irun,analysis_obj.build_Flm_array(obs_list)])
 
                     bcoeffs_dict[helicity].append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
     

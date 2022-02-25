@@ -122,7 +122,7 @@ def read_input():
                                 # Momentum grid parameters only for plotting purposes.
                 'k_grid':       {   'type':'automatic', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                     'kmin': 0.0,    #ignored when automatic
-                                    'kmax': 2.0     #ignored when automatic               
+                                    'kmax': 1.0     #ignored when automatic               
                                 },
 
                 'th_grid':      {   'thmin': 0.0,
@@ -132,7 +132,7 @@ def read_input():
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
                 
-                'legendre':     True, # calculate Legendre decomposition
+                'legendre':     False, # calculate Legendre decomposition
 
                 'PES':          False, # calculate PES
                 'PES_params': {     
@@ -179,7 +179,7 @@ def read_input():
 
     params['FT_params'] = {
                                     'FT_method':            "FFT_hankel",  #Fourier transform is calculated from the wavefunction calculated on real-space grid bounded by rcutoff and Rmax.
-                                    'FT_npts_k':            100,    # number of radial points over which the Hankel Transform is evaluated.
+                                    'FT_npts_k':            50,    # number of radial points over which the Hankel Transform is evaluated.
                                     'rcutoff':              10.0,   # radial cut-off of the wavepacket in the calculation of momentum space distributions
                                     'plot_Plm':             False,  # plot and save photoelectron partial waves?
                                     'plot_Flm':             False } # plot and save individual Hankel transforms?

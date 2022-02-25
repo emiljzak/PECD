@@ -22,12 +22,12 @@ class Avobs:
         self.grid_euler, self.N_Euler, self.N_per_batch  = GridObjEuler.read_euler_grid()
 
 
-    def read_obs(self):
+    def read_bcoeffs(self):
         barray = []
         bcoeffs_dict = {"L":[],"R":[]}
 
         for ibatch in range(0,self.params['N_batches']):
-            bcoeffs_dict_ibatch = self.read_h5(ibatch)
+            bcoeffs_dict_ibatch = self.read_bcoeffs_h5(ibatch)
             for sigma,b in bcoeffs_dict_ibatch.items():
                 bcoeffs_dict[sigma].append(b)
 
@@ -47,7 +47,7 @@ class Avobs:
         return bcoeffs_dict
 
 
-    def read_h5(self,ibatch):
+    def read_bcoeffs_h5(self,ibatch):
 
         index_energy = self.params['index_energy'][0]
         index_time = self.params['index_time'][0]
@@ -212,9 +212,10 @@ if __name__ == "__main__":
     params.update(params_consolidate)
 
     Obs = Avobs(params)
-    bcoeffs_dict = Obs.read_obs()
+    bcoeffs_dict = Obs.read_bcoeffs()
  
     #read Flm's and do alpha-averaging
+    Flm_dict = Obs.read_Flm()
     #produce 2D Euler grid (beta,gamma)
     #set up alpha averaged Flm array
     #loop over alpha in 3D grid
