@@ -15,13 +15,16 @@ class Avobs:
     def __init__(self,params):
         self.params     = params
         self.helicity   = params['helicity_consolidate']
+
+        #read 3D Euler grid
         GridObjEuler    = wavefunction.GridEuler(   self.params['N_euler'],
                                                     self.params['N_batches'],
                                                     self.params['orient_grid_type'])
     
         self.grid_euler, self.N_Euler, self.N_per_batch  = GridObjEuler.read_euler_grid()
-
-
+        #generate 2D euler grid for alpha-averaged variables
+        self.grid_euler2D, self.n_grid_euler_2d = GridObjEuler.gen_euler_grid_2D()   
+    
     def read_Flm(self):
         Flm_dict = {"L":[],"R":[]}
 
@@ -110,7 +113,11 @@ class Avobs:
 
     def calc_Flm_alpha_av(self,Flm_dict):
         "Calculating alpha-averaged Flm for a selected set of energies and times"
+        Flm_alpha_av_dict = {'L':[],
+                            'R':[]}
 
+
+        return Flm_alpha_av_dict
 
 
     def calc_bcoeffs_av(self,bcoeff_dict):
