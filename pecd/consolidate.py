@@ -215,6 +215,9 @@ if __name__ == "__main__":
     bcoeffs_dict = Obs.read_obs()
  
     #read Flm's and do alpha-averaging
+    #produce 2D Euler grid (beta,gamma)
+    #set up alpha averaged Flm array
+    #loop over alpha in 3D grid
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)

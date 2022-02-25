@@ -71,6 +71,61 @@ class analysis:
                 G1.create_dataset(    name    = "bcoefs"+sigma, 
                                             data    = np.asarray(temp_b_arr,dtype=float),
                                             dtype   = float)
+    
+    @staticmethod
+    def save_Flm_dict(dir,Flm_dict,ibatch):
+        """Saves Flm amplitudes dictionary to an hdf5 format file
+            Keys: helicity = "L","R"
+            Values: list of lists containing [[irun, [itime,t,[l,m,Flm[ft_kgrid]]], ...] for irun in the present batch
+        """
+        bcoeffs_file    = "Flm_batch_"+str(ibatch)
+        with  h5py.File(dir + bcoeffs_file+".h5", mode = 'w') as bfileh5:
+                        
+
+            G1    = bfileh5.create_group("Flm_group")
+            for sigma,Flm_list in Flm_dict.items():
+
+                irun_indices    = []
+                temp_Flm_arr      = []
+
+                print("saving Flm for helicity: " )
+
+                for elem in Flm_list:
+                    irun_indices.append(elem[0])
+                    temp_Flm_arr.append(elem[1])
+
+                G1.create_dataset(  name    = "irun_indices"+sigma, 
+                                                data        = np.asarray(irun_indices,dtype=int),
+                                                dtype       = int) 
+        
+                #be careful when converting nested list to a numpy array.
+                G1.create_dataset(    name    = "Flm"+sigma, 
+                                            data    = np.asarray(temp_Flm_arr,dtype=float),
+                                            dtype   = float)
+
+    def build_Flm_array(self,obs_list):
+      
+        Ntimes = np.array(self.params['momentum_analyze_times']).shape[0]
+        print("Ntimes = " + str(Ntimes))
+
+        Flm_arr = np.zeros((Ntimes,lmax+1,2*lmax+1,N_ft_kgrid),dtype=complex)
+
+        for elem in obs_list:
+            print("i = " + str(elem[0]) + ", t = " + str(elem[1]))
+            itime = elem[0]
+            for key, value in elem[2].items():
+                #print(key, ":", value)
+                if key == "Flm":
+     
+                    for ienr in range(value.shape[0]):
+                        for n in range(value.shape[1]):
+                            bcoeffs_arr[itime,ienr,n] = value[ienr,n]
+
+
+        return bcoeffs_arr
+
+
+
 
 
     def build_bcoeffs_array(self,obs_list):
@@ -699,6 +754,7 @@ class analysis:
             Plm_resampled = Hank_obj.to_transform_r(elem[3])
             F = Hank_obj.qdht(Plm_resampled)
             Flm.append([elem[0],elem[1],elem[2],F])
+
             if  self.params['FT_params']['plot_Flm']  == True:
                 plt.plot(Hank_obj.kr,np.abs(F))
         
@@ -1639,6 +1695,7 @@ class momentumfuncs(analysis):
         obs_dict = {}
         obs_list = []
 
+
         """ loop over evaluation times """
         for i, (itime, t) in enumerate(zip(self.tgrid_plot_index,list(self.tgrid_plot_time))):
   
@@ -1652,6 +1709,8 @@ class momentumfuncs(analysis):
 
             #here return Flm for alpha averaging
             #Flm at selected energies, save into .h5
+
+            obs_dict['Flm'] = Flm_t
 
             Wav = self.W2Dav_calc(  funcpars,
                                     Flm_t,
@@ -2815,7 +2874,8 @@ if __name__ == "__main__":
 
     bcoeffs_list = []
     bcoeffs_dict = {"L":[],"R":[]}
-
+    Flm_dict = {"L":[],"R":[]}
+    
     if ibatch == 0: save_grids(params)
 
     for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
@@ -2857,8 +2917,11 @@ if __name__ == "__main__":
                     func = getattr(momentumobs,elem['name'])
                     print("Calling momentum function: " + str(elem['name']))
                     obs_list,ft_polargrid = func(elem)
-                    
+
+                    Flm_dict[helicity].append([irun,obs_list])
+
                     bcoeffs_dict[helicity].append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
     
     
     analysis.save_bcoeffs_dict(params['job_directory'],bcoeffs_dict,ibatch)          
+    analysis.save_Flm_dict(params['job_directory'],Flm_dict,ibatch)          
