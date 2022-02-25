@@ -143,17 +143,33 @@ class Avobs:
             #k0 = self.find_k_index()
             k0 =0
             itime = 1
-            Flm_alpha_av = np.zeros((grid2D.shape[0],Flm.shape[2],Flm.shape[3]))
+            Flm_alpha_av = np.zeros((grid2D.shape[0],Flm.shape[2],Flm.shape[3]),dtype=complex)
 
             for betagamma in range(Ngrid2D):
 
                 for ialpha in range(self.params['N_euler']+2):
-                    Flm_alpha_av[betagamma,:,:] += Flm[betagamma+ialpha*Ngrid2D,itime,:,:,k0])
+                    Flm_alpha_av[betagamma,:,:] += Flm[betagamma+ialpha*Ngrid2D,itime,:,:,k0]
 
             Flm_alpha_av_dict[sigma] = Flm_alpha_av
 
-        return Flm_alpha_av_dict
+        return Flm_alpha_av_dict,grid2D
 
+
+    def calc_bcoeffs_Flm_alpha_av(self, Flm_alpha_av_dict):
+        """Calculate b-coefficients from alpha-averaged Flm"""
+        
+        bcoeffs_arr = np.zeros((Flm_alpha_av_dict["L"].shape[0],Flm_alpha_av_dict["L"].shape[1]),dtype = float)
+        bcoeffs_dict = {'L':[],
+                            'R':[]}
+
+        for sigma,Flm in Flm_alpha_av_dict.items():
+            Nomega = Flm.shape[0]
+            print("Nomega = " + str(Nomega))
+            for l in range(Flm.shape[1]):
+                bcoeffs_arr[:,l] = Flm[:,l,0] * np.sqrt((2.0*float(l)+1)/(4.0*np.pi))
+
+            bcoeffs_dict[sigma] = bcoeffs_arr
+        return bcoeffs_dict
 
     def calc_bcoeffs_av(self,bcoeff_dict):
         """Calculate orientation averaged b-coefficients for selected helicities"""
@@ -305,12 +321,8 @@ if __name__ == "__main__":
  
     #read Flm's and do alpha-averaging
     Flm_dict = Obs.read_Flm()
-    #produce 2D Euler grid (beta,gamma)
-    #set up alpha averaged Flm array
-    Flm_alpha_av_dict = Obs.calc_Flm_alpha_av(Flm_dict)
-    print(Flm_alpha_av_dict)
-    #loop over alpha in 3D grid
-    #b_flm_alpha_av = Obs.calc_bcoeffs_flm_alpha_av(Flm_alpha_av)
+    Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
+    b_flm_alpha_av = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
     exit()
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
