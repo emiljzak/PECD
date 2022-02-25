@@ -118,16 +118,16 @@ class analysis:
             for key, value in elem[2].items():
                 #print(key, ":", value)
                 if key == "Flm":
-                    print(type(value))
-                    print(np.shape(value))
-                    print(value)
+                  
+                    for ielem,el_flm in enumerate(value):
 
+                        itime = el_flm[0]
+                        l = el_flm[1]
+                        m = el_flm[2]
+                        F_array = el_flm[3]
+                        #print("itime = " + str(itime)+ " l = " + str(l) + " m = " + str(m) + " Farray = " + str(F_array))
+                        Flm_arr[itime,l,l+m,:] = F_array
 
-                    for itime in range(Ntimes):
-                        for l in range(lmax+1):
-                            for m in range(-l,l+1):
-
-                                Flm_arr[itime,l,m,:] = value[itime][l][l+m][:]
 
 
         return Flm_arr

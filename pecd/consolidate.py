@@ -22,6 +22,30 @@ class Avobs:
         self.grid_euler, self.N_Euler, self.N_per_batch  = GridObjEuler.read_euler_grid()
 
 
+    def read_Flm(self):
+        Farray = []
+        Flm_dict = {"L":[],"R":[]}
+
+        for ibatch in range(0,self.params['N_batches']):
+            Flm_dict_ibatch = self.read_Flm_h5(ibatch)
+
+            for sigma,b in Flm_dict_ibatch.items():
+                Flm_dict[sigma].append(b)
+
+        print(Flm_dict)
+        print("shape of Flm_dict[L]:")
+        print(np.shape(Flm_dict['L']))
+
+
+        for key,value in Flm_dict.items():
+            blist = value
+            barray = np.concatenate(np.asarray(blist),axis=0)
+            bcoeffs_dict[key] = barray
+
+
+        return bcoeffs_dict
+
+
     def read_bcoeffs(self):
         barray = []
         bcoeffs_dict = {"L":[],"R":[]}
@@ -48,6 +72,25 @@ class Avobs:
 
 
     def read_bcoeffs_h5(self,ibatch):
+
+        index_energy = self.params['index_energy'][0]
+        index_time = self.params['index_time'][0]
+        index_bcoeff = self.params['index_bcoeff']
+
+        bcoeffs_dict = {}
+        print(ibatch)
+        with h5py.File(self.params['job_directory']+"bcoeffs_batch_"+str(ibatch)+".h5", 'r') as h5:
+            G = h5.get('bcoefs_group')
+            for sigma in self.helicity:
+
+                bcoefs_arr = np.asarray(G.get("bcoefs"+sigma),dtype=float)
+                bcoeffs_dict[sigma] = bcoefs_arr[:,index_time,index_energy,index_bcoeff]
+                #print(list(G.items()))
+
+        return bcoeffs_dict
+
+
+    def read_Flm_h5(self,ibatch):
 
         index_energy = self.params['index_energy'][0]
         index_time = self.params['index_time'][0]
@@ -218,7 +261,10 @@ if __name__ == "__main__":
     Flm_dict = Obs.read_Flm()
     #produce 2D Euler grid (beta,gamma)
     #set up alpha averaged Flm array
+    Flm_alpha_av = Obs.calc_Flm_alpha_av(Flm_dict)
     #loop over alpha in 3D grid
+    b_flm_alpha_av = Obs.calc_bcoeffs_flm_alpha_av(Flm_alpha_av)
+    
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
