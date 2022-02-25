@@ -241,14 +241,17 @@ class Avobs:
         
         for sigma,barray in b_flm_alpha_av.items():
 
-
+            print(grid2D)
+            print(barray)
+            print(barray.shape)
+            #exit()
             for n in range(barray.shape[1]):
                 fig = plt.figure()
                 grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-                line_b = ax1.tricontourf( grid2D[:,0],grid2D[:,1],barray[:,n],100,cmap = 'jet')
+                line_b = ax1.tricontourf( grid2D[:,1],grid2D[:,2],barray[:,n],100,cmap = 'jet')
                 plt.colorbar(line_b, ax=ax1, aspect=30) 
-                fig.savefig(  "bcoeffs_flm_map"+str(n)+".pdf"   )
+                fig.savefig(  "bcoeffs_flm_map"+str(n)+"_"+str(sigma)+".pdf"   )
                 plt.close()
     
 
