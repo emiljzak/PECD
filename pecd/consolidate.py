@@ -39,6 +39,9 @@ class Avobs:
 
             Flm_dict[key] = np.concatenate(np.asarray(value),axis=0)
 
+        print("shape of Flm_dict[L] after concatenate:")
+        print(np.shape(Flm_dict['L']))
+
         return Flm_dict
 
 
@@ -103,6 +106,11 @@ class Avobs:
                 #print(list(G.items()))
 
         return Flm_dict
+
+
+    def calc_Flm_alpha_av(self,Flm_dict):
+        "Calculating alpha-averaged Flm for a selected set of energies and times"
+
 
 
     def calc_bcoeffs_av(self,bcoeff_dict):
@@ -257,7 +265,7 @@ if __name__ == "__main__":
     Flm_dict = Obs.read_Flm()
     #produce 2D Euler grid (beta,gamma)
     #set up alpha averaged Flm array
-    #Flm_alpha_av = Obs.calc_Flm_alpha_av(Flm_dict)
+    Flm_alpha_av = Obs.calc_Flm_alpha_av(Flm_dict)
     #loop over alpha in 3D grid
     #b_flm_alpha_av = Obs.calc_bcoeffs_flm_alpha_av(Flm_alpha_av)
     exit()
