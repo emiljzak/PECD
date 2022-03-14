@@ -43,7 +43,7 @@ class analysis:
 
     def save_kgrid(self,ft_polargrid):
         with open( self.params['job_directory'] +  "kgrid.dat" , 'w') as kgridfile:   
-            np.savetxt(kgridfile, ft_polargrid[:,0], fmt = '%10.4e')
+            np.savetxt(kgridfile, ft_polargrid[0][:,0], fmt = '%10.4e')
 
 
     @staticmethod
@@ -199,7 +199,7 @@ class analysis:
 
         """
     
-        return  2.0 * np.sqrt(array/constants.au_to_ev) 
+        return  np.sqrt(2.0 * array/constants.au_to_ev) 
 
 
     def find_nearest(self,array, value):
@@ -2929,7 +2929,7 @@ if __name__ == "__main__":
                     func = getattr(momentumobs,elem['name'])
                     print("Calling momentum function: " + str(elem['name']))
                     obs_list,ft_polargrid = func(elem)
-
+                   
                     Flm_dict[helicity].append([irun,analysis_obj.build_Flm_array(obs_list)])
 
                     bcoeffs_dict[helicity].append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
@@ -2937,4 +2937,4 @@ if __name__ == "__main__":
     
     analysis.save_bcoeffs_dict(params['job_directory'],bcoeffs_dict,ibatch)          
     analysis.save_Flm_dict(params['job_directory'],Flm_dict,ibatch)
-    analysis.save_kgrid(ft_polargrid)
+    analysis_obj.save_kgrid(ft_polargrid)

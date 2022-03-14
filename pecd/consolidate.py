@@ -109,11 +109,11 @@ class Avobs:
 
         energy = params['legendre_params']['energy_grid'][index_energy]
         with open( self.params['job_directory'] +  "kgrid.dat" , 'r') as kgridfile:   
-            kgrid = np.loadtxt(kgridfile, fmt = '%10.4e')
+            kgrid = np.loadtxt(kgridfile)
 
         print("loaded kgrid: ")
         print(kgrid)
-        exit()
+    
         #value of momentum at which we want to evaluate Flm
         val = np.sqrt(2.0*energy)
         #index of momentum at which we want ot evaluate Flm
@@ -126,7 +126,7 @@ class Avobs:
             for sigma in self.helicity:
 
                 Flm_arr = np.asarray(G.get("Flm"+sigma),dtype=complex)
-                Flm_dict[sigma] = Flm_arr[:,index_time,:,:,index_k]
+                Flm_dict[sigma] = Flm_arr[:,index_time,:,:,index_k] #F[omega,t,l,m,k]
                 #print(list(G.items()))
 
         return Flm_dict
