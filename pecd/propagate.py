@@ -874,25 +874,47 @@ if __name__ == "__main__":
     end_time = time.time()
     print("Time for the calculation of the kinetic energy matrix for the propagatino Hamiltonian = " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-    # loop over molecular orientations in the present batch
-    for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
+    if params['restart'] == False:
+        # loop over molecular orientations in the present batch
+        for irun in range(ibatch * N_per_batch, (ibatch+1) * N_per_batch):
 
-        start_time  = time.time()
-        pot_prop    = HamObjProp.build_potmat(grid_euler, irun)
-        end_time    = time.time()
-        print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+            start_time  = time.time()
+            pot_prop    = HamObjProp.build_potmat(grid_euler, irun)
+            end_time    = time.time()
+            print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        start_time  = time.time()
-        ham_init    = HamObjProp.build_ham(keo_prop, pot_prop)
-        end_time    = time.time()
-        print("Time for filtering of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
+            start_time  = time.time()
+            ham_init    = HamObjProp.build_ham(keo_prop, pot_prop)
+            end_time    = time.time()
+            print("Time for filtering of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-        PsiObj          = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"bound")
-        psi_bound_0_rot = PsiObj.rotate_psi(psi_bound_0[:,params['ivec']])
-        psi_init        = PsiObj.project_psi_global(psi_bound_0_rot)
+            PsiObj          = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"bound")
+            psi_bound_0_rot = PsiObj.rotate_psi(psi_bound_0[:,params['ivec']])
+            psi_init        = PsiObj.project_psi_global(psi_bound_0_rot)
 
-        PropObj     = Propagator(params,irun)
-        PropObj.prop_wf(ham_init, dipmat, psi_init)
+            PropObj     = Propagator(params,irun)
+            PropObj.prop_wf(ham_init, dipmat, psi_init)
+
+    else:
+        for irun in params['restart_list']:
+
+            start_time  = time.time()
+            pot_prop    = HamObjProp.build_potmat(grid_euler, irun)
+            end_time    = time.time()
+            print("Time for construction of the potential energy matrix for the propagation Hamiltonian: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+            start_time  = time.time()
+            ham_init    = HamObjProp.build_ham(keo_prop, pot_prop)
+            end_time    = time.time()
+            print("Time for filtering of the propagation Hamiltonian at time t=0: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+            PsiObj          = wavefunction.Psi(params,WDMATS_wfn,grid_euler,irun,"bound")
+            psi_bound_0_rot = PsiObj.rotate_psi(psi_bound_0[:,params['ivec']])
+            psi_init        = PsiObj.project_psi_global(psi_bound_0_rot)
+
+            PropObj     = Propagator(params,irun)
+            PropObj.prop_wf(ham_init, dipmat, psi_init)
+
 
 
     end_time_total = time.time()

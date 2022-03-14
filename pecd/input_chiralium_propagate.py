@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "test_Flm_alpha" 
+    params['job_label']    = "restart" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -20,27 +20,29 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 17
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 20
+    params['prop_nbins']        = 200
 
 
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 100.0 
+    params['tmax']          = 6000.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 10 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
-    params['N_euler'] 	        = 2   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
-    params['N_batches'] 	    = 2    # number of batches for orientation averaging
+    params['restart']           = True #restart some of the runs?
+    params['restart_list']      = [2] #global id list of jobs to be restarted. Must be compatible with the ordering of the Euler grid.
+    params['N_euler'] 	        = 6   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
+    params['N_batches'] 	    = 64    # number of batches for orientation averaging
     params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 

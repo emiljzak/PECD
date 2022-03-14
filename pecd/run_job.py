@@ -317,21 +317,31 @@ def run_array_job(params_list):
             
             if iparams['mode'] == "propagate" or "analyze":
 
-                for ibatch in range(iparams['N_batches']):
-                    time.sleep(2)
-                    if iparams['mode'] == "propagate":
-                        pecd_process =  "./master_script.sh " + str(ibatch) +\
-                                        " " + str(iparams['job_directory']) + " " +\
-                                        str("propagate.py")
-                        iflag = subprocess.call(pecd_process, shell=True)
-                        flag.append([ibatch,iflag])
+                if iparams['restart'] == True:
+                        if iparams['mode'] == "propagate":
+                            pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                            " " + str(iparams['job_directory']) + " " +\
+                                            str("propagate.py")
+                            iflag = subprocess.call(pecd_process, shell=True)
+                            flag.append([ibatch,iflag])
+                        else:
+                            raise NotImplementedError("Restart mode for analyze not implemented")
+                else:
+                    for ibatch in range(iparams['N_batches']):
+                        time.sleep(2)
+                        if iparams['mode'] == "propagate":
+                            pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                            " " + str(iparams['job_directory']) + " " +\
+                                            str("propagate.py")
+                            iflag = subprocess.call(pecd_process, shell=True)
+                            flag.append([ibatch,iflag])
 
-                    elif iparams['mode'] == "analyze":
-                        pecd_process =  "./master_script.sh " + str(ibatch) +\
-                                        " " + str(iparams['job_directory']) + " " +\
-                                        str("analyze.py")
-                        iflag = subprocess.call(pecd_process, shell=True)
-                        flag.append([ibatch,iflag])
+                        elif iparams['mode'] == "analyze":
+                            pecd_process =  "./master_script.sh " + str(ibatch) +\
+                                            " " + str(iparams['job_directory']) + " " +\
+                                            str("analyze.py")
+                            iflag = subprocess.call(pecd_process, shell=True)
+                            flag.append([ibatch,iflag])
             elif iparams['mode'] == "consolidate":
                 pecd_process =  "./master_script.sh " + str(0) +\
                                         " " + str(iparams['job_directory']) + " " +\

@@ -11,16 +11,17 @@ def read_input():
 
     params = {}
  
-    params['job_label']    = "test_Flm_alpha" #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
+    params['job_label']    = "tesaaaaaaaaaaa" 
+     #job identifier. In case of Psi4 ESP it can be metod/basis specification: "UHF-aug-cc-pVTZ" #"UHF_6-31Gss"
     params['molec_name']   = "chiralium"
 
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (6,6,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
     params['bound_nbins']       = 17
-    params['prop_nbins']        = 20
+    params['prop_nbins']        = 200
 
-    params['tmax']              = 100.0 
+    params['tmax']              = 6000.0 
 
     params['N_euler'] 	        = 2   
     params['N_batches'] 	    = 2    
@@ -98,14 +99,14 @@ def read_input():
                                     'FT_npts_th': 720
                                 },
                 
-                'legendre':     True, # calculate Legendre decomposition
+                'legendre':     False, # calculate Legendre decomposition
 
-                'PES':          True, # calculate PES
+                'PES':          False, # calculate PES
                 'PES_params': {     
                                 'name':         'PES',
-                                'plot':         (True, graphics.gparams_PES()), #specify parameters of the plot to load
+                                'plot':         (False, graphics.gparams_PES()), #specify parameters of the plot to load
                                 'show':         False, # show image on screen
-                                'save':         True, # save array in file
+                                'save':         False, # save array in file
                             
                                 'k-axis':       "energy", # energy (eV) or momentum (a.u.)
                                 'y-axis':       "log",   # log or unit scale
