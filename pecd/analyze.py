@@ -41,6 +41,11 @@ class analysis:
         self.params = params
         self.helicity = helicity
 
+    def save_kgrid(self,ft_polargrid):
+        with open( self.params['job_directory'] +  "kgrid.dat" , 'w') as kgridfile:   
+            np.savetxt(kgridfile, ft_polargrid[:,0], fmt = '%10.4e')
+
+
     @staticmethod
     def save_bcoeffs_dict(dir,bcoeffs_dict,ibatch):
         """Saves b-coeffs dictionary to an hdf5 format file
@@ -2931,4 +2936,5 @@ if __name__ == "__main__":
     
     
     analysis.save_bcoeffs_dict(params['job_directory'],bcoeffs_dict,ibatch)          
-    analysis.save_Flm_dict(params['job_directory'],Flm_dict,ibatch)          
+    analysis.save_Flm_dict(params['job_directory'],Flm_dict,ibatch)
+    analysis.save_kgrid(ft_polargrid)

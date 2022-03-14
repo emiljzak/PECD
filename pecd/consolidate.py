@@ -96,6 +96,10 @@ class Avobs:
 
         return bcoeffs_dict
 
+    def find_nearest_ind(self,array, value):
+            array   = np.asarray(array)
+            idx     = (np.abs(array - value)).argmin()
+            return array[idx], idx
 
     def read_Flm_h5(self,ibatch):
 
@@ -103,14 +107,26 @@ class Avobs:
         index_time = self.params['index_time'][0]
         index_bcoeff = self.params['index_bcoeff']
 
+        energy = params['legendre_params']['energy_grid'][index_energy]
+        with open( self.params['job_directory'] +  "kgrid.dat" , 'r') as kgridfile:   
+            kgrid = np.loadtxt(kgridfile, fmt = '%10.4e')
+
+        print("loaded kgrid: ")
+        print(kgrid)
+        exit()
+        #value of momentum at which we want to evaluate Flm
+        val = np.sqrt(2.0*energy)
+        #index of momentum at which we want ot evaluate Flm
+        index_k = self.find_nearest_ind(kgrid,val)
+
         Flm_dict = {}
-        print(ibatch)
+        print("Reading ibatch = " + str(ibatch))
         with h5py.File(self.params['job_directory']+"Flm_batch_"+str(ibatch)+".h5", 'r') as h5:
             G = h5.get('Flm_group')
             for sigma in self.helicity:
 
                 Flm_arr = np.asarray(G.get("Flm"+sigma),dtype=complex)
-                Flm_dict[sigma] = Flm_arr
+                Flm_dict[sigma] = Flm_arr[:,index_time,:,:,index_k]
                 #print(list(G.items()))
 
         return Flm_dict
@@ -163,8 +179,8 @@ class Avobs:
     def calc_bcoeffs_Flm_alpha_av(self, Flm_alpha_av_dict):
         """Calculate b-coefficients from alpha-averaged Flm"""
         
-        bcoeffs_arr = np.zeros((Flm_alpha_av_dict["L"].shape[0],Flm_alpha_av_dict["L"].shape[1]),dtype = float)
-        bcoeffs_dict = {'L':[],
+        bcoeffs_arr     = np.zeros((Flm_alpha_av_dict["L"].shape[0],Flm_alpha_av_dict["L"].shape[1]),dtype = float)
+        bcoeffs_dict    = { 'L':[],
                             'R':[]}
 
         for sigma,Flm in Flm_alpha_av_dict.items():
@@ -177,7 +193,7 @@ class Avobs:
         return bcoeffs_dict
 
     def calc_bcoeffs_av(self,bcoeff_dict):
-        """Calculate orientation averaged b-coefficients for selected helicities"""
+        """Calculate 3D orientation-averaged b-coefficients for selected helicities"""
         bcoeff_av_dict = {}
 
         for sigma,barray in bcoeff_dict.items():
@@ -345,15 +361,21 @@ if __name__ == "__main__":
     #read Flm's and do alpha-averaging
     Flm_dict = Obs.read_Flm()
     Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
+    
     #calculate b-coeffs from alpha-averaged Flm
     b_flm_alpha_av = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
-
-
     Obs.plot_bcoeffs_Flm_2D(b_flm_alpha_av,grid2D)
+
+
+    #calculate alpha-averaged b-coeffs the legendre expansion 
+    #b_alpha_av = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
+    #calculate 3D orientation-averaged b-coeffs 
+    #b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
+    #Obs.plot_bcoeffs_2D(b_alpha_av,b_av_dict)
     exit()
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
     pecd        = Obs.calc_pecd(bcoeffs_dict)
     pecd_av     = Obs.calc_pecd_av(pecd,b_av_dict)
-    #Obs.plot_bcoeffs_2D(barray,b_av)
+    #

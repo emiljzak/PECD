@@ -347,7 +347,7 @@ def run_array_job(params_list):
                                         " " + str(iparams['job_directory']) + " " +\
                                         str("consolidate.py")
                 iflag = subprocess.call(pecd_process, shell=True)
-                flag.append([ibatch,iflag])
+                flag.append([0,iflag])
 
             print("Termination flags for euler grid array job: [ibatch,flag]")        
             print(flag)

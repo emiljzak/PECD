@@ -32,7 +32,7 @@ def read_input():
 
     params['consolidate'] = {'bcoeffs': True}
 
-    params['index_energy'] = [0]
+    params['index_energy'] = [1]
     params['index_time'] = [1]
     params['index_bcoeff'] = list(np.linspace(0,4,5,endpoint=True,dtype=int))
 
