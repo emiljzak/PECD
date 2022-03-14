@@ -307,6 +307,25 @@ class Avobs:
         """Check the symmetry of b-coefficients"""
         return 0
 
+    def check_sizes(self,params):
+        """This module produces a list of unfinished jobs based on wavepacket file size"""
+        missing_files = []
+        awkward_files = []
+        # The directory that we are interested in
+        myPath = params['job_directory']
+        for i in range(self.N_Euler):
+            if os.path.isfile(myPath +"wavepacketL_"+str(i)+".h5"):
+                fsize =  os.path.getsize(myPath+"wavepacketL_"+str(i)+".h5")
+                if fsize < 40000:
+                    awkward_files.append(i)
+            else:
+                missing_files.append(i)
+
+        print("missing and awkward files lists, respectively:")
+        print(missing_files)
+        print(awkward_files)
+        exit()
+        return missing_files,awkward_files
 """
 if params['density_averaging'] == True:
     WDMATS  = gen_wigner_dmats( N_Euler, 
@@ -337,7 +356,7 @@ if __name__ == "__main__":
     print("---------------------- START CONSOLIDATE --------------------")
     print(" ")
     print(sys.argv)
-    os.chdir(sys.argv[1])
+    os.chdir(sys.argv[2])
     path = os.getcwd()
     print(path)
     # read input_propagate
@@ -354,6 +373,11 @@ if __name__ == "__main__":
     params.update(params_prop)
     params.update(params_analyze)
     params.update(params_consolidate)
+
+
+    if params['check_sizes'] == True:
+        print("commencing with size check of wavepackets...")
+        Avobs.check_sizes(params)
 
     Obs = Avobs(params)
     bcoeffs_dict = Obs.read_bcoeffs()

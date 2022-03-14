@@ -315,7 +315,7 @@ def run_array_job(params_list):
             
             print ("Job directory is %s" % iparams['job_directory'])
             
-            if iparams['mode'] == "propagate" or "analyze":
+            if iparams['mode'] == "propagate" or iparams['mode'] == "analyze":
 
                 if iparams['restart'] == True:
                         if iparams['mode'] == "propagate":
@@ -386,7 +386,7 @@ def run_array_job(params_list):
             
             elif iparams['mode'] == "consolidate":
                 print("proceeding with consolidate")
-                pecd_process = "python3 consolidate.py " + str(iparams['job_directory'])
+                pecd_process = "python3 consolidate.py " + str(0) + str(iparams['job_directory'])
                 iflag = subprocess.call(pecd_process, shell=True) 
 
             print("Termination flags for euler grid array job: [ibatch,flag]")
