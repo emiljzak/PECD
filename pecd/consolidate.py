@@ -309,8 +309,13 @@ class Avobs:
 
     def check_sizes(self):
         """This module produces a list of unfinished jobs based on wavepacket file size"""
-        missing_files = []
-        awkward_files = []
+        missing_filesL = []
+        awkward_filesL = []
+        missing_filesR = []
+        awkward_filesR = []
+
+        default_size_min = 4*10**8
+        default_size_max = 4.2*10**8
         # The directory that we are interested in
         myPath = params['job_directory']
         print(self.N_Euler)
@@ -318,21 +323,24 @@ class Avobs:
             if os.path.isfile(myPath +"wavepacketL_"+str(i)+".h5"):
                 fsize =  os.path.getsize(myPath+"wavepacketL_"+str(i)+".h5")
                 print(fsize)
-                if fsize < 170000 or fsize > 190000:
-                    awkward_files.append(i)
+                if fsize < default_size_min or fsize > default_size_max:
+                    awkward_filesL.append(i)
             else:
-                missing_files.append(i)
+                missing_filesL.append(i)
             if os.path.isfile(myPath +"wavepacketR_"+str(i)+".h5"):
                 fsize =  os.path.getsize(myPath+"wavepacketR_"+str(i)+".h5")
                 print(fsize)
-                if fsize < 170000 or fsize > 190000:
-                    awkward_files.append(i)
+                if fsize < default_size_min or fsize > default_size_max:
+                    awkward_filesR.append(i)
             else:
-                missing_files.append(i)
+                missing_filesR.append(i)
 
-        print("missing and awkward files lists, respectively:")
-        print(missing_files)
-        print(awkward_files)
+        print("R - missing and awkward files lists, respectively:")
+        print(missing_filesR)
+        print(awkward_filesR)
+        print("L - missing and awkward files lists, respectively:")
+        print(missing_filesL)
+        print(awkward_filesL)
         exit()
         return missing_files,awkward_files
 """
