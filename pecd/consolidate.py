@@ -117,8 +117,9 @@ class Avobs:
         #value of momentum at which we want to evaluate Flm
         val = np.sqrt(2.0*energy)
         #index of momentum at which we want ot evaluate Flm
-        index_k = self.find_nearest_ind(kgrid,val)
-
+        _,index_k = self.find_nearest_ind(kgrid,val)
+        #print(index_k)
+        #exit()
         Flm_dict = {}
         print("Reading ibatch = " + str(ibatch))
         with h5py.File(self.params['job_directory']+"Flm_batch_"+str(ibatch)+".h5", 'r') as h5:
@@ -126,6 +127,7 @@ class Avobs:
             for sigma in self.helicity:
 
                 Flm_arr = np.asarray(G.get("Flm"+sigma),dtype=complex)
+
                 Flm_dict[sigma] = Flm_arr[:,index_time,:,:,index_k] #F[omega,t,l,m,k]
                 #print(list(G.items()))
 
@@ -161,15 +163,13 @@ class Avobs:
             elif sigma == "R":
                 sign = +1
 
-            #k0 = self.find_k_index()
-            k0 =0
-            itime = 1
-            Flm_alpha_av = np.zeros((grid2D.shape[0],Flm.shape[2],Flm.shape[3]),dtype=complex)
+            
+            Flm_alpha_av = np.zeros((grid2D.shape[0],Flm.shape[1],Flm.shape[2]),dtype=complex)
 
             for betagamma in range(Ngrid2D):
 
                 for ialpha in range(self.params['N_euler']+2):
-                    Flm_alpha_av[betagamma,:,:] += Flm[betagamma+ialpha*Ngrid2D,itime,:,:,k0]
+                    Flm_alpha_av[betagamma,:,:] += Flm[betagamma+ialpha*Ngrid2D,:,:]
 
             Flm_alpha_av_dict[sigma] = Flm_alpha_av
 
