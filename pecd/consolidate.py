@@ -307,16 +307,25 @@ class Avobs:
         """Check the symmetry of b-coefficients"""
         return 0
 
-    def check_sizes(self,params):
+    def check_sizes(self):
         """This module produces a list of unfinished jobs based on wavepacket file size"""
         missing_files = []
         awkward_files = []
         # The directory that we are interested in
         myPath = params['job_directory']
+        print(self.N_Euler)
         for i in range(self.N_Euler):
             if os.path.isfile(myPath +"wavepacketL_"+str(i)+".h5"):
                 fsize =  os.path.getsize(myPath+"wavepacketL_"+str(i)+".h5")
-                if fsize < 40000:
+                print(fsize)
+                if fsize < 170000 or fsize > 190000:
+                    awkward_files.append(i)
+            else:
+                missing_files.append(i)
+            if os.path.isfile(myPath +"wavepacketR_"+str(i)+".h5"):
+                fsize =  os.path.getsize(myPath+"wavepacketR_"+str(i)+".h5")
+                print(fsize)
+                if fsize < 170000 or fsize > 190000:
                     awkward_files.append(i)
             else:
                 missing_files.append(i)
@@ -374,12 +383,12 @@ if __name__ == "__main__":
     params.update(params_analyze)
     params.update(params_consolidate)
 
+    Obs = Avobs(params)
 
     if params['check_sizes'] == True:
         print("commencing with size check of wavepackets...")
-        Avobs.check_sizes(params)
+        Obs.check_sizes()
 
-    Obs = Avobs(params)
     bcoeffs_dict = Obs.read_bcoeffs()
  
     #read Flm's and do alpha-averaging

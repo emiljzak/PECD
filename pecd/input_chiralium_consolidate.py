@@ -22,7 +22,7 @@ def read_input():
     params['tmax']              = 100.0 
 
     params['helicity_consolidate']          = ["L","R"]
-
+    params['check_sizes'] = True #pre-check sizes of wavepacket files?
     #maximum number of photons considered in PECD calculations based on Legendre expansion.
     params['Nmax_photons']      = 2
 
