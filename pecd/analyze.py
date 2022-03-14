@@ -128,8 +128,6 @@ class analysis:
                         #print("itime = " + str(itime)+ " l = " + str(l) + " m = " + str(m) + " Farray = " + str(F_array))
                         Flm_arr[itime,l,l+m,:] = F_array
 
-
-
         return Flm_arr
 
 

@@ -26,18 +26,23 @@ class Avobs:
         self.grid_euler2D, self.n_grid_euler_2d = GridObjEuler.gen_euler_grid_2D()   
     
     def read_Flm(self):
+        """Reads Flm arrays for a sequeces of batches
+        
+        """
+        
         Flm_dict = {"L":[],"R":[]}
 
         for ibatch in range(0,self.params['N_batches']):
             Flm_dict_ibatch = self.read_Flm_h5(ibatch)
 
-            for sigma,b in Flm_dict_ibatch.items():
-                Flm_dict[sigma].append(b)
+            for sigma,f in Flm_dict_ibatch.items():
+                Flm_dict[sigma].append(f)
 
         print(Flm_dict)
         print("shape of Flm_dict[L]:")
         print(np.shape(Flm_dict['L']))
 
+        #merge Flm arrays from separate batches
         for key,value in Flm_dict.items():
 
             Flm_dict[key] = np.concatenate(np.asarray(value),axis=0)
@@ -340,6 +345,7 @@ if __name__ == "__main__":
     #read Flm's and do alpha-averaging
     Flm_dict = Obs.read_Flm()
     Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
+    #calculate b-coeffs from alpha-averaged Flm
     b_flm_alpha_av = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
 
 

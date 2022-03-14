@@ -16,7 +16,8 @@ echo "Requested number of nodes :" $nnodes
 echo "Requested number of cores :" $nproc
 echo "sbatch submit..."
 
-sbatch --partition=$jobtype --ntasks=$nproc --time=$wclim:00:00 --job-name=$jobname --output=$2$jobname.o --error=$2$jobname.e \
+sbatch --partition=$jobtype --requeue --ntasks=$nproc --time=$wclim:00:00 --job-name=$jobname --output=$2$jobname.o --error=$2$jobname.e \
        $pwd/run_python.sh $1 $2 $3
 
+echo "Number of restarts:":$SLURM_RESTART_COUNT
 #$pwd/run_python.sh
