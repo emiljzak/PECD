@@ -258,9 +258,9 @@ class Avobs:
         return pecd_av
 
 
-    def plot_bcoeffs_Flm_2D(self,b_flm_alpha_av,grid2D):
+    def plot_bcoeffs_Flm_2D(self,b_flm_alpha_av_dict,grid2D):
         
-        for sigma,barray in b_flm_alpha_av.items():
+        for sigma,barray in b_flm_alpha_av_dict.items():
 
             print(grid2D)
             print(barray)
@@ -363,8 +363,8 @@ if __name__ == "__main__":
     Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
     
     #calculate b-coeffs from alpha-averaged Flm
-    b_flm_alpha_av = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
-    Obs.plot_bcoeffs_Flm_2D(b_flm_alpha_av,grid2D)
+    bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
+    Obs.plot_bcoeffs_Flm_2D(bcoeffs_flm_alpha_av_dict,grid2D)
 
 
     #calculate alpha-averaged b-coeffs the legendre expansion 
