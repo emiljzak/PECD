@@ -319,7 +319,7 @@ def run_array_job(params_list):
 
                 if iparams['restart'] == True:
                         if iparams['mode'] == "propagate":
-                            pecd_process =  "./master_script.sh " + str(ibatch) +\
+                            pecd_process =  "./master_script.sh " + str(0) +\
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
                             iflag = subprocess.call(pecd_process, shell=True)
@@ -363,16 +363,26 @@ def run_array_job(params_list):
 
             if iparams['mode'] == "propagate" or iparams['mode'] =="analyze":
 
-                for ibatch in range(0,iparams['N_batches']):
+                if iparams['restart'] == True:
                     if iparams['mode'] == "propagate":
-                        pecd_process = "python3 propagate.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                        pecd_process = "python3 propagate.py " 	+ str(0)  + " " +str(iparams['job_directory'])
                         iflag = subprocess.call(pecd_process, shell=True) 
-                        flag.append([ibatch,iflag])
+                        flag.append([0,iflag])
 
-                    elif iparams['mode'] == "analyze":
-                        pecd_process = "python3 analyze.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
-                        iflag = subprocess.call(pecd_process, shell=True) 
-                        flag.append([ibatch,iflag])
+                    else:
+                        raise NotImplementedError("Restart mode for analyze not implemented")
+                else:
+                        
+                    for ibatch in range(0,iparams['N_batches']):
+                        if iparams['mode'] == "propagate":
+                            pecd_process = "python3 propagate.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                            iflag = subprocess.call(pecd_process, shell=True) 
+                            flag.append([ibatch,iflag])
+
+                        elif iparams['mode'] == "analyze":
+                            pecd_process = "python3 analyze.py " 	+ str(ibatch)  + " " +str(iparams['job_directory'])
+                            iflag = subprocess.call(pecd_process, shell=True) 
+                            flag.append([ibatch,iflag])
             
             elif iparams['mode'] == "consolidate":
                 print("proceeding with consolidate")
