@@ -8,7 +8,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 
 import h5py
-
+import spherical
 import wavefunction
 
 class Avobs:
@@ -183,13 +183,27 @@ class Avobs:
         bcoeffs_dict    = { 'L':[],
                             'R':[]}
 
+        lmax = self.params['bound_lmax']
+
         for sigma,Flm in Flm_alpha_av_dict.items():
             Nomega = Flm.shape[0]
+            barray = np.zeros((Nomega,2*self.params['Nmax_photons']),dtype = complex)
             print("Nomega = " + str(Nomega))
-            for l in range(Flm.shape[1]):
-                bcoeffs_arr[:,l] = Flm[:,l,0] * np.sqrt((2.0*float(l)+1)/(4.0*np.pi))
+            for L in range(2*self.params['Nmax_photons']):
 
-            bcoeffs_dict[sigma] = bcoeffs_arr
+                for l1 in range(lmax):
+                    for l2 in range(lmax):
+                        if l1+l2 >= L:
+                            tau = 0.0
+                            for m in range(-l1,l1+1):
+                                tau += (-1.0)**(l2+m) * (1j)**(l1+l2) * np.conjugate(Flm[:,l1,m]) * Flm[:,l2,m] *  spherical.clebsch_gordan(l1,0,l2,0,L,0) * spherical.clebsch_gordan(l1,-1*m,l2,m,L,0) 
+
+                            barray[:,L] += 8.0 * np.pi**2 * tau * np.sqrt((2.0*float(L)+1)/(4.0*np.pi))
+
+           # for l in range(Flm.shape[1]):
+           #     bcoeffs_arr[:,l] = barray[:,l] * np.sqrt((2.0*float(l)+1)/(4.0*np.pi))
+            print(barray)
+            bcoeffs_dict[sigma] = barray
         return bcoeffs_dict
 
 
