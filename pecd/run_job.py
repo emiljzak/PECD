@@ -323,7 +323,7 @@ def run_array_job(params_list):
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
                             iflag = subprocess.call(pecd_process, shell=True)
-                            flag.append([ibatch,iflag])
+                            flag.append([0,iflag])
                         else:
                             raise NotImplementedError("Restart mode for analyze not implemented")
                 else:

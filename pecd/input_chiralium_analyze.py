@@ -133,7 +133,7 @@ def read_input():
                 
                 'npts_phi':     1, #number of phi points for the integration over tha azimuthal angle.
                 
-                'legendre':     False, # calculate Legendre decomposition
+                'legendre':     True, # calculate Legendre decomposition
 
                 'PES':          False, # calculate PES
                 'PES_params': {     

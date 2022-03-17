@@ -192,6 +192,48 @@ class Avobs:
             bcoeffs_dict[sigma] = bcoeffs_arr
         return bcoeffs_dict
 
+
+    def calc_bcoeffs_alpha_av(self,bcoeffs_dict):
+        """Calculating alpha-averaged b for a selected set of energies and times
+        We choose one energy and one time. The output is kept in sigma-resolved dictionary.
+        """
+
+        bcoeffs_alpha_av_dict = {'L':[],
+                            'R':[]}
+
+        grid3D = self.grid_euler
+        Ngrid3D = grid3D.shape[0]
+        print("Ngrid3D = " + str(Ngrid3D))
+
+        print(grid3D)
+
+        #generate 2D euler grid for alpha-averaged variables
+        grid2D = self.grid_euler2D
+        Ngrid2D = grid2D.shape[0]   
+        print("Ngrid2D = " + str(Ngrid2D))
+
+        print(grid2D)
+
+        for sigma,barray in bcoeffs_dict.items():
+
+            if sigma == "L":
+                sign = -1
+            elif sigma == "R":
+                sign = +1
+
+  
+            bcoeffs_alpha_av = np.zeros((grid2D.shape[0],barray.shape[1]),dtype=complex)
+
+            for betagamma in range(Ngrid2D):
+
+                for ialpha in range(self.params['N_euler']+2):
+                    bcoeffs_alpha_av[betagamma,:] += barray[betagamma+ialpha*Ngrid2D,:]
+
+            bcoeffs_alpha_av_dict[sigma] = bcoeffs_alpha_av
+
+        return bcoeffs_alpha_av_dict,grid2D
+
+
     def calc_bcoeffs_av(self,bcoeff_dict):
         """Calculate 3D orientation-averaged b-coefficients for selected helicities"""
         bcoeff_av_dict = {}
@@ -276,17 +318,23 @@ class Avobs:
                 plt.close()
     
 
-    def plot_bcoeffs_2D(self,barray,b_av):
+    def plot_bcoeffs_2D(self,b_alpha_av_dict,grid2D):
+        
+        for sigma,barray in b_alpha_av_dict.items():
 
-        for n in range(barray.shape[1]):
-            fig = plt.figure()
-            grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-            ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-            line_b = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
-            plt.colorbar(line_b, ax=ax1, aspect=30) 
-            fig.savefig(  "bcoeffs_map"+str(n)+".pdf"   )
-            plt.close()
-
+            print(grid2D)
+            print(barray)
+            print(barray.shape)
+            #exit()
+            for n in range(barray.shape[1]):
+                fig = plt.figure()
+                grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+                ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
+                line_b = ax1.tricontourf( grid2D[:,1],grid2D[:,2],np.abs(barray[:,n]),100,cmap = 'jet')
+                plt.colorbar(line_b, ax=ax1, aspect=30) 
+                fig.savefig(  "bcoeffs_map"+str(n)+"_"+str(sigma)+".pdf"   )
+                plt.close()
+    
 
     def plot_pecd_2D(self,barray,b_av):
         """Generate 2D plot of PECD for a sequence of photon numbers"""
@@ -397,22 +445,22 @@ if __name__ == "__main__":
         print("commencing with size check of wavepackets...")
         Obs.check_sizes()
 
-    bcoeffs_dict = Obs.read_bcoeffs()
- 
+    """ ===== b-coeffs using Flm amplitudes and an anlytic formula ===="""
     #read Flm's and do alpha-averaging
-    Flm_dict = Obs.read_Flm()
-    Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
+    #Flm_dict = Obs.read_Flm()
+    #Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
     
     #calculate b-coeffs from alpha-averaged Flm
-    bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
-    Obs.plot_bcoeffs_Flm_2D(bcoeffs_flm_alpha_av_dict,grid2D)
+    #bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
+    #Obs.plot_bcoeffs_Flm_2D(bcoeffs_flm_alpha_av_dict,grid2D)
 
-
+    """ ===== b-coeffs using numerical Legendre expansion ===="""
+    bcoeffs_dict = Obs.read_bcoeffs()
     #calculate alpha-averaged b-coeffs the legendre expansion 
-    #b_alpha_av = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
+    b_alpha_av_dict,grid2D = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
     #calculate 3D orientation-averaged b-coeffs 
-    #b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    #Obs.plot_bcoeffs_2D(b_alpha_av,b_av_dict)
+    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
+    Obs.plot_bcoeffs_2D(b_alpha_av_dict,grid2D)
     exit()
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
