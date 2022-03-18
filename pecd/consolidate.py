@@ -328,7 +328,7 @@ class Avobs:
                 plt.close()
     
 
-    def plot_bcoeffs_2D(self,b_alpha_av_dict,b_av_dict,grid2D):
+    def plot_bcoeffs_2D(self,b_alpha_av_dict,b_av_dict,grid2D,name):
         
         #<b_0>
         bav = b_av_dict["R"][0]
@@ -347,7 +347,7 @@ class Avobs:
                 ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
                 line_b = ax1.tricontourf( grid2D[:,2],grid2D[:,1],100*np.abs(barray[:,n])/bav,100,cmap = 'jet')
                 plt.colorbar(line_b, ax=ax1, aspect=30) 
-                fig.savefig(  "bcoeffs_map"+str(n)+"_"+str(sigma)+".pdf"   )
+                fig.savefig(  "bcoeffs_"+str(name)+"_"+str(n)+"_"+str(sigma)+".pdf"   )
                 plt.close()
     
 
@@ -462,12 +462,13 @@ if __name__ == "__main__":
 
     """ ===== b-coeffs using Flm amplitudes and an anlytic formula ===="""
     #read Flm's and do alpha-averaging
-    #Flm_dict = Obs.read_Flm()
-    #Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
+    Flm_dict = Obs.read_Flm()
+    Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
     
     #calculate b-coeffs from alpha-averaged Flm
-    #bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
-    #Obs.plot_bcoeffs_Flm_2D(bcoeffs_flm_alpha_av_dict,grid2D)
+    bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
+    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_flm_alpha_av_dict)
+    Obs.plot_bcoeffs_2D(bcoeffs_flm_alpha_av_dict,b_av_dict,grid2D,"flm")
 
     """ ===== b-coeffs using numerical Legendre expansion ===="""
     bcoeffs_dict = Obs.read_bcoeffs()
@@ -475,7 +476,7 @@ if __name__ == "__main__":
     bcoeffs_alpha_av_dict,grid2D = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
     #calculate 3D orientation-averaged b-coeffs 
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    Obs.plot_bcoeffs_2D(bcoeffs_alpha_av_dict,b_av_dict,grid2D)
+    Obs.plot_bcoeffs_2D(bcoeffs_alpha_av_dict,b_av_dict,grid2D,"leg")
     exit()
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
