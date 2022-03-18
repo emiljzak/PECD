@@ -219,14 +219,11 @@ class Avobs:
         Ngrid3D = grid3D.shape[0]
         print("Ngrid3D = " + str(Ngrid3D))
 
-        print(grid3D)
 
         #generate 2D euler grid for alpha-averaged variables
         grid2D = self.grid_euler2D
         Ngrid2D = grid2D.shape[0]   
         print("Ngrid2D = " + str(Ngrid2D))
-
-        print(grid2D)
 
         for sigma,barray in bcoeffs_dict.items():
 
@@ -235,7 +232,6 @@ class Avobs:
             elif sigma == "R":
                 sign = +1
 
-  
             bcoeffs_alpha_av = np.zeros((grid2D.shape[0],barray.shape[1]),dtype=complex)
 
             for betagamma in range(Ngrid2D):
@@ -243,7 +239,7 @@ class Avobs:
                 for ialpha in range(self.params['N_euler']+2):
                     bcoeffs_alpha_av[betagamma,:] += barray[betagamma+ialpha*Ngrid2D,:]
 
-            bcoeffs_alpha_av_dict[sigma] = bcoeffs_alpha_av
+            bcoeffs_alpha_av_dict[sigma] = bcoeffs_alpha_av/(self.params['N_euler']+2)
 
         return bcoeffs_alpha_av_dict,grid2D
 
@@ -332,19 +328,24 @@ class Avobs:
                 plt.close()
     
 
-    def plot_bcoeffs_2D(self,b_alpha_av_dict,grid2D):
+    def plot_bcoeffs_2D(self,b_alpha_av_dict,b_av_dict,grid2D):
         
+        #<b_0>
+        bav = b_av_dict["R"][0]
+
+
         for sigma,barray in b_alpha_av_dict.items():
 
             print(grid2D)
             print(barray)
             print(barray.shape)
+            print("bav = " + str(bav))
             #exit()
             for n in range(barray.shape[1]):
                 fig = plt.figure()
                 grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-                line_b = ax1.tricontourf( grid2D[:,1],grid2D[:,2],np.abs(barray[:,n]),100,cmap = 'jet')
+                line_b = ax1.tricontourf( grid2D[:,2],grid2D[:,1],100*np.abs(barray[:,n])/bav,100,cmap = 'jet')
                 plt.colorbar(line_b, ax=ax1, aspect=30) 
                 fig.savefig(  "bcoeffs_map"+str(n)+"_"+str(sigma)+".pdf"   )
                 plt.close()
@@ -471,10 +472,10 @@ if __name__ == "__main__":
     """ ===== b-coeffs using numerical Legendre expansion ===="""
     bcoeffs_dict = Obs.read_bcoeffs()
     #calculate alpha-averaged b-coeffs the legendre expansion 
-    b_alpha_av_dict,grid2D = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
+    bcoeffs_alpha_av_dict,grid2D = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
     #calculate 3D orientation-averaged b-coeffs 
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    Obs.plot_bcoeffs_2D(b_alpha_av_dict,grid2D)
+    Obs.plot_bcoeffs_2D(bcoeffs_alpha_av_dict,b_av_dict,grid2D)
     exit()
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
