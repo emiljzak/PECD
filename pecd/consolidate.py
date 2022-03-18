@@ -193,17 +193,18 @@ class Avobs:
 
                 for l1 in range(lmax):
                     for l2 in range(lmax):
-                        if l1+l2 >= L:
+                        if l1+l2 >= L and np.abs(l1-l2) <= L:
                             tau = 0.0
-                            for m in range(-l1,l1+1):
-                                tau += (-1.0)**(l2+m) * (1j)**(l1+l2) * np.conjugate(Flm[:,l1,m]) * Flm[:,l2,m] *  spherical.clebsch_gordan(l1,0,l2,0,L,0) * spherical.clebsch_gordan(l1,-1*m,l2,m,L,0) 
+                            for m1 in range(-l1,l1+1):
+                                for m2 in range(-l2,l2+1):
+                                    tau +=  (-1)**m1 * np.conjugate(Flm[:,l1,l1+m1]) * Flm[:,l2,l1+m2] *  spherical.clebsch_gordan(l1,0,l2,0,L,0) * spherical.clebsch_gordan(l1,-1*m1,l2,m2,L,0) 
 
-                            barray[:,L] += 8.0 * np.pi**2 * tau * np.sqrt((2.0*float(L)+1)/(4.0*np.pi))
+                            barray[:,L] += tau * (-1.0)**(l2) * (1j)**(l1+l2) * np.sqrt((2.0*float(l1)+1)*(2.0*float(l2)+1))
 
            # for l in range(Flm.shape[1]):
            #     bcoeffs_arr[:,l] = barray[:,l] * np.sqrt((2.0*float(l)+1)/(4.0*np.pi))
             print(barray)
-            bcoeffs_dict[sigma] = barray
+            bcoeffs_dict[sigma] = 8.0 * np.pi**2 * barray
         return bcoeffs_dict
 
 
@@ -345,7 +346,7 @@ class Avobs:
                 fig = plt.figure()
                 grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
                 ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-                line_b = ax1.tricontourf( grid2D[:,2],grid2D[:,1],100*np.abs(barray[:,n])/bav,100,cmap = 'jet')
+                line_b = ax1.tricontourf( grid2D[:,2],grid2D[:,1],100*float(barray[:,n])/bav,100,cmap = 'jet')
                 plt.colorbar(line_b, ax=ax1, aspect=30) 
                 fig.savefig(  "bcoeffs_"+str(name)+"_"+str(n)+"_"+str(sigma)+".pdf"   )
                 plt.close()
