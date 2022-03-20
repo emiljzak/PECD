@@ -260,6 +260,7 @@ class Avobs:
             bcoeff_av_dict[sigma] = bav
             print("Orientation-averaged b-coefficients for sigma = "+sigma)
             print(bav)
+            #save b-coeffs
         return bcoeff_av_dict
 
     def calc_pecd(self,bcoeffs_dict):
@@ -285,26 +286,27 @@ class Avobs:
             elif sigma == "R":
                 sign = +1
             print("helicity = " + sigma)
+
             for nph in range(1,Nphotons+1):
                 print("Number of photons = " + str(nph))
-                for n in range(2*nph+1):
+                for n in range(1,2*nph+1,2):
                     print("n = "+str(n))
-                    pecd[:,nph-1] += sign*coefficients[n]*barray[:,n]
+                    pecd[:,nph-1] += sign*coefficients[n]*barray[:,n].real
 
-        print("PECD across orientations")
-        print(pecd)
+        #print("PECD across orientations")
+        #print(pecd)
         return pecd
 
 
     def calc_pecd_av(self,pecd,b_av_dict):
         """Calculate multi-photon PECD averaged over orientations, for a sequence of total photon numbers"""
-
+        bav = b_av_dict["R"][0]
         Nphotons = self.params['Nmax_photons']
 
         pecd_av = np.zeros(Nphotons,dtype=float)
 
         for nph in range(1,Nphotons+1):
-            pecd_av[nph-1] = np.sum(pecd[:,nph-1])
+            pecd_av[nph-1] = np.sum(pecd[:,nph-1])/bav
         
         print("PECD_av")
         print(pecd_av)
@@ -352,15 +354,16 @@ class Avobs:
                 plt.close()
     
 
-    def plot_pecd_2D(self,barray,b_av):
+    def plot_pecd_2D(self,pecd_alpha_av,b_av_dict,grid2D):
         """Generate 2D plot of PECD for a sequence of photon numbers"""
-        for n in range(barray.shape[1]):
+        bav = b_av_dict["R"][0]
+        for n in range(pecd_alpha_av.shape[1]):
             fig = plt.figure()
             grid_fig = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
             ax1 = fig.add_subplot(grid_fig[0, 0], projection='rectilinear')
-            line_b = ax1.tricontourf( self.grid_euler[:,1],self.grid_euler[:,2],barray[:,n]/b_av[0],100,cmap = 'jet')
+            line_b = ax1.tricontourf( grid2D[:,2],grid2D[:,1],100*pecd_alpha_av[:,n]/bav,100,cmap = 'jet')
             plt.colorbar(line_b, ax=ax1, aspect=30) 
-            fig.savefig(  "pecd_map"+str(nph)+".pdf"   )
+            fig.savefig(  "pecd_map_nph"+str(n+1)+".pdf"   )
             plt.close()
 
     def average_alpha(self):
@@ -463,13 +466,13 @@ if __name__ == "__main__":
 
     """ ===== b-coeffs using Flm amplitudes and an anlytic formula ===="""
     #read Flm's and do alpha-averaging
-    Flm_dict = Obs.read_Flm()
-    Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
+    #Flm_dict = Obs.read_Flm()
+    #Flm_alpha_av_dict,grid2D = Obs.calc_Flm_alpha_av(Flm_dict)
     
     #calculate b-coeffs from alpha-averaged Flm
-    bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
-    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_flm_alpha_av_dict)
-    Obs.plot_bcoeffs_2D(bcoeffs_flm_alpha_av_dict,b_av_dict,grid2D,"flm")
+    #bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
+    #b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_flm_alpha_av_dict)
+    #Obs.plot_bcoeffs_2D(bcoeffs_flm_alpha_av_dict,b_av_dict,grid2D,"flm")
 
     """ ===== b-coeffs using numerical Legendre expansion ===="""
     bcoeffs_dict = Obs.read_bcoeffs()
@@ -477,11 +480,18 @@ if __name__ == "__main__":
     bcoeffs_alpha_av_dict,grid2D = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
     #calculate 3D orientation-averaged b-coeffs 
     b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    Obs.plot_bcoeffs_2D(bcoeffs_alpha_av_dict,b_av_dict,grid2D,"leg")
+    print("b1(R)= " + str(b_av_dict["R"][1]))
+    print("b1(L)= " + str(b_av_dict["L"][1]))
     exit()
+    Obs.plot_bcoeffs_2D(bcoeffs_alpha_av_dict,b_av_dict,grid2D,"leg")
+    
+
+    #calculate multi-photon alpha-averaged PECD for (beta,gamma) orientations
+
 
     #calculate orientation-averaged b-coefficients for given time, energy and helicities.
-    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    pecd        = Obs.calc_pecd(bcoeffs_dict)
-    pecd_av     = Obs.calc_pecd_av(pecd,b_av_dict)
+    pecd_alpha_av        = Obs.calc_pecd(bcoeffs_alpha_av_dict)
+
+    Obs.plot_pecd_2D(pecd_alpha_av,b_av_dict,grid2D )
+    pecd_av     = Obs.calc_pecd_av(pecd_alpha_av,b_av_dict)
     #
