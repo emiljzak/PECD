@@ -1632,44 +1632,6 @@ def gen_tjmat_leb(lmax_basis,lmax_multi):
 
     return tjmat#/np.sqrt(4.0*np.pi)
 
-""" ============ POTMAT0 ROTATED with Multipole expansion ============ """
-def BUILD_POTMAT0_MULTIPOLES_ROT( params, maparray, Nbas , Gr, grid_euler, irun ):
-    """ Calculate potential matrix using multipole expansion representation of 
-    the electrostatic potential. Integrals are analytic. Matrix is labeled by vlist.
-    
-    """
-
-    # 1. Construct vlist
-    start_time = time.time()
-    vlist = mapping.GEN_VLIST( maparray, Nbas, params['map_type'] )
-    vlist = np.asarray(vlist)
-    end_time = time.time()
-    print("Time for the construction of vlist: " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
-
-    # 2. Build array of multipole moments
-    start_time = time.time()
-    qlm = POTENTIAL.calc_multipoles(params)
-    end_time = time.time()
-    print("Time for the calculation of multipole moments: " +  str("%10.3f"%(end_time-start_time)) + "s")
-    
-
-    # 3. Build array of 3-j symbols
-    tjmat =  gen_tjmat(params['bound_lmax'],params['multi_lmax'])
-
-    # 3a. Build array of '1/r**l' values on the radial grid
-
-    rlmat = np.zeros((Gr.shape[0]*Gr.shape[1],params['multi_lmax']), dtype=float)
-    for L in range(params['multi_lmax']):
-        rlmat[:,L] = 1.0 / Gr.ravel()**L
-
-
-    # 4. Perform semi-vectorized summation
-    potmat0, potind = calc_potmat_multipoles_jit( vlist, tjmat, qlm, params['multi_lmax'], rlmat )
-    # 5. Return final potential matrix
-    return  potmat0, potind 
-
-
 
 
 
@@ -1721,76 +1683,6 @@ def read_adaptive_quads_rot(params,irun):
         scheme  = str(words[3])
         levels.append([i,n,xi,scheme])
     return levels
-
-def gen_adaptive_quads(params, esp_interpolant, rgrid):
-
-    sph_quad_list = [] #list of quadrature levels needed to achieve convergence quad_tol of the potential energy matrix elements (global)
-
-    lmax = params['bound_lmax']
-    quad_tol = params['sph_quad_tol']
-
-    print("Testing potential energy matrix elements using Lebedev quadratures")
-
-    sphlist = mapping.GEN_SPHLIST(lmax)
-
-    val =  np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
-    val_prev = np.zeros( shape = ( len(sphlist)**2 ), dtype=complex)
-
-    spherical_schemes = []
-    for elem in list(quadpy.u3.schemes.keys()):
-        if 'lebedev' in elem:
-            spherical_schemes.append(elem)
-
-    xi = 0
-    for i in range(np.size( rgrid, axis=0 )): 
-        for n in range(np.size( rgrid, axis=1 )): 
-            rin = rgrid[i,n]
-            print("i = " + str(i) + ", n = " + str(n) + ", xi = " + str(xi) + ", r = " + str(rin) )
-            if rin <= params['r_cutoff']:
-                for scheme in spherical_schemes[3:]: #skip 003a,003b,003c rules
-                    k=0
-                    for l1,m1 in sphlist:
-                        for l2,m2 in sphlist:
-                        
-                            val[k] = calc_potmatelem_quadpy( l1, m1, l2, m2, rin, scheme, esp_interpolant )
-                            print(  '%4d %4d %4d %4d'%(l1,m1,l2,m2) + '%12.6f %12.6fi' % (val[k].real, val[k].imag) + \
-                                    '%12.6f %12.6fi' % (val_prev[k].real, val_prev[k].imag) + \
-                                    '%12.6f %12.6fi' % (np.abs(val[k].real-val_prev[k].real), np.abs(val[k].imag-val_prev[k].imag)) + \
-                                    '%12.6f '%np.abs(val[k]-val_prev[k])  )
-                            k += 1
-
-                    diff = np.abs(val - val_prev)
-
-                    if (np.any( diff > quad_tol )):
-                        print( str(scheme) + " convergence not reached" ) 
-                        for k in range(len(val_prev)):
-                            val_prev[k] = val[k]
-                    elif ( np.all( diff < quad_tol ) ):     
-                        print( str(scheme) + " convergence reached !!!")
-                        sph_quad_list.append([ i, n, xi, str(scheme)])
-                        xi += 1
-                        break
-
-                    #if no convergence reached raise warning
-                    if ( scheme == spherical_schemes[len(spherical_schemes)-1] and np.any( diff > quad_tol )):
-                        print("WARNING: convergence at tolerance level = " + str(quad_tol) + " not reached for all considered quadrature schemes")
-
-            else:
-                scheme = spherical_schemes[lmax+1]
-                sph_quad_list.append([ i, n, xi, str(scheme)])
-                print("r>r_cutoff: "+str(scheme))
-                xi += 1
-
-
-    print("Converged quadrature levels: ")
-    print(sph_quad_list)
-    quadfilename = params['job_directory'] + params['file_quad_levels'] 
-    fl = open(quadfilename,'w')
-    print("saving quadrature levels to file: " + quadfilename )
-    for item in sph_quad_list:
-        fl.write( str('%4d '%item[0]) + str('%4d '%item[1]) + str('%4d '%item[2]) + str(item[3]) + "\n")
-
-    return sph_quad_list
 
 
 

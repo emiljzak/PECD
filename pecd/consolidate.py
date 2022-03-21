@@ -245,8 +245,12 @@ class Avobs:
         return bcoeffs_alpha_av_dict,grid2D
 
 
-    def calc_bcoeffs_av(self,bcoeff_dict):
+    def calc_bcoeffs_av(self,bcoeff_dict,grid3D):
         """Calculate 3D orientation-averaged b-coefficients for selected helicities"""
+        
+        #calculate sin(beta) on the euler grid
+        sinbeta = np.sin(grid3D[:,1])
+        
         bcoeff_av_dict = {}
 
         for sigma,barray in bcoeff_dict.items():
@@ -255,12 +259,20 @@ class Avobs:
             bav = np.zeros((barray.shape[1]),dtype=float)
 
             for n in range(barray.shape[1]):
-                bav[n] = np.sum(barray[:,n])/Nomega
+                bav[n] = np.sum(sinbeta[:]*barray[:,n])/Nomega
             
             bcoeff_av_dict[sigma] = bav
             print("Orientation-averaged b-coefficients for sigma = "+sigma)
-            print(bav)
+            print(bav/bav[0])
             #save b-coeffs
+            
+        print("2b_1/b_0:")
+        print(200*bcoeff_av_dict["R"][1]/bcoeff_av_dict["R"][0])
+        with open(  self.params['job_directory'] +  "bcoeffs_averaged.dat" , 'w') as bcoeffile:
+            for sigma,val in bcoeff_av_dict.items(): 
+ 
+                bcoeffile.write(str(sigma) +  " ".join('{:12.8f}'.format(val[n]) for n in range(val.shape[0]))+"\n") 
+
         return bcoeff_av_dict
 
     def calc_pecd(self,bcoeffs_dict):
@@ -306,7 +318,7 @@ class Avobs:
         pecd_av = np.zeros(Nphotons,dtype=float)
 
         for nph in range(1,Nphotons+1):
-            pecd_av[nph-1] = np.sum(pecd[:,nph-1])/bav
+            pecd_av[nph-1] = np.sum(pecd[:,nph-1])
         
         print("PECD_av")
         print(pecd_av)
@@ -479,10 +491,9 @@ if __name__ == "__main__":
     #calculate alpha-averaged b-coeffs the legendre expansion 
     bcoeffs_alpha_av_dict,grid2D = Obs.calc_bcoeffs_alpha_av(bcoeffs_dict)
     #calculate 3D orientation-averaged b-coeffs 
-    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict)
-    print("b1(R)= " + str(b_av_dict["R"][1]))
-    print("b1(L)= " + str(b_av_dict["L"][1]))
-    exit()
+    b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_dict,Obs.grid_euler)
+    
+  
     Obs.plot_bcoeffs_2D(bcoeffs_alpha_av_dict,b_av_dict,grid2D,"leg")
     
 
@@ -495,3 +506,5 @@ if __name__ == "__main__":
     Obs.plot_pecd_2D(pecd_alpha_av,b_av_dict,grid2D )
     pecd_av     = Obs.calc_pecd_av(pecd_alpha_av,b_av_dict)
     #
+    print("b1(R)= " + str(b_av_dict["R"][1]))
+    print("b1(L)= " + str(b_av_dict["L"][1]))
