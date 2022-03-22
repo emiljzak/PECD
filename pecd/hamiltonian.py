@@ -1065,8 +1065,11 @@ class Hamiltonian():
             vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point
         """
         lmax    = self.params['bound_lmax']
-        Nang    = lmax**2
+        Nang    = (lmax+1)**2
         vxi     = np.zeros((Nang,Nang), dtype = complex) 
+        print(np.shape(Gs))
+        print(np.shape(V))
+        #exit()
         w       = Gs[:,2]
         print("shape of Gs:")
         print(Gs.shape)
@@ -1076,10 +1079,13 @@ class Hamiltonian():
                 for l2 in range(0,lmax+1):
                     for m2 in range(-l2,l2+1):
                         f = np.conjugate(sph_harm( m1 , l1 , Gs[:,1] + np.pi,  Gs[:,0])) * \
-                            sph_harm( m2 , l2 , Gs[:,1] + np.pi,  Gs[:,0]) *\
-                            V[:]
+                            sph_harm( m2 , l2 , Gs[:,1] + np.pi,  Gs[:,0]) * V[:]
+                        #print(f.shape)
+                        #print(w.shape)
+                        #exit()
                         vxi[l1*(l1+1)+m1,l2*(l2+1)+m2] = np.dot(w,f.T) * 4.0 * np.pi 
-
+        #plt.spy(vxi.real,precision=1e-3,color='b', markersize=5)
+        #plt.show()
         return vxi
 
 
@@ -1175,7 +1181,7 @@ class Hamiltonian():
         # This part can probably be done in parallel
         potarr = []
         for ipoint in range(Nr):
-            vxi = self.calc_vxi_leb(VG[ipoint])
+            vxi = self.calc_vxi_leb(VG[ipoint],Gs[ipoint])
             potarr.append(vxi)
 
         potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
@@ -1740,10 +1746,9 @@ class Hamiltonian():
                     V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                     V        = -1.0 * np.asarray(V)
 
-                    print(V.shape)
-                    exit()
+                    
                     esp_grid = np.hstack((grid_xyz,V[:,None])) 
-                    fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] + "_"+str(irun), "w")
+                    fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] , "w")
                     np.savetxt(fl, esp_grid, fmt='%10.6f')
 
                 else:
@@ -1769,11 +1774,11 @@ class Hamiltonian():
                 
                 
                 esp_grid = np.hstack((grid_xyz,V[:,None])) 
-                fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] + "_"+str(irun), "w")
+                fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/" + self.params['file_esp'], "w")
                 np.savetxt(fl, esp_grid, fmt='%10.6f')
 
             #construct the final VG array containing ESP on the (r,theta,phi) grid
-            for k in range(Nr):
+            for k in range(Nr-1):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])) )
                 for s in range(Gs[k].shape[0]):

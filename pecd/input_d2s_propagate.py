@@ -61,7 +61,7 @@ def read_input():
 
     """===== potential energy matrix ====="""
     params['matelem_method']    = "lebedev" 
-    params['sph_quad_global']   = "lebedev_19" 
+    params['sph_quad_global']   = "lebedev_019" 
     params['sph_quad_tol']      = 1e-10     
 
     """==== electrostatic potential ===="""
