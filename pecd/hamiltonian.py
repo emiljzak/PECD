@@ -1067,12 +1067,12 @@ class Hamiltonian():
         lmax    = self.params['bound_lmax']
         Nang    = (lmax+1)**2
         vxi     = np.zeros((Nang,Nang), dtype = complex) 
-        print(np.shape(Gs))
-        print(np.shape(V))
+        #print(np.shape(Gs))
+        #print(np.shape(V))
         #exit()
         w       = Gs[:,2]
-        print("shape of Gs:")
-        print(Gs.shape)
+        #print("shape of Gs:")
+        #print(Gs.shape)
         
         for l1 in range(0,lmax+1):
             for m1 in range(-l1,l1+1):
@@ -1131,7 +1131,7 @@ class Hamiltonian():
                 else:
                     raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
         else: 
-            print(str(self.params['molec_name']) + ": building the potential energy matrix elements numerical potential and numerical (quadratures) integrals")
+            print(str(self.params['molec_name']) + ": building the potential energy matrix elements with numerical potential and numerical (quadratures) integrals")
             if self.params['matelem_method'] == "lebedev":
                 
                 if self.params['esp_mode'] == "psi4":
@@ -1180,6 +1180,10 @@ class Hamiltonian():
 
         # This part can probably be done in parallel
         potarr = []
+        print("shape of Gs:")
+        print(np.shape(Gs))
+        print("Shape of VG:")
+        print(np.shape(VG))
         for ipoint in range(Nr):
             vxi = self.calc_vxi_leb(VG[ipoint],Gs[ipoint])
             potarr.append(vxi)
@@ -1481,18 +1485,16 @@ class Hamiltonian():
             grid: list of lists [[x,y,z]]
         """
         grid = []
-        r_array = self.Gr.flatten()
-        #print(r_array)
         print("working dir: " + working_dir )
         gridfile = open(working_dir + "grid.dat", 'w')
 
-        for k in range(len(r_array)):
+        for k in range(self.Gr.shape[0]):
             #print(Gs[k].shape[0])
             for s in range(Gs[k].shape[0]):
 
                 theta   = Gs[k][s,0] 
                 phi     = Gs[k][s,1]
-                r       = r_array[k]
+                r       = self.Gr[k]
                 x,y,z   = self.sph2cart(r,theta,phi)
 
                 gridfile.write( " %12.6f"%x +  " %12.6f"%y + "  %12.6f"%z + "\n")
@@ -1681,8 +1683,8 @@ class Hamiltonian():
             VG: list of numpy arrays: [V0,V1,...,VNr-1], where each Vk is numpy array of shape (Nsph,1): with elements (r_k,theta_s^(k),phi_s^(k)).
             Nsph is determined by the spherical quadrature level.
         """
-        r_array = self.Gr.flatten()
-        Nr      = r_array.shape[0]
+   
+        Nr      = self.Gr.shape[0]
         VG      = []
         counter = 0
 
@@ -1696,9 +1698,9 @@ class Hamiltonian():
 
             lmax_multi = self.params['multi_lmax']
 
-            for k in range(len(r_array)-1):
+            for k in range(len(self.Gr)-1):
                 sph = np.zeros(Gs[k].shape[0], dtype=complex)
-                print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])))
+                print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(self.Gr[k])))
                 for s in range(Gs[k].shape[0]):
 
                     #entire potential block 
@@ -1716,11 +1718,11 @@ class Hamiltonian():
 
         elif self.params['molec_name'] == "h": # test case of shifted hydrogen
             r0 = self.params['mol_geometry']["rc"]
-            for k in range(len(r_array)-1):
-                sph = np.zeros(Gs[k].shape[0], dtype=float)
-                print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])))
-                for s in range(Gs[k].shape[0]):
-                    sph[s] = -1.0 / np.sqrt(r_array[k]**2 + r0**2 - 2.0 * r_array[k] * r0 * np.cos(Gs[k][s,0]))
+            for k in range(len(self.Gr)-1):
+                sph = np.zeros(Gs[k].shape[1], dtype=float)
+                print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(self.Gr[k])))
+                for s in range(Gs[k].shape[1]):
+                    sph[s] = -1.0 / np.sqrt(self.Gr[k]**2 + r0**2 - 2.0 * self.Gr[k] * r0 * np.cos(Gs[k][s,0]))
                     #sph[s] = -1.0 / (r_array[k])
                     counter  += 1
 
@@ -1747,7 +1749,7 @@ class Hamiltonian():
                     V        = -1.0 * np.asarray(V)
 
                     
-                    esp_grid = np.hstack((grid_xyz,V[:,None])) 
+                    esp_grid = np.hstack((grid_xyz,V.reshape(-1,1))) 
                     fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] , "w")
                     np.savetxt(fl, esp_grid, fmt='%10.6f')
 
@@ -1759,7 +1761,7 @@ class Hamiltonian():
                         words   = line.split()
                         potval  = float(words[3])
                         V.append(potval)
-                    V = np.asarray(V,dtype=complex)
+                    V = np.asarray(V,dtype=float)
 
             else:
                 print (self.params['file_esp'] + " file does not exist")
@@ -1771,16 +1773,24 @@ class Hamiltonian():
                 V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                 V        = -1.0 * np.asarray(V)
 
+                print("shapes of gridxyz and V:")
+                print(V.shape)
+                print(grid_xyz.shape)
                 
                 
                 esp_grid = np.hstack((grid_xyz,V[:,None])) 
+                print(esp_grid.shape)
+                #exit()
                 fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/" + self.params['file_esp'], "w")
                 np.savetxt(fl, esp_grid, fmt='%10.6f')
 
             #construct the final VG array containing ESP on the (r,theta,phi) grid
-            for k in range(Nr-1):
+            #print(np.shape(Gs))
+            #print(V.shape)
+            counter = 0
+            for k in range(Nr):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
-                print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])) )
+                print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(self.Gr[k])) )
                 for s in range(Gs[k].shape[0]):
                     sph[s]      = V[counter]
                     counter     += 1

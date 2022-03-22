@@ -20,7 +20,7 @@ def read_input():
     """
     """ BOUND PART"""
     params['bound_nlobs_arr']   = (10,10,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_lmax_arr']    = (2,10,5)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 20
@@ -43,12 +43,12 @@ def read_input():
     params['restart_list']      = [1,5] #global id list of jobs to be restarted. Must be compatible with the ordering of the Euler grid.
     params['N_euler'] 	        = 1   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
-    params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
 
     params['molec_name']    = "d2s"
-    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.2 * 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
+    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
     params['mol_masses']    = {"S":32.0, "D":2.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
