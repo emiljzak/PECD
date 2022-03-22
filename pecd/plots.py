@@ -8,7 +8,6 @@ import os
 
 import json
 
-import grid
 #import mapping
 import constants
 

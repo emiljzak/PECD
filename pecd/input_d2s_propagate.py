@@ -61,7 +61,7 @@ def read_input():
 
     """===== potential energy matrix ====="""
     params['matelem_method']    = "lebedev" 
-    params['sph_quad_global']   = "lebedev_119" 
+    params['sph_quad_global']   = "lebedev_19" 
     params['sph_quad_tol']      = 1e-10     
 
     """==== electrostatic potential ===="""
@@ -70,7 +70,7 @@ def read_input():
     params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
     params['scf_method']         = 'UHF'
     params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
-
+    params['multi_lmax']         = 8 
 
     """===== Hamiltonian parameters ====="""
     params['hmat_filter']           = 1e-4 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian

@@ -1064,13 +1064,13 @@ class Hamiltonian():
         Returns: numpy.ndarray, dtype = complex, shape = (Nang,Nang)
             vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point
         """
-        lmax = self.params['bound_lmax']
-        Nang = lmax**2
-        vxi = np.zeros((Nang,Nang), dtype = complex) 
-        w = Gs[:,2]
+        lmax    = self.params['bound_lmax']
+        Nang    = lmax**2
+        vxi     = np.zeros((Nang,Nang), dtype = complex) 
+        w       = Gs[:,2]
         print("shape of Gs:")
         print(Gs.shape)
-        exit()
+        
         for l1 in range(0,lmax+1):
             for m1 in range(-l1,l1+1):
                 for l2 in range(0,lmax+1):
@@ -1148,8 +1148,9 @@ class Hamiltonian():
             .. note:: For this function to work Psi4 must be installed and appropriate conda environment activated.
 
         """
-
+      
         Nr = self.Gr.ravel().shape[0]
+
         mol_xyz = self.rotate_mol_xyz(grid_euler, irun)
 
         print("using global quadrature scheme")
@@ -1157,9 +1158,7 @@ class Hamiltonian():
         xi = 0
 
         for i in range(self.Gr.shape[0]):
-            for n in range(self.Gr.shape[1]):
-                xi +=1
-                sph_quad_list.append([i,n+1,xi,self.params['sph_quad_global']])
+            sph_quad_list.append([i,self.params['sph_quad_global']])
         #print(sph_quad_list)
         #exit()
 
@@ -1169,7 +1168,7 @@ class Hamiltonian():
         print("Time for generation of the Gs grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
         start_time = time.time()
-        VG = self.build_esp_mat(Gs, mol_xyz, irun, True)
+        VG = self.build_esp_mat(Gs, mol_xyz, irun)
         end_time = time.time()
         print("Time for construction of the ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
@@ -1458,7 +1457,7 @@ class Hamiltonian():
         """
         Gs = []
         for elem in sph_quad_list:
-            gs = self.read_leb_quad(str(elem[3]), path)
+            gs = self.read_leb_quad(str(elem[1]), path)
             Gs.append( gs )
         return Gs
 
@@ -1767,19 +1766,19 @@ class Hamiltonian():
                 V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                 V        = -1.0 * np.asarray(V)
 
-                print(V.shape)
-                exit()
+                
+                
                 esp_grid = np.hstack((grid_xyz,V[:,None])) 
                 fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] + "_"+str(irun), "w")
                 np.savetxt(fl, esp_grid, fmt='%10.6f')
 
             #construct the final VG array containing ESP on the (r,theta,phi) grid
-            for k in range(len(r_array)-1):
+            for k in range(Nr):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])) )
                 for s in range(Gs[k].shape[0]):
-                    sph[s] = V[counter]
-                    counter  += 1
+                    sph[s]      = V[counter]
+                    counter     += 1
 
                 VG.append(sph)
 
