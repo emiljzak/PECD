@@ -1096,8 +1096,82 @@ class Hamiltonian():
                     raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
         else: 
             print(str(self.params['molec_name']) + ": building the potential energy matrix elements numerical potential and numerical (quadratures) integrals")
-        
+            if self.params['matelem_method'] == "lebedev":
+                
+                if self.params['esp_mode'] == "psi4":
+                    print("building the potential energy matrix elements using global lebedev quadratures")
+                    potmat = self.build_potmat_psi4(grid_euler,irun)
+                else:
+                    raise NotImplementedError("ESP " + str(self.params['esp_mode']) + " not implemented for this molecule and matelem_method" )
         return potmat
+
+    def build_potmat_psi4(self,grid_euler,irun):
+        """Build the potential energy matrix using the analytic method with the ESP read from files provided by A. Artemyev.
+
+            See theory docs for more detailes.
+
+            Returns: sparse matrix
+                potmat sparse matrix, dtype = complex, shape = (Nbas,Nbas)
+                    potential energy matrix
+
+            .. note:: For this function to work a set of ESP files in ./potential/ directory must be provided.
+
+            Examples:   
+                Below are given example structures of the potential energy matrix:
+
+                .. figure:: _images/potmat_example_zoom1.png
+                    :height: 400
+                    :width: 400
+                    :align: center
+
+                .. figure:: _images/potmat_example_zoom2.png
+                    :height: 400
+                    :width: 400
+                    :align: center
+
+                .. figure:: _images/potmat_example_zoom3.png
+                    :height: 400
+                    :width: 400
+                    :align: center          
+
+        """
+
+
+        Nr = self.Gr.ravel().shape[0]
+        # Read the potential partial waves on the grid
+        start_time = time.time()
+        vLM,rgrid_anton = potential.read_potential_anton(self.params,Nr,False)
+        end_time = time.time()
+        print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
+
+        # Build an array of 3-j symbols
+        tjmat       = self.gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
+
+        tjmat       = self.rotate_tjmat(grid_euler,irun,tjmat)
+
+        tmats = self.map_tjmat(tjmat)
+
+        vmats = self.map_vmats(vLM,Nr)
+
+        # This part can probably be done in parallel
+        potarr = []
+        for ipoint in range(Nr):
+            vxi = self.calc_vxi(vmats[ipoint],tmats)
+            potarr.append(vxi)
+
+        potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
+
+        # build potmat from block-diagonal parts in each bin
+        potmat = sparse.block_diag(potarr)
+        
+        #plot the matrix:
+        #plot_mat(potmat,1.0,show=True,save=True,name="potmat_example",path="./")
+        #plt.spy(potmat.todense(),precision=1e-3,color='b', markersize=5)
+        #plt.show()
+        #exit()
+        return potmat
+
+
 
     def build_potmat_chiralium_anton(self,grid_euler,irun):
         """Build the potential energy matrix using the analytic method with the ESP read from files provided by A. Artemyev.
@@ -1164,6 +1238,9 @@ class Hamiltonian():
         #plt.show()
         #exit()
         return potmat
+
+
+
 
 
     def build_potmat_standard(self,grid_euler=[0,0,0],irun=0):

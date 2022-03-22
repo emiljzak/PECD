@@ -18,7 +18,13 @@ def rotate_mol_xyz(params, grid_euler, irun):
         followed by shift to the centre of mass,
         followed by rotation by appropriate rotation matrix associated with elements of the Euler angles grid
     """
-
+    """
+        Set up properties of the molecule, including atomic masses, geometry, MF embedding
+        *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
+            Extend later to the option of the cartesian input. 
+        *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
+            Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
+    """
     print("generating rotated cartesian coordinates of atoms...")
     print("irun = " + str(irun))
     print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
