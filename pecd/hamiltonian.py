@@ -1054,7 +1054,7 @@ class Hamiltonian():
 
         return vxi
 
-    def calc_vxi_leb(self,V):
+    def calc_vxi_leb(self,V,Gs):
         """Calculate a block of the potential energy matrix for a single grid point. Uses Lebedev quadratures.
 
         Arguments:
@@ -1064,24 +1064,22 @@ class Hamiltonian():
         Returns: numpy.ndarray, dtype = complex, shape = (Nang,Nang)
             vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point
         """
+        lmax = self.params['bound_lmax']
+        Nang = lmax**2
         vxi = np.zeros((Nang,Nang), dtype = complex) 
-       
-       for l1 in range(0,lmax+1):
-           for m1 in range(-l1,l1+1):
-            for l1 in range(0,lmax+1):
-           for m1 in range(-l1,l1+1):          
-        
-        #print(vlist[p1,:])
-        w = Gs[vlist[p1,0]-1][:,2]
-        G = Gs[vlist[p1,0]-1] 
-        V = VG[vlist[p1,0]-1] #xi starts from 1,2,3 but python listst start from 0.
+        w = Gs[:,2]
+        print("shape of Gs:")
+        print(Gs.shape)
+        exit()
+        for l1 in range(0,lmax+1):
+            for m1 in range(-l1,l1+1):
+                for l2 in range(0,lmax+1):
+                    for m2 in range(-l2,l2+1):
+                        f = np.conjugate(sph_harm( m1 , l1 , Gs[:,1] + np.pi,  Gs[:,0])) * \
+                            sph_harm( m2 , l2 , Gs[:,1] + np.pi,  Gs[:,0]) *\
+                            V[:]
+                        vxi[l1*(l1+1)+m1,l2*(l2+1)+m2] = np.dot(w,f.T) * 4.0 * np.pi 
 
-        f = np.conjugate(sph_harm( m1 , l1 , G[:,1] + np.pi,  G[:,0])) * \
-            sph_harm( m2 , l2 , G[:,1] + np.pi,  G[:,0]) *\
-            V[:]
-
-        pot.append( [np.dot(w,f.T) * 4.0 * np.pi ] )
-        
         return vxi
 
 
