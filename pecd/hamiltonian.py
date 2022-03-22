@@ -1054,25 +1054,34 @@ class Hamiltonian():
 
         return vxi
 
-    def calc_vxi_leb(self,vmat,tmats):
+    def calc_vxi_leb(self,V):
         """Calculate a block of the potential energy matrix for a single grid point. Uses Lebedev quadratures.
 
         Arguments:
-            vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
-            tmats (3D numpy array, shape=(Nang,Nang,Nmulti)): tjmat reduced to 3 dimensions
+            V (1D numpy array, shape=(Nsph).
+
         
         Returns: numpy.ndarray, dtype = complex, shape = (Nang,Nang)
             vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point
         """
-        Nang = tmats.shape[0]
-        Nmulti = vmat.shape[0]
-        #print("Nmulti in calc_vxi = " +str(Nmulti))
-        vxi = np.zeros((Nang,Nang), dtype = complex)
+        vxi = np.zeros((Nang,Nang), dtype = complex) 
+       
+       for l1 in range(0,lmax+1):
+           for m1 in range(-l1,l1+1):
+            for l1 in range(0,lmax+1):
+           for m1 in range(-l1,l1+1):          
+        
+        #print(vlist[p1,:])
+        w = Gs[vlist[p1,0]-1][:,2]
+        G = Gs[vlist[p1,0]-1] 
+        V = VG[vlist[p1,0]-1] #xi starts from 1,2,3 but python listst start from 0.
 
-        for imulti in range(Nmulti):
-            vxi += vmat[imulti] * tmats[:,:,imulti]
-        #vxi = np.dot(vmat[ipoint,:],tmats[,,:])
+        f = np.conjugate(sph_harm( m1 , l1 , G[:,1] + np.pi,  G[:,0])) * \
+            sph_harm( m2 , l2 , G[:,1] + np.pi,  G[:,0]) *\
+            V[:]
 
+        pot.append( [np.dot(w,f.T) * 4.0 * np.pi ] )
+        
         return vxi
 
 
@@ -1212,7 +1221,7 @@ class Hamiltonian():
         print("irun = " + str(irun))
         print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
 
-        if params['molec_name'] == "d2s":
+        if self.params['molec_name'] == "d2s":
 
             mol_xyz = np.zeros( (3,3), dtype = float) #
             mol_xyz_rotated = np.zeros( (3,3), dtype = float) #
@@ -1223,14 +1232,14 @@ class Hamiltonian():
 
             ang_au = constants.angstrom_to_au
             # create raw cartesian coordinates from input molecular geometry and embedding
-            rSD1 = params['mol_geometry']["rSD1"] * ang_au
-            rSD2 = params['mol_geometry']["rSD2"] * ang_au
-            alphaDSD = params['mol_geometry']["alphaDSD"] * np.pi / 180.0
+            rSD1 = self.params['mol_geometry']["rSD1"] * ang_au
+            rSD2 = self.params['mol_geometry']["rSD2"] * ang_au
+            alphaDSD = self.params['mol_geometry']["alphaDSD"] * np.pi / 180.0
 
-            mS = params['mol_masses']["S"]    
-            mD = params['mol_masses']["D"]
+            mS = self.params['mol_masses']["S"]    
+            mD = self.params['mol_masses']["D"]
 
-            mVec = np.array ( [mS, mD, mD])
+            mVec = np.array( [mS, mD, mD])
 
             Sz = 1.1 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
 
@@ -1278,7 +1287,7 @@ class Hamiltonian():
             print(mol_xyz_rotated)
 
 
-        elif params['molec_name'] == "n2":
+        elif self.params['molec_name'] == "n2":
             
             mol_xyz = np.zeros( (3,2), dtype = float) #
             mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
@@ -1289,7 +1298,7 @@ class Hamiltonian():
 
             ang_au = constants.angstrom_to_au
 
-            mol_xyz[2,0] = ang_au * params['mol_geometry']["rNN"] / 2.0 
+            mol_xyz[2,0] = ang_au * self.params['mol_geometry']["rNN"] / 2.0 
             mol_xyz[2,1] =  -1.0 * mol_xyz[2,0] 
 
             print("Rotation matrix:")
@@ -1301,7 +1310,7 @@ class Hamiltonian():
             print(mol_xyz_rotated)
 
 
-        elif params['molec_name'] == "co":
+        elif self.params['molec_name'] == "co":
             
             mol_xyz = np.zeros( (3,2), dtype = float) # initial embedding coordinates (0 degrees rotation)
             mol_xyz_rotated = np.zeros( (3,2), dtype = float) #
@@ -1309,9 +1318,9 @@ class Hamiltonian():
 
             ang_au = constants.angstrom_to_au
 
-            mC = params['mol_masses']["C"]    
-            mO = params['mol_masses']["O"]
-            rCO = params['mol_geometry']["rCO"] 
+            mC = self.params['mol_masses']["C"]    
+            mO = self.params['mol_masses']["O"]
+            rCO = self.params['mol_geometry']["rCO"] 
 
             # C = O   in ----> positive direction of z-axis.
             #coordinates for vanishing electric dipole moment in psi4 calculations is z_C = -0.01 a.u. , z_O = 2.14 a.u
@@ -1319,7 +1328,7 @@ class Hamiltonian():
             mol_xyz[2,1] =  1.0 * ang_au * mC * rCO / (mC + mO) #z_O
 
             """rotation associated with MF embedding"""
-            rotmatMF = R.from_euler('zyz', [0.0, params['mol_embedding'], 0.0], degrees=True)
+            rotmatMF = R.from_euler('zyz', [0.0, self.params['mol_embedding'], 0.0], degrees=True)
 
             for iatom in range(2):
                 mol_xyz_MF[:,iatom] = rotmatMF.apply(mol_xyz[:,iatom])
@@ -1335,7 +1344,7 @@ class Hamiltonian():
             print("rotated molecular cartesian matrix:")
             print(mol_xyz_rotated)
 
-        elif params['molec_name'] == "h":
+        elif self.params['molec_name'] == "h":
             
             mol_xyz = np.zeros( (3,1), dtype = float) #
             mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
@@ -1344,7 +1353,7 @@ class Hamiltonian():
             #  Hy 
             #  Hz 
 
-        elif params['molec_name'] == "c":
+        elif self.params['molec_name'] == "c":
             
             mol_xyz = np.zeros( (3,1), dtype = float) #
             mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
@@ -1353,7 +1362,7 @@ class Hamiltonian():
             #  Cy 
             #  Cz 
 
-        elif params['molec_name'] == "h2o":
+        elif self.params['molec_name'] == "h2o":
             mol_xyz = np.zeros( (3,1), dtype = float) #
             mol_xyz_rotated = np.zeros( (3,1), dtype = float) #
         else:
@@ -1408,7 +1417,6 @@ class Hamiltonian():
 
         mlab.show()
         """
-
         return mol_xyz_rotated
 
     def read_leb_quad(self,scheme, path):
