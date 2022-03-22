@@ -1034,7 +1034,7 @@ class Hamiltonian():
 
 
     def calc_vxi(self,vmat,tmats):
-        """Calculate a block of the potential energy matrix for a single grid point.
+        """Calculate a block of the potential energy matrix for a single grid point. Uses multipole expansion as given in Demekhin et al.
 
         Arguments:
             vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
@@ -1053,6 +1053,28 @@ class Hamiltonian():
         #vxi = np.dot(vmat[ipoint,:],tmats[,,:])
 
         return vxi
+
+    def calc_vxi_leb(self,vmat,tmats):
+        """Calculate a block of the potential energy matrix for a single grid point. Uses Lebedev quadratures.
+
+        Arguments:
+            vmats (1D numpy array, shape=(Nmulti)): Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.
+            tmats (3D numpy array, shape=(Nang,Nang,Nmulti)): tjmat reduced to 3 dimensions
+        
+        Returns: numpy.ndarray, dtype = complex, shape = (Nang,Nang)
+            vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point
+        """
+        Nang = tmats.shape[0]
+        Nmulti = vmat.shape[0]
+        #print("Nmulti in calc_vxi = " +str(Nmulti))
+        vxi = np.zeros((Nang,Nang), dtype = complex)
+
+        for imulti in range(Nmulti):
+            vxi += vmat[imulti] * tmats[:,:,imulti]
+        #vxi = np.dot(vmat[ipoint,:],tmats[,,:])
+
+        return vxi
+
 
     def build_potmat(self,grid_euler=np.zeros((1,3),dtype=float),irun=0):
         """Driver routine for the calculation of the potential energy matrix.
@@ -1147,7 +1169,7 @@ class Hamiltonian():
         # This part can probably be done in parallel
         potarr = []
         for ipoint in range(Nr):
-            vxi = self.calc_vxi(vmats[ipoint],tmats)
+            vxi = self.calc_vxi_leb(VG[ipoint])
             potarr.append(vxi)
 
         potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
@@ -1506,12 +1528,17 @@ class Hamiltonian():
 
 
     def calc_esp_psi4_rot(self,dir,mol_xyz):
+        """Calculates ESP on a cartesian grid stored in grid.dat
+        
+        Returns: numpy array
+            vvals: array of ESP values on the cartesian grid. Shape = (Npts,1)
+        """
         os.chdir(dir)
         psi4.core.be_quiet()
-        properties_origin=["COM"] #[“NUCLEAR_CHARGE”] or ["COM"] #here might be the shift!
-        ang_au = constants.angstrom_to_au
+        properties_origin   =["COM"] #[“NUCLEAR_CHARGE”] or ["COM"] #here might be the shift!
+        ang_au              = constants.angstrom_to_au
 
-        if params['molec_name'] == "d2s":
+        if self.params['molec_name'] == "d2s":
             mol = psi4.geometry("""
             1 2
             noreorient
@@ -1526,7 +1553,7 @@ class Hamiltonian():
                         mol_xyz[0,2], mol_xyz[1,2], mol_xyz[2,2],)
             )
         
-        if params['molec_name'] == "cmethane":
+        if self.params['molec_name'] == "cmethane":
             mol = psi4.geometry("""
             1 2
             units au
@@ -1541,13 +1568,13 @@ class Hamiltonian():
             CH3    = {2}
             CH4    = {3}
             HCH    = 109.471209
-            """.format( params['mol_geometry']['r1'], params['mol_geometry']['r2'],
-                        params['mol_geometry']['r3'], params['mol_geometry']['r4'])
+            """.format( self.params['mol_geometry']['r1'], self.params['mol_geometry']['r2'],
+                        self.params['mol_geometry']['r3'], self.params['mol_geometry']['r4'])
             )
         
 
 
-        elif params['molec_name'] == "n2":
+        elif self.params['molec_name'] == "n2":
             mol = psi4.geometry("""
             1 2
             noreorient
@@ -1561,7 +1588,7 @@ class Hamiltonian():
             )
 
 
-        elif params['molec_name'] == "co":
+        elif self.params['molec_name'] == "co":
             mol = psi4.geometry("""
             1 2
             noreorient
@@ -1574,7 +1601,7 @@ class Hamiltonian():
                         mol_xyz[0,1], mol_xyz[1,1], mol_xyz[2,1])
             )
 
-        elif params['molec_name'] == "ocs":
+        elif self.params['molec_name'] == "ocs":
             mol = psi4.geometry("""
             1 2
             noreorient
@@ -1591,7 +1618,7 @@ class Hamiltonian():
             )
 
 
-        elif params['molec_name'] == "h2o":
+        elif self.params['molec_name'] == "h2o":
             mol = psi4.geometry("""
             1 2
             noreorient
@@ -1606,7 +1633,7 @@ class Hamiltonian():
                         0.0, -2.0, 2.0,)
             )
 
-        elif params['molec_name'] == "h":
+        elif self.params['molec_name'] == "h":
             mol = psi4.geometry("""
             1 1
             noreorient
@@ -1617,7 +1644,7 @@ class Hamiltonian():
             """.format( 0.0, 0.0, 0.0)
             )
 
-        elif params['molec_name'] == "c":
+        elif self.params['molec_name'] == "c":
             mol = psi4.geometry("""
             1 2
             noreorient
@@ -1628,10 +1655,11 @@ class Hamiltonian():
             """.format( 0.0, 0.0, 0.0)
             )
 
-        psi4.set_options({'basis': params['scf_basis'], 'e_convergence': params['scf_enr_conv'], 'reference': params['scf_method']})
+        psi4.set_options({'basis': self.params['scf_basis'], 'e_convergence': self.params['scf_enr_conv'], 'reference': self.params['scf_method']})
         E, wfn = psi4.prop('scf', properties = ["GRID_ESP"], return_wfn = True)
         Vvals = wfn.oeprop.Vvals()
         os.chdir("../")
+        
         return Vvals
 
 
@@ -1640,6 +1668,7 @@ class Hamiltonian():
         
         Returns: list
             VG: list of numpy arrays: [V0,V1,...,VNr-1], where each Vk is numpy array of shape (Nsph,1): with elements (r_k,theta_s^(k),phi_s^(k)).
+            Nsph is determined by the spherical quadrature level.
         """
         r_array = self.Gr.flatten()
         Nr      = r_array.shape[0]
@@ -1703,15 +1732,18 @@ class Hamiltonian():
 
                     grid_xyz = self.gen_xyz_grid(Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
                     grid_xyz = np.asarray(grid_xyz)
-                    V        = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/"+str(irun) + "/" , params)
-                    V        = -1.0 * np.asarray(V,dtype=complex)
+                    V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
+                    V        = -1.0 * np.asarray(V)
+
+                    print(V.shape)
+                    exit()
                     esp_grid = np.hstack((grid_xyz,V[:,None])) 
-                    fl       = open(params['job_directory']  + "esp/"+str(irun) + "/"  + params['file_esp'], "w")
-                    np.savetxt(fl,esp_grid, fmt='%10.6f')
+                    fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] + "_"+str(irun), "w")
+                    np.savetxt(fl, esp_grid, fmt='%10.6f')
 
                 else:
                     print("The file is not empty.")
-                    flpot1 = open(params['job_directory']  + "esp/" +str(irun) + "/" + params['file_esp'], "r")
+                    flpot1 = open(self.params['job_directory']  + "esp/" +str(irun) + "/" + self.params['file_esp'], "r")
                     V = []
                     for line in flpot1:
                         words   = line.split()
@@ -1729,6 +1761,8 @@ class Hamiltonian():
                 V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                 V        = -1.0 * np.asarray(V)
 
+                print(V.shape)
+                exit()
                 esp_grid = np.hstack((grid_xyz,V[:,None])) 
                 fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] + "_"+str(irun), "w")
                 np.savetxt(fl, esp_grid, fmt='%10.6f')

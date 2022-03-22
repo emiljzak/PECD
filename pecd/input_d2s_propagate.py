@@ -67,6 +67,10 @@ def read_input():
     """==== electrostatic potential ===="""
     params['esp_mode']           = "psi4" 
     params['esp_rotation_mode']  = 'mol_xyz' #'on_the_fly', 'to_wf'
+    params['scf_basis']          = 'aug-cc-pVTZ' #"cc-pDTZ" #"631G**"
+    params['scf_method']         = 'UHF'
+    params['scf_enr_conv']       = 1.0e-6 #convergence threshold for SCF
+
 
     """===== Hamiltonian parameters ====="""
     params['hmat_filter']           = 1e-4 #threshold value (in a.u.) for keeping matrix elements of the field-free Hamiltonian
