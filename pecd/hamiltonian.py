@@ -1139,27 +1139,10 @@ class Hamiltonian():
         end_time = time.time()
         print("Time for generation of the Gs grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
 
-
         start_time = time.time()
-        VG = POTENTIAL.BUILD_ESP_MAT_EXACT_ROT(params, Gs, Gr, mol_xyz, irun,True)
+        VG = self.build_esp_mat(Gs, mol_xyz, irun, True)
         end_time = time.time()
         print("Time for construction of the ESP on the grid: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-
-        # Read the potential partial waves on the grid
-        start_time = time.time()
-        vLM,rgrid_anton = potential.read_potential_anton(self.params,Nr,False)
-        end_time = time.time()
-        print("Time for the construction of the potential partial waves: " +  str("%10.3f"%(end_time-start_time)) + "s")
-
-        # Build an array of 3-j symbols
-        tjmat       = self.gen_tjmat(self.params['bound_lmax'],self.params['multi_lmax'])
-
-        tjmat       = self.rotate_tjmat(grid_euler,irun,tjmat)
-
-        tmats = self.map_tjmat(tjmat)
-
-        vmats = self.map_vmats(vLM,Nr)
 
         # This part can probably be done in parallel
         potarr = []
@@ -1458,14 +1441,14 @@ class Hamiltonian():
         z = r * np.cos(theta)
         return x,y,z
 
-    def gen_xyz_grid(self,Gs,Gr,working_dir):
+    def gen_xyz_grid(self,Gs,working_dir):
         """Generates a cartesian grid of coordinates of points at which the ESP will be calculated
         
         Returns: list
             grid: list of lists [[x,y,z]]
         """
         grid = []
-        r_array = Gr.flatten()
+        r_array = self.Gr.flatten()
         #print(r_array)
         print("working dir: " + working_dir )
         gridfile = open(working_dir + "grid.dat", 'w')
@@ -1653,22 +1636,25 @@ class Hamiltonian():
 
 
     def build_esp_mat(self, Gs, mol_xyz, irun):
-
-        r_array = Gr.flatten()
-        Nr = r_array.shape[0]
-
-        VG = []
+        """Calculates the electrostatic potential on a grid.
+        
+        Returns: list
+            VG: list of numpy arrays: [V0,V1,...,VNr-1], where each Vk is numpy array of shape (Nsph,1): with elements (r_k,theta_s^(k),phi_s^(k)).
+        """
+        r_array = self.Gr.flatten()
+        Nr      = r_array.shape[0]
+        VG      = []
         counter = 0
 
-        if params['molec_name'] == "chiralium": # test case for chiralium. We have analytic potential on the radial grid and we want to use Lebedev quadratures for matrix elements
+        if self.params['molec_name'] == "chiralium": # test case for chiralium. We have analytic potential on the radial grid and we want to use Lebedev quadratures for matrix elements
             
             # 1. Read potential
 
             start_time = time.time()
-            vLM,rgrid_anton = read_potential(params,Nr,bound)
+            vLM,rgrid_anton = potential.read_potential_anton(self.params,Nr,False)
             end_time = time.time()
 
-            lmax_multi = params['multi_lmax']
+            lmax_multi = self.params['multi_lmax']
 
             for k in range(len(r_array)-1):
                 sph = np.zeros(Gs[k].shape[0], dtype=complex)
@@ -1688,9 +1674,8 @@ class Hamiltonian():
 
             return VG
 
-
-        elif params['molec_name'] == "h": # test case of shifted hydrogen
-            r0 = params['mol_geometry']["rc"]
+        elif self.params['molec_name'] == "h": # test case of shifted hydrogen
+            r0 = self.params['mol_geometry']["rc"]
             for k in range(len(r_array)-1):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])))
@@ -1703,21 +1688,20 @@ class Hamiltonian():
 
             return VG
 
-
         else:
 
-            if os.path.isfile(params['job_directory']  + "esp/" +str(irun) + "/" + params['file_esp']):
-                print (params['file_esp'] + " file exist")
+            if os.path.isfile(self.params['job_directory']  + "esp/" +str(irun) + "/" + self.params['file_esp']):
+                print (self.params['file_esp'] + " file exist")
 
                 #os.remove(params['working_dir'] + "esp/" + params['file_esp'])
 
-                if os.path.getsize(params['job_directory'] + "esp/" +str(irun) + "/"  + params['file_esp']) == 0:
+                if os.path.getsize(self.params['job_directory'] + "esp/" +str(irun) + "/"  + self.params['file_esp']) == 0:
 
                     print("But the file is empty.")
-                    os.remove(params['job_directory'] + "esp/"+str(irun) + "/"  + params['file_esp'])
-                    os.remove(params['job_directory']  + "esp" +str(irun) + "/" +"grid.dat")
+                    os.remove(self.params['job_directory'] + "esp/"+str(irun) + "/"  + self.params['file_esp'])
+                    os.remove(self.params['job_directory']  + "esp" +str(irun) + "/" +"grid.dat")
 
-                    grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/"+str(irun) + "/" )
+                    grid_xyz = self.gen_xyz_grid(Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
                     grid_xyz = np.asarray(grid_xyz)
                     V        = GRID.CALC_ESP_PSI4(params['job_directory']  + "esp/"+str(irun) + "/" , params)
                     V        = -1.0 * np.asarray(V,dtype=complex)
@@ -1736,20 +1720,20 @@ class Hamiltonian():
                     V = np.asarray(V,dtype=complex)
 
             else:
-                print (params['file_esp'] + " file does not exist")
+                print (self.params['file_esp'] + " file does not exist")
 
                 #os.remove(params['working_dir'] + "esp/grid.dat")
 
-                grid_xyz = GRID.GEN_XYZ_GRID(Gs, Gr, params['job_directory']  + "esp/"+str(irun) + "/" )
+                grid_xyz = self.gen_xyz_grid(Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
                 grid_xyz = np.asarray(grid_xyz)
-                V        = GRID.CALC_ESP_PSI4_ROT(params['job_directory']  + "esp/"+str(irun) + "/" , params, mol_xyz)
+                V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                 V        = -1.0 * np.asarray(V)
 
                 esp_grid = np.hstack((grid_xyz,V[:,None])) 
-                fl       = open(params['job_directory']  + "esp/"+str(irun) + "/"  + params['file_esp'] + "_"+str(irun), "w")
+                fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/"  + self.params['file_esp'] + "_"+str(irun), "w")
                 np.savetxt(fl, esp_grid, fmt='%10.6f')
 
-
+            #construct the final VG array containing ESP on the (r,theta,phi) grid
             for k in range(len(r_array)-1):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(r_array[k])) )
@@ -1826,7 +1810,6 @@ class Hamiltonian():
         #plt.show()
         #exit()
         return potmat
-
 
     def build_potmat_standard(self,grid_euler=[0,0,0],irun=0):
         """ 
