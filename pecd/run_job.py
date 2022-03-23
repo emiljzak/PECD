@@ -262,11 +262,13 @@ def setup_input(params_input,mode,jobtype):
     return params
 
 def read_restart_list(dir,helicity):
+    restart_list = []
     with open(dir+"restart_"+str(helicity)+".dat",'r') as restart_file:
         for lines in restart_file:
             word = lines.split()
-            print(str(word[0]))
-
+            restart_list.append(word)
+            print(str(word))
+    return restart_list
 
 
 def run_array_job(params_list):
