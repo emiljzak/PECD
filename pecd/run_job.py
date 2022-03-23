@@ -261,8 +261,8 @@ def setup_input(params_input,mode,jobtype):
 
     return params
 
-def read_restart_list(helicity):
-    with open("resrtart_"+str(helicity)+".dat",'r') as restart_file:
+def read_restart_list(dir,helicity):
+    with open(dir+"restart_"+str(helicity)+".dat",'r') as restart_file:
         for lines in restart_file:
             word = lines.split()
             print(str(word[0]))
@@ -325,13 +325,13 @@ def run_array_job(params_list):
 
                 if iparams['restart'] == True:
                     if iparams['restart_mode'] == "file":
-                        iparams['restart_list'] = read_restart_list(iparams['restart_helicity'])
+                        iparams['restart_list'] = read_restart_list(iparams['job_directory'],iparams['restart_helicity'])
                         print(np.shape(iparams['restart_list']))
                         print(iparams['restart_list'])
                         exit()
                         if iparams['mode'] == "propagate":
                             
-                            for ijob in iparams['restart_list']
+                            #for ijob in iparams['restart_list']
                             pecd_process =  "./master_script.sh " + str(0) +\
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
@@ -431,9 +431,9 @@ if __name__ == "__main__":
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
     """
 
-    jobtype	    = "local" 
+    jobtype	    = "slurm" 
     mode        = sys.argv[1]
-    inputfile 	= "input_d2s" #input file name
+    inputfile 	= "input_chiralium" #input file name
     input_module = importlib.import_module(inputfile+"_"+mode)
 
     print("input file: " + str(inputfile+"_"+mode))
