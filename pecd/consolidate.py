@@ -446,12 +446,25 @@ class Avobs:
             if ielem > len(missing_filesR)-10:
                 print(missing_filesR[ielem:])
                 break
-        #print("R - missing and awkward files lists, respectively:")
-        #print(missing_filesR)
-        #print(awkward_filesR)
-        #print("L - missing and awkward files lists, respectively:")
-        #print(missing_filesL)
-        #print(awkward_filesL)
+        
+
+        #save lists in restart files
+        with open('restart_R.dat', 'w') as restart_file:
+            
+            for ielem,elem in enumerate(missing_filesR):
+                if ielem%10 == 0 and ielem>0:
+                   restart_file.write(" ".join('{:12.8f}'.format(missing_filesR[ielem-10:ielem]) +"\n"))
+                if ielem > len(missing_filesR)-10:                    
+                    restart_file.write(" ".join('{:12.8f}'.format(missing_filesR[ielem:]) +"\n"))
+                    break
+            #for ielem,elem in enumerate(awkward_filesR):
+            ##    if ielem%10 == 0 and ielem>0:
+             #       print(awkward_filesR[ielem-10:ielem])                      
+             #   if ielem > len(awkward_filesR)-10:
+             #       print(awkward_filesR[ielem:])
+             #       break
+
+
         exit()
         return missing_files,awkward_files
 """
