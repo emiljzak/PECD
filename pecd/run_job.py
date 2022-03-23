@@ -333,9 +333,10 @@ def run_array_job(params_list):
                         if iparams['mode'] == "propagate":
                             
                             for ijob,reslist in enumerate(iparams['restart_list_master']):
+                                print("current list of restart job IDs")
                                 print(ijob)
                                 iparams['restart_list'] = reslist
-                                if ijob > 3:
+                                if ijob > 1:
                                     exit()
                                 pecd_process =  "./master_script.sh " + str(0) +\
                                                 " " + str(iparams['job_directory']) + " " +\
