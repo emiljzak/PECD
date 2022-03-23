@@ -327,18 +327,21 @@ def run_array_job(params_list):
 
                 if iparams['restart'] == True:
                     if iparams['restart_mode'] == "file":
-                        iparams['restart_list'] = read_restart_list(iparams['job_directory'],iparams['restart_helicity'])
-                        print(np.shape(iparams['restart_list']))
-                        print(iparams['restart_list'])
-                        exit()
+                        iparams['restart_list_master'] = read_restart_list(iparams['job_directory'],iparams['restart_helicity'])
+
+                        
                         if iparams['mode'] == "propagate":
                             
-                            #for ijob in iparams['restart_list']
-                            pecd_process =  "./master_script.sh " + str(0) +\
-                                            " " + str(iparams['job_directory']) + " " +\
-                                            str("propagate.py")
-                            iflag = subprocess.call(pecd_process, shell=True)
-                            flag.append([0,iflag])
+                            for ijob,reslist in enumerate(iparams['restart_list_master']):
+                                print(ijob)
+                                iparams['restart_list'] = reslist
+                                if ijob > 3:
+                                    exit()
+                                pecd_process =  "./master_script.sh " + str(0) +\
+                                                " " + str(iparams['job_directory']) + " " +\
+                                                str("propagate.py")
+                                iflag = subprocess.call(pecd_process, shell=True)
+                                flag.append([0,iflag])
                     else:
                         if iparams['mode'] == "propagate":
                             pecd_process =  "./master_script.sh " + str(0) +\
