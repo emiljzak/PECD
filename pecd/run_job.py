@@ -261,6 +261,12 @@ def setup_input(params_input,mode,jobtype):
 
     return params
 
+def read_restart_list(helicity):
+    with open("resrtart_"+str(helicity)+".dat",'r') as restart_file:
+        for lines in restart_file:
+            word = lines.split()
+            print(str(word[0]))
+
 
 
 def run_array_job(params_list):
@@ -318,14 +324,16 @@ def run_array_job(params_list):
             if iparams['mode'] == "propagate" or iparams['mode'] == "analyze":
 
                 if iparams['restart'] == True:
+                    if iparams['restart_mode'] == "file":
+                        iparams['restart_list'] = read_restart_list(iparams['restart_helicity'])
                         if iparams['mode'] == "propagate":
                             pecd_process =  "./master_script.sh " + str(0) +\
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
                             iflag = subprocess.call(pecd_process, shell=True)
                             flag.append([0,iflag])
-                        else:
-                            raise NotImplementedError("Restart mode for analyze not implemented")
+                else:
+                    raise NotImplementedError("Restart mode for analyze not implemented")
                 else:
                     for ibatch in range(iparams['N_batches']):
                         time.sleep(2)
