@@ -393,8 +393,8 @@ class Avobs:
         missing_filesR = []
         awkward_filesR = []
 
-        default_size_min = 4*10**8
-        default_size_max = 4.2*10**8
+        default_size_min = int(1*10**8)
+        default_size_max = int(1.05*10**8)
         # The directory that we are interested in
         myPath = params['job_directory']
         print(self.N_Euler)
@@ -422,14 +422,14 @@ class Avobs:
                 print(awkward_filesL[ielem-10:ielem])
             if ielem > len(awkward_filesL)-10:
                 print(awkward_filesL[ielem:])
-
+                break
         print("R: awkward files:")
         for ielem,elem in enumerate(awkward_filesR):
             if ielem%10 == 0 and ielem>0:
                 print(awkward_filesR[ielem-10:ielem])                      
             if ielem > len(awkward_filesR)-10:
                 print(awkward_filesR[ielem:])
-
+                break
 
         print("L: missing files:")
         for ielem,elem in enumerate(missing_filesL):
@@ -437,6 +437,7 @@ class Avobs:
                 print(missing_filesL[ielem-10:ielem])
             if ielem > len(missing_filesL)-10:
                 print(missing_filesL[ielem:])
+                break
 
         print("R: missing files:")
         for ielem,elem in enumerate(missing_filesR):
@@ -444,7 +445,7 @@ class Avobs:
                 print(missing_filesR[ielem-10:ielem])
             if ielem > len(missing_filesR)-10:
                 print(missing_filesR[ielem:])
-
+                break
         #print("R - missing and awkward files lists, respectively:")
         #print(missing_filesR)
         #print(awkward_filesR)
