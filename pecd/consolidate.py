@@ -453,17 +453,32 @@ class Avobs:
             
             for ielem,elem in enumerate(missing_filesR):
                 if ielem%10 == 0 and ielem>0:
-                   restart_file.write(missing_filesR[ielem-10:ielem])
+                   restart_file.write(str(missing_filesR[ielem-10:ielem])+"\n")
                 if ielem > len(missing_filesR)-10:                    
-                    restart_file.write(missing_filesR[ielem:])
+                    restart_file.write(str(missing_filesR[ielem:])+"\n")
                     break
-            #for ielem,elem in enumerate(awkward_filesR):
-            ##    if ielem%10 == 0 and ielem>0:
-             #       print(awkward_filesR[ielem-10:ielem])                      
-             #   if ielem > len(awkward_filesR)-10:
-             #       print(awkward_filesR[ielem:])
-             #       break
+            for ielem,elem in enumerate(awkward_filesR):
+                if ielem%10 == 0 and ielem>0:
+                   restart_file.write(str(awkward_filesR[ielem-10:ielem])+"\n")
+                if ielem > len(awkward_filesR)-10:                    
+                    restart_file.write(str(awkward_filesR[ielem:])+"\n")
+                    break
 
+
+        with open('restart_L.dat', 'w') as restart_file:
+            
+            for ielem,elem in enumerate(missing_filesL):
+                if ielem%10 == 0 and ielem>0:
+                   restart_file.write(str(missing_filesL[ielem-10:ielem])+"\n")
+                if ielem > len(missing_filesL)-10:                    
+                    restart_file.write(str(missing_filesL[ielem:])+"\n")
+                    break
+            for ielem,elem in enumerate(awkward_filesL):
+                if ielem%10 == 0 and ielem>0:
+                   restart_file.write(str(awkward_filesL[ielem-10:ielem])+"\n")
+                if ielem > len(awkward_filesL)-10:                    
+                    restart_file.write(str(awkward_filesL[ielem:])+"\n")
+                    break
 
         exit()
         return missing_files,awkward_files
