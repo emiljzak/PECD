@@ -339,8 +339,8 @@ def run_array_job(params_list):
                                 print(reslist)
                                 iparams['restart_list'] = reslist
                                 save_input_file(iparams,"prop")
-                                if ijob > 1:
-                                    exit()
+                                #if ijob > 1:
+                                #    exit()
                                 pecd_process =  "./master_script.sh " + str(0) +\
                                                 " " + str(iparams['job_directory']) + " " +\
                                                 str("propagate.py")
