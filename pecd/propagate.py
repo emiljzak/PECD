@@ -896,6 +896,7 @@ if __name__ == "__main__":
             PropObj.prop_wf(ham_init, dipmat, psi_init)
 
     else:
+        #read restart list
         for irun in params['restart_list']:
 
             start_time  = time.time()

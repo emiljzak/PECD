@@ -19,9 +19,9 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up a loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (8,14,4)
+    params['bound_nlobs_arr']   = (12,12,1)
     params['bound_lmax_arr']    = (6,6,1)
-    params['bound_binw_arr']    = (2.0,2.0,1)
+    params['bound_binw_arr']    = (1.0,3.0,12)
 
     params['bound_nbins']       = 20
     params['bound_rshift']      = 0.0
