@@ -404,6 +404,7 @@ class Avobs:
                 print(fsize)
                 if fsize < default_size_min or fsize > default_size_max:
                     awkward_filesL.append(i)
+
             else:
                 missing_filesL.append(i)
             if os.path.isfile(myPath +"wavepacketR_"+str(i)+".h5"):
@@ -414,12 +415,20 @@ class Avobs:
             else:
                 missing_filesR.append(i)
 
-        print("R - missing and awkward files lists, respectively:")
-        print(missing_filesR)
-        print(awkward_filesR)
-        print("L - missing and awkward files lists, respectively:")
-        print(missing_filesL)
+        for ielem,elem in enumerate(awkward_filesL):
+            print("L: awkward files:")
+            if ielem%10 == 0 and ielem>0:
+                print(awkward_filesL[ielem-10:ielem]+"\n")
+                        
+
+        print("full L awkwkard files list:")
         print(awkward_filesL)
+        #print("R - missing and awkward files lists, respectively:")
+        #print(missing_filesR)
+        #print(awkward_filesR)
+        #print("L - missing and awkward files lists, respectively:")
+        #print(missing_filesL)
+        #print(awkward_filesL)
         exit()
         return missing_files,awkward_files
 """
