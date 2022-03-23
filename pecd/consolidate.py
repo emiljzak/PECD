@@ -420,14 +420,14 @@ class Avobs:
         for ielem,elem in enumerate(awkward_filesL):
             if ielem%10 == 0 and ielem>0:
                 print(awkward_filesL[ielem-10:ielem])
-            if ielem > len(awkward_filesL-10):
+            if ielem > len(awkward_filesL)-10:
                 print(awkward_filesL[ielem:])
 
         print("R: awkward files:")
         for ielem,elem in enumerate(awkward_filesR):
             if ielem%10 == 0 and ielem>0:
                 print(awkward_filesR[ielem-10:ielem])                      
-            if ielem > len(awkward_filesR-10):
+            if ielem > len(awkward_filesR)-10:
                 print(awkward_filesR[ielem:])
 
 
@@ -435,14 +435,14 @@ class Avobs:
         for ielem,elem in enumerate(missing_filesL):
             if ielem%10 == 0 and ielem>0:
                 print(missing_filesL[ielem-10:ielem])
-            if ielem > len(missing_filesL-10):
+            if ielem > len(missing_filesL)-10:
                 print(missing_filesL[ielem:])
 
         print("R: missing files:")
         for ielem,elem in enumerate(missing_filesR):
             if ielem%10 == 0 and ielem>0:
                 print(missing_filesR[ielem-10:ielem])
-            if ielem > len(missing_filesR-10):
+            if ielem > len(missing_filesR)-10:
                 print(missing_filesR[ielem:])
 
         #print("R - missing and awkward files lists, respectively:")
