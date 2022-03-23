@@ -898,7 +898,8 @@ if __name__ == "__main__":
     else:
         #read restart list
         for irun in params['restart_list']:
-
+            print(type(irun))
+            print(irun)
             start_time  = time.time()
             pot_prop    = HamObjProp.build_potmat(grid_euler, irun)
             end_time    = time.time()
