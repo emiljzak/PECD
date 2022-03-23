@@ -453,15 +453,17 @@ class Avobs:
             
             for ielem,elem in enumerate(missing_filesR):
                 if ielem%10 == 0 and ielem>0:
-                   restart_file.write(str(missing_filesR[ielem-10:ielem])+"\n")
+                   restart_file.write(" ".join('{:4d}'.format(v) for v in missing_filesR[ielem-10:ielem])+"\n")
                 if ielem > len(missing_filesR)-10:           
-                    restart_file.write(" ".join('{:3d}'.format(v) for v in  missing_filesR[ielem:] ))
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  missing_filesR[ielem:] )+"\n")
                     break
+
             for ielem,elem in enumerate(awkward_filesR):
                 if ielem%10 == 0 and ielem>0:
-                   restart_file.write(str(awkward_filesR[ielem-10:ielem])+"\n")
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesR[ielem-10:ielem] )+"\n")
+                   
                 if ielem > len(awkward_filesR)-10:                    
-                    restart_file.write(str(awkward_filesR[ielem:])+"\n")
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesR[ielem:])+"\n")
                     break
 
 
@@ -469,16 +471,19 @@ class Avobs:
             
             for ielem,elem in enumerate(missing_filesL):
                 if ielem%10 == 0 and ielem>0:
-                   restart_file.write(str(missing_filesL[ielem-10:ielem])+"\n")
-                if ielem > len(missing_filesL)-10:                    
-                    restart_file.write(str(missing_filesL[ielem:])+"\n")
+                   restart_file.write(" ".join('{:4d}'.format(v) for v in missing_filesL[ielem-10:ielem])+"\n")
+                if ielem > len(missing_filesL)-10:           
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  missing_filesL[ielem:] )+"\n")
                     break
+
             for ielem,elem in enumerate(awkward_filesL):
                 if ielem%10 == 0 and ielem>0:
-                   restart_file.write(str(awkward_filesL[ielem-10:ielem])+"\n")
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesL[ielem-10:ielem] )+"\n")
+                   
                 if ielem > len(awkward_filesL)-10:                    
-                    restart_file.write(str(awkward_filesL[ielem:])+"\n")
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesL[ielem:])+"\n")
                     break
+
 
         exit()
         return missing_files,awkward_files
