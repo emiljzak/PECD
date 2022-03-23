@@ -326,14 +326,26 @@ def run_array_job(params_list):
                 if iparams['restart'] == True:
                     if iparams['restart_mode'] == "file":
                         iparams['restart_list'] = read_restart_list(iparams['restart_helicity'])
+                        print(np.shape(iparams['restart_list']))
+                        print(iparams['restart_list'])
+                        exit()
+                        if iparams['mode'] == "propagate":
+                            
+                            for ijob in iparams['restart_list']
+                            pecd_process =  "./master_script.sh " + str(0) +\
+                                            " " + str(iparams['job_directory']) + " " +\
+                                            str("propagate.py")
+                            iflag = subprocess.call(pecd_process, shell=True)
+                            flag.append([0,iflag])
+                    else:
                         if iparams['mode'] == "propagate":
                             pecd_process =  "./master_script.sh " + str(0) +\
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
                             iflag = subprocess.call(pecd_process, shell=True)
                             flag.append([0,iflag])
-                else:
-                    raise NotImplementedError("Restart mode for analyze not implemented")
+            
+                
                 else:
                     for ibatch in range(iparams['N_batches']):
                         time.sleep(2)
