@@ -454,8 +454,8 @@ class Avobs:
             for ielem,elem in enumerate(missing_filesR):
                 if ielem%10 == 0 and ielem>0:
                    restart_file.write(str(missing_filesR[ielem-10:ielem])+"\n")
-                if ielem > len(missing_filesR)-10:                    
-                    restart_file.write(str(missing_filesR[ielem:])+"\n")
+                if ielem > len(missing_filesR)-10:           
+                    restart_file.write(" ".join('{:3d}'.format(v) for v in  missing_filesR[ielem:] ))
                     break
             for ielem,elem in enumerate(awkward_filesR):
                 if ielem%10 == 0 and ielem>0:
