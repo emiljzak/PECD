@@ -266,6 +266,7 @@ def read_restart_list(dir,helicity):
     with open(dir+"restart_"+str(helicity)+".dat",'r') as restart_file:
         for lines in restart_file:
             word = lines.split()
+            #here we can split into individual ints
             restart_list.append(word)
             print(word)
     return restart_list
@@ -296,7 +297,7 @@ def run_array_job(params_list):
             """ Save input file and euler angles grid """
             print("mode = propagate")
             #save_input_file(iparams,"prop")
-
+            save_input_file(iparams,"prop")
             GridObjEuler.save_euler_grid(grid_euler, path)
 
         elif iparams['mode'] == 'analyze':
@@ -329,26 +330,23 @@ def run_array_job(params_list):
                     print("RESTART MODE")
                     if iparams['restart_mode'] == "file":
                         print("restart list read from file")
-                        iparams['restart_list_master'] = read_restart_list(iparams['job_directory'],iparams['restart_helicity'])
-
-                        
+                        restart_list_master = read_restart_list(iparams['job_directory'],iparams['restart_helicity'])
+       
                         if iparams['mode'] == "propagate":
                             
-                            for ijob,reslist in enumerate(iparams['restart_list_master']):
+                            for ijob,reslist in enumerate(restart_list_master):
                                 print("current list of restart job IDs")
                                 print(reslist)
-                                iparams['restart_list'] = reslist
-                                save_input_file(iparams,"prop")
                                 #if ijob > 1:
                                 #    exit()
-                                pecd_process =  "./master_script.sh " + str(0) +\
+                                pecd_process =  "./master_script.sh " + str(ijob) +\
                                                 " " + str(iparams['job_directory']) + " " +\
                                                 str("propagate.py")
                                 iflag = subprocess.call(pecd_process, shell=True)
                                 flag.append([0,iflag])
                     else:
                         if iparams['mode'] == "propagate":
-                            save_input_file(iparams,"prop")
+
                             pecd_process =  "./master_script.sh " + str(0) +\
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
@@ -361,7 +359,7 @@ def run_array_job(params_list):
                         time.sleep(2)
                         
                         if iparams['mode'] == "propagate":
-                            save_input_file(iparams,"prop")
+
                             pecd_process =  "./master_script.sh " + str(ibatch) +\
                                             " " + str(iparams['job_directory']) + " " +\
                                             str("propagate.py")
@@ -387,7 +385,6 @@ def run_array_job(params_list):
         elif iparams['jobtype'] == "local":
             flag = []
             print("Executing local job")
-            save_input_file(iparams,"prop")
             path = os.getcwd()
             print ("The current working directory is %s" % path)
             print ("Job directory is %s" % iparams['job_directory'])

@@ -702,6 +702,15 @@ def gen_euler_grid_theta_chi(n_euler):
     #print(euler_grid_3d)
     return euler_grid_3d, n_euler_3d
 
+def read_restart_list(dir,helicity):
+    restart_list = []
+    with open(dir+"restart_"+str(helicity)+".dat",'r') as restart_file:
+        for lines in restart_file:
+            word = lines.split()
+            #here we can split into individual ints
+            restart_list.append(word)
+    return restart_list
+
 
 
 if __name__ == "__main__":   
@@ -897,9 +906,13 @@ if __name__ == "__main__":
 
     else:
         #read restart list
+        restart_list_master = read_restart_list(params['job_directory'],params['restart_helicity'])
+        print(restart_list_master)
+        print(restart_list_master[ibatch])
+        exit() 
         for irun in params['restart_list']:
-            print(type(irun))
-            print(irun)
+            
+            irun = int(irun)
             start_time  = time.time()
             pot_prop    = HamObjProp.build_potmat(grid_euler, irun)
             end_time    = time.time()
