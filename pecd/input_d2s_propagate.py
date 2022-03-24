@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "bound_test" 
+    params['job_label']    = "prop_test" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -19,21 +19,21 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up a loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (12,12,1)
-    params['bound_lmax_arr']    = (6,6,1)
-    params['bound_binw_arr']    = (1.0,3.0,12)
+    params['bound_nlobs_arr']   = (6,6,1)
+    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 20
+    params['bound_nbins']       = 10
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 20
+    params['prop_nbins']        = 10
 
 
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 6.0 
+    params['tmax']          = 60.0 
     params['dt']            = 2.0 # replace with the calculated number for N points per cycle
     params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 

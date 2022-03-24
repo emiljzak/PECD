@@ -335,6 +335,7 @@ def run_array_job(params_list):
                         if iparams['mode'] == "propagate":
                             
                             for ijob,reslist in enumerate(restart_list_master):
+                                time.sleep(2)
                                 print("current list of restart job IDs")
                                 print(reslist)
                                 print("ijob = " + str(ijob))
@@ -441,9 +442,9 @@ if __name__ == "__main__":
         2) 'slurm':    submission to a SLURM workload manager for an HPC job
     """
 
-    jobtype	    = "slurm" 
+    jobtype	    = "local" 
     mode        = sys.argv[1]
-    inputfile 	= "input_chiralium" #input file name
+    inputfile 	= "input_d2s" #input file name
     input_module = importlib.import_module(inputfile+"_"+mode)
 
     print("input file: " + str(inputfile+"_"+mode))

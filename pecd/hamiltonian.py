@@ -1544,7 +1544,7 @@ class Hamiltonian():
         """Calculates ESP on a cartesian grid stored in grid.dat
         
         Returns: numpy array
-            vvals: array of ESP values on the cartesian grid. Shape = (Npts,1)
+            vvals: array of ESP values (au) on the cartesian grid. Shape = (Npts,1)
         """
         os.chdir(dir)
         psi4.core.be_quiet()
@@ -1761,7 +1761,10 @@ class Hamiltonian():
                         words   = line.split()
                         potval  = float(words[3])
                         V.append(potval)
-                    V = np.asarray(V,dtype=float)
+                        # print(str(potval))
+                    V = np.asarray(V)
+                    print(V.shape)
+                    
 
             else:
                 print (self.params['file_esp'] + " file does not exist")
@@ -1777,24 +1780,36 @@ class Hamiltonian():
                 print(V.shape)
                 print(grid_xyz.shape)
                 
+                for i in range(V.shape[0]):
+                    if np.isnan(V[i]):
+                        print("NaN encountered")
+                        break
                 
-                esp_grid = np.hstack((grid_xyz,V[:,None])) 
+                esp_grid = np.hstack((grid_xyz,V.reshape(-1,1))) 
                 print(esp_grid.shape)
                 #exit()
-                fl       = open(self.params['job_directory']  + "esp/"+str(irun) + "/" + self.params['file_esp'], "w")
-                np.savetxt(fl, esp_grid, fmt='%10.6f')
-
+                with open(self.params['job_directory']  + "esp/"+str(irun) + "/" + self.params['file_esp'], "w") as flesp:
+                    np.savetxt(flesp, esp_grid, fmt='%20.6f')
+               
+               
+            
             #construct the final VG array containing ESP on the (r,theta,phi) grid
             #print(np.shape(Gs))
             #print(V.shape)
             counter = 0
+            #print("Shape of Gs")
+            #print(np.shape(Gs))
+            #exit()
+            print("shape of V")
+            print(V.shape)
+            
             for k in range(Nr):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(self.Gr[k])) )
                 for s in range(Gs[k].shape[0]):
                     sph[s]      = V[counter]
                     counter     += 1
-
+                    #print(counter)
                 VG.append(sph)
 
             return VG
