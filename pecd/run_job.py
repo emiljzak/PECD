@@ -337,6 +337,7 @@ def run_array_job(params_list):
                             for ijob,reslist in enumerate(restart_list_master):
                                 print("current list of restart job IDs")
                                 print(reslist)
+                                print("ijob = " + str(ijob))
                                 #if ijob > 1:
                                 #    exit()
                                 pecd_process =  "./master_script.sh " + str(ijob) +\

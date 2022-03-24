@@ -908,9 +908,10 @@ if __name__ == "__main__":
         #read restart list
         restart_list_master = read_restart_list(params['job_directory'],params['restart_helicity'])
         print(restart_list_master)
+        print(ibatch)
         print(restart_list_master[ibatch])
-        exit() 
-        for irun in params['restart_list']:
+         
+        for irun in restart_list_master[ibatch]:
             
             irun = int(irun)
             start_time  = time.time()
