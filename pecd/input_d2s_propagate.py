@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "prop_test" 
+    params['job_label']    = "orbitals" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -19,23 +19,23 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up a loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (6,6,1)
+    params['bound_nlobs_arr']   = (10,10,1)
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 10
+    params['bound_nbins']       = 50
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 10
+    params['prop_nbins']        = 50
 
 
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 60.0 
-    params['dt']            = 2.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['tmax']          = 2000.0 
+    params['dt']            = 5.0 # replace with the calculated number for N points per cycle
+    params['wfn_saverate']  = 100 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
@@ -43,7 +43,7 @@ def read_input():
     params['restart_list']      = [1,5] #global id list of jobs to be restarted. Must be compatible with the ordering of the Euler grid.
     params['N_euler'] 	        = 1   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
-    params['orient_grid_type']  = "2D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "1D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
 
@@ -54,7 +54,7 @@ def read_input():
 
 
     """ ====== Initial wavefunction ====="""
-    params['ivec']              = 2 
+    params['ivec']              = 8 
 
     """===== kinetic energy matrix ====="""
     params['keo_method']        = "blocks"
@@ -86,7 +86,7 @@ def read_input():
 
     """ ====== FIELD PARAMETERS ====== """
     params['freq_units']    = "ev"      # nm or ev
-    params['omega']         = 22.1   # 23.128 nm = 54 eV, 60 nm = 20 eV
+    params['omega']         = 8.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
     params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
     params['field_func_name']    = "RCPL"
@@ -94,7 +94,7 @@ def read_input():
     params['CEP0']               = 0.0 #CEP phase of the field
 
     """ gaussian pulse """
-    params['gauss_tau']     = 1000.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
+    params['gauss_tau']     = 500.0/np.sqrt(2.0) #as: pulse duration (sigma). When e^-t^2/T^2 is used we divide by sqrt(2)
     params['gauss_t0']      = 1000.0 #as: pulse centre
 
     """ === ro-vibrational part ==== """ 

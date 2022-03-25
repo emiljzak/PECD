@@ -50,7 +50,8 @@ def create_dirs(params):
         os.mkdir("momentum")
         os.chdir("../")
         os.chdir("esp")
-        for irun in range(params['N_batches']):
+        
+        for irun in range(params['n_grid_euler']):
             os.mkdir(str(irun))
 
     os.chdir(params['main_dir'])
@@ -277,21 +278,22 @@ def run_array_job(params_list):
     for iparams in params_list:
 
         """ Create directories """
-        path         = create_dirs(iparams)
+        
         GridObjEuler = wavefunction.GridEuler(  iparams['N_euler'],
                                                 iparams['N_batches'],
                                                 iparams['orient_grid_type'])
 
         """ Generate a grid of molecular orientations parametrized by the Euler angles"""
         if iparams['orient_grid_type'] == "3D":
-            grid_euler, iparams['n_grid_euler_3d'] = GridObjEuler.gen_euler_grid()            
+            grid_euler, iparams['n_grid_euler'] = GridObjEuler.gen_euler_grid()            
         elif iparams['orient_grid_type'] == "2D":
-            grid_euler, iparams['n_grid_euler_2d'] = GridObjEuler.gen_euler_grid_2D()            
+            grid_euler, iparams['n_grid_euler'] = GridObjEuler.gen_euler_grid_2D()            
         elif iparams['orient_grid_type'] == "1D":
-            grid_euler, iparams['n_grid_euler_2d'] = GridObjEuler.gen_euler_grid_1D()     
+            grid_euler, iparams['n_grid_euler'] = GridObjEuler.gen_euler_grid_1D()     
         else:
             raise ValueError("incorrect euler grid typ")
         
+        path         = create_dirs(iparams)
         if iparams['mode'] == 'propagate':
 
             """ Save input file and euler angles grid """
