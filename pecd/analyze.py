@@ -2929,7 +2929,7 @@ if __name__ == "__main__":
                     func = getattr(momentumobs,elem['name'])
                     print("Calling momentum function: " + str(elem['name']))
                     obs_list,ft_polargrid = func(elem)
-                   
+                    analysis_obj.save_kgrid(ft_polargrid)
                     Flm_dict[helicity].append([irun,analysis_obj.build_Flm_array(obs_list)])
 
                     bcoeffs_dict[helicity].append([irun,analysis_obj.build_bcoeffs_array(obs_list)])
@@ -2937,4 +2937,4 @@ if __name__ == "__main__":
     
     analysis.save_bcoeffs_dict(params['job_directory'],bcoeffs_dict,ibatch)          
     analysis.save_Flm_dict(params['job_directory'],Flm_dict,ibatch)
-    analysis_obj.save_kgrid(ft_polargrid)
+    
