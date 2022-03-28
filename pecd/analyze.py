@@ -843,6 +843,12 @@ class spacefuncs(analysis):
         return indices,coeffs
 
 
+    def rho3Dcart(self,funcpars):
+        print("Calculating 3D electron density")
+        """Mayavi plots of 3D density"""
+
+
+
     def rho1D_ini_rad(self,funcpars):
 
         """ Plotting initial radial orbitals"""

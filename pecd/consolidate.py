@@ -418,32 +418,32 @@ class Avobs:
 
         print("L: awkward files:")
         for ielem,elem in enumerate(awkward_filesL):
-            if ielem%10 == 0 and ielem>0:
-                print(awkward_filesL[ielem-10:ielem])
-            if ielem > len(awkward_filesL)-10:
+            if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                print(awkward_filesL[ielem-self.params['res_jobs_per_batch']:ielem])
+            if ielem > len(awkward_filesL)-self.params['res_jobs_per_batch']:
                 print(awkward_filesL[ielem:])
                 break
         print("R: awkward files:")
         for ielem,elem in enumerate(awkward_filesR):
-            if ielem%10 == 0 and ielem>0:
-                print(awkward_filesR[ielem-10:ielem])                      
-            if ielem > len(awkward_filesR)-10:
+            if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                print(awkward_filesR[ielem-self.params['res_jobs_per_batch']:ielem])                      
+            if ielem > len(awkward_filesR)-self.params['res_jobs_per_batch']:
                 print(awkward_filesR[ielem:])
                 break
 
         print("L: missing files:")
         for ielem,elem in enumerate(missing_filesL):
-            if ielem%10 == 0 and ielem>0:
-                print(missing_filesL[ielem-10:ielem])
-            if ielem > len(missing_filesL)-10:
+            if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                print(missing_filesL[ielem-self.params['res_jobs_per_batch']:ielem])
+            if ielem > len(missing_filesL)-self.params['res_jobs_per_batch']:
                 print(missing_filesL[ielem:])
                 break
 
         print("R: missing files:")
         for ielem,elem in enumerate(missing_filesR):
-            if ielem%10 == 0 and ielem>0:
-                print(missing_filesR[ielem-10:ielem])
-            if ielem > len(missing_filesR)-10:
+            if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                print(missing_filesR[ielem-self.params['res_jobs_per_batch']:ielem])
+            if ielem > len(missing_filesR)-self.params['res_jobs_per_batch']:
                 print(missing_filesR[ielem:])
                 break
         
@@ -452,17 +452,17 @@ class Avobs:
         with open('restart_R.dat', 'w') as restart_file:
             
             for ielem,elem in enumerate(missing_filesR):
-                if ielem%10 == 0 and ielem>0:
-                   restart_file.write(" ".join('{:4d}'.format(v) for v in missing_filesR[ielem-10:ielem])+"\n")
-                if ielem > len(missing_filesR)-10:           
+                if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                   restart_file.write(" ".join('{:4d}'.format(v) for v in missing_filesR[ielem-self.params['res_jobs_per_batch']:ielem])+"\n")
+                if ielem > len(missing_filesR)-self.params['res_jobs_per_batch']:           
                     restart_file.write(" ".join('{:4d}'.format(v) for v in  missing_filesR[ielem:] )+"\n")
                     break
 
             for ielem,elem in enumerate(awkward_filesR):
-                if ielem%10 == 0 and ielem>0:
-                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesR[ielem-10:ielem] )+"\n")
+                if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesR[ielem-self.params['res_jobs_per_batch']:ielem] )+"\n")
                    
-                if ielem > len(awkward_filesR)-10:                    
+                if ielem > len(awkward_filesR)-self.params['res_jobs_per_batch']:                    
                     restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesR[ielem:])+"\n")
                     break
 
@@ -470,17 +470,17 @@ class Avobs:
         with open('restart_L.dat', 'w') as restart_file:
             
             for ielem,elem in enumerate(missing_filesL):
-                if ielem%10 == 0 and ielem>0:
-                   restart_file.write(" ".join('{:4d}'.format(v) for v in missing_filesL[ielem-10:ielem])+"\n")
-                if ielem > len(missing_filesL)-10:           
+                if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                   restart_file.write(" ".join('{:4d}'.format(v) for v in missing_filesL[ielem-self.params['res_jobs_per_batch']:ielem])+"\n")
+                if ielem > len(missing_filesL)-self.params['res_jobs_per_batch']:           
                     restart_file.write(" ".join('{:4d}'.format(v) for v in  missing_filesL[ielem:] )+"\n")
                     break
 
             for ielem,elem in enumerate(awkward_filesL):
-                if ielem%10 == 0 and ielem>0:
-                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesL[ielem-10:ielem] )+"\n")
+                if ielem%self.params['res_jobs_per_batch'] == 0 and ielem>0:
+                    restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesL[ielem-self.params['res_jobs_per_batch']:ielem] )+"\n")
                    
-                if ielem > len(awkward_filesL)-10:                    
+                if ielem > len(awkward_filesL)-self.params['res_jobs_per_batch']:                    
                     restart_file.write(" ".join('{:4d}'.format(v) for v in  awkward_filesL[ielem:])+"\n")
                     break
 
@@ -571,5 +571,5 @@ if __name__ == "__main__":
     Obs.plot_pecd_2D(pecd_alpha_av,b_av_dict,grid2D )
     pecd_av     = Obs.calc_pecd_av(pecd_alpha_av,b_av_dict)
     #
-    print("b1(R)= " + str(b_av_dict["R"][1]))
-    print("b1(L)= " + str(b_av_dict["L"][1]))
+    print("b1(R)/b_av= " + str(b_av_dict["R"][1]/b_av_dict["R"][0]))
+    print("b1(L)/b_av= " + str(b_av_dict["L"][1]/b_av_dict["R"][0]))
