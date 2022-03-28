@@ -63,6 +63,7 @@ def read_input():
     params['matelem_method']    = "lebedev" 
     params['sph_quad_global']   = "lebedev_019" 
     params['sph_quad_tol']      = 1e-10     
+    params['r_cutoff']          = 30.0
 
     """==== electrostatic potential ===="""
     params['esp_mode']           = "psi4" 

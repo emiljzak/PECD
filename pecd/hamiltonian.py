@@ -1475,7 +1475,7 @@ class Hamiltonian():
         z = r * np.cos(theta)
         return x,y,z
 
-    def gen_xyz_grid(self,Gs,working_dir):
+    def gen_xyz_grid(self,Gr,Gs,working_dir):
         """Generates a cartesian grid of coordinates of points at which the ESP will be calculated
         
         Returns: list
@@ -1485,13 +1485,13 @@ class Hamiltonian():
         print("working dir: " + working_dir )
         gridfile = open(working_dir + "grid.dat", 'w')
 
-        for k in range(self.Gr.shape[0]):
+        for k in range(Gr.shape[0]):
             #print(Gs[k].shape[0])
             for s in range(Gs[k].shape[0]):
 
                 theta   = Gs[k][s,0] 
                 phi     = Gs[k][s,1]
-                r       = self.Gr[k]
+                r       = Gr[k]
                 x,y,z   = self.sph2cart(r,theta,phi)
 
                 gridfile.write( " %12.6f"%x +  " %12.6f"%y + "  %12.6f"%z + "\n")
@@ -1684,6 +1684,7 @@ class Hamiltonian():
         Nr      = self.Gr.shape[0]
         VG      = []
         counter = 0
+        r_cutoff = self.params['r_cutoff']
 
         if self.params['molec_name'] == "chiralium": # test case for chiralium. We have analytic potential on the radial grid and we want to use Lebedev quadratures for matrix elements
             
@@ -1729,6 +1730,11 @@ class Hamiltonian():
 
         else:
 
+            # which grid point corresponds to the radial cut-off?
+            ipoint_cutoff = np.argmin(np.abs(self.Gr - self.params['r_cutoff']))
+            print("Index of radial cut-off of the ESP: " + str(ipoint_cutoff))
+            Gr = self.Gr[:ipoint_cutoff]
+
             if os.path.isfile(self.params['job_directory']  + "esp/" +str(irun) + "/" + self.params['file_esp']):
                 print (self.params['file_esp'] + " file exist")
 
@@ -1740,7 +1746,7 @@ class Hamiltonian():
                     os.remove(self.params['job_directory'] + "esp/"+str(irun) + "/"  + self.params['file_esp'])
                     os.remove(self.params['job_directory']  + "esp" +str(irun) + "/" +"grid.dat")
 
-                    grid_xyz = self.gen_xyz_grid(Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
+                    grid_xyz = self.gen_xyz_grid(Gr,Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
                     grid_xyz = np.asarray(grid_xyz)
                     V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                     V        = -1.0 * np.asarray(V)
@@ -1767,7 +1773,8 @@ class Hamiltonian():
 
                 #os.remove(params['working_dir'] + "esp/grid.dat")
 
-                grid_xyz = self.gen_xyz_grid(Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
+
+                grid_xyz = self.gen_xyz_grid(Gr, Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
                 grid_xyz = np.asarray(grid_xyz)
                 V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                 V        = -1.0 * np.asarray(V)

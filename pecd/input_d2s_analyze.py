@@ -67,15 +67,15 @@ def read_input():
 
 
     rho2D = {   'name':         'rho2D',
-                'plane':        ('XZ','YZ'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
+                'plane':        ('XZ','XY'), #in which Cartesian planes do we want to plot rho2D? 'XY','XZ','YZ' or [nx,ny,nz] - vector normal to the plane
                 'plot':         (True, graphics.gparams_rho2D_polar()), #specify parameters of the plot to load
                 'show':         False, # show image on screen                    
                 'save':         True,
                 'scale':        "log", #unit or log
                 'r_grid':       {   'type':'manual', #manual or automatic grid type. 
-                                    'npts': 200,    #ignored when automatic (2*rmax)
+                                    'npts': 500,    #ignored when automatic (2*rmax)
                                     'rmin': 0.0,    #ignored when automatic
-                                    'rmax': 50.0  #ignored when automatic
+                                    'rmax': 100.0  #ignored when automatic
                                     #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                 },                   
                 'th_grid':      (0.0,2.0*np.pi,360), #grif for phi and for theta too (although it goes from 0 to pi)

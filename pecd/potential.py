@@ -325,11 +325,6 @@ def euler_rot(chi, theta, phi, xyz):
 
 
 
-
-
-
-
-
 def BUILD_ESP_MAT(Gs,rgrid,esp_interpolant,r_cutoff):
     VG = []
     Gr = rgrid.flatten()
