@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "orbitals" 
+    params['job_label']    = "radial_cutoff" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -23,11 +23,11 @@ def read_input():
     params['bound_lmax_arr']    = (2,2,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
-    params['bound_nbins']       = 50
+    params['bound_nbins']       = 20
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 50
+    params['prop_nbins']        = 20
 
 
     """==== time-grid parameters ===="""
@@ -63,7 +63,7 @@ def read_input():
     params['matelem_method']    = "lebedev" 
     params['sph_quad_global']   = "lebedev_019" 
     params['sph_quad_tol']      = 1e-10     
-    params['r_cutoff']          = 30.0
+    params['r_cutoff']          = 22.0
 
     """==== electrostatic potential ===="""
     params['esp_mode']           = "psi4" 
@@ -90,7 +90,7 @@ def read_input():
     params['omega']         = 8.0   # 23.128 nm = 54 eV, 60 nm = 20 eV
     params['intensity']     = 5.0e+13   # W/cm^2: peak intensity
     params['field_form']    = "analytic" #or numerical (i.e. read from file). To be implemented.
-    params['field_func_name']    = "RCPL"
+    params['field_func_name']    = "LCPL"
     params['field_env_name']     = "gaussian" 
     params['CEP0']               = 0.0 #CEP phase of the field
 

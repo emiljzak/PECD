@@ -1180,10 +1180,16 @@ class Hamiltonian():
 
         # This part can probably be done in parallel
         potarr = []
-       
+        ipoint_cutoff = np.argmin(np.abs(self.Gr - self.params['r_cutoff']))
+        lmax    = self.params['bound_lmax']
+        Nang    = (lmax+1)**2
         for ipoint in range(Nr):
-            vxi = self.calc_vxi_leb(VG[ipoint],Gs[ipoint])
+            if ipoint < ipoint_cutoff:
+                vxi = self.calc_vxi_leb(VG[ipoint],Gs[ipoint])
+            else:
+                vxi = np.zeros((Nang,Nang), dtype = complex) 
             potarr.append(vxi)
+            
 
         potmat = sparse.csr_matrix((self.Nbas,self.Nbas),dtype=complex)
 
@@ -1684,7 +1690,10 @@ class Hamiltonian():
         Nr      = self.Gr.shape[0]
         VG      = []
         counter = 0
-        r_cutoff = self.params['r_cutoff']
+        # which grid point corresponds to the radial cut-off?
+        ipoint_cutoff = np.argmin(np.abs(self.Gr - self.params['r_cutoff']))
+        print("Index of radial cut-off of the ESP: " + str(ipoint_cutoff))
+        Gr = self.Gr[:ipoint_cutoff]
 
         if self.params['molec_name'] == "chiralium": # test case for chiralium. We have analytic potential on the radial grid and we want to use Lebedev quadratures for matrix elements
             
@@ -1730,11 +1739,6 @@ class Hamiltonian():
 
         else:
 
-            # which grid point corresponds to the radial cut-off?
-            ipoint_cutoff = np.argmin(np.abs(self.Gr - self.params['r_cutoff']))
-            print("Index of radial cut-off of the ESP: " + str(ipoint_cutoff))
-            Gr = self.Gr[:ipoint_cutoff]
-
             if os.path.isfile(self.params['job_directory']  + "esp/" +str(irun) + "/" + self.params['file_esp']):
                 print (self.params['file_esp'] + " file exist")
 
@@ -1746,7 +1750,7 @@ class Hamiltonian():
                     os.remove(self.params['job_directory'] + "esp/"+str(irun) + "/"  + self.params['file_esp'])
                     os.remove(self.params['job_directory']  + "esp" +str(irun) + "/" +"grid.dat")
 
-                    grid_xyz = self.gen_xyz_grid(Gr,Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
+                    grid_xyz = self.gen_xyz_grid(Gr, Gs, self.params['job_directory']  + "esp/"+str(irun) + "/" )
                     grid_xyz = np.asarray(grid_xyz)
                     V        = self.calc_esp_psi4_rot(self.params['job_directory']  + "esp/"+str(irun) + "/" , mol_xyz)
                     V        = -1.0 * np.asarray(V)
@@ -1788,7 +1792,8 @@ class Hamiltonian():
             
             #construct the final VG array containing ESP on the (r,theta,phi) grid
             counter = 0
-            for k in range(Nr):
+            print("ipoint_cutoff:" + str(ipoint_cutoff))
+            for k in range(ipoint_cutoff):
                 sph = np.zeros(Gs[k].shape[0], dtype=float)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(self.Gr[k])) )
                 for s in range(Gs[k].shape[0]):
