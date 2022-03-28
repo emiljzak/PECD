@@ -114,8 +114,82 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.propagate.Propagator" title="pecd.propagate.Propagator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.propagate.Propagator</span></code></a>(params, irun)</p></td>
+<td><p>Class contains methods related to the time-propagation of the wavefunction.</p></td>
+</tr>
 </tbody>
 </table>
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.propagate.Propagator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.propagate.</span></span><span class="sig-name descname"><span class="pre">Propagator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.propagate.Propagator" title="Permalink to this definition"></a></dt>
+<dd><p>Class contains methods related to the time-propagation of the wavefunction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filename</strong> – str
+fdsfsd</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Kwargs:</dt><dd><dl class="simple">
+<dt>thresh<span class="classifier">float</span></dt><dd><p>fdsf</p>
+</dd>
+</dl>
+</dd>
+<dt>Attrs:</dt><dd><dl class="simple">
+<dt>params<span class="classifier">dict</span></dt><dd><p>Keeps relevant parameters.</p>
+</dd>
+<dt>irun<span class="classifier">int</span></dt><dd><p>id of the run over the Euler grid</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.propagate.Propagator.gen_timegrid">
+<span class="sig-name descname"><span class="pre">gen_timegrid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.propagate.Propagator.gen_timegrid" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates equidistant time-grid for the wavefunction proapgation.
+Start and end points are included in the grid.</p>
+<dl class="simple">
+<dt>Returns: tuple</dt><dd><dl class="simple">
+<dt>tgrid: numpy 1D array</dt><dd><p>time grid array</p>
+</dd>
+<dt>dt: float</dt><dd><p>time step</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>If t0=0.0 and tmax = 10.0 and dt = 1.0 the grid has 11 elements:
+[ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10.]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.propagate.Propagator.prop_wf">
+<span class="sig-name descname"><span class="pre">prop_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ham_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipmat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psi_init</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.propagate.Propagator.prop_wf" title="Permalink to this definition"></a></dt>
+<dd><p>This function propagates the wavefunction with the time-dependent Hamiltonian and saves the wavepacket in a file.</p>
+<p>Here the time-grid and the electric fields are constructed. The wavefunction is propagated by an iterative
+calculation of the product of the time-dependent Hamiltonian matrix exponential and the wavefunction vector:</p>
+<div class="math notranslate nohighlight" id="equation-wf-propagation">
+<span class="eqno">(1)<a class="headerlink" href="#equation-wf-propagation" title="Permalink to this equation"></a></span>\[\psi(t_{i+1}) = \exp(-i\cdot H(t) \cdot dt) \psi(t_i)\]</div>
+<dl class="simple">
+<dt>Arguments: tuple</dt><dd><dl class="simple">
+<dt>ham_init<span class="classifier">scipy.sparse.csr_matrix, dtype = complex/float, shape = (Nbas,Nbas)</span></dt><dd><p>Initial Hamiltonian matrix</p>
+</dd>
+<dt>intmat<span class="classifier">scipy.sparse.csr_matrix, dtype = complex, shape = (Nbas,Nbas)</span></dt><dd><p>electric dipole interaction matrix (with no field included)</p>
+</dd>
+<dt>psi_init<span class="classifier">numpy.ndarray, dtype = complex, shape = (Nbas,)</span></dt><dd><p>initial wavefunction</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Returns: None</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The initial Hamiltonian <cite>ham_init</cite> <code class="xref py py-func docutils literal notranslate"><span class="pre">Hamiltonian.build_ham()</span></code> has complex matrix elements in general. However the kinetic energy matrix constructed in <code class="xref py py-func docutils literal notranslate"><span class="pre">Hamiltonian.build_keo()</span></code> is real by construction. Therefore when the potential matrix calculated in <code class="xref py py-func docutils literal notranslate"><span class="pre">Hamiltonian.build_potmat()</span></code> is real, the Hamiltonian matrix is real too.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="hamiltonian-module-hamiltonian">
 <h2>Hamiltonian module (<code class="code docutils literal notranslate"><span class="pre">hamiltonian</span></code>)<a class="headerlink" href="#hamiltonian-module-hamiltonian" title="Permalink to this headline"></a></h2>
@@ -125,8 +199,239 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.hamiltonian.Hamiltonian" title="pecd.hamiltonian.Hamiltonian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.hamiltonian.Hamiltonian</span></code></a>(params, WDMATS)</p></td>
+<td><p>Hamiltonian class keeps methods for generating and manipulating matrices: kinetic energy operator, potential energy operator, hamiltonian, dipole interaction operator.</p></td>
+</tr>
 </tbody>
 </table>
+<dl class="py class">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.hamiltonian.</span></span><span class="sig-name descname"><span class="pre">Hamiltonian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WDMATS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hamtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bound'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian" title="Permalink to this definition"></a></dt>
+<dd><p>Hamiltonian class keeps methods for generating and manipulating matrices: kinetic energy operator, potential energy operator, hamiltonian, dipole interaction operator.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The characteristics of the photo-electron propagation using the FEM-DVR method suggests
+that a DVR-type mapping is suitable and natural.</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.hamtype">
+<span class="sig-name descname"><span class="pre">hamtype</span></span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.hamtype" title="Permalink to this definition"></a></dt>
+<dd><p>‘bound’ or ‘prop’ determines the type of the hamiltonian to be created</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.params">
+<span class="sig-name descname"><span class="pre">params</span></span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.params" title="Permalink to this definition"></a></dt>
+<dd><p>standard input parameters dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dics</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.build_dmat">
+<span class="sig-name descname"><span class="pre">build_dmat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.build_dmat" title="Permalink to this definition"></a></dt>
+<dd><p>Constructs the D-matrix of derivatives of Lagrange polynomials evaluated at Gauss-Lobatto quadrature nodes.</p>
+<p>The D-matrix is defined as</p>
+<blockquote>
+<div><div class="math notranslate nohighlight" id="equation-d-matrix">
+<span class="eqno">(2)<a class="headerlink" href="#equation-d-matrix" title="Permalink to this equation"></a></span>\[D_{kn} = L'_n(x_k)\]</div>
+<dl class="simple">
+<dt>Arguments: numpy.ndarray, dtype = float, shape = (Nl,)</dt><dd><p>x : quadrature nodes</p>
+</dd>
+<dt>Returns: numpy.ndarray</dt><dd><dl class="simple">
+<dt>Dmat :numpy.ndarray</dt><dd><p>The D-matrix</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.build_keomat_blocks">
+<span class="sig-name descname"><span class="pre">build_keomat_blocks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">KD0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">KC0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CFE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nang</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.build_keomat_blocks" title="Permalink to this definition"></a></dt>
+<dd><p>Create compressed sparse-row matrix from copies of the generic inflated KD and KC matrices + the CFE term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>KD0</strong> (<em>2D numpy array</em>) – inflated KD matrix</p></li>
+<li><p><strong>KC0</strong> (<em>2D numpy array</em>) – inflated KC matrix</p></li>
+<li><p><strong>CFE</strong> (<em>1D numpy array</em>) – The centrifugal term</p></li>
+<li><p><strong>nbins</strong> (<em>float</em>) – number of bins</p></li>
+<li><p><strong>Nu</strong> (<em>float</em>) – number of points per block (Nang*(nlobs-1))</p></li>
+<li><p><strong>Nang</strong> (<em>float</em>) – size of the angular basis</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the KEO operator matrix in csr format</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>keomat (2D sparse csr array)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.build_jmat">
+<span class="sig-name descname"><span class="pre">build_jmat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.build_jmat" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.gen_klist">
+<span class="sig-name descname"><span class="pre">gen_klist</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.gen_klist" title="Permalink to this definition"></a></dt>
+<dd><p>Generates a list of non-zero indices in the KEO matrix</p>
+<dl class="simple">
+<dt>Returns: list</dt><dd><dl class="simple">
+<dt>klist: 1D list</dt><dd><p>list [i1,n1,i2,n2,l2,p1,p2]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.calc_vxi">
+<span class="sig-name descname"><span class="pre">calc_vxi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vmat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmats</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.calc_vxi" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate a block of the potential energy matrix for a single grid point. Uses multipole expansion as given in Demekhin et al.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vmats</strong> (<em>1D numpy array</em><em>, </em><em>shape=</em><em>(</em><em>Nmulti</em><em>)</em>) – Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.</p></li>
+<li><p><strong>tmats</strong> (<em>3D numpy array</em><em>, </em><em>shape=</em><em>(</em><em>Nang</em><em>,</em><em>Nang</em><em>,</em><em>Nmulti</em><em>)</em>) – tjmat reduced to 3 dimensions</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: numpy.ndarray, dtype = complex, shape = (Nang,Nang)</dt><dd><p>vxi: 2D numpy array keeping the matrix elements of the potential energy for a given radial grid point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.gen_tjmat">
+<span class="sig-name descname"><span class="pre">gen_tjmat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmax_basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmax_multi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.gen_tjmat" title="Permalink to this definition"></a></dt>
+<dd><p>precompute all necessary 3-j symbols for the matrix elements of the multipole moments</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.build_potmat_chiralium_anton">
+<span class="sig-name descname"><span class="pre">build_potmat_chiralium_anton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid_euler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.build_potmat_chiralium_anton" title="Permalink to this definition"></a></dt>
+<dd><p>Build the potential energy matrix using the analytic method with the ESP read from files provided by A. Artemyev.</p>
+<p>See theory docs for more detailes.</p>
+<dl class="simple">
+<dt>Returns: sparse matrix</dt><dd><dl class="simple">
+<dt>potmat sparse matrix, dtype = complex, shape = (Nbas,Nbas)</dt><dd><p>potential energy matrix</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For this function to work a set of ESP files in ./potential/ directory must be provided.</p>
+</div>
+<p class="rubric">Examples</p>
+<p>Below are given example structures of the potential energy matrix:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/potmat_example_zoom1.png"><img alt="_images/potmat_example_zoom1.png" src="_images/potmat_example_zoom1.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/potmat_example_zoom2.png"><img alt="_images/potmat_example_zoom2.png" src="_images/potmat_example_zoom2.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/potmat_example_zoom3.png"><img alt="_images/potmat_example_zoom3.png" src="_images/potmat_example_zoom3.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.gen_3j_dip">
+<span class="sig-name descname"><span class="pre">gen_3j_dip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.gen_3j_dip" title="Permalink to this definition"></a></dt>
+<dd><p>Precompute all necessary <span class="math notranslate nohighlight">\(h_{ll'mm'\mu}\)</span> dipole matrix elements.</p>
+<blockquote>
+<div><p>Perform the following Legendre decomposition:</p>
+<div class="math notranslate nohighlight">
+\[h_{ll'mm'\mu} = (-1)^m\sqrt{\]</div>
+</div></blockquote>
+<dl>
+<dt>rac{3}{4pi}}sqrt{(2l+1)(2l’+1)} egin{pmatrix}</dt><dd><blockquote>
+<div><blockquote>
+<div><p>l &amp; 1 &amp; l’ m’ &amp; -mu &amp; -m
+end{pmatrix}}</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">label</dt>
+<dd class="field-odd"><p>dipole_matrix</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns: numpy.ndarray</dt><dd><p>tjmat : numpy.ndarray, dtype = float, shape = (lmax + 1, lmax + 1, 2*lmax + 1, 2*lmax + 1, 3)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.map_tjmat_dip">
+<span class="sig-name descname"><span class="pre">map_tjmat_dip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tjmat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.map_tjmat_dip" title="Permalink to this definition"></a></dt>
+<dd><p>Map the 5D dipole’s tjmat onto a practical 3D numpy array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tjmat</strong> (<em>5D numpy array</em>) – matrix elements of the respective spherical harmonics operators in the spherical harmonics basis</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: array</dt><dd><p>tjmats (3D numpy array, shape=(Nang,Nang,Nr)): tjmat reduced to 3 dimensions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.build_intmat">
+<span class="sig-name descname"><span class="pre">build_intmat</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.build_intmat" title="Permalink to this definition"></a></dt>
+<dd><p>Driver routine for the calculation of the dipole interaction energy matrix.</p>
+<dl class="simple">
+<dt>Returns: numpy.ndarray</dt><dd><p>intmat : numpy.ndarray, dtype = float, shape = (Nbas,Nbas)</p>
+</dd>
+</dl>
+<p>An example plot of the dipole interaction matrix for CPL is given below:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/dipmat_example1.png"><img alt="_images/dipmat_example1.png" src="_images/dipmat_example1.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+<p>this matrix is not Hermitian. The symmetrized dipole interaction matrix is shown below:</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/dipmat_example2.png"><img alt="_images/dipmat_example2.png" src="_images/dipmat_example2.png" style="width: 400px; height: 400px;" /></a>
+</figure>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.hamiltonian.Hamiltonian.calc_dipxi">
+<span class="sig-name descname"><span class="pre">calc_dipxi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmats</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.hamiltonian.Hamiltonian.calc_dipxi" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate a block of the electric dipole interaction matrix for a single grid point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vmats</strong> (<em>1D numpy array</em><em>, </em><em>shape=</em><em>(</em><em>Nmulti</em><em>)</em>) – Nmulti = (Lmax+1)^2, values of the radial potential at a single grid point.</p></li>
+<li><p><strong>tmats</strong> (<em>3D numpy array</em><em>, </em><em>shape=</em><em>(</em><em>Nang</em><em>,</em><em>Nang</em><em>,</em><em>Nr</em><em>)</em>) – tjmat reduced to 3 dimensions</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: numpy.ndarray, dtype = float, shape=(Nmulti,Nmulti)): Nmulti = (Lmax+1)^2</dt><dd><p>dipxi : array of dipole matrix lements labeled by the angular coordinate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="potential-module-potential">
 <h2>Potential module (<code class="code docutils literal notranslate"><span class="pre">potential</span></code>)<a class="headerlink" href="#potential-module-potential" title="Permalink to this headline"></a></h2>
@@ -156,7 +461,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#pecd.wavefunction.GridEuler" title="pecd.wavefunction.GridEuler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.GridEuler</span></code></a>(N_euler, ...)</p></td>
 <td><p>GridEuler class keeps methods for generating and manipulating the grid of molecular orientations</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pecd.wavefunction.Psi" title="pecd.wavefunction.Psi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.Psi</span></code></a>(params, grid_euler, irun)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#pecd.wavefunction.Psi" title="pecd.wavefunction.Psi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.wavefunction.Psi</span></code></a>(params, WDMATS, ...[, ...])</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -367,11 +672,21 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 <p>Status: tested.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="pecd.wavefunction.GridEuler.read_euler_grid">
+<span class="sig-name descname"><span class="pre">read_euler_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.GridEuler.read_euler_grid" title="Permalink to this definition"></a></dt>
+<dd><p>Read the Euler grid from file and put it in a correct shape.</p>
+<dl class="simple">
+<dt>Returns: numpy.ndarray, dtype = float, shape = (N_euler,3)</dt><dd><p>grid_euler: numpy array keeping the Euler angles</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.wavefunction.Psi">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">Psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_euler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psitype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bound'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Psi" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.wavefunction.</span></span><span class="sig-name descname"><span class="pre">Psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WDMATS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_euler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psitype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bound'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Psi" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="pecd.wavefunction.Psi.project_psi_global">
 <span class="sig-name descname"><span class="pre">project_psi_global</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psi0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.wavefunction.Psi.project_psi_global" title="Permalink to this definition"></a></dt>
@@ -380,7 +695,7 @@ Format: [ [nbins,nlobs,Rbin], … ].</p>
 <div class="math notranslate nohighlight">
 \[\psi(r \geq R_{bound},t=0) = 0\]</div>
 <div class="math notranslate nohighlight" id="equation-psi-init">
-<span class="eqno">(1)<a class="headerlink" href="#equation-psi-init" title="Permalink to this equation"></a></span>\[\psi(r,t=0)|_{r&lt;R_{bound}} = \psi_0\]</div>
+<span class="eqno">(3)<a class="headerlink" href="#equation-psi-init" title="Permalink to this equation"></a></span>\[\psi(r,t=0)|_{r&lt;R_{bound}} = \psi_0\]</div>
 <dl class="simple">
 <dt>Arguments: numpy.ndarray</dt><dd><dl class="simple">
 <dt>psi0: numpy.ndarray, dtype = <cite>float</cite>, shape = (<cite>Nbas0</cite>,)</dt><dd><p>Bound state wavefunction stored in 1D numpy array.</p>
@@ -471,15 +786,15 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <tbody>
 <tr class="row-even"><td><p>Fvec[:,0]</p></td>
 <td><p>complex</p></td>
-<td><p><span class="math notranslate nohighlight">\(F_{-1}(t)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(E_{-1}(t)\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p>Fvec[:,1]</p></td>
 <td><p>complex</p></td>
-<td><p><span class="math notranslate nohighlight">\(F_{0}(t)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(E_{0}(t)\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p>Fvec[:,2]</p></td>
 <td><p>complex</p></td>
-<td><p><span class="math notranslate nohighlight">\(F_{+1}(t)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(E_{+1}(t)\)</span></p></td>
 </tr>
 </tbody>
 </table>
@@ -497,14 +812,17 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.analyze.analysis" title="pecd.analyze.analysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.analyze.analysis</span></code></a>(params)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pecd.analyze.analysis" title="pecd.analyze.analysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.analyze.analysis</span></code></a>(params, helicity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pecd.analyze.momentumfuncs" title="pecd.analyze.momentumfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pecd.analyze.momentumfuncs</span></code></a>(params, helicity)</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.analyze.analysis">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.analyze.</span></span><span class="sig-name descname"><span class="pre">analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.analyze.</span></span><span class="sig-name descname"><span class="pre">analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">helicity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="pecd.analyze.analysis.read_wavepacket">
 <span class="sig-name descname"><span class="pre">read_wavepacket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgrid_plot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.analysis.read_wavepacket" title="Permalink to this definition"></a></dt>
@@ -547,7 +865,7 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pecd.analyze.momentumfuncs">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.analyze.</span></span><span class="sig-name descname"><span class="pre">momentumfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pecd.analyze.</span></span><span class="sig-name descname"><span class="pre">momentumfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">helicity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="pecd.analyze.momentumfuncs.W2D">
 <span class="sig-name descname"><span class="pre">W2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">funcpars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pecd.analyze.momentumfuncs.W2D" title="Permalink to this definition"></a></dt>
@@ -643,7 +961,7 @@ Name of the HDF5 file from which tensor data is loaded.</p>
 <dd><p>Calculate the photo-electron spectrum (PES) from a 2D momentum distribution.</p>
 <p>Perform the following integration:</p>
 <div class="math notranslate nohighlight" id="equation-pes-definition">
-<span class="eqno">(2)<a class="headerlink" href="#equation-pes-definition" title="Permalink to this equation"></a></span>\[\sigma(E) = \int \sin\theta d\theta W_{2D}(E,\tilde{\theta})\]</div>
+<span class="eqno">(4)<a class="headerlink" href="#equation-pes-definition" title="Permalink to this equation"></a></span>\[\sigma(E) = \int \sin\theta d\theta W_{2D}(E,\tilde{\theta})\]</div>
 <p>This function carries options for:
 a) saving the PES for a chosen momentum grid (<cite>save_PES=True</cite>)
 b) psaving the PES for a chosen momentum grid (<cite>plot_PES=True</cite>)</p>
@@ -784,7 +1102,7 @@ For ‘manual’ we use a user-defined grid to plot W2Dav. This grid only cuts r
 <dd><p>Calculate the photo-electron spectrum (PES) from a phi-averaged momentum distribution.</p>
 <p>Perform the following integration:</p>
 <div class="math notranslate nohighlight" id="equation-pes-definition">
-<span class="eqno">(3)<a class="headerlink" href="#equation-pes-definition" title="Permalink to this equation"></a></span>\[\sigma(E) = \int \sin\theta d\theta \bar{W}_{2D}(E,\tilde{\theta})\]</div>
+<span class="eqno">(5)<a class="headerlink" href="#equation-pes-definition" title="Permalink to this equation"></a></span>\[\sigma(E) = \int \sin\theta d\theta \bar{W}_{2D}(E,\tilde{\theta})\]</div>
 <p>This function carries options for:
 a) saving the PES for a chosen momentum grid (<cite>save_PES=True</cite>)
 b) psaving the PES for a chosen momentum grid (<cite>plot_PES=True</cite>)</p>
@@ -817,14 +1135,14 @@ b) psaving the PES for a chosen momentum grid (<cite>plot_PES=True</cite>)</p>
 <dd><p>Calculate the Legendre expansion coefficients as a function of the photo-electron momentum.</p>
 <p>Perform the following Legendre decomposition:</p>
 <div class="math notranslate nohighlight" id="equation-legendre-expansion">
-<span class="eqno">(4)<a class="headerlink" href="#equation-legendre-expansion" title="Permalink to this equation"></a></span>\[W(k,\tilde{\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\tilde{\theta})\]</div>
+<span class="eqno">(6)<a class="headerlink" href="#equation-legendre-expansion" title="Permalink to this equation"></a></span>\[W(k,\tilde{\theta}) = \sum_{n=0}^{n_{max}} b_n(k)P_n(\cos\tilde{\theta})\]</div>
 <p>where the expansion coefficients are given as:</p>
 <div class="math notranslate nohighlight" id="equation-legendre-coeffs">
-<span class="eqno">(5)<a class="headerlink" href="#equation-legendre-coeffs" title="Permalink to this equation"></a></span>\[b_n(k) =\frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\tilde{\theta}))P_n(\cos\tilde{\theta}) d\cos\tilde{\theta}\]</div>
+<span class="eqno">(7)<a class="headerlink" href="#equation-legendre-coeffs" title="Permalink to this equation"></a></span>\[b_n(k) =\frac{2n+1}{2}\int_{-1}^{1} W(k,\cos\tilde{\theta}))P_n(\cos\tilde{\theta}) d\cos\tilde{\theta}\]</div>
 <p><span class="math notranslate nohighlight">\(n_{max}\)</span> is determined by <cite>Leg_Lmax</cite> in the input file.</p>
 <p>For consisency with the angular range and definition of <cite>W2D</cite> we use <span class="math notranslate nohighlight">\(\theta=-np.arccos(x[:,0])+2.0*np.pi\)</span>. The respespective integral is calculated using the Gauss-Legendre quadrature:</p>
 <div class="math notranslate nohighlight" id="equation-legendre-coeffs-quad">
-<span class="eqno">(6)<a class="headerlink" href="#equation-legendre-coeffs-quad" title="Permalink to this equation"></a></span>\[b_n(k) =  \sum_{q=0}^{q_{max}} w_q P_n(\cos\tilde{\theta}_q) W(k,-\arccos(\cos\tilde{\theta})+2\pi)\]</div>
+<span class="eqno">(8)<a class="headerlink" href="#equation-legendre-coeffs-quad" title="Permalink to this equation"></a></span>\[b_n(k) =  \sum_{q=0}^{q_{max}} w_q P_n(\cos\tilde{\theta}_q) W(k,-\arccos(\cos\tilde{\theta})+2\pi)\]</div>
 <p>where <span class="math notranslate nohighlight">\(q_{max}\)</span> is determined by <a href="#id3"><span class="problematic" id="id4">`</span></a>N_leg_quad’.</p>
 <p>This function carries options for:
 a) saving legendre expansion coefficients for a chosen momentum grid (<cite>save_bcoeffs=True</cite>)
@@ -847,7 +1165,7 @@ b) plotting legendre expansion coefficients for a chosen momentum grid (<cite>pl
 <dt>Returns: tuple</dt><dd><dl class="simple">
 <dt>bcoef<span class="classifier">numpy.ndarray, dtype = float, shape = (len(energy_grid),Legmax+1)</span></dt><dd><p>Array of the legendre expansion coefficients calculated at energies specified by the used in   params[‘legendre_params’][‘energy_grid’]</p>
 </dd>
-<dt>momentum_grid: numpy.ndarray</dt><dd><p>momentum grid on which the b-coeffs are calculated</p>
+<dt>energy_grid: numpy.ndarray</dt><dd><p>energy grid on which the b-coeffs are calculated</p>
 </dd>
 </dl>
 </dd>

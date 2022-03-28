@@ -40,7 +40,10 @@ def read_input():
 
     """==== Molecule-field orientation ===="""
     params['restart']           = False #restart some of the runs?
-    params['restart_list']      = [1,5] #global id list of jobs to be restarted. Must be compatible with the ordering of the Euler grid.
+    params['restart_mode']      = "file" #manual
+    params['restart_helicity']  = "L"
+    if params['restart_mode']      == "manual":
+        params['restart_list']      =  []#global id list of jobs to be restarted. 
     params['N_euler'] 	        = 3   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
     params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.

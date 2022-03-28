@@ -16,3 +16,4 @@ ToDo list
 7. Try numba jit (parallel = True) with prange when constructing the KEO with (indptr,indices,data)->csr. Loop over bins, loop over points. Any gain vs scipy.sparse.block_diag? Consider cupyx.scipy.sparse for the same purpose.
 8. Parallelize calc_vxi part in potmat (loop over grid points).
 9. Cleanup the Hamiltonian class
+10. alpha averaging of Flm and direct calculation of b coefficients from F_l0

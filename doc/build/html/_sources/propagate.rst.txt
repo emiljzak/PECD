@@ -26,10 +26,18 @@ Hamiltonian module (:code:`hamiltonian`)
 
 .. autoclass:: pecd.hamiltonian.Hamiltonian
 
+	.. automethod:: build_dmat
+	.. automethod:: build_keomat_blocks
+	.. automethod:: build_jmat
 	.. automethod:: gen_klist
 	.. automethod:: calc_vxi
+	.. automethod:: gen_tjmat
 	.. automethod:: build_potmat_chiralium_anton
-
+	.. automethod:: gen_3j_dip
+	.. automethod:: map_tjmat_dip
+	.. automethod:: build_intmat
+	.. automethod:: calc_dipxi
+	
 Potential module (:code:`potential`)
 -------------------------------------
 
@@ -60,8 +68,8 @@ Wavefunction module (:code:`wavefunction`)
 
 	.. automethod:: gen_euler_grid
 	.. automethod:: gen_euler_grid_2D
-
-
+	.. automethod:: read_euler_grid
+	
 .. autoclass:: pecd.wavefunction.Psi
 
 	.. automethod:: project_psi_global
@@ -86,7 +94,7 @@ Analysis module (:code:`analyze`)
 .. autosummary::
 
 	pecd.analyze.analysis
-	pecs.analyze.momentumfuncs
+	pecd.analyze.momentumfuncs
 	
 .. autoclass:: pecd.analyze.analysis
 

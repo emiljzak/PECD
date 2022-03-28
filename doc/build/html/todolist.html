@@ -111,6 +111,7 @@
 <li><p>Try numba jit (parallel = True) with prange when constructing the KEO with (indptr,indices,data)-&gt;csr. Loop over bins, loop over points. Any gain vs scipy.sparse.block_diag? Consider cupyx.scipy.sparse for the same purpose.</p></li>
 <li><p>Parallelize calc_vxi part in potmat (loop over grid points).</p></li>
 <li><p>Cleanup the Hamiltonian class</p></li>
+<li><p>alpha averaging of Flm and direct calculation of b coefficients from F_l0</p></li>
 </ol>
 </section>
 
