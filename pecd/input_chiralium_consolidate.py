@@ -23,6 +23,8 @@ def read_input():
 
     params['helicity_consolidate']          = ["L","R"]
     params['check_sizes'] = False #pre-check sizes of wavepacket files?
+    params['res_jobs_per_batch'] = 10 #number of restart jobs per batch
+    
     #maximum number of photons considered in PECD calculations based on Legendre expansion.
     params['Nmax_photons']      = 2
 

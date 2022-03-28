@@ -42,7 +42,6 @@ def read_input():
     params['restart']           = True #restart some of the runs?
     params['restart_mode']      = "file" #manual
     params['restart_helicity']  = "L"
-    params['res_jobs_per_batch'] = 10 #number of restart jobs per batch
     if params['restart_mode']      == "manual":
         params['restart_list']      =  []#global id list of jobs to be restarted. Must be compatible with the ordering of the Euler grid.
     params['N_euler'] 	        = 2   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
