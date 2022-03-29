@@ -1701,8 +1701,9 @@ class Hamiltonian():
             end_time = time.time()
 
             lmax_multi = self.params['multi_lmax']
-
-            for k in range(len(self.Gr)-1):
+            counter = 0
+            print("ipoint_cutoff:" + str(ipoint_cutoff))
+            for k in range(ipoint_cutoff):
                 sph = np.zeros(Gs[k].shape[0], dtype=complex)
                 print("No. spherical quadrature points  = " + str(Gs[k].shape[0]) + " at grid point " + str('{:10.3f}'.format(self.Gr[k])))
                 for s in range(Gs[k].shape[0]):

@@ -49,13 +49,6 @@ def read_input():
     params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
-    """
-        Set up properties of the molecule, including atomic masses, geometry, MF embedding
-        *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
-            Extend later to the option of the cartesian input. 
-        *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
-            Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
-    """
     params['molec_name']    = "chiralium"
     params['mol_geometry']  = {"rc":0.0} #angstroms
     params['mol_masses']    = {"c":12.0}
@@ -72,6 +65,7 @@ def read_input():
     params['matelem_method']    = "analytic" 
     params['sph_quad_global']   = "lebedev_119" 
     params['sph_quad_tol']      = 1e-10     
+    params['r_cutoff']          = 400.0
 
     """==== electrostatic potential ===="""
     params['esp_mode']           = "anton" 
