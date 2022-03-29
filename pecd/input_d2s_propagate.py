@@ -10,7 +10,7 @@ def read_input():
 
     params = {}
 
-    params['job_label']    = "orientations" 
+    params['job_label']    = "no_com" 
     
     """====== Basis set parameters ======"""
     """ 
@@ -19,23 +19,23 @@ def read_input():
         Format (tuple): params['bound_nnn'] = (par_min, par_max, number_of_params) - to set up a loop over parameters
     """
     """ BOUND PART"""
-    params['bound_nlobs_arr']   = (6,6,1)
-    params['bound_lmax_arr']    = (2,2,1)
+    params['bound_nlobs_arr']   = (10,10,1)
+    params['bound_lmax_arr']    = (4,4,1)
     params['bound_binw_arr']    = (2.0,2.0,1)
 
     params['bound_nbins']       = 20
     params['bound_rshift']      = 0.0
 
     """ PROPAGATION PART"""
-    params['prop_nbins']        = 50
+    params['prop_nbins']        = 20
 
 
     """==== time-grid parameters ===="""
     params['time_units']    = "as"
     params['t0']            = 0.0 
-    params['tmax']          = 2000.0 
+    params['tmax']          = 20.0 
     params['dt']            = 5.0 # replace with the calculated number for N points per cycle
-    params['wfn_saverate']  = 100 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
+    params['wfn_saverate']  = 1 #save rate wrt. index labeling the timegrid. '1' means save all time-steps
 
 
     """==== Molecule-field orientation ===="""
@@ -44,14 +44,14 @@ def read_input():
     params['restart_helicity']  = "L"
     if params['restart_mode']      == "manual":
         params['restart_list']      =  []#global id list of jobs to be restarted. 
-    params['N_euler'] 	        = 3   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
+    params['N_euler'] 	        = 1   # number of euler grid points per dimension (beta angle) for orientation averaging. Alpha and gamma are on double-sized grid.
     params['N_batches'] 	    = 1    # number of batches for orientation averaging
-    params['orient_grid_type']  = "3D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
+    params['orient_grid_type']  = "1D"  # 2D or 3D. Use 2D when averaging is performed over phi in W2D.
 
     """ ===== Molecule definition ====== """ 
 
     params['molec_name']    = "d2s"
-    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.336, "alphaDSD": 92.0} #angstroms#in next generation load internal geometry from file
+    params['mol_geometry']  = {"rSD1":1.336, "rSD2": 1.336, "alphaDSD": 92.06} #angstroms#in next generation load internal geometry from file
     params['mol_masses']    = {"S":32.0, "D":2.0}
     params['mol_embedding'] = "bisector" #TROVE's bisector embedding
 
@@ -64,9 +64,9 @@ def read_input():
 
     """===== potential energy matrix ====="""
     params['matelem_method']    = "lebedev" 
-    params['sph_quad_global']   = "lebedev_019" 
+    params['sph_quad_global']   = "lebedev_041" 
     params['sph_quad_tol']      = 1e-10     
-    params['r_cutoff']          = 15.0
+    params['r_cutoff']          = 40.0
 
     """==== electrostatic potential ===="""
     params['esp_mode']           = "psi4" 

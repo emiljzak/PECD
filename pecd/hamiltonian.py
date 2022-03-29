@@ -1207,26 +1207,21 @@ class Hamiltonian():
     def rotate_mol_xyz(self, grid_euler, irun):
         """ Generate raw cartesian coordinates of atoms from Z-matrix,
             followed by shift to the centre of mass,
-            followed by rotation by appropriate rotation matrix associated with elements of the Euler angles grid
-        """
-        """
-            Set up properties of the molecule, including atomic masses, geometry, MF embedding
-            *)  mol_geometry: for now only supports a dictionary with internal coordinates (bond lengths, angles). 
-                Extend later to the option of the cartesian input. 
-            *) mol_embedding (string): define the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
-                Extend later beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
-        
+            followed by rotation by appropriate rotation matrix associated with elements of the Euler angles grid.
+            Requires definition of  the MF embedding, which matches the embedding used for calculating the ro-vibrational wavefunctions.
+            To do: extend beyond the TROVE wavefunctions. Add own ro-vibrational wavefunctions and embeddings.
     
-        #D2S geometry (NIST)
-        # r(S-D) = 1.336 ang
-        #angle = 92.06
-        
-        units angstrom
-        S	    0.0000	0.0000	0.1031
-        H@2.014	0.0000	0.9617	-0.8246
-        H@2.014	0.0000	-0.9617	-0.8246
-        
+            #D2S geometry (NIST)
+            # r(S-D) = 1.336 ang
+            #angle = 92.06
+            
+            units angstrom
+            S	    0.0000	0.0000	0.1031
+            H@2.014	0.0000	0.9617	-0.8246
+            H@2.014	0.0000	-0.9617	-0.8246
+            
         """
+
         print("generating rotated cartesian coordinates of atoms...")
         print("irun = " + str(irun))
         print("(alpha,beta,gamma) = " + str(grid_euler[irun]))
@@ -1246,12 +1241,15 @@ class Hamiltonian():
             rSD2 = self.params['mol_geometry']["rSD2"] * ang_au
             alphaDSD = self.params['mol_geometry']["alphaDSD"] * np.pi / 180.0
 
+            print("Bond lengths in atomic units:")
+            print(rSD1,rSD2)
+            
             mS = self.params['mol_masses']["S"]    
             mD = self.params['mol_masses']["D"]
 
             mVec = np.array( [mS, mD, mD])
 
-            Sz = 1.1 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
+            Sz = 0.0 * ang_au  #dummy value (angstrom) of z-coordinate for S-atom to place the molecule in frame of reference. Later shifted to COM.
 
             mol_xyz[2,0] = Sz
 
@@ -1265,19 +1263,18 @@ class Hamiltonian():
             print("raw cartesian molecular-geometry matrix")
             print(mol_xyz)
 
-            
-            print("Centre-of-mass coordinates: ")
-            RCM = np.zeros(3, dtype=float)
 
+            RCM = np.zeros(3, dtype=float)
             for iatom in range(3):
                 RCM[:] += mVec[iatom] * mol_xyz[:,iatom]
 
             RCM /= np.sum(mVec)
 
+            print("Centre-of-mass coordinates: ")
             print(RCM)
         
-            for iatom in range(3):
-                mol_xyz[:,iatom] -= RCM[:] 
+            #for iatom in range(3):
+            #    mol_xyz[:,iatom] -= RCM[:] 
 
             print("cartesian molecular-geometry matrix shifted to centre-of-mass: ")
             print(mol_xyz)

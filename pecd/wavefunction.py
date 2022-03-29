@@ -110,7 +110,7 @@ class Psi():
         irun    = self.irun
         lmax    = self.params['bound_lmax']
         WDMATS  = self.WDMATS
-        print("irunnnn"+ str(irun))
+        print("irun"+ str(irun))
         Dsize   = (lmax+1)**2 
         Dmat    = np.zeros((Dsize,Dsize), dtype = complex)
 
@@ -146,7 +146,7 @@ class Psi():
             xi_start[xi+1] = xi_start[xi] + Dsize
             xi_end[xi+1]   = xi_end[xi] +  Dsize 
             
-            print(xi_start[xi],xi_end[xi])
+            #print(xi_start[xi],xi_end[xi])
         print("size of single D-mat block: " + str(-xi_start[1]+xi_end[1]))
 
         for xi in range(Nr):
