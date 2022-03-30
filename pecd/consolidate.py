@@ -325,6 +325,16 @@ class Avobs:
         return pecd_av
 
 
+    def plot_pecd_av():
+        """ Polar plot (k,theta) of 3D orientation averaged PECD
+        
+            The function reads W2Dav distributions for 'L' and 'R' helicity and for each orientation and sums the respective distributions.
+            Finally orientation averaged W2D('R') is substracted from W2D('L')
+        
+        """
+
+        return 0
+
     def plot_bcoeffs_Flm_2D(self,b_flm_alpha_av_dict,grid2D):
         
         for sigma,barray in b_flm_alpha_av_dict.items():
@@ -570,6 +580,8 @@ if __name__ == "__main__":
 
     Obs.plot_pecd_2D(pecd_alpha_av,b_av_dict,grid2D )
     pecd_av     = Obs.calc_pecd_av(pecd_alpha_av,b_av_dict)
+    #polar plot of orientation averaged PECD (L-R distributions)
+    Obs.plot_pecd_av()
     #
     print("b1(R)/b_av= " + str(b_av_dict["R"][1]/b_av_dict["R"][0]))
     print("b1(L)/b_av= " + str(b_av_dict["L"][1]/b_av_dict["R"][0]))
