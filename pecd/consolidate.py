@@ -563,7 +563,9 @@ if __name__ == "__main__":
                                                 WDMATS,
                                                 params) 
 
-
+        print("rho:")
+        print(rho)
+        exit()
 
 
 

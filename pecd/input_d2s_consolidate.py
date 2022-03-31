@@ -36,10 +36,12 @@ def read_input():
     params['index_bcoeff']  = list(np.linspace(0,4,5,endpoint=True,dtype=int))
 
     """ === ro-vibrational part ==== """ 
-    params['density_averaging'] = True #use rotational proability density for orientation averageing. Otherwise uniform probability. 
-    params['Jmax']              = 2 #maximum J for the ro-vibrational wavefunction
-    params['rv_wavepacket_time']= 50
-    params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
+    params['density_averaging']     = True #use rotational proability density for orientation averageing. Otherwise uniform probability. 
+    params['Jmax']                  = 60 #maximum J for the ro-vibrational wavefunction
+    params['rv_wavepacket_name']    = "wavepacket_J60.h5"
+    params['rv_coefficients_name']  = "coefficients_j0_j60.rchm"
+    params['rv_wavepacket_time']    = 50
+    params['rv_wavepacket_dt']      = 0.1 #richmol time-step in ps #
 
 
     return params

@@ -177,12 +177,8 @@ def setup_input(params_input,mode,jobtype):
 
     if mode == 'propagate':
 
-        params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + "wavepacket_J60.h5"
-        params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + "coefficients_j0_j60.rchm"
-
         params['wavepacket_file']    = "wavepacket"
-
-
+        
         """==== file paths and names ===="""
 
         params['file_psi0']         =   "psi0_" + params['molec_name']   + \
@@ -258,6 +254,10 @@ def setup_input(params_input,mode,jobtype):
 
         """ ******** Create field dictionaries *********"""
         params['field_type'], params['field_env'] = field_params(params)  
+    
+    elif params['mode'] == "consolidate":
+        params['rot_wf_file']       = params['working_dir'] + "rv_wavepackets/" + params['rv_wavepacket_name']
+        params['rot_coeffs_file']   = params['working_dir'] + "rv_wavepackets/" + params['rv_coefficients_name']
 
 
     return params
