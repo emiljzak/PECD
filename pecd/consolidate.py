@@ -30,18 +30,17 @@ class Avobs:
     
         #2. setup time grid
         self.tgrid               = self.calc_tgrid()
-        #3. setup time grid indices to analyze - they correspond to the respective analyze times
-        self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['momentum_analyze_times']) 
-        self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
-        print("times for which momentum functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
-        
 
-            """ set up time grids for evaluating rho1D from the propagated wavefunction """
-        tgrid,dt = self.calc_tgrid()
 
-        plot_index = self.calc_plot_times(tgrid,dt,self.params['space_analyze_times']) #plot time indices
+    def calc_tgrid(self):
+        print("Setting up time-grid")
 
-        tgrid_plot = tgrid[plot_index]
+        tgrid   = np.linspace(    self.params['t0'] * time_to_au, 
+                                    self.params['tmax'] * time_to_au, 
+                                    int((self.params['tmax']-self.params['t0'])/self.params['dt']+1), 
+                                    endpoint = True )
+        return tgrid
+
 
     def read_Flm(self):
         """Reads Flm arrays for a sequeces of batches
@@ -352,28 +351,31 @@ class Avobs:
         """
 
         #generate polargrid
-
-        #read W2Dav files
+        # read kgrid  
+        with open( self.params['job_directory'] +  "kgrid.dat" , 'r') as kgridfile:   
+            ft_kgrid = np.loadtxt(kgridfile)
+        thtuple             = (self.params['PECD_av']['th_grid']['thmin'], self.params['PECD_av']['th_grid']['thmax'], self.params['PECD_av']['th_grid']['FT_npts_th'])
+        unity_vec           = np.linspace(0.0, 1.0, thtuple[2], endpoint=True, dtype=float)
+        thgrid1D            = thtuple[1] * unity_vec
+        ft_polargrid = np.meshgrid(ft_kgrid, thgrid1D, indexing='ij')
 
         #set up time at which we calculate W
-        index_time = self.params['index_time'][0]
-        t = timegrid[index_time]
-
+        #need to fix it to account for intermediate saving and saverate
+        index_time  = self.params['index_time'][0]
+        t           = self.tgrid[index_time]
+        print("Plot time: " + str(t))
 
         for helicity in self.params['helicity_consolidate']:
             for ipoint in range(N_Euler):
                 #read W2D(helicity,ipoint)
         
-                with open( self.params['job_directory'] +  "W2Dav" + "_" + str(ipoint) + "_" + str('{:.1f}'.format(t/time_to_au) ) + "_" + helicity + ".dat" , 'r') as Wavfile:   
+                with open( self.params['job_directory'] +  "W2Dav" + "_" + str(ipoint) + "_" + str('{:.1f}'.format(2000.0) ) + "_" + helicity + ".dat" , 'r') as Wavfile:   
                     W2D = np.loadtxt(Wavfile)
-                print(W2D)
-                print(W2D.shape)
-
-                exit()
+                #print(W2D)
+                #print(W2D.shape)       
                 W += rho[ipoint] * W2D
 
-
-        self.pecd_plot2D(self.params['PECD_av'],polargrid,W)
+        #self.pecd_plot2D(self.params['PECD_av'],polargrid,W)
 
         return W
 
@@ -732,7 +734,7 @@ if __name__ == "__main__":
         print(rho)
         #exit()
 
-    Obs.plot_pecd_av(N_Euler,grid_euler,rho)
+    Obs.calc_pecd2D_av(N_Euler,grid_euler,rho)
     exit()
 
 
