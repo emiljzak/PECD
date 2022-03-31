@@ -116,7 +116,7 @@ def calc_rotdens(grid_3d, WDMATS, params):
             #D_{m,k}^{(J)} = wig[ipoint,k+J], so that the range for the second argument is 0,...,2J
             
         symtop[ij].append( np.conj(WDMATS[int(J)]) * Jfac )
-    print("...done")
+    print("Finished constructing symmetric-top functions")
 
     #print(np.shape(symtop))
     #print(np.shape(symtop[0]))
@@ -124,9 +124,9 @@ def calc_rotdens(grid_3d, WDMATS, params):
     # compute rotational density
 
     vmax = max([max([v for v in state["v"]]) for state in states])
-    func = np.zeros((npoints_3d,vmax+1), dtype=np.complex128)
-    tot_func = np.zeros((npoints_3d,vmax+1), dtype=np.complex128)
-    dens = np.zeros(npoints_3d, dtype=np.complex128)
+    func = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
+    tot_func = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
+    dens = np.zeros(npoints_3d, dtype=np.complex)
 
     for q,cc,istate in zip(quanta,coefs,ind_state): #loop over coefficients in the wavepacket
 
@@ -260,12 +260,12 @@ def rotdens(npoints, nbatches, ibatch, states, quanta, coefs):
 
 if __name__ == "__main__":
 
-    coef_file = sys.argv[1]
-    wavepacket_file = sys.argv[2]
-    time0 = round(float(sys.argv[3]),1)
-    dens_name = sys.argv[4]
+    coef_file           = sys.argv[1]
+    wavepacket_file     = sys.argv[2]
+    time0               = round(float(sys.argv[3]),1)
+    dens_name           = sys.argv[4]
 
-    states = read_coefficients(coef_file, coef_thresh=1.0e-06)
+    states              = read_coefficients(coef_file, coef_thresh=1.0e-06)
     time, coefs, quanta = read_wavepacket(wavepacket_file, coef_thresh=1.0e-06)
     #time = np.asarray(time)
     #coefs = np.asarray(coefs)
@@ -274,10 +274,9 @@ if __name__ == "__main__":
     	print(time[itime],quanta[itime],coefs[itime])
 
     # Cartesian coordinates of D2S
-
     xyz = np.array([[  0.00000000,        0.00000000,        0.10358697],
                     [ -0.96311715,        0.00000000,       -0.82217544],
-                    [  0.96311715,        0.00000000,       -0.82217544]], dtype=np.float64)
+                    [  0.96311715,        0.00000000,       -0.82217544]], dtype=float)
 
     # polarizability axes: small, middle, main (c = y, b = z, a = x)
 

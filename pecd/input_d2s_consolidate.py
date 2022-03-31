@@ -21,21 +21,26 @@ def read_input():
 
     params['tmax']              = 2000.0 
 
-    params['helicity_consolidate']          = ["L","R"]
-    params['check_sizes'] = False #pre-check sizes of wavepacket files?
-    params['res_jobs_per_batch'] = 10 #number of restart jobs per batch
+    params['helicity_consolidate']  = ["L","R"]
+    params['check_sizes']           = False #pre-check sizes of wavepacket files?
+    params['res_jobs_per_batch']    = 10 #number of restart jobs per batch
     
+    #maximum number of photons considered in PECD calculations based on Legendre expansion.
     params['Nmax_photons']      = 2
-
-    params['N_euler'] 	        = 3   
-    params['N_batches'] 	    = 1    
+    params['N_euler'] 	        = 6   
+    params['N_batches'] 	    = 72    
     params['orient_grid_type']  = "3D"  
 
-    params['consolidate'] = {'bcoeffs': True}
+    params['index_energy']  = [0]
+    params['index_time']    = [0]
+    params['index_bcoeff']  = list(np.linspace(0,4,5,endpoint=True,dtype=int))
 
-    params['index_energy'] = [1]
-    params['index_time'] = [1]
-    params['index_bcoeff'] = list(np.linspace(0,4,5,endpoint=True,dtype=int))
+    """ === ro-vibrational part ==== """ 
+    params['density_averaging'] = True #use rotational proability density for orientation averageing. Otherwise uniform probability. 
+    params['Jmax']              = 2 #maximum J for the ro-vibrational wavefunction
+    params['rv_wavepacket_time']= 50
+    params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
+
 
     return params
 

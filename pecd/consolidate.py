@@ -10,6 +10,7 @@ from matplotlib.ticker import FormatStrFormatter
 import h5py
 import spherical
 import wavefunction
+import rotdens
 
 class Avobs:
     def __init__(self,params):
@@ -497,24 +498,6 @@ class Avobs:
 
         exit()
         return missing_files,awkward_files
-"""
-if params['density_averaging'] == True:
-    WDMATS  = gen_wigner_dmats( N_Euler, 
-                                params['Jmax'], 
-                                grid_euler)
-
-    #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
-    grid_rho, rho = ROTDENS.calc_rotdens(   grid_euler,
-                                            WDMATS,
-                                            params) 
-
-
-        
-    print(n_grid_euler_2d)
-    grid_rho, rho = ROTDENS.calc_rotdens( grid_euler_2d,
-                                WDMATS,
-                                params) 
-"""
 
 
 
@@ -560,6 +543,30 @@ if __name__ == "__main__":
     #bcoeffs_flm_alpha_av_dict = Obs.calc_bcoeffs_Flm_alpha_av( Flm_alpha_av_dict)
     #b_av_dict   = Obs.calc_bcoeffs_av(bcoeffs_flm_alpha_av_dict)
     #Obs.plot_bcoeffs_2D(bcoeffs_flm_alpha_av_dict,b_av_dict,grid2D,"flm")
+
+
+    if params['density_averaging'] == True:
+        print("\n")
+        print("Reading grid of molecular orientations (Euler angles)...")
+        print("\n")
+
+        GridObjEuler = wavefunction.GridEuler(  params['N_euler'],
+                                                params['N_batches'],
+                                                params['orient_grid_type'])
+        
+        grid_euler, N_Euler, N_per_batch  = GridObjEuler.read_euler_grid()
+
+        WDMATS  = GridObjEuler.gen_wigner_dmats( N_Euler,grid_euler, params['Jmax'])
+        #calculate rotational density at grid (alpha, beta, gamma) = (n_grid_euler, 3)
+
+        grid_rho, rho = rotdens.calc_rotdens(   grid_euler,
+                                                WDMATS,
+                                                params) 
+
+
+
+
+
 
     """ ===== b-coeffs using numerical Legendre expansion ===="""
     bcoeffs_dict = Obs.read_bcoeffs()

@@ -1453,200 +1453,6 @@ class momentumfuncs(analysis):
            
         return Flm, kgrid
     
-    def PECD(self,funcpars):
-        
-        print("------------ Quantitative PECD analysis --------------"+'\n\n')
-
-        """ Calculate W2D for left- and right-circularly polarized light """
-
-        print("Calculating Flm for left- and right-circularly polarized pulse")
-
-        self.params['field_type']['function_name'] = "fieldRCPL"
-        obs_R, polargrid = self.W2Dav(self.params['W2Dav'])
-
-        self.params['field_type']['function_name'] = "fieldLCPL" 
-        obs_L, _ = self.W2Dav(self.params['W2Dav'])
-        
-
-        """ ************** Calculate PECD **************** """
-        
-        """ set up time grids PECD """
-        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
-        
-        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
-  
-            print(  "Generating PECD at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
-                " " + str( self.params['time_units']) + " ----- " +\
-                "time index = " + str(itime) )
-
-            funcpars['t'] = t
-
-
-            Wav_L = obs_L[i][2]['Wav']
-            Wav_R = obs_R[i][2]['Wav']
-
-            bcoeff_L    = obs_L[i][2]['bcoeff']
-            bcoeff_R    = obs_R[i][2]['bcoeff']
-            kgrid       = obs_R[i][2]['kgrid']
-
-            pecd = Wav_R-Wav_L
-
-            # calculating differential W2Dav:
-            if funcpars['plot2D'][0] == True:
-                self.PECD_plot2D(funcpars,polargrid,pecd)
-
-            k_pecd      = [] # values of electron momentum at which PECD is evaluated
-            ind_kgrid   = [] # index of electron momentum in the list
-
-
-        
-            for kelem in params['pecd_momenta']:
-                k, ind = self.find_nearest(kgrid[:,0], kelem)
-                k_pecd.append(k)
-                ind_kgrid.append(ind)
-
-
-            pecd_list = []
-
-            if funcpars['save'] == True:
-   
-                with open(  self.params['job_directory'] +  "PECD" +\
-                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
-                            ".dat" , 'w') as pecdfile:
-
-                    np.savetxt(pecdfile, pecd , fmt = '%10.4e')
-
-   
-                with open(  self.params['job_directory'] +  "bcoeffs" +\
-                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
-                            ".dat" , 'w') as pecdfile:
-                    for ielem, k in enumerate(k_pecd):
-                        pecdfile.write(    str('{:8.2f}'.format(k)) +\
-                                            " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
-                                            " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
-                                            "\n")
-
-            
-            assert (self.params['pecd_lmax'] <= self.params['Leg_lmax'])
-            
-            for ielem, k in enumerate(k_pecd):
-                print(  str('{:8.2f}'.format(k)) +\
-                        " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
-                        " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
-                        "\n")
-
-                pecd_list.append([   t,k, [bcoeff_R[ielem,n]/bcoeff_R[ielem,0] for n in range(self.params['pecd_lmax']+1)],
-                                    [bcoeff_L[ielem,n]/bcoeff_L[ielem,0] for n in range(self.params['pecd_lmax']+1)],
-                                    2.0 * bcoeff_R[ielem,1]/bcoeff_R[ielem,0] * 100.0])
-
-
-        return pecd_list
-
-    def PECD_plot2D(self,funcpars,polargrid,W):
-        """ Produces contour plot for 2D spatial electron density f = rho(r,theta) """
-
-        plot_params = funcpars['plot2D'][1] #all plot params
-
-        """
-        Args:
-            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
-            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
-            plot_params: parameters of the plot loaded from GRAPHICS.py
-        """
-
-        figsizex    = plot_params['figsize_x'] #size of the figure on screen
-        figsizey    = plot_params['figsize_y']  #size of the figure on screen
-        resolution  = plot_params['resolution']  #resolution in dpi
-
-        fig         = plt.figure(   figsize=(figsizex, figsizey), 
-                                    dpi=resolution,
-                                    constrained_layout=True)
-                                    
-        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-
-        ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
-
-        cmap = matplotlib.cm.jet #jet, cool, etc
-        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=W.max())
-
-
-        plot_W2D  = ax1.contourf(   polargrid[1], 
-                                    polargrid[0], 
-                                    W,  
-                                    plot_params['ncont'], 
-                                    cmap = 'jet', 
-                                    vmin = plot_params['vmin'],
-                                    vmax = W.max())
-        
-
-        ax1.set_title(  label               = plot_params['title_text'],
-                        fontsize            = plot_params['title_size'],
-                        color               = plot_params['title_color'],
-                        verticalalignment   = plot_params['title_vertical'],
-                        horizontalalignment = plot_params['title_horizontal'],
-                        #position            = plot_params[ "title_position"],
-                        pad                 = plot_params['title_pad'],
-                        backgroundcolor     = plot_params['title_background'],
-                        fontname            = plot_params['title_fontname'],
-                        fontstyle           = plot_params['title_fontstyle'])
-
-
-        ax1.set_ylim(polargrid[0].min(),funcpars['kmax']) #radial scale
-        ax1.set_thetamin(polargrid[1].min()*180.0/np.pi)
-        ax1.set_thetamax(polargrid[1].max()*180.0/np.pi)
-
-
-        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
-        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
-
-        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
-                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
-                    alpha = 0.5,
-                    transform = ax1.transAxes)
-
-        
-        #custom ticks and labels:
-        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
-        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
-
-        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
-        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
-
-        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
-        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
-
-        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
-                        ax                  = ax1, 
-                        orientation         = plot_params['cbar_orientation'],
-                        label               = plot_params['cbar_label'],
-                        fraction            = plot_params['cbar_fraction'],
-                        aspect              = plot_params['cbar_aspect'],
-                        shrink              = plot_params['cbar_shrink'],
-                        pad                 = plot_params['cbar_pad'],
-                        extend              = plot_params['cbar_extend'],
-                        ticks               = plot_params['cbar_ticks'],
-                        drawedges           = plot_params['cbar_drawedges'],
-                        format              = plot_params['cbar_format']
-                       )
-        
-        if plot_params['save'] == True:
-
-            fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" + str(irun) + "_" +
-                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
-                                            "_" +
-                                            self.helicity +
-                                            ".pdf",
-                                            
-                            dpi         =   plot_params['save_dpi'],
-                            orientation =   plot_params['save_orientation'],
-                            bbox_inches =   plot_params['save_bbox_inches'],
-                            pad_inches  =   plot_params['save_pad_inches']
-                            )
-        if funcpars['show'] == True:
-            plt.show()
-        
-        plt.close()
 
 
     def W2Dav(self,funcpars):
@@ -2471,6 +2277,202 @@ class momentumfuncs(analysis):
                             )       
 
 
+    def PECD(self,funcpars):
+        
+        print("------------ Quantitative PECD analysis --------------"+'\n\n')
+
+        """ Calculate W2D for left- and right-circularly polarized light """
+
+        print("Calculating Flm for left- and right-circularly polarized pulse")
+
+        self.params['field_type']['function_name'] = "fieldRCPL"
+        obs_R, polargrid = self.W2Dav(self.params['W2Dav'])
+
+        self.params['field_type']['function_name'] = "fieldLCPL" 
+        obs_L, _ = self.W2Dav(self.params['W2Dav'])
+        
+
+        """ ************** Calculate PECD **************** """
+        
+        """ set up time grids PECD """
+        tgrid_plot, plot_index   = self.setup_timegrids(self.params['momentum_analyze_times'])
+        
+        for i, (itime, t) in enumerate(zip(plot_index,list(tgrid_plot))):
+  
+            print(  "Generating PECD at time = " + str('{:6.2f}'.format(t/time_to_au) ) +\
+                " " + str( self.params['time_units']) + " ----- " +\
+                "time index = " + str(itime) )
+
+            funcpars['t'] = t
+
+
+            Wav_L = obs_L[i][2]['Wav']
+            Wav_R = obs_R[i][2]['Wav']
+
+            bcoeff_L    = obs_L[i][2]['bcoeff']
+            bcoeff_R    = obs_R[i][2]['bcoeff']
+            kgrid       = obs_R[i][2]['kgrid']
+
+            pecd = Wav_R-Wav_L
+
+            # calculating differential W2Dav:
+            if funcpars['plot2D'][0] == True:
+                self.PECD_plot2D(funcpars,polargrid,pecd)
+
+            k_pecd      = [] # values of electron momentum at which PECD is evaluated
+            ind_kgrid   = [] # index of electron momentum in the list
+
+
+        
+            for kelem in params['pecd_momenta']:
+                k, ind = self.find_nearest(kgrid[:,0], kelem)
+                k_pecd.append(k)
+                ind_kgrid.append(ind)
+
+
+            pecd_list = []
+
+            if funcpars['save'] == True:
+   
+                with open(  self.params['job_directory'] +  "PECD" +\
+                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
+                            ".dat" , 'w') as pecdfile:
+
+                    np.savetxt(pecdfile, pecd , fmt = '%10.4e')
+
+   
+                with open(  self.params['job_directory'] +  "bcoeffs" +\
+                            "_" + str(irun) + "_"  + str('{:.1f}'.format(t/time_to_au) ) +\
+                            ".dat" , 'w') as pecdfile:
+                    for ielem, k in enumerate(k_pecd):
+                        pecdfile.write(    str('{:8.2f}'.format(k)) +\
+                                            " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                                            " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                                            "\n")
+
+            
+            assert (self.params['pecd_lmax'] <= self.params['Leg_lmax'])
+            
+            for ielem, k in enumerate(k_pecd):
+                print(  str('{:8.2f}'.format(k)) +\
+                        " ".join('{:12.8f}'.format(bcoeff_R[ielem,n]/bcoeff_R[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                        " ".join('{:12.8f}'.format(bcoeff_L[ielem,n]/bcoeff_L[ielem,0]) for n in range(self.params['pecd_lmax']+1)) +\
+                        "\n")
+
+                pecd_list.append([   t,k, [bcoeff_R[ielem,n]/bcoeff_R[ielem,0] for n in range(self.params['pecd_lmax']+1)],
+                                    [bcoeff_L[ielem,n]/bcoeff_L[ielem,0] for n in range(self.params['pecd_lmax']+1)],
+                                    2.0 * bcoeff_R[ielem,1]/bcoeff_R[ielem,0] * 100.0])
+
+
+        return pecd_list
+
+    def PECD_plot2D(self,funcpars,polargrid,W):
+        """ Produces contour plot for 2D PECD representation"""
+
+        plot_params = funcpars['plot2D'][1] #all plot params
+
+        """
+        Args:
+            polargrid: np.array of size (nptsr,nptsth,2): (r,theta) coordinates on a meshgrid
+            rho: array of size (nptsr,nptsth): function values at each point of the polar meshgrid        Comments:
+            plot_params: parameters of the plot loaded from GRAPHICS.py
+        """
+
+        figsizex    = plot_params['figsize_x'] #size of the figure on screen
+        figsizey    = plot_params['figsize_y']  #size of the figure on screen
+        resolution  = plot_params['resolution']  #resolution in dpi
+
+        fig         = plt.figure(   figsize=(figsizex, figsizey), 
+                                    dpi=resolution,
+                                    constrained_layout=True)
+                                    
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
+
+        cmap = matplotlib.cm.jet #jet, cool, etc
+        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=W.max())
+
+
+        plot_W2D  = ax1.contourf(   polargrid[1], 
+                                    polargrid[0], 
+                                    W,  
+                                    plot_params['ncont'], 
+                                    cmap = 'jet', 
+                                    vmin = plot_params['vmin'],
+                                    vmax = W.max())
+        
+
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+
+        ax1.set_ylim(polargrid[0].min(),funcpars['kmax']) #radial scale
+        ax1.set_thetamin(polargrid[1].min()*180.0/np.pi)
+        ax1.set_thetamax(polargrid[1].max()*180.0/np.pi)
+
+
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
+                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
+                    alpha = 0.5,
+                    transform = ax1.transAxes)
+
+        
+        #custom ticks and labels:
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                        ax                  = ax1, 
+                        orientation         = plot_params['cbar_orientation'],
+                        label               = plot_params['cbar_label'],
+                        fraction            = plot_params['cbar_fraction'],
+                        aspect              = plot_params['cbar_aspect'],
+                        shrink              = plot_params['cbar_shrink'],
+                        pad                 = plot_params['cbar_pad'],
+                        extend              = plot_params['cbar_extend'],
+                        ticks               = plot_params['cbar_ticks'],
+                        drawedges           = plot_params['cbar_drawedges'],
+                        format              = plot_params['cbar_format']
+                       )
+        
+        if plot_params['save'] == True:
+
+            fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
+                                            plot_params['save_name'] + "_" + str(irun) + "_" +
+                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "_" +
+                                            self.helicity +
+                                            ".pdf",
+                                            
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
+                            )
+        if funcpars['show'] == True:
+            plt.show()
+        
+        plt.close()
+
+
 
     def calc_fftcart_psi_3d(self,params, maparray, Gr, psi, chilist):
         coeff_thr = 1e-3
@@ -2493,7 +2495,7 @@ class momentumfuncs(analysis):
 
         x   =  np.zeros(nlobs)
         w   =  np.zeros(nlobs)
-        x,w =  GRID.gauss_lobatto(nlobs,14)
+        x,w =  self.gauss_lobatto(nlobs,14)
         w   =  np.array(w)
         x   =  np.array(x) # convert back to np arrays
 
@@ -2674,67 +2676,6 @@ class momentumfuncs(analysis):
         plt.legend()   
         plt.show()  
 
-    def calc_ftpsi_2d(self,params, maparray, Gr, psi, chilist):
-    
-        coeff_thr = 1e-5
-        ncontours = 100
-
-        nlobs   = params['bound_nlobs']
-        nbins   = params['bound_nbins'] 
-        npoints = 200
-        rmax    = nbins * params['bound_binw']
-        rmin    = 25.0
-
-        fig = plt.figure(figsize=(4, 4), dpi=200, constrained_layout=True)
-        spec = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
-        axft = fig.add_subplot(spec[0, 0])
-
-        cart_grid = np.linspace(rmin, rmax*0.95, npoints, endpoint=True, dtype=float)
-
-        y2d, z2d = np.meshgrid(cart_grid,cart_grid)
-
-        thetagrid = np.arctan2(y2d,z2d)
-        rgrid = np.sqrt(y2d**2 + z2d**2)
-
-        x   =  np.zeros(nlobs)
-        w   =  np.zeros(nlobs)
-        x,w =  GRID.gauss_lobatto(nlobs,14)
-        w   =  np.array(w)
-        x   =  np.array(x) # convert back to np arrays
-
-        y = np.zeros((len(y2d),len(z2d)), dtype=complex)
-
-        phi0 = 0.0 * np.pi/2 #fixed polar angle
-        
-        for ielem, elem in enumerate(maparray):
-            if np.abs(psi[2*ielem]+1j*psi[2*ielem + 1]) > coeff_thr:
-                print(str(elem) + str(psi[ielem]))
-
-                #chir = flist[elem[2]-1](rgrid) #labelled by xi
-
-                for i in range(len(cart_grid)):
-        
-                    y[i,:] +=  ( psi[2*ielem] + 1j * psi[2*ielem + 1] ) * PLOTS.spharm(elem[3], elem[4], thetagrid[i,:], phi0) * \
-                            chilist[elem[2]-1](rgrid[i,:]) #chi(elem[0], elem[1], rang[:], Gr, w, nlobs, nbins) 
-
-
-        fty = fftn(y)
-        print(fty)
-
-        ft_grid = np.linspace(-1.0/(rmax), 1.0/(rmax), npoints, endpoint=True, dtype=float)
-
-        yftgrid, zftgrid = np.meshgrid(ft_grid,ft_grid)
-
-        line_ft = axft.contourf(yftgrid, zftgrid , fty[:npoints].imag/np.max(np.abs(fty)), 
-                                            ncontours, cmap = 'jet', vmin=-0.2, vmax=0.2) #vmin=0.0, vmax=1.0cmap = jet, gnuplot, gnuplot2
-        plt.colorbar(line_ft, ax=axft, aspect=30)
-        
-        #axradang_r.set_yticklabels(list(str(np.linspace(rmin,rmax,5.0)))) # set radial tick label
-        plt.legend()   
-        plt.show()  
-
-        return fty, yftgrid, zftgrid 
-
 
 def check_compatibility(params_prop,params_analyze):
 
@@ -2751,9 +2692,6 @@ def check_compatibility(params_prop,params_analyze):
 
     return 0
 
-
-
-    
 def save_grids(params):
     
     with  h5py.File( params['job_directory'] + "grids.h5", mode = 'w') as hdf5: 

@@ -103,14 +103,6 @@ def read_input():
 
     params['CEP0']          = 0.0 #CEP phase of the field
 
-
-    """ === ro-vibrational part ==== """ 
-    params['density_averaging'] = False #use rotational proability density for orientation averageing. Otherwise uniform probability. 
-
-    params['Jmax']              = 60 #maximum J for the ro-vibrational wavefunction
-    params['rv_wavepacket_time']= 50
-    params['rv_wavepacket_dt']  = 0.1 #richmol time-step in ps #
-
     """====  SAVING and PLOTTING ===="""
     params['save_psi0']     = True #save psi0
     params['save_enr0']     = True #save eigenenergies for psi0
