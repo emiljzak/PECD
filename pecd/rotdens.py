@@ -227,9 +227,9 @@ def rotdens(npoints, nbatches, ibatch, states, quanta, coefs):
     # compute rotational density
 
     vmax = max([max([v for v in state["v"]]) for state in states])
-    func = np.zeros((npoints_3d,vmax+1), dtype=np.complex128)
-    tot_func = np.zeros((npoints_3d,vmax+1), dtype=np.complex128)
-    dens = np.zeros(npoints_3d, dtype=np.complex128)
+    func = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
+    tot_func = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
+    dens = np.zeros(npoints_3d, dtype=np.complex)
 
     for q,cc,istate in zip(quanta,coefs,ind_state): #loop over coefficients in the wavepacket
 

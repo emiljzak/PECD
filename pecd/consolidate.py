@@ -365,7 +365,9 @@ class Avobs:
         t           = self.tgrid[index_time]
         print("Plot time: " + str(t))
 
+        Wdict = {}
         for helicity in self.params['helicity_consolidate']:
+            W = np.zeros((ft_polargrid[0].shape[0],ft_polargrid[1].shape[1]),dtype = float)
             for ipoint in range(N_Euler):
                 #read W2D(helicity,ipoint)
         
@@ -373,14 +375,21 @@ class Avobs:
                     W2D = np.loadtxt(Wavfile)
                 #print(W2D)
                 #print(W2D.shape)       
-                W += rho[ipoint] * W2D
+                W +=  W2D #*float(rho[ipoint]) 
+            #W /= N_Euler
+            Wdict[helicity] = W
 
-        #self.pecd_plot2D(self.params['PECD_av'],polargrid,W)
+            self.pecd_plot2D(self.params['PECD_av'],ft_polargrid,W,helicity)
+        
+        
+        PECD = Wdict["R"]- Wdict["L"] / (Wdict["R"] + Wdict["L"])
+        print(PECD)
+        self.pecd_plot2D(self.params['PECD_av'],ft_polargrid,PECD,helicity)
 
         return W
 
 
-    def pecd_plot2D(self,funcpars,ft_polargrid,W): 
+    def pecd_plot2D(self,funcpars,ft_polargrid,W,helicity): 
         """Produces a contour 2D plot for 3D averaged electron's momentum distribution 
         
         .. warning:: In the present implementation the 2D controur plot is produced for the **original FT** grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only. 
@@ -429,7 +438,7 @@ class Avobs:
 
         plot_W2D  = ax1.contourf(   ft_polargrid[1], 
                                     ft_polargrid[0], 
-                                    W2D,  
+                                    W,  
                                     plot_params['ncont'], 
                                     cmap = 'jet', 
                                     vmin = plot_params['vmin'],
@@ -452,7 +461,7 @@ class Avobs:
         ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
         ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
 
-        ax1.text(   0.0, 0.0, str('{:.1f}'.format(funcpars['t']/time_to_au) ) + " as", 
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(2000.0) ) + " as", 
                     color = plot_params['time_colour'], fontsize = plot_params['time_size'],
                     alpha = 0.5,
                     transform = ax1.transAxes)
@@ -485,10 +494,10 @@ class Avobs:
         if plot_params['save'] == True:
 
             fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
-                                            plot_params['save_name'] + "_" + str(irun) + "_" +
-                                            str('{:.1f}'.format(funcpars['t']/time_to_au) ) +
+                                            "PECD_av_2D_" + 
+                                            str('{:.1f}'.format(2000.0) ) +
                                             "_" +
-                                            self.helicity +
+                                            helicity +
                                             ".pdf",
                                             
                             dpi         =   plot_params['save_dpi'],
@@ -730,8 +739,8 @@ if __name__ == "__main__":
                                                 WDMATS,
                                                 params) 
 
-        print("rho:")
-        print(rho)
+        #print("rho:")
+        #print(rho)
         #exit()
 
     Obs.calc_pecd2D_av(N_Euler,grid_euler,rho)
