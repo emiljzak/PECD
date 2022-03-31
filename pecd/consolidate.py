@@ -11,6 +11,8 @@ import h5py
 import spherical
 import wavefunction
 import rotdens
+import constants
+
 
 class Avobs:
     def __init__(self,params):
@@ -26,6 +28,21 @@ class Avobs:
         #generate 2D euler grid for alpha-averaged variables
         self.grid_euler2D, self.n_grid_euler_2d = GridObjEuler.gen_euler_grid_2D()   
     
+        #2. setup time grid
+        self.tgrid               = self.calc_tgrid()
+        #3. setup time grid indices to analyze - they correspond to the respective analyze times
+        self.tgrid_plot_index    =  self.calc_plot_times(self.tgrid,params['momentum_analyze_times']) 
+        self.tgrid_plot_time     = self.tgrid[self.tgrid_plot_index]
+        print("times for which momentum functions are analyzed: " + str(self.tgrid_plot_time/time_to_au))
+        
+
+            """ set up time grids for evaluating rho1D from the propagated wavefunction """
+        tgrid,dt = self.calc_tgrid()
+
+        plot_index = self.calc_plot_times(tgrid,dt,self.params['space_analyze_times']) #plot time indices
+
+        tgrid_plot = tgrid[plot_index]
+
     def read_Flm(self):
         """Reads Flm arrays for a sequeces of batches
         
@@ -341,16 +358,19 @@ class Avobs:
         #set up time at which we calculate W
         index_time = self.params['index_time'][0]
         t = timegrid[index_time]
-        
+
 
         for helicity in self.params['helicity_consolidate']:
             for ipoint in range(N_Euler):
                 #read W2D(helicity,ipoint)
         
                 with open( self.params['job_directory'] +  "W2Dav" + "_" + str(ipoint) + "_" + str('{:.1f}'.format(t/time_to_au) ) + "_" + helicity + ".dat" , 'r') as Wavfile:   
-                    np.savetxt(Wavfile, Wav, fmt = '%10.4e')
+                    W2D = np.loadtxt(Wavfile)
+                print(W2D)
+                print(W2D.shape)
 
-                W += rho[ipoint] * W2Dav
+                exit()
+                W += rho[ipoint] * W2D
 
 
         self.pecd_plot2D(self.params['PECD_av'],polargrid,W)
@@ -670,6 +690,8 @@ if __name__ == "__main__":
     params.update(params_prop)
     params.update(params_analyze)
     params.update(params_consolidate)
+
+    time_to_au = constants.time_to_au[ params['time_units'] ]
 
     Obs = Avobs(params)
 
