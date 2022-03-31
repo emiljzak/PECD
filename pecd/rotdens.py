@@ -158,7 +158,7 @@ def calc_rotdens(grid_3d, WDMATS, params):
 
     return grid_3d, dens
 
-
+#old function 
 def rotdens(npoints, nbatches, ibatch, states, quanta, coefs):
     """
     """
@@ -256,8 +256,6 @@ def rotdens(npoints, nbatches, ibatch, states, quanta, coefs):
 
     return grid_3d, dens, [ipoint0,ipoint1]
 
-
-
 if __name__ == "__main__":
 
     coef_file           = sys.argv[1]
@@ -271,7 +269,7 @@ if __name__ == "__main__":
     #coefs = np.asarray(coefs)
     quanta = np.asarray(quanta)
     for itime in range(0,10):
-    	print(time[itime],quanta[itime],coefs[itime])
+        print(time[itime],quanta[itime],coefs[itime])
 
     # Cartesian coordinates of D2S
     xyz = np.array([[  0.00000000,        0.00000000,        0.10358697],
@@ -312,4 +310,4 @@ if __name__ == "__main__":
 
         # do monte-carlo
 
-        monte_carlo(grid_3d, dens_3d, xyz, dens_name, npoints=100000)
+        #monte_carlo(grid_3d, dens_3d, xyz, dens_name, npoints=100000)

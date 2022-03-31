@@ -44,5 +44,21 @@ def read_input():
     params['rv_wavepacket_dt']      = 0.1 #richmol time-step in ps #
 
 
+    params['PECD_av'] = {
+                            'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
+                            'show':         True, # show image on screen
+                            'save':         True, # save array in file
+                                            # Momentum grid parameters only for plotting purposes.
+                            'k_grid':       {   'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                                'kmin': 0.0,    #ignored when automatic
+                                                'kmax': 1.0     #ignored when automatic               
+                                            },
+
+                            'th_grid':      {   'thmin': 0.0,
+                                                'thmax': 2.0*np.pi,
+                                                'FT_npts_th': 360
+                                            }
+                        }
+
     return params
 
