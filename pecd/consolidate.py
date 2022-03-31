@@ -375,18 +375,18 @@ class Avobs:
                     W2D = np.loadtxt(Wavfile)
                 #print(W2D)
                 #print(W2D.shape)       
-                W +=  W2D #*float(rho[ipoint]) 
-            #W /= N_Euler
+                W +=  W2D #*float(rho[ipoint]) #* np.sin(float(ipoint) * np.pi/400.0)
+            W /= N_Euler
             Wdict[helicity] = W
 
-            self.pecd_plot2D(self.params['PECD_av'],ft_polargrid,W,helicity)
+            #self.W_plot2D(self.params['W_av'],ft_polargrid,W,helicity)
         
         
-        PECD = Wdict["R"]- Wdict["L"] / (Wdict["R"] + Wdict["L"])
+        PECD = 100*(Wdict["R"] - Wdict["L"]) #/ (Wdict["R"] + Wdict["L"])
         print(PECD)
         self.pecd_plot2D(self.params['PECD_av'],ft_polargrid,PECD,helicity)
 
-        return W
+        return Wdict
 
 
     def pecd_plot2D(self,funcpars,ft_polargrid,W,helicity): 
@@ -509,6 +509,132 @@ class Avobs:
             plt.show()
         
         plt.close()
+
+
+
+    def W_plot2D(self,funcpars,ft_polargrid,W,helicity): 
+        """Produces a contour 2D plot for 3D averaged electron's momentum distribution 
+        
+        .. warning:: In the present implementation the 2D controur plot is produced for the **original FT** grid, not for the grid defined by the user. User-defined grid determines ranges and ticks only. 
+
+        .. note:: `contourf` already performs interpolation of W2D. There is no need for evaluation of W2D on a finer grid than ft_polargrid.
+        """
+        #radial grid
+        if funcpars['k_grid']['type'] == "manual":
+            
+            # ktuple determines the range for which we PLOT W2D. ft_grid is the grid over which W2Dav is evaluated and kept in memory.
+            ktuple  = (funcpars['k_grid']['kmin'], funcpars['k_grid']['kmax'])
+
+        elif funcpars['k_grid']['type'] == "automatic":
+
+            # automatic radial momentum grid as given by the resolution of the FT 
+            ktuple  = (ft_polargrid[0].min(), ft_polargrid[0].max())
+
+        thtuple             = (funcpars['th_grid']['thmin'], funcpars['th_grid']['thmax'], funcpars['th_grid']['FT_npts_th'])
+
+        plot_params = funcpars['plot'][1] #all plot params
+
+        figsizex    = plot_params['figsize_x'] #size of the figure on screen
+        figsizey    = plot_params['figsize_y']  #size of the figure on screen
+        resolution  = plot_params['resolution']  #resolution in dpi
+
+        fig         = plt.figure(   figsize = (figsizex, figsizey), 
+                                    dpi = resolution,
+                                    constrained_layout = True)
+                                    
+        grid_fig    = gridspec.GridSpec(ncols=1, nrows=1, figure=fig)
+        ax1         = fig.add_subplot(grid_fig[0, 0], projection='polar')
+
+        cmap = matplotlib.cm.jet #jet, cool, etc
+        norm = matplotlib.colors.Normalize(vmin=plot_params['vmin'], vmax=plot_params['vmax'])
+
+
+        ax1.set_ylim(ktuple[0],ktuple[1]) #radial scale
+        ax1.set_thetamin(thtuple[0]*180.0/np.pi)
+        ax1.set_thetamax(thtuple[1]*180.0/np.pi)
+
+
+        plot_params['thticks']  = list(np.linspace(thtuple[0],thtuple[1],plot_params['nticks_th']))
+        plot_params['rticks']   = list(np.linspace(ktuple[0],ktuple[1],plot_params['nticks_rad'])) 
+
+      
+
+        plot_W2D  = ax1.contourf(   ft_polargrid[1], 
+                                    ft_polargrid[0], 
+                                    W,  
+                                    plot_params['ncont'], 
+                                    cmap = 'jet', 
+                                    vmin = plot_params['vmin'],
+                                    vmax = plot_params['vmax'])
+        
+
+        ax1.set_title(  label               = plot_params['title_text'],
+                        fontsize            = plot_params['title_size'],
+                        color               = plot_params['title_color'],
+                        verticalalignment   = plot_params['title_vertical'],
+                        horizontalalignment = plot_params['title_horizontal'],
+                        #position            = plot_params[ "title_position"],
+                        pad                 = plot_params['title_pad'],
+                        backgroundcolor     = plot_params['title_background'],
+                        fontname            = plot_params['title_fontname'],
+                        fontstyle           = plot_params['title_fontstyle'])
+
+
+
+        ax1.yaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+        ax1.xaxis.grid(linewidth=0.5, alpha=0.5, color = '0.8', visible=True)
+
+        ax1.text(   0.0, 0.0, str('{:.1f}'.format(2000.0) ) + " as", 
+                    color = plot_params['time_colour'], fontsize = plot_params['time_size'],
+                    alpha = 0.5,
+                    transform = ax1.transAxes)
+
+        
+        #custom ticks and labels:
+        #ax1.set_xticks(plot_params['thticks']) #positions of th-ticks
+        #ax1.set_yticks(plot_params['rticks']) #positions of r-ticks
+
+        #ax1.set_xticklabels(plot_params['thticks'],fontsize=8) #th-ticks labels
+        #ax1.set_yticklabels(plot_params['rticks'],fontsize=8) #r-ticks labels
+
+        #ax1.xaxis.set_major_formatter(FormatStrFormatter(plot_params['xlabel_format'])) #set tick label formatter 
+        #ax1.yaxis.set_major_formatter(FormatStrFormatter(plot_params['ylabel_format']))
+
+        fig.colorbar(   mappable=  matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap),
+                        ax                  = ax1, 
+                        orientation         = plot_params['cbar_orientation'],
+                        label               = plot_params['cbar_label'],
+                        fraction            = plot_params['cbar_fraction'],
+                        aspect              = plot_params['cbar_aspect'],
+                        shrink              = plot_params['cbar_shrink'],
+                        pad                 = plot_params['cbar_pad'],
+                        extend              = plot_params['cbar_extend'],
+                        ticks               = plot_params['cbar_ticks'],
+                        drawedges           = plot_params['cbar_drawedges'],
+                        format              = plot_params['cbar_format']
+                       )
+        
+        if plot_params['save'] == True:
+
+            fig.savefig(    fname       =   self.params['job_directory']  + "/graphics/momentum/"+
+                                            "W_av_2D_" + 
+                                            str('{:.1f}'.format(2000.0) ) +
+                                            "_" +
+                                            helicity +
+                                            ".pdf",
+                                            
+                            dpi         =   plot_params['save_dpi'],
+                            orientation =   plot_params['save_orientation'],
+                            bbox_inches =   plot_params['save_bbox_inches'],
+                            pad_inches  =   plot_params['save_pad_inches']
+                            )
+        if funcpars['show'] == True:
+            plt.show()
+        
+        plt.close()
+
+
+
 
     def plot_bcoeffs_Flm_2D(self,b_flm_alpha_av_dict,grid2D):
         

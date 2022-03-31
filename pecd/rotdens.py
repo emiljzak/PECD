@@ -123,19 +123,19 @@ def calc_rotdens(grid_3d, WDMATS, params):
 
     # compute rotational density
 
-    vmax = max([max([v for v in state["v"]]) for state in states])
-    func = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
-    tot_func = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
-    dens = np.zeros(npoints_3d, dtype=np.complex)
+    vmax        = max([max([v for v in state["v"]]) for state in states])
+    func        = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
+    tot_func    = np.zeros((npoints_3d,vmax+1), dtype=np.complex)
+    dens        = np.zeros(npoints_3d, dtype=np.complex)
 
     for q,cc,istate in zip(quanta,coefs,ind_state): #loop over coefficients in the wavepacket
 
-        m = q[0]
-        j = q[1]
-        state = states[istate]
+        m       = q[0]
+        j       = q[1]
+        state   = states[istate]
 
-        ind_j = jlist.index(j)
-        ind_m = mlist[ind_j].index(m)
+        ind_j   = jlist.index(j)
+        ind_m   = mlist[ind_j].index(m)
 
         print(ind_j)
         print(ind_m)

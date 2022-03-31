@@ -395,9 +395,9 @@ def gparams_PECD2D():
 
     """" ===== Plot parameters ====="""
 
-    vmin    = 0.0
-    vmax    = 1.0
-    ncont   = 200
+    vmin    = -10.0
+    vmax    = 10.0
+    ncont   = 100
     resolution = 200
     fig_size_x = 3.5
     fig_size_y = 3.5

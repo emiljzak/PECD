@@ -45,9 +45,9 @@ def read_input():
 
 
     params['PECD_av'] = {
-                            'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
+                            'plot':         (True, graphics.gparams_PECD2D()), #specify parameters of the plot to load
                             'show':         True, # show image on screen
-                            'save':         True, # save array in file
+                            'save':         False, # save array in file
                                             # Momentum grid parameters only for plotting purposes.
                             'k_grid':       {   'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
                                                 'kmin': 0.0,    #ignored when automatic
@@ -59,6 +59,24 @@ def read_input():
                                                 'FT_npts_th': 360
                                             }
                         }
+
+
+    params['W_av'] = {
+                            'plot':         (True, graphics.gparams_W2Dav_polar()), #specify parameters of the plot to load
+                            'show':         True, # show image on screen
+                            'save':         False, # save array in file
+                                            # Momentum grid parameters only for plotting purposes.
+                            'k_grid':       {   'type':'manual', #manual or automatic plotting grid type.  #Automatic means that we choose ranges based on maximum range given by the basis set.   
+                                                'kmin': 0.0,    #ignored when automatic
+                                                'kmax': 1.0     #ignored when automatic               
+                                            },
+
+                            'th_grid':      {   'thmin': 0.0,
+                                                'thmax': 2.0*np.pi,
+                                                'FT_npts_th': 360
+                                            }
+                        }
+
 
     return params
 
